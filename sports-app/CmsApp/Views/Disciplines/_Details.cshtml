@@ -1,0 +1,448 @@
+﻿@using CmsApp.Controllers;
+@model DisciplineDetailsForm
+@{
+    bool hasErrors = ViewBag.HasErrors != null && ViewBag.HasErrors == true;
+    int routeId = ViewBag.RouteId != null ? ViewBag.RouteId : 0;
+    int teamRouteId = ViewBag.TeamRouteId != null ? ViewBag.TeamRouteId : 0;
+
+}
+
+@using (Html.BeginForm("ExportDisciplineInfo", "Disciplines",
+    new
+    {
+        disciplineId = Model.DisciplineId,
+        seasonId = Model.SeasonId
+    },
+    FormMethod.Post,
+    new
+    {
+        id = "export_discipline_players"
+    })) { }
+<div class=col-sm-7>
+    @using (Ajax.BeginForm("Details", "Disciplines", new AjaxOptions { UpdateTargetId = "info" }, new { autocomplete = "off", enctype = "multipart/form-data" }))
+    {
+        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+        {
+            <div class="row">
+                <div class="row">
+                    <div class="col-sm-12 form-group">
+                        <label class="control-label">@Messages.DisciplineName:</label>
+                        <div class="row">
+                            <div class="col-sm-9 form-group">
+                                @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.Name)
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <a href="#" role="button" class="btn btn-primary" id="export_discipline" onclick="$('#export_discipline_players').submit()">
+                                    @Messages.ExportToExcel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 form-group">
+                        <label class="control-label">@Messages.PrefferedDiscipline:</label>&nbsp;&nbsp;&nbsp;
+                        @Html.CheckBoxFor(m => m.IsPreffered)
+                    </div>
+                </div>
+                @if (ViewBag?.Alias == GamesAlias.Bicycle)
+                {
+                    <div class="row">
+                        <div class="col-sm-12 form-group">
+                            <label class="control-label">@Messages.RoadHeat:</label>&nbsp;&nbsp;&nbsp;
+                            @Html.CheckBoxFor(m => m.RoadHeat)
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12 form-group">
+                            <label class="control-label">@Messages.MountainHeat:</label>&nbsp;&nbsp;&nbsp;
+                            @Html.CheckBoxFor(m => m.MountainHeat)
+                        </div>
+                    </div>
+                }
+                <div class="row">
+                    <div class="col-sm-12 form-group">
+                        <label class="control-label">@Messages.Description:</label>
+                        @Html.TextAreaFor(m => m.Description, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Description)
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 form-group">
+                        <label class="control-label">@Messages.Index:</label>
+                        @Html.TextAreaFor(m => m.IndexAbout, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.IndexAbout)
+                    </div>
+                </div>
+                @if (ViewBag?.Alias == GamesAlias.Gymnastic)
+                {
+
+
+                    <div class="row">
+                        <div class="col-sm-12 form-group">
+                            <label class="control-label">@Messages.Individual @Messages.Routes:</label>
+                            <div>
+                                @Html.ValidationMessage("_individual_")
+                            </div>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>@Messages.Hierarchy</th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.Routes.Count; i++)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @Html.TextBoxFor(m => Model.Routes[i].Hierarchy, new { @class = "form-control int-control" })
+                                                @Html.ValidationMessageFor(m => Model.Routes[i].Hierarchy)
+                                            </td>
+                                            <td>
+                                                <div class="modal fade" role="dialog" id="rankModal_@Model.Routes[i].Id">
+                                                    @{ Html.RenderPartial("_Ranks", Model.Routes[i], new ViewDataDictionary { { "disciplineId", Model.DisciplineId } });
+                                                    }
+                                                </div>
+                                                @Html.TextBoxFor(m => Model.Routes[i].Route, new { @class = "form-control" })
+                                                @Html.ValidationMessageFor(m => Model.Routes[i].Route)
+                                                @Html.HiddenFor(m => Model.Routes[i].Id)
+                                            </td>
+                                            <td>
+                                                <a href="#rankModal_@Model.Routes[i].Id" role="button" class="btn btn-primary" data-toggle="modal" id="refbtn_@Model.Routes[i].Id">
+                                                    @Messages.Ranks
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("DeleteRoute", new { disciplineId = Model.DisciplineId, routeId = Model.Routes[i].Id, seasonId = Model.SeasonId })" class="@AppCss.Delete"
+                                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                                   data-ajax-update="#info"
+                                                   data-ajax="true"></a>
+                                            </td>
+                                        </tr>
+                                    }
+                                    <tr>
+                                        <td>
+                                            @Html.TextBoxFor(m => m.NewHierarchy, new { @class = "form-control int-control", id = "NewHierarchy" })
+                                            @Html.ValidationMessageFor(m => m.NewHierarchy)
+                                        </td>
+                                        <td colspan="2">
+                                            @Html.TextBoxFor(m => m.NewRote, new { @class = "form-control " })
+                                            @Html.ValidationMessageFor(m => m.NewRote)
+                                        </td>
+                                        <td>
+                                            <input type="submit" value="@Messages.AddNewRoute" class="btn btn-primary" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-12 form-group">
+                            <label class="control-label">@Messages.Team @Messages.Routes:</label>
+                            <div>
+                                @Html.ValidationMessage("_team_")
+                            </div>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>@Messages.Hierarchy</th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.TeamRoutes.Count; i++)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @Html.TextBoxFor(m => Model.TeamRoutes[i].Hierarchy, new { @class = "form-control int-control" })
+                                                @Html.ValidationMessageFor(m => Model.TeamRoutes[i].Hierarchy)
+                                            </td>
+                                            <td>
+                                                <div class="modal fade" role="dialog" id="rankModal_@Model.TeamRoutes[i].Id">
+                                                    @{ Html.RenderPartial("_TeamRanks", Model.TeamRoutes[i], new ViewDataDictionary { { "disciplineId", Model.DisciplineId } });
+                                                    }
+                                                </div>
+                                                @Html.TextBoxFor(m => Model.TeamRoutes[i].Route, new { @class = "form-control" })
+                                                @Html.ValidationMessageFor(m => Model.TeamRoutes[i].Route)
+                                                @Html.HiddenFor(m => Model.TeamRoutes[i].Id)
+                                            </td>
+                                            <td>
+                                                <a href="#rankModal_@Model.TeamRoutes[i].Id" role="button" class="btn btn-primary" data-toggle="modal" id="refbtn_@Model.TeamRoutes[i].Id">
+                                                    @Messages.Ranks
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("DeleteTeamRoute", new { disciplineId = Model.DisciplineId, routeId = Model.TeamRoutes[i].Id, seasonId = Model.SeasonId })" class="@AppCss.Delete"
+                                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                                   data-ajax-update="#info"
+                                                   data-ajax="true"></a>
+                                            </td>
+                                        </tr>
+                                    }
+                                    <tr>
+                                        <td>
+                                            @Html.TextBoxFor(m => m.NewTeamHierarchy, new { @class = "form-control int-control", id = "NewTeamHierarchy" })
+                                            @Html.ValidationMessageFor(m => m.NewTeamHierarchy)
+                                        </td>
+                                        <td colspan="2">
+                                            @Html.TextBoxFor(m => m.NewTeamRote, new { @class = "form-control " })
+                                            @Html.ValidationMessageFor(m => m.NewTeamRote)
+                                        </td>
+                                        <td>
+                                            <input type="submit" value="@Messages.AddNewRoute" class="btn btn-primary" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                <div class="row">
+                    <div class="col-sm-3 form-group">
+                        <label class="control-label">@Messages.Logo:</label> (<span>2mb</span>)
+                        <table>
+                            <tr>
+                                <td width="100px">
+                                    @Html.Editor("LogoFile", "ImageUpload", new { css = "validfile" })
+                                </td>
+                                <td width="10px"></td>
+                                <td>
+                                    <a class="btn btn-sm btn-danger"
+                                       href="@Url.Action("DeleteImage", new { disciplineId = Model.DisciplineId, image = "Logo" })"
+                                       title="@Messages.Delete">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        @Html.ValidationMessage("LogoFile")
+                        @if (!string.IsNullOrEmpty(Model.Logo))
+                        {
+                            <div class="offset-2"></div>
+                            @ShowImage(Model.Logo)
+                        }
+                    </div>
+                    <div class="col-sm-1 form-group"></div>
+                    <div class="col-sm-3 form-group">
+                        <label class="control-label">@Messages.Image:</label> (<span>2mb</span>)
+                        <table>
+                            <tr>
+                                <td width="100px">
+                                    @Html.Editor("PrimaryImageFile", "ImageUpload", new { css = "validfile" })
+                                </td>
+                                <td width="10px"></td>
+                                <td>
+                                    <a class="btn btn-sm btn-danger"
+                                       href="@Url.Action("DeleteImage", new { disciplineId = Model.DisciplineId, image = "PrimaryImage" })"
+                                       title="@Messages.Delete">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        @Html.ValidationMessage("PrimaryImageFile")
+                        @if (!string.IsNullOrEmpty(Model.PrimaryImage))
+                        {
+                            <div class="offset-2"></div>
+                            @ShowImage(Model.PrimaryImage)
+                        }
+                    </div>
+                    <div class="col-sm-1 form-group"></div>
+                    <div class="col-sm-3 form-group">
+                        <label class="control-label">Index:</label> (<span>2mb</span>)
+                        <table>
+                            <tr>
+                                <td width="100px">
+                                    @Html.Editor("IndexFile", "ImageUpload", new { css = "validfile" })
+                                </td>
+                                <td width="10px"></td>
+                                <td>
+                                    <a class="btn btn-sm btn-danger"
+                                       href="@Url.Action("DeleteImage", new { disciplineId = Model.DisciplineId, image = "IndexImage" })"
+                                       title="@Messages.Delete">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        @if (!string.IsNullOrEmpty(Model.IndexImage))
+                        {
+                            <div class="offset-2"></div>
+                            @ShowImage(Model.IndexImage)
+                        }
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <label class="control-label">@Messages.TermsFile:</label> (<span>2mb</span>)
+                        @if (Model.DocId != 0)
+                        {
+                            <a href="@Url.Action("ShowDoc", new { id = Model.DocId })" target="_blank">@Messages.ShowTerms</a>
+                        }
+                        <span class="btn btn-default btn-file">
+                            <span>@Messages.AddFile</span>
+                            <input type="file" name="DocFile" data-val="true" data-val-regex-pattern="^.*\.(pdf|PDF)$" data-val-regex="@string.Format(Messages.SelectValidFile, "PDF")" accept="application/pdf" />
+                        </span>
+
+                        @Html.ValidationMessage("DocFile")
+                    </div>
+                    <div class="col-md-1">
+                        <label class="control-label">&nbsp;</label>
+                        <a class="btn btn-sm btn-danger"
+                           href="@Url.Action("DeleteDoc", new { disciplineId = Model.DisciplineId })"
+                           title="@Messages.Delete">
+                            <i class="glyphicon glyphicon-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-8">
+                    @if (TempData["Saved"] != null)
+                    {
+                        <span class="text-success">@Messages.DataSavedSuccess</span>
+                    }
+                </div>
+                <div class="col-sm-4 text-align">
+                    <input class="btn btn-primary" type="submit" value="@Messages.Save" />
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <h3>@Model.Name</h3>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3 form-group">
+                    @if (!string.IsNullOrEmpty(Model.Logo))
+                    {
+                        <div class="offset-2"></div>
+                        @ShowImage(Model.Logo)
+                    }
+                </div>
+                <div class="col-sm-3 form-group">
+                    @if (!string.IsNullOrEmpty(Model.PrimaryImage))
+                    {
+                        <div class="offset-2"></div>
+                        @ShowImage(Model.PrimaryImage)
+                    }
+                </div>
+            </div>
+
+        }
+        @Html.HiddenFor(m => m.DisciplineId)
+        @Html.HiddenFor(m => m.SeasonId)
+    }
+</div>
+
+@if (ViewBag?.Alias == GamesAlias.Gymnastic)
+{
+    <div class="col-sm-5" id="instruments">
+        @{ Html.RenderPartial("_Instruments", Model.IntrumentForm);}
+    </div>
+}
+
+
+
+@helper ShowImage(string imgName)
+{
+    string src = GlobVars.ContentPath + "/discipline/" + imgName;
+    <img class="img-responsive img-thumbnail" src="@src" />
+}
+
+@if (hasErrors && routeId > 0)
+{
+    <div class="modal fade" id="routeAlertModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="alert alert-danger text-center" id="routeAlertDiv">
+                        @*@Messages.RouteDeleteAlertMessage*@
+                        @Messages.RouteDeleteConfirmation
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <a href="@Url.Action("DeleteRoute", new { disciplineId = Model.DisciplineId, routeId = routeId, seasonId = Model.SeasonId, deleteRelation = true })" class="@AppCss.Delete"
+                       data-ajax-update="#info"
+                       data-ajax="true"></a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (hasErrors && teamRouteId > 0)
+{
+    <div class="modal fade" id="routeAlertModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="alert alert-danger text-center" id="routeAlertDiv">
+                        @*@Messages.RouteDeleteAlertMessage*@
+                        @Messages.RouteDeleteConfirmation
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <a href="@Url.Action("DeleteTeamRoute", new { disciplineId = Model.DisciplineId, routeId = teamRouteId, seasonId = Model.SeasonId, deleteRelation = true })" class="@AppCss.Delete"></a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    //$('#frmDisciplinesDetails').validateBootstrap(true);
+    $('[data-toggle="tooltip"]').tooltip();
+    var disciplineId = '@Model.DisciplineId';
+    var unionId = '@Model.UnionId';
+    var seasonId = '@Model.SeasonId';
+
+    function updateMask() {
+        $(".int-control").inputmask({ "mask": "9", "repeat": 10, "greedy": false });
+    }
+
+    $(function () {
+        updateMask();
+    });
+
+    function onConfirm(hasRelation, confirmMessageHasRelation, confirmMessageNoRelation, url) {
+
+        //debugger;
+        //var confirmMessage = '';
+        //if (hasRelation == "1") {
+        //    confirmMessage = confirmMessageHasRelation;
+        //}
+        //else {
+        //    confirmMessage = confirmMessageNoRelation;
+        //}
+
+        //if (confirm(confirmMessage)) {
+        //    return true;
+        //}
+        //else {
+        //    return false;
+        //}
+    }
+
+</script>
+<script src="~/Scripts/pages/ranksFeature.js"></script>
+
+@if (hasErrors)
+{
+    <script>
+        $("#routeAlertModal").modal("show");
+    </script>
+}

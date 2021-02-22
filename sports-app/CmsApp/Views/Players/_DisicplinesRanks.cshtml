@@ -1,0 +1,140 @@
+﻿@using DataService.DTO;
+@model Dictionary<AppModel.Discipline, IEnumerable<AppModel.DisciplineRoute>>
+@{
+    var ranksValues = new Dictionary<int, IEnumerable<AppModel.RouteRank>>();
+    var routeHierarchy = new Dictionary<int, int?>();
+    foreach (var discipline in Model)
+    {
+        foreach (var rank in discipline.Value)
+        {
+            if (rank != null)
+            {
+                ranksValues.Add(rank.Id, rank.RouteRanks.Where(x => x.IsArchived != true));
+                routeHierarchy.Add(rank.Id, rank.Hierarchy.GetValueOrDefault(-1));
+            }
+        }
+    }
+    var selectedValues = (IEnumerable<SelectedRoutesDto>)ViewBag.SelectedValues;
+    bool fromAdding = (bool)ViewBag.IsFromAdd;
+}
+
+@{
+    int userId = ViewBag.UserId != null ? ViewBag.UserId : 0;
+    string _type = ViewBag.RouteType;
+}
+@*<div class="modal-body">*@
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>@Messages.Discipline</td>
+            <td>@Messages.Route</td>
+            <td>@Messages.Ranks</td>
+            @if (!fromAdding)
+            {
+                <td></td>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var disciplineValues in Model)
+        {
+            var selected = selectedValues.Where(c => c.DisciplineId == disciplineValues.Key?.DisciplineId).FirstOrDefault();
+            var routesSelect = disciplineValues.Value?.Select(c => new SelectListItem
+            {
+                Text = c.Route,
+                Value = c.Id.ToString(),
+                Selected = selected != null && selected.UsersRouteId == c.Id
+            });
+            var usersRanks = disciplineValues.Value.Select(c => c.RouteRanks.FirstOrDefault(j => j.RouteId == selected?.UsersRouteId)).FirstOrDefault(c => c != null);
+            var usersRanksDrop = new List<SelectListItem>();
+            if (usersRanks != null)
+            {
+                foreach (var userRank in usersRanks.DisciplineRoute?.RouteRanks)
+                {
+                    if (userRank.IsArchived == true)
+                    {
+                        continue;
+                    }
+
+                    usersRanksDrop.Add(new SelectListItem
+                    {
+                        Text = userRank.Rank,
+                        Value = userRank.Id.ToString(),
+                        Selected = selected != null && selected.UsersRankId == userRank.Id
+                    });
+                }
+            }
+
+            <tr data-id="@disciplineValues.Key.DisciplineId" data-route-old-id="@(selected != null ? selected.UsersRouteId : -1)" data-type="@_type">
+                <td>@disciplineValues.Key.Name</td>
+                <td>@Html.DropDownList($"routes", routesSelect, Messages.Select, new { @class = $"routes {_type} form-control", id = $"routes-{disciplineValues.Key.DisciplineId}-{_type}" })</td>
+                <td><div id="rankDiv">@Html.DropDownList($"rank", usersRanksDrop, Messages.Select, new { @class = "rank form-control", id = $"rank-{disciplineValues.Key.DisciplineId}-{_type}" })</div></td>
+                @if (!fromAdding)
+                {
+                    <td><a class="saveRouteBtn @AppCss.Save"></a></td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+@*</div>*@
+
+@*<div class="modal-footer">
+        <button type="button" class="btn btn-default close-routes-modal">@Messages.Close</button>
+        @if (fromAdding)
+        {
+            <a id="saveRouteMainBtn" class="btn btn-primary">@Messages.Save</a>
+        }
+    </div>*@
+
+@if (Model != null && Model.Count > 0)
+{
+    <script>
+            var routesRanks = [];
+            var routesHierarchy = {};
+            var _ranks = {};
+    </script>
+    foreach (var rankValue in ranksValues)
+    {
+        <script>
+            var ranksIds = '@String.Join(",", rankValue.Value?.Where(x =>x.IsArchived != true).Select(r => r.Id))'.split(',');
+            var ranksNames = '@String.Join(",", rankValue.Value?.Where(x => x.IsArchived != true).Select(r => r.Rank))'.split(',');
+            var ranksAgesFrom = '@String.Join(",", rankValue.Value?.Where(x => x.IsArchived != true).Select(r => r.FromAge?.Ticks ?? -1))'
+                .split(',');
+            var ranksAgesTo = '@String.Join(",", rankValue.Value?.Where(x => x.IsArchived != true).Select(r => r.ToAge?.Ticks ?? -1))'
+                .split(',');
+            var ranks = {
+                "routeId": '@rankValue.Key',
+                "ranksIds": ranksIds,
+                "ranksNames": ranksNames,
+                "ranksAgesFrom":ranksAgesFrom,
+                "ranksAgesTo":ranksAgesTo
+            };
+            routesRanks.push(ranks);
+        </script>
+    }
+
+    foreach (var rankValue in ranksValues)
+    {
+        <script>
+                var ranksIds = '@String.Join(",", rankValue.Value?.Where(x => x.IsArchived != true).Select(r => r.Id))'.split(',');
+                var ranksAgesFrom = '@String.Join(",", rankValue.Value?.Where(x => x.IsArchived != true).Select(r => r.FromAge?.Ticks ?? -1))'.split(',');
+                var ranksAgesTo = '@String.Join(",", rankValue.Value?.Where(x => x.IsArchived != true).Select(r => r.ToAge?.Ticks ?? -1))'.split(',');
+                for (var i = 0; i < ranksIds.length; i++) {
+                    var id = ranksIds[i];
+                    var from = ranksAgesFrom[i];
+                    var to = ranksAgesTo[i];
+                    if (id != '') {
+                        _ranks[id] = { from: from, to: to };
+                    }
+                }
+        </script>
+    }
+
+    foreach (var route in routeHierarchy)
+    {
+        <script>
+            routesHierarchy['@route.Key'] = '@route.Value';
+        </script>
+    }
+}

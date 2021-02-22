@@ -1,0 +1,44 @@
+﻿@model UnionCompetitionForm
+@{
+    var hasSportsmen = false;
+    bool isHebrew = Request.IsHebrew();
+    var competitions = Model.Competitions;
+
+}
+
+@foreach (var competition in competitions)
+{
+<tr class="@(competition.IsEnded ? "isEnded" : string.Empty) @(competition.IsStarted ? string.Empty : "isNotStarted") @(competition.IsMaxed ? "isMaxed" : string.Empty)">
+    <td>
+        <a data-id="@competition.LeagueId" class="btn btn-primary information">
+            <i class="glyphicon glyphicon-info-sign" name="info-icon"></i>
+            <i class="fa fa-spin fa-spinner" name="spinner" style="display:none"></i>
+        </a>
+    </td>
+    <td>
+        @{
+            var disabledAttr = string.IsNullOrEmpty(competition.RegistrationLink) ? "disabled" : "";
+        }
+        <a href="@competition.RegistrationLink" class="btn btn-primary" target="_blank" @disabledAttr>@Messages.Register</a>
+    </td>
+
+    <td>
+        <a href="@Url.Action("AthleticsRegistrationList", "Clubs", new { clubId = Model.ClubId, seasonId = Model.SeasonId, leagueId = competition.LeagueId })"
+           data-toggle="modal"
+           data-target="#athleticsregistrationlist"
+           data-ajax-update="#athleticsregistrationlist_pl"
+           data-ajax="true"
+           class="btn btn-primary">
+            @Messages.Status
+        </a>
+    </td>
+    <td><b>@competition.CompetitionName</b></td>
+    <td>@competition.StartDate</td>
+    <td>@competition.EndDate</td>
+    <td>@competition.StartRegistrationDate</td>
+    <td>@competition.EndRegistrationDate</td>
+    <td>@competition.Place</td>
+</tr>
+   
+
+}

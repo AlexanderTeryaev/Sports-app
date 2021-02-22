@@ -1,0 +1,118 @@
+﻿@model Dictionary<DataService.DTO.ClubShort, IEnumerable<DataService.DTO.WorkerMainShortDto>>
+@{
+    bool isHebrew = Request.IsHebrew();
+    string position = isHebrew ? "left" : "right";
+    var checkApproveStatus = new Func<bool, string>((isApproved) =>
+    {
+        return isApproved ? "checked" : string.Empty;
+    });
+}
+<div class="row">
+    <div class="col-sm-9"><h4>@Messages.ClubsRefereesregistrations</h4></div>
+    <div class="col-sm-3"><span><b>@Messages.Referees @Messages.Count.ToLower()</b>:@ViewBag.RefereesRegistered</span></div>
+
+</div>
+
+    <div class="row" style="margin-bottom:20px;">
+        <div class="col-sm-12">
+            <a id="excelBtnExp" class="btn btn-info remove_print" href="#" onclick="$('#exportrefereeregistrations').submit()">
+                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                @using (Html.BeginForm("ExportRefereeRegistrationsToExcel", "Teams", new { leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId },
+                FormMethod.Post, new { id = "exportrefereeregistrations" })) { }
+            </a>
+            <a id="printrefereeregs" class="btn btn-info remove_print">
+                <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+            </a>
+        </div>
+    </div>
+
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-bordered" id="refereeTable">
+            <thead>
+                <tr>
+                    <th width="40%">@Messages.ClubName</th>
+                    <th>@Messages.Referee</th>
+                    @if (GamesAlias.MartialArts.Equals(ViewBag.SectionAlias))
+                    {
+                        <th align="@position">@Messages.Approve</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (GamesAlias.MartialArts.Equals(ViewBag.SectionAlias))
+                {
+                    foreach (var items in Model)
+                    {
+                        foreach (var referee in items.Value)
+                        {
+                            <tr>
+                                <td>@items.Key.Name</td>
+                                <td>@referee.UserFullName</td>
+                                <td align="@position">
+                                    <input class="approve-referee-checkbox" data-id="@referee.RegistrationId" type="checkbox" @checkApproveStatus(referee.IsApproved) />
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Key.Name</td>
+                            <td>@string.Join(", ", item.Value?.Select(c => c.UserFullName))</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+        
+        }
+        else
+        {
+        <div class="alert alert-danger">@Messages.NoRefereesRegisteredToThisCompetition</div>
+        }
+
+        <script>
+    $(".approve-referee-checkbox").on("click", function () {
+        var isApproved = $(this).is(":checked");
+        var id = $(this).attr("data-id");
+        $.ajax({
+            url: "@Url.Action("ApproveReferee", "Teams")",
+            type: "POST",
+            data: {
+                id: id,
+                isApproved: isApproved
+            }
+        })
+    })
+        $('#printrefereeregs').click(function () {
+            var tbl = $("#refereeTable");
+        if (tbl.length > 0) {
+            tablePrint(tbl);
+        }
+    });
+
+    function tablePrint(el) {
+        var wnd = window.open('', '@Messages.Referee @Messages.RegistrationStatus.ToLower()', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.Referee @Messages.RegistrationStatus.ToLower() @Messages.Competition: @ViewBag.CompetitionName</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 200);
+    }
+        </script>

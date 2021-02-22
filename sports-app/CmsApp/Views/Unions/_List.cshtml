@@ -1,0 +1,81 @@
+﻿@model UnionsForm
+@{
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+    int errId = TempData["ErrId"] != null ? (int)TempData["ErrId"] : 0;
+}
+<table class="table table-bordered">
+    <tbody>
+        @foreach (var m in Model.UnionsList)
+        {
+            string frmid = "unionsform" + m.UnionId;
+            if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+            {
+                <tr>
+                    <td>
+                        <a class="@AppCss.Edit" href="@Url.Action("Edit", "Unions", new { id = m.UnionId })"></a>
+                    </td>
+                    <td>
+                        @using (Ajax.BeginForm("Update", "Unions", new AjaxOptions { UpdateTargetId = "unions" }, new { id = frmid }))
+                        {
+                            <span class="form-group">
+                                <input type="text" name="Name" value="@m.Name" form="@frmid" class="form-control required" maxlength="50" />
+                                @Html.ValidationMessage("Name")
+                            </span>
+                            if (errId == m.UnionId)
+                            {
+                                <div class="text-danger">@Messages.DeleteLeaguesFirst</div>
+                            }
+                            <input type="hidden" name="UnionId" form="@frmid" value="@m.UnionId" />
+                        }
+                    </td>
+                    <td>
+                        <button class="@AppCss.Save @(savedId == m.UnionId ? "btn-success" : null) btn" form="@frmid"></button>
+                    </td>
+                    <td>
+                        <a href="@Url.Action("Delete", new { id = m.UnionId })" class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#unions"
+                           data-ajax="true"></a>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td>
+                        @m.Name
+                    </td>
+                    <td>
+                        <a class="btn btn-primary" href="@Url.Action("Edit", "Unions", new { id = m.UnionId })">@Messages.Details</a>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+    {
+        <tfoot>
+            <tr>
+                <td></td>
+                <td>
+                    @using (Ajax.BeginForm("Save", "Unions", new AjaxOptions { UpdateTargetId = "unions" }, new { id = "unionsform" }))
+                    {
+                        <span class="form-group">
+                            @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = Messages.AddNew, form = "unionsform", maxlength = 50 })
+                            @Html.ValidationMessageFor(m => m.Name)
+                        </span>
+                        @Html.HiddenFor(m => m.SectionId, new { form = "unionsform" })
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-primary" form="unionsform">@Messages.Save</button>
+                </td>
+                <td></td>
+            </tr>
+        </tfoot>
+    }
+</table>
+
+<script>
+    $('#unionsform').validateBootstrap(true);
+</script>

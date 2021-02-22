@@ -1,0 +1,31 @@
+﻿@model CmsApp.Models.Schedules
+
+<div class="row" id="period-filter-div" style="display: flex; vertical-align: bottom; float: none; margin-top:10px; margin-bottom:10px;">
+    <div class="col-sm-2">
+        <label for="dateFilterType">@Messages.Period</label>
+        <select id="dateFilterType" name="dateFilterType"
+                onchange="javascript: gcList.dateFilterTypeChange()"
+                class="form-control">
+            <option @(Model.dateFilterType == Schedules.DateFilterPeriod.FromToday ? "selected" : "") value="@Schedules.DateFilterPeriod.FromToday">@Messages.FromToday</option>
+            <option @(Model.dateFilterType == Schedules.DateFilterPeriod.BeginningOfMonth ? "selected" : "") value="@Schedules.DateFilterPeriod.BeginningOfMonth">@Messages.BeginningOfMonth</option>
+            <option @(Model.dateFilterType == Schedules.DateFilterPeriod.Ranged ? "selected" : "") value="@Schedules.DateFilterPeriod.Ranged">@Messages.Ranged</option>
+            <option @(Model.dateFilterType == Schedules.DateFilterPeriod.All ? "selected" : "") value="@Schedules.DateFilterPeriod.All">@Messages.All</option>
+        </select>
+    </div>
+    <div class="col-sm-1" id="date-from-div" @(Model.dateFilterType == Schedules.DateFilterPeriod.Ranged ? "" : "hidden")>
+        <label for="dateFrom">@Messages.RangeStart</label>
+        <input type="text" id="dateFrom" name="dateFrom" value="@((Model.dateFrom ?? Schedules.FirstDayOfMonth).ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time required"/>
+    </div>
+    <div class="col-sm-1" id="date-to-div" @(Model.dateFilterType == Schedules.DateFilterPeriod.Ranged ? "" : "hidden")>
+        <label for="dateTo">@Messages.RangeEnd</label>
+        <input type="text" id="dateTo" name="dateTo" value="@((Model.dateTo ?? Schedules.Tomorrow).ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time required" />
+    </div>
+    <div class="col-sm-1" id="date-to-div" style="margin-top: auto">
+        <fieldset>
+            <label for="choice-submit">&nbsp;</label>
+            <input type="submit" id="choice-submit"
+                   style="width: 70px"
+                   value="@Messages.Show" class="btn btn-primary form-control export" />
+        </fieldset>
+    </div>
+</div>

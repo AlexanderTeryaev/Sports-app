@@ -1,0 +1,1527 @@
+﻿@using CmsApp.Controllers
+@model CompetitionDisciplineListModel
+@{
+    var isAthletics = Model.SectionName == GamesAlias.Athletics;
+    var isSwimming = Model.SectionName == GamesAlias.Swimming;
+    var isWeightLifting = Model.SectionName == GamesAlias.WeightLifting;
+    var isBicycle = Model.SectionName == GamesAlias.Bicycle;
+    bool isCallRoomManager = User.CurrentTopLeagueLevelJob(Model.CompetitionId) == JobRole.CallRoomManager;
+    var leaguesList = Model.ListLeagues.OrderByDescending(l => l.LeagueStartDate ?? DateTime.MinValue).ToList();
+    var selection = new MultiSelectList(leaguesList, "LeagueId", "NameAndStartDate", null, null);
+    var isClimbing = Model.SectionName == GamesAlias.Climbing;
+
+    bool refereePermission = User.GetSessionWorkerValueOrTopLevelLeagueJob((int)ViewBag.LeagueId) == JobRole.Referee;
+    var disabledAttribute = refereePermission ? "disabled" : "";
+}
+<link href="~/Content/css/jquery.timesetter.css" rel="stylesheet" />
+<script src="~/Content/js/jquery.timesetter.js"></script>
+<style>
+    .background_floral {
+        background: floralwhite;
+    }
+</style>
+<div class="row">
+    <div class="@(isAthletics? "col-sm-12":"col-sm-6")">
+        @if (!isCallRoomManager)
+        {
+            var actionName = isBicycle ? nameof(LeaguesController.CreateDiscipline) : nameof(LeaguesController.CreateDiscipline);
+            <a @disabledAttribute href="@Url.Action(actionName, nameof(LeaguesController).TrimControllerName(), new { competitionId = ViewBag.CompetitionId })"
+               data-toggle="modal" data-target="#create_competition_discipline"
+               data-ajax-update="#create_competition_discipline_content"
+               data-ajax="true"
+               class="btn btn-primary">@Messages.AddNew</a>
+        }
+        @if (isAthletics || Model.SectionName == GamesAlias.Rowing || Model.SectionName == GamesAlias.WeightLifting)
+        {
+            <a @disabledAttribute class="btn btn-primary fa fa-info" style="line-height: 20px;"
+               href="@Url.Action(nameof(ClubsController.AthleticsRegistrationList), nameof(ClubsController).TrimControllerName(), new { leagueId = ViewBag.CompetitionId, seasonId = ViewBag.SeasonId })"
+               data-toggle="modal"
+               data-target="#athleticsregistrationlist"
+               data-ajax-update="#athleticsregistrationlist_pl"
+               data-ajax="true">
+            </a>
+        }
+        @if (Model.SectionName == GamesAlias.Bicycle)
+        {
+            <a @disabledAttribute class="btn btn-primary fa fa-info" style="line-height: 20px;"
+               href="@Url.Action(nameof(ClubsController.BicycleRegistrationList), nameof(ClubsController).TrimControllerName(), new { leagueId = ViewBag.CompetitionId, seasonId = ViewBag.SeasonId })"
+               data-toggle="modal"
+               data-target="#athleticsregistrationlist"
+               data-ajax-update="#athleticsregistrationlist_pl"
+               data-ajax="true">
+            </a>
+        }
+        @if (Model.SectionName == GamesAlias.Rowing)
+        {
+            <a href="@Url.Action("GetTeamNumberPerClubForAllBoats", "Clubs", new { competitionId = Model.CompetitionId })"
+               data-toggle="modal" data-target="#view_all_competition_discipline_team_registrations"
+               data-ajax-update="#view_all_competition_discipline_team_registrations_content"
+               data-ajax="true"
+               class="btn btn-primary">@Messages.ExportTeamRegistrations</a>
+        }
+        @if (isAthletics)
+        {
+            <a href="@GlobVars.SiteUrl/LeagueTable/AthleticsDisciplines/@ViewBag.CompetitionId" target="_blank" class="btn btn-primary">@Messages.ExternalLink</a>
+            if (!isCallRoomManager)
+            {
+                <a @disabledAttribute href="@Url.Action(nameof(LeaguesController.DownloadCompetitionResultsForm), nameof(LeaguesController).TrimControllerName())"
+                   class="btn btn-primary" style="margin-left: 4px;">@Messages.DownloadCompetitionResultsForm</a>
+                var routeOptions = new RouteValueDictionary { { "id", ViewBag.CompetitionId } };
+
+                <div class="pull-left" id="competition_csv_selection_div">
+                    @using (Html.BeginForm(nameof(LeaguesController.CSVAutomation), nameof(LeaguesController).TrimControllerName(), FormMethod.Post, new { id = "form_csv", data_leagueId = ViewBag.CompetitionId }))
+                    {
+                        @Html.DropDownList("competitions", selection, refereePermission ? new { @class = "competition_csv_selection pull-left", @multiple = "multiple", @disabled = "disabled" } as object : new { @class = "competition_csv_selection pull-left", @multiple = "multiple" } as object)
+                        <input @disabledAttribute type="hidden" name="leagues" id="leagues_csv" value="@ViewBag.CompetitionId" />
+                        <input @disabledAttribute type="hidden" name="CSVType" id="CSVType" value="" />
+                        <button @disabledAttribute class="btn btn-primary" title="Download CSVs" id="csvGenerationBtn" style="margin-left: 4px;"><i href="#" class="glyphicon glyphicon-open"></i></button>
+                        <button @disabledAttribute class="btn btn-primary" title="Upload PhotoFinish" id="photoFinishBtn" style="margin-left: 4px;"><i href="#" class="glyphicon glyphicon glyphicon-floppy-open"></i></button>
+                    }
+                </div>
+            }
+        }
+
+    </div>
+    <div class="col-sm-6">
+        @if (isWeightLifting)
+        {
+            <a href="@GlobVars.SiteUrl/LeagueTable/WeightliftingSessions/@ViewBag.CompetitionId" target="_blank" class="btn btn-primary pull-left">@Messages.ExternalLink</a>
+        }
+    </div>
+</div>
+@{ 
+    var minH = isBicycle ? "min-height:800px;" : "";
+}
+<div class="row" style="margin-top:20px; @minH">
+    <div class="@(isWeightLifting ? "col-xl-4" :  "col-sm-12")">
+        @if (isAthletics)
+        {
+            <div class="col-sm-6">
+                <h4>@ViewBag.CompetitionStartDate</h4>
+            </div>
+            <div class="col-sm-6">
+                <input class="form-control pull-left" placeholder="@Messages.Filter" style="max-width:120px;" type="text" onchange="filterDisciplinesTable(this);" /><div class="pull-left" style="line-height: 32px;">@Messages.Search: </div>
+            </div>
+        }
+        <table class="table table-bordered">
+            <thead>
+                @if (!isBicycle)
+                {
+                <tr>
+                    <th>@Messages.Status</th>
+                    <th>#</th>
+                    @if (isAthletics || isSwimming || Model.SectionName == GamesAlias.Rowing)
+                    {
+                        <th>@(Model.SectionName == GamesAlias.Rowing ? Messages.Boat : Messages.AthleticsDisciplines)</th>
+                    }
+                    @if (Model.SectionName == GamesAlias.Rowing)
+                    {
+                        <th>@Messages.Distance</th>
+                    }
+                    <th>@Messages.Category</th>
+                    @if (isAthletics)
+                    {
+                        <th>@Messages.MaxAthletes</th>
+                    }
+                    else if (isSwimming || isClimbing)
+                    {
+                        <th>@Messages.MaxSportsmen</th>
+                    }
+                    @if (isAthletics || Model.SectionName == GamesAlias.Rowing)
+                    {
+                        if (Model.SectionName != GamesAlias.Rowing)
+                        {
+                            <th>@Messages.MinResult</th>
+                        }
+                        <th>@Messages.StartTime</th>
+                    }
+                    <th>@Messages.Total @(isAthletics ? Messages.Athletes.ToLower() : Messages.Sportsmans.ToLower())</th>
+                    @if (isSwimming)
+                    {
+                        <th></th>
+                        <th></th>
+                    }
+                    @if (isAthletics)
+                    {
+                        if (!isCallRoomManager)
+                        {
+                            <th>@Messages.IsManualRanking</th>
+                            if (ViewBag.IsCompetitionWithScore)
+                            {
+                                <th>@Messages.IsForScore</th>
+                            }
+                            if (ViewBag.IsItMultiBattleType)
+                            {
+                                <th>@Messages.MultiBattle</th>
+                            }
+                            <th>
+                                @if (isAthletics)
+                                {
+                                    <a class="btn btn-primary" title="Generate All Referee Forms" href="@Url.Action("GenerateAllRefereeForms", "Leagues", new { competitionId = ViewBag.CompetitionId })"><i href="#" class="glyphicon glyphicon-open"></i><i style="display:none;" class="fa fa-spinner fa-spin fa-fw"></i></a> <br />
+                                }
+                                @Messages.RefereeForm
+                            </th>
+                        }
+                    }
+                    @if (isAthletics || isClimbing)
+                    {
+                        <th>
+                            <a class="btn btn-primary" title="Generate All Startlists" href="@Url.Action("GenerateAllStartList", "Leagues", new { competitionId = ViewBag.CompetitionId })"><i href="#" class="glyphicon glyphicon-open"></i><i style="display:none;" class="fa fa-spinner fa-spin fa-fw"></i></a> <br />
+                            
+                            @Messages.StartList
+                        </th>
+                    }
+                    @if (isAthletics)
+                    {
+                        if (!isCallRoomManager)
+                        {
+                            <th>@Messages.Results</th>
+                            <th>LS</th>
+                            <th></th>
+                        }
+                    }
+                    @if (Model.SectionName == GamesAlias.Rowing)
+                    {
+                        <th>@Messages.Team @Messages.Status</th>
+                    }
+                    else
+                    {
+                        <th></th>
+                    }
+                    <th></th>
+                    <th></th>
+                    @if (isSwimming)
+                    {
+                        <th></th>
+                    }
+				</tr>
+                }
+                else
+                {
+                    <tr>
+                        <th>@Messages.Status</th>
+                        <th>#</th>
+                        <th>@Messages.Name</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+					</tr>
+                }
+            </thead>
+            <tbody id="disciplines_body">
+                @if (!isBicycle)
+                {
+                    foreach (var discipline in Model.Disciplines)
+                    {
+                <tr id="tr_discipline_@discipline.Id">
+                    <td>
+                        <a class="btn btn-sm btn-primary fa fa-info"
+                           href="@Url.Action(nameof(ClubsController.AthleticsRegistrationList), nameof(ClubsController).TrimControllerName(), new { leagueId = discipline.CompetitionId, disciplineId = discipline.Id, seasonId = ViewBag.SeasonId })"
+                           data-toggle="modal"
+                           data-target="#athleticsregistrationlist"
+                           data-ajax-update="#athleticsregistrationlist_pl"
+                           data-ajax="true">
+                        </a>
+                    </td>
+                    <td>@discipline.Id</td>
+                    @if (isAthletics || isSwimming || Model.SectionName == GamesAlias.Rowing)
+                    {
+                        <td>@discipline.DisciplineName</td>
+                    }
+                    @if (Model.SectionName == GamesAlias.Rowing)
+                    {
+                        <td>@discipline.DistanceName</td>
+                    }
+                    <td>@discipline.CategoryName</td>
+                    @if (isAthletics || isSwimming || isClimbing)
+                    {
+                        <td>@discipline.MaxSportsmen</td>
+                    }
+                    @if (isAthletics || Model.SectionName == GamesAlias.Rowing)
+                    {
+                        if (Model.SectionName != GamesAlias.Rowing)
+                        {
+                            <td>@discipline.MinResult</td>
+                        }
+                        <td>
+                            @if (discipline.StartTime.HasValue)
+                            {@discipline.StartTime.Value.ToString("HH:mm")}
+                        </td>
+                    }
+                    <td>@discipline.RegistrationsCount</td>
+                    @if (isSwimming && discipline.HeatsGenerated)
+                    {
+                        <td>
+                            @using (Ajax.BeginForm(nameof(LeaguesController.AddNewHeat), nameof(LeaguesController).TrimControllerName(), new { competitionId = ViewBag.CompetitionId, competitionDisciplineId = discipline.Id }, new AjaxOptions { HttpMethod = "POST", OnSuccess = "updateHeats" }, new { id = "add_new_heat" }))
+                            {
+                                <button class="btn btn-primary">@Messages.AddNewHeat</button>
+                            }
+                        </td>
+                    }
+                    @if (isSwimming && !discipline.HeatsGenerated)
+                    {
+                        <td>
+                            @using (Ajax.BeginForm(nameof(LeaguesController.GenerateHeats), nameof(LeaguesController).TrimControllerName(), new { competitionId = ViewBag.CompetitionId, competitionDisciplineId = discipline.Id, seasonId = ViewBag.SeasonId }, new AjaxOptions { HttpMethod = "POST", OnSuccess = "updateHeats", OnComplete = "reset_boxes" }, new { id = "generate_heats" }))
+                            {
+                                <button class="btn btn-primary">@Messages.GenerateHeats</button>
+                            }
+                        </td>
+                    }
+                    @if (isWeightLifting)
+                    {
+                        <td>
+                            <a href="@GlobVars.SiteUrl/LeagueTable/WeightDeclarationResults/@discipline.Id" target="_blank" class="btn btn-primary pull-left" style="margin-left:10px;margin-right:10px;">@Messages.ExternalLink</a>
+                        </td>
+                    }
+                    @if (isAthletics)
+                    {
+                        if (!isCallRoomManager)
+                        {
+                            <td>@Html.CheckBox("IsResultsManualyRanked", discipline.IsResultsManualyRanked, new { disabled = "disabled" })</td>
+                            if (ViewBag.IsCompetitionWithScore)
+                            {
+                                <td>@Html.CheckBox("IsForScore", discipline.IsForScore, new { onclick = $"setIsForScore(this,{discipline.Id});" })</td>
+                            }
+                            if (ViewBag.IsItMultiBattleType)
+                            {
+                                <td>@Html.CheckBox("IsMultiBattle", discipline.IsMultiBattle, new { onclick = $"setIsMultiBattle(this,{discipline.Id});" })</td>
+                            }
+                            <td>
+                                <a href="@Url.Action("GenerateDisciplineRefereeForm", "Leagues", new { id = discipline.Id })"
+                                   class="@AppCss.Edit glyphicon-signal"></a>
+                            </td>
+                        }
+                    }
+                    @if (isAthletics || isClimbing)
+                    {
+                        <td>
+                            <a href="@Url.Action("StartList", "Leagues", new { id = discipline.Id })"
+                               data-toggle="modal" data-target="#start_list"
+                               data-ajax-update="#start_list_pl"
+                               data-ajax="true"
+                               class="@AppCss.Edit glyphicon glyphicon-edit"></a>
+                        </td>
+                    }
+                    @if (isAthletics)
+                    {
+                        if (!isCallRoomManager)
+                        {
+                            <td>
+                                <a href="@Url.Action("DisciplineResults", "Leagues", new { id = discipline.Id })"
+                                   data-toggle="modal" data-target="#athleticsregistrationlist"
+                                   data-ajax-update="#athleticsregistrationlist_pl"
+                                   data-ajax="true"
+                                   class="@AppCss.Edit glyphicon-signal"></a>
+                            </td>
+                            <td>
+                                @if (discipline.Format == 7 || discipline.Format == 6 || discipline.Format == 10 || discipline.Format == 11)
+                                {
+                                    <a href="@Url.Action("DisciplineLiveResults", "Leagues", new { id = discipline.Id })"
+                                       data-toggle="modal" data-target="#athleticsliveresultlist"
+                                       data-ajax-update="#athleticsliveresultlist_pl"
+                                       data-ajax="true"
+                                       class="@AppCss.Edit glyphicon-signal"></a>
+                                }
+                            </td>
+                            <td>
+                                <a @disabledAttribute class="btn btn-primary btn-edit" style="min-width: 120px;" href="@Url.Action("ImportCompetitionResults", "Leagues", new { DisciplineId = discipline.Id })" ,
+                                   data-target="#resultsimportform"
+                                   data-toggle="modal"
+                                   title="@Messages.ImportCompetitionResults">
+                                    <i class="glyphicon glyphicon-save pull-left"></i>@Messages.ImportCompetitionResults
+                                </a>
+                            </td>
+                        }
+                    }
+                    @if (Model.SectionName == SectionAliases.Rowing)
+                    {
+                        <td>
+                            <a @disabledAttribute href="@Url.Action("GetTeamNumberPerClub", "Clubs", new { disciplineId = discipline.Id })"
+                               data-toggle="modal" data-target="#view_competition_discipline_clubs"
+                               data-ajax-update="#view_competition_discipline_clubs_content"
+                               data-ajax="true"
+                               class="btn btn-sm btn-primary fa fa-info"></a>
+                        </td>
+                        <td>
+							<a href="#" class="btn btn-info" onclick="importDisciplinesFromExcel(this, @(ViewBag.ClubId == null ? "null" : ViewBag.ClubId.ToString()), @discipline.Id, @(ViewBag.LeagueId == null ? "null" : ViewBag.LeagueId.ToString()), @(ViewBag.SeasonId == null ? "null" : ViewBag.SeasonId.ToString()));">
+								<i href="#" class="glyphicon glyphicon-open" style="transform: rotate(180deg)" title="@Messages.ImportFromExcel"></i> 
+							</a>
+                        </td>
+                    }
+                    @if (!isCallRoomManager)
+                    {
+                        <td>
+                            <a @disabledAttribute href="@Url.Action("UpdateDiscipline", "Leagues", new { id = discipline.Id })"
+                               data-toggle="modal" data-target="#create_competition_discipline"
+                               data-ajax-update="#create_competition_discipline_content"
+                               data-ajax="true"
+                               class="@AppCss.Edit"></a>
+
+                        </td>
+                        <td>
+                            <a @disabledAttribute onclick="deleteDiscipline('@discipline.Id')" class="@AppCss.Delete"></a>
+                        </td>
+                        if (isSwimming && discipline.HeatsGenerated)
+                        {
+                            <td>
+                                <button data-id="@discipline.Id" class="btn btn-primary showHeats">@Messages.ShowHeats</button>
+                            </td>
+                        }
+                    }
+                </tr>
+                        if (isSwimming)
+                        {
+                            <tbody>
+                                @Html.Partial("Disciplines/Heats", @discipline.Heats)
+                            </tbody>
+                        }
+                    }
+                }
+                else
+                {
+                    foreach(var exp in Model.CompetitionExperties)
+                    {
+                            <tr id="tr_expertise_@exp.Id">
+                                <td></td>
+                                <td>@exp.Id</td>
+                                <td>@exp.DisciplineExpertise.Name</td>
+                                @if (!isCallRoomManager)
+                                {
+                                    <td>
+                                        <a @disabledAttribute href="@Url.Action("UpdateDiscipline", "Leagues", new { id = exp.Id, isBicycle = isBicycle })"
+                                           data-toggle="modal" data-target="#create_competition_discipline"
+                                           data-ajax-update="#create_competition_discipline_content"
+                                           data-ajax="true"
+                                           class="@AppCss.Edit"></a>
+
+                                    </td>
+                                    <td>
+                                        <a data-id="@exp.Id" class="btn btn-primary addHeatCollapse">@Messages.ShowAddHeat</a>
+                                    </td>
+                                    <td>
+                                        <a @disabledAttribute onclick="deleteDiscipline('@exp.Id')" class="@AppCss.Delete"></a>
+                                    </td>
+                                }
+                            </tr>
+                            <tr style="display:none" id="collapse_@exp.Id" name="collapse_@exp.Id" class="background_floral">
+                                <td></td>
+                                <td colspan="2">
+                                    <label class="control-label">@Messages.CompetitionHeats:</label>
+                                    @Html.DropDownList("CompetitionHeat", (SelectList)ViewBag.CompetitionHeats, Messages.Select, new { @class = "form-control", @style = "width:50%", @id = "compheat_" + exp.Id })
+                                </td>
+
+                                <td>
+                                    <label class="control-label">@Messages.Heats:</label> <br />
+                                    @Html.DropDownList("UnionHeat", (SelectList)ViewBag.UnionHeats, Messages.SelectAllHeats, new { @class = "form-control unionHeatSelection", @multiple = "multiple", @style = "width:50%", @id = "unionheat_" + exp.Id })
+                                </td>
+                                <td>
+                                    <a data-id="@exp.Id" class="btn btn-primary saveCompExpHeats">
+                                        <i class="fa fa-spin fa-spinner saveloader_@exp.Id" id="saveloader_@exp.Id" style="display: none;"></i>
+                                        @Messages.Save
+                                    </a>
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        if (exp.CompetitionExpertiesHeats.Count()>0) {
+                            
+                            foreach (var compExp in exp.CompetitionExpertiesHeats)
+                            {
+                                var listInt = compExp.CompetitionExpertiesDisciplineHeats.Select(x => x.HeatDisciplineId);
+                                var mulitList = new MultiSelectList(ViewBag.UnionHeats, "Value", "Text", listInt);
+                                var levelList = new SelectList(ViewBag.CompetitionLevels, "id", "level_name", compExp.CompetitionLevelId);
+                                var compHeatId = compExp.BicycleCompetitionHeatId;
+                                var trId = "rowCompHeat_" + exp.Id + "_" + compHeatId;
+                                var compAges = compExp.CompetitionExpertiesDisciplineHeats.SelectMany(x => x.Discipline.CompetitionAges).Distinct().ToList();
+                                var agesIds = compExp.CompetitionExpertiesHeatsAges.Select(x => x.CompetitionAgeId);
+                                var multiAgesList = new MultiSelectList(compAges, "id", "age_name", agesIds);
+                            <tr name="collapse_@exp.Id" style="display:none" id="@trId" class="background_floral">
+                                <td>
+                                    <a class="btn btn-sm btn-primary fa fa-info"
+                                       href="@Url.Action(nameof(ClubsController.BicycleRegistrationList), nameof(ClubsController).TrimControllerName(), new { leagueId = exp.CompetitionId, compExpId = compExp.Id, seasonId = ViewBag.SeasonId })"
+                                       data-toggle="modal"
+                                       data-target="#athleticsregistrationlist"
+                                       data-ajax-update="#athleticsregistrationlist_pl"
+                                       data-ajax="true">
+                                    </a>
+                                </td>
+                                <td>@compExp.BicycleCompetitionHeat.Name</td>
+                                <td>
+
+                                    <label class="control-label">@Messages.Level:</label>
+                                    @Html.DropDownList("CompetitionLevel", levelList, Messages.Select, new { @class = "form-control levelSelection", @style="width:60%;", data_expId = exp.Id, data_compHeatId = compHeatId })
+
+                                </td>
+                                <td>
+                                    @Html.DropDownList("UnionHeat", mulitList, Messages.SelectAllHeats, new { @class = "form-control unionHeatExistingSelection", @multiple = "multiple", @style = "width:50%", data_expId = exp.Id, data_compHeatId = compHeatId })
+                                </td>
+                                <td>
+                                    @Html.DropDownList("CompAges", multiAgesList, Messages.SelectAllHeats, new { @class = "form-control compAgesExistingSelection", @multiple = "multiple", @style = "width:50%", data_expId = exp.Id, data_compHeatId = compHeatId })
+                                </td>
+                                <td>
+                                    <a class="@AppCss.Delete" onclick="deleteCompHeat('@exp.Id','@compHeatId')"></a>
+                                </td>
+                                <td></td>
+                            </tr>
+                            }
+                }
+                    }
+                }
+                </tbody>
+
+            </table>
+        </div>
+        @if (isWeightLifting)
+        {
+            <style>
+                .dropdown-menu {
+                    max-height: 400px;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                }
+            </style>
+            <div class="col-xl-8 non-xl-top-margin xl-pull-@(Messages.Lang == "he" ? "right" : "left")" style="overflow-x:scroll;">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 50px;">#</th>
+                            <th style="min-width: 140px;">@Messages.DateTime</th>
+                            <th style="min-width: 140px;">@Messages.WeightIn @Messages.FromHour</th>
+                            <th style="min-width: 140px;">@Messages.WeightIn @Messages.ToHour</th>
+                            <th>@Messages.Results</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="sessions_table">
+                        @Html.Partial("Disciplines/_WeightLiftingSessionsTable", Model.Sessions)
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <td>
+                                @Html.TextBox("StartTime", "", "{0:dd/MM/yyyy}", new { @class = "form-control frm-date-session", form = "add_new_session" })
+                                @Html.ValidationMessage("StartTime", "*", new { @class = "text-danger" })
+                            </td>
+                            <td>
+                                @Html.TextBox("WeightStartTime", "", "{0:dd/MM/yyyy}", new { @class = "form-control frm-date-session", form = "add_new_session" })
+                                @Html.ValidationMessage("WeightStartTime", "*", new { @class = "text-danger" })
+                            </td>
+                            <td>
+                                @Html.TextBox("WeightFinishTime", "", "{0:dd/MM/yyyy}", new { @class = "form-control frm-date-session", form = "add_new_session" })
+                                @Html.ValidationMessage("WeightFinishTime", "*", new { @class = "text-danger" })
+                            </td>
+                            <td>
+                                @using (Ajax.BeginForm(nameof(LeaguesController.CreateNewSession), nameof(LeaguesController).TrimControllerName(), new { competitionId = ViewBag.CompetitionId }, new AjaxOptions { HttpMethod = "POST", OnSuccess = "updateSessions", OnComplete = "reset_boxes" }, new { id = "add_new_session" }))
+                                {
+                                    <button class="btn btn-primary">@Messages.AddNew</button>
+                                }
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="modal fade" id="session_registrations_modal" role="dialog">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content" id="session_registrations_modal_pl">
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="modal fade" id="create_competition_discipline" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="create_competition_discipline_content">
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="view_competition_discipline_clubs" role="dialog">
+        <div class="modal-dialog modal-lg modal-result-custom-width">
+            <div class="modal-content" id="view_competition_discipline_clubs_content">
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="view_all_competition_discipline_team_registrations" role="dialog">
+        <div class="modal-dialog modal-lg modal-result-custom-width">
+            <div class="modal-content" id="view_all_competition_discipline_team_registrations_content">
+            </div>
+        </div>
+    </div>
+    <style>
+    .modal-result-custom-width {
+        width:100%;
+    }
+    .modal-result-lg-custom-width {
+        width:100%;
+    }
+    @Html.Raw('@')media screen and (min-width: 1400px) {
+    .modal-result-custom-width {
+        max-width:1400px;
+        width:100%;
+    }
+    .modal-result-lg-custom-width {
+        min-width:1400px;
+        width:100%;
+    }
+}
+    </style>
+    <div class="modal fade" id="athleticsregistrationlist" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-result-custom-width">
+            <div class="modal-content" id="athleticsregistrationlist_pl">
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="changeSwimmerModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="changeSwimmerModal_pl">
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="start_list" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-result-custom-width">
+            <div class="modal-content" id="start_list_pl">
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="weightliftingregistrationresultslist" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-result-lg-custom-width">
+            <div class="modal-content" id="weightliftingregistrationresultslist_pl">
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="resultsimportform" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="resultsimportform_pl"></div>
+        </div>
+    </div>
+
+
+
+    <div class="modal fade" id="athleticsliveresultlist" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-result-custom-width" style="min-width:1400px;">
+            <div class="modal-content" id="athleticsliveresultlist_pl">
+            </div>
+        </div>
+    </div>
+
+@using (Html.BeginForm("ImportCategoryFromExcel", "ClubsRowing", FormMethod.Post, new { id = "formImportCategoryExcel", enctype = "multipart/form-data" }))
+{
+    <input type="file" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" name="importedExcel" style="display: none" />
+	@Html.Hidden("clubId")
+	@Html.Hidden("disciplineId") 
+	@Html.Hidden("leagueId")
+	@Html.Hidden("seasonId")
+}
+
+    <script>
+    var currentCompetitionId = @ViewBag.CompetitionId;
+    competitionsToMergeWithCSV = [currentCompetitionId];
+
+    if (localStorage["csv_" + currentCompetitionId] != undefined) {
+        competitionsToMergeWithCSV = JSON.parse(localStorage["csv_" + currentCompetitionId]);
+    }
+
+        $(".showHeats").on("click", function () {
+        var disciplineId = $(this).attr("data-id");
+        var heatsId = ".heats_table_" + disciplineId;
+        $(heatsId).toggle();
+    });
+
+
+    function deleteDiscipline(id) {
+        var isConfirmed = confirm("@Messages.DeleteConfirm");
+        var isBic = "@isBicycle" == "True";
+        if (isConfirmed) {
+            $.ajax({
+                url: "@Url.Action("DeleteDiscipline", "Leagues")",
+                type: "POST",
+                data: { id: id, isBicycle: isBic },
+                success: function () {
+                    if (isBic) {
+                        $("#tr_expertise_" + id).remove();
+                        $("tr[name^=collapse_" + id + "]").remove();
+                    }
+                    else {
+                        $("#tr_discipline_" + id).remove();
+                    }
+                }
+            });
+        }
+        }
+
+    function deleteCompHeat(expId, compHeatId) {
+        $.ajax({
+            url: '/Disciplines/DeleteCompetitionExpertiseHeat',
+            data: {
+                leagueId: "@Model.CompetitionId",
+                expId: expId,
+                compHeatId: compHeatId
+            },
+            type: 'POST',
+            dataType: 'json',
+            success: function (data) {
+                if (data.Success) {
+                    $("#rowCompHeat_" + expId + "_" + compHeatId).remove();
+                }
+                else {
+                    alert(data.Message);
+                }
+            }
+        });
+    }
+    function reset_boxes() {
+        $("#StartTime[form='add_new_session']").val("");
+        $("#WeightStartTime[form='add_new_session']").val("");
+        $("#WeightFinishTime[form='add_new_session']").val("");
+    }
+
+    function updateSessions(data) {
+        $("#sessions_table").html("");
+        $("#sessions_table").append(data.data);
+    }
+
+    function updateHeats(data) {
+        location.reload();
+    }
+
+    function removeSession(id) {
+            $.ajax({
+                url: "@Url.Action("DeleteWeightLiftingSession", "Leagues",new { competitionId = ViewBag.CompetitionId })",
+                type: "POST",
+                data: { Id: id, seasonId: @ViewBag.SeasonId },
+                success: function (data) {
+                    $("#sessions_table").html(data);
+                }
+            });
+    }
+
+    function filterDisciplinesTable(element) {
+        var str = element.value;
+        if (str == undefined || str.length < 2) {
+            $("#disciplines_body").find("tr").show();
+        } else {
+            $("#disciplines_body").find("tr").hide();
+            $("#disciplines_body").find("tr:contains(" + element.value + ")").show();
+        }
+    }
+
+    /*
+    $('#importAthletesNumbers').click(function () {
+        $('#importAthletesNumbersModal').modal('show');
+    });
+    */
+    function setIsForScore(element, competitionDisciplineId) {
+        var value = $(element).is(":checked");
+        $.ajax({
+            url: '@Url.Action("SetIsForScore", "Disciplines")',
+            data: {
+                Id: competitionDisciplineId,
+                IsForScore: value
+            },
+            type: 'POST',
+            dataType: 'json'
+        });
+    }
+
+
+    function setIsMultiBattle(element, competitionDisciplineId) {
+        var value = $(element).is(":checked");
+        $.ajax({
+            url: '@Url.Action("SetIsMultiBattle", "Disciplines")',
+            data: {
+                Id: competitionDisciplineId,
+                IsMultiBattle: value
+            },
+            type: 'POST',
+            dataType: 'json'
+        });
+    }
+
+	$(".competition_csv_selection").multiselect({
+        enableCaseInsensitiveFiltering: true,
+        buttonText: function (options, select) {
+            return '@Messages.Select';
+        },
+        buttonWidth: '280px',
+        onChange: function (option, checked) {
+        },
+        onInitialized: function (select, container) {
+            for (var i = 0; i < competitionsToMergeWithCSV.length; i++) {
+                var id = competitionsToMergeWithCSV[i];
+                $("#competition_csv_selection_div option[value='" + id + "']").prop('selected', true);
+                $("#competition_csv_selection_div input[value='" + id + "']").prop('checked', true);
+                $("#competition_csv_selection_div input[value='" + id + "']").parent().parent().parent().addClass("active");
+            }
+        },
+        onDropdownHide: function(element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownHidden: function (options, select) {
+            var select = $(this)[0].$select[0];
+            var values = $(select).val();
+            competitionsToMergeWithCSV = [currentCompetitionId];
+            for (var i = 0; i < values.length; i++) {
+                competitionsToMergeWithCSV.push(parseInt(values[i]));
+            }
+            localStorage["csv_" + currentCompetitionId] = JSON.stringify(competitionsToMergeWithCSV);
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    var isAnythingChanged = false;
+    $(".unionHeatSelection").multiselect({
+        enableCaseInsensitiveFiltering: false,
+        multiselect: true,
+        buttonText: function (options, select) {
+            return '@Messages.Heats';
+        },       
+        onChange: function (option, checked) {
+            var select = $(this)[0].$select[0];
+            var checkboxClickedValue = $(option).val();
+            var $ul = $(select).parent().find('ul');
+            //if (isCoxwain) maxSportsmen = (maxSportsmen - 1).toString();
+            if (checkboxClickedValue == "") {
+                var $input = $ul.find('input[type=checkbox]');
+                var selectedValues = [];
+                if (checked) {
+                    $input.each(function (index) {
+                        if (index > 0)
+                            selectedValues.push($(this).val());
+                    });
+
+                    $input.prop('checked', true);
+                    $input.each(function (index) {
+                        $(this).parent().parent().parent().attr("class", "active");
+                    });
+                    $(select).val(selectedValues);
+                    
+                } else {
+                    $input.prop('checked', false);
+                    $input.each(function (index) {
+                        $(this).parent().parent().parent().removeClass("active");
+                    });
+                    $(select).val(selectedValues);
+                }
+            }
+            if (!checked) {
+                var $selectAllInput = $ul.find('input[value=""]');
+                $selectAllInput.prop('checked', false);
+                $selectAllInput.closest('label').parent().parent().removeClass('active');
+            }
+
+            var values = $(select).val();
+            if (values != null && values.length > 0 && values[0] == "") {
+                values = values.splice(1);
+            }
+        },
+        onDropdownHide: function (element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    $(".unionHeatExistingSelection").multiselect({
+            enableCaseInsensitiveFiltering: false,
+            multiselect: true,
+            buttonText: function (options, select) {
+                return '@Messages.Heats';
+            },
+            onDropdownHidden: function (options, select) {
+                var select = $(this)[0].$select[0];
+                var expId = $(select).attr("data-expId");
+                var compHeatId = $(select).attr("data-compHeatId");
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+
+                if (values == null || values.length == 0) {
+                    alert("@Messages.Bicycle_HeatsRequired");
+                }
+                else {
+                    if (isAnythingChanged) {
+                        $.ajax({
+                            url: '/Disciplines/UpdateCompetitionExpertiseHeat',
+                            data: {
+                                leagueId: "@Model.CompetitionId",
+                                expId: expId,
+                                compHeatId: compHeatId,
+                                unionHeatIds: values
+                            },
+                            type: 'POST',
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.Success) {
+                                    alert("@Messages.DataSavedSuccess");
+                                    isAnythingChanged = false;
+                                }
+                                else {
+                                    alert(data.Message);
+                                }
+                            }
+                        });
+                    }
+                }
+            },
+            onChange: function (option, checked) {
+                isAnythingChanged = true;
+                var select = $(this)[0].$select[0];
+                var checkboxClickedValue = $(option).val();
+                var $ul = $(select).parent().find('ul');
+                if (checkboxClickedValue == "") {
+                    var $input = $ul.find('input[type=checkbox]');
+                    var selectedValues = [];
+                    if (checked) {
+                        $input.each(function (index) {
+                            if (index > 0)
+                                selectedValues.push($(this).val());
+                        });
+
+                        $input.prop('checked', true);
+                        $input.each(function (index) {
+                            $(this).parent().parent().parent().attr("class", "active");
+                        });
+                        $(select).val(selectedValues);
+
+                    } else {
+                        $input.prop('checked', false);
+                        $input.each(function (index) {
+                            $(this).parent().parent().parent().removeClass("active");
+                        });
+                        $(select).val(selectedValues);
+                    }
+                }
+                if (!checked) {
+                    var $selectAllInput = $ul.find('input[value=""]');
+                    $selectAllInput.prop('checked', false);
+                    $selectAllInput.closest('label').parent().parent().removeClass('active');
+                }
+
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+    });
+
+         $(".compAgesExistingSelection").multiselect({
+            enableCaseInsensitiveFiltering: false,
+            multiselect: true,
+            buttonText: function (options, select) {
+                return '@Messages.Categories';
+            },
+            onDropdownHidden: function (options, select) {
+                var select = $(this)[0].$select[0];
+                var expId = $(select).attr("data-expId");
+                var compHeatId = $(select).attr("data-compHeatId");
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+
+                if (values == null || values.length == 0) {
+                    alert("@Messages.CategoryRequired");
+                }
+                else {
+                    if (isAnythingChanged) {
+                        $.ajax({
+                            url: '/Disciplines/UpdateCompetitionExpertiseHeatAges',
+                            data: {
+                                leagueId: "@Model.CompetitionId",
+                                expId: expId,
+                                compHeatId: compHeatId,
+                                agesIds: values
+                            },
+                            type: 'POST',
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.Success) {
+                                    alert("@Messages.DataSavedSuccess");
+                                    isAnythingChanged = false;
+                                }
+                                else {
+                                    alert(data.Message);
+                                }
+                            }
+                        });
+                    }
+                }
+            },
+            onChange: function (option, checked) {
+                isAnythingChanged = true;
+                var select = $(this)[0].$select[0];
+                var checkboxClickedValue = $(option).val();
+                var $ul = $(select).parent().find('ul');
+                if (checkboxClickedValue == "") {
+                    var $input = $ul.find('input[type=checkbox]');
+                    var selectedValues = [];
+                    if (checked) {
+                        $input.each(function (index) {
+                            if (index > 0)
+                                selectedValues.push($(this).val());
+                        });
+
+                        $input.prop('checked', true);
+                        $input.each(function (index) {
+                            $(this).parent().parent().parent().attr("class", "active");
+                        });
+                        $(select).val(selectedValues);
+
+                    } else {
+                        $input.prop('checked', false);
+                        $input.each(function (index) {
+                            $(this).parent().parent().parent().removeClass("active");
+                        });
+                        $(select).val(selectedValues);
+                    }
+                }
+                if (!checked) {
+                    var $selectAllInput = $ul.find('input[value=""]');
+                    $selectAllInput.prop('checked', false);
+                    $selectAllInput.closest('label').parent().parent().removeClass('active');
+                }
+
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+    $(".saveCompExpHeats").on("click", function () {
+        var expId = $(this).attr("data-id");
+        var compHeatId = $("#compheat_" + expId).val();
+        var unionHeatsId = $("#unionheat_" + expId).val();
+
+        if (compHeatId == null || compHeatId == "" || unionHeatsId == undefined || unionHeatsId == null || unionHeatsId.length == 0) {
+            alert("@Messages.Bicycle_BothDropdownsRequired");
+            return;
+        }
+        var ldr = $(this).find('i');
+        $(ldr).show();
+        $.ajax({
+            url: '/Disciplines/CreateCompetitionExpertiseHeat',
+            data: {
+                leagueId: "@Model.CompetitionId",
+                expId: expId,
+                compHeatId: compHeatId,
+                unionHeatIds: unionHeatsId
+            },
+            type: 'POST',
+            dataType: 'json',
+            success: function (data) {
+                if (data.Success) {
+                    var s = createMultiselectHeatDropdown(expId, compHeatId, data.CompHeatName, data.UnionHeats);
+                    var s_ages = createMultiselectAgesDropdown(expId, compHeatId, data.CompHeatName, data.CompAges);
+                    var s_levels = createSingleSelectLevelDropddown(expId, compHeatId, data.CompHeatName, data.Levels);
+                    var row = $('<tr />');
+                    row.attr("Id", "rowCompHeat_" + expId + "_" + compHeatId);
+                    row.attr("Name", "collapse_" + expId);
+                    row.addClass("background_floral");
+                    var statusBtn = $('<a />');
+                    statusBtn.addClass("btn btn-sm btn-primary fa fa-info");
+                    statusBtn.attr("href", "/Clubs/BicycleRegistrationList?leagueId=" + "@Model.CompetitionId" + "&compExpId=" + data.CompExpHeatId + "&seasonId=1141");
+                    statusBtn.attr("data-toggle", "modal");
+                    statusBtn.attr("data-target", "#athleticsregistrationlist");
+                    statusBtn.attr("data-ajax-update", "#athleticsregistrationlist_pl");
+                    statusBtn.attr("data-ajax", "true");
+                    var stat = $('<td />').append(statusBtn);
+                    row.append(stat);
+
+                    var n = $('<td />').append(data.CompHeatName);
+                    row.append(n);
+                    var col = $('<td />').append(s_levels);
+                    row.append(col);
+                    var sel = $('<td />').append(s);
+                    row.append(sel);
+                    var ages = $('<td />').append(s_ages);
+                    row.append(ages);
+                    var btn = $('<a />');
+                    btn.addClass("@AppCss.Delete");
+                    var del = $('<td />').append(btn);
+                    row.append(del);
+                    row.append($('<td />'));
+
+                    $("tr[name =collapse_" + expId + "]").last().after(row);
+
+                    initializeMultiselectHeatDropdown(s);
+                    initializeMultiselectAgesDropdown(s_ages);
+                    s_levels.on("change", updateCompetitionExpLevel);
+                    btn.on("click", function () { deleteCompHeat(expId, compHeatId); });
+
+                    $("#" + s.attr("Id") + " option:selected").removeAttr("selected");
+
+                    var $ul = $(s).parent().find('ul');
+                    var $input = $ul.find('input[type=checkbox]');
+                    var selectedValues = unionHeatsId;
+                    $input.prop('checked', false);
+                    $input.each(function (index) {
+                        var hid = $(this).attr("value");
+                        if ($.inArray(hid, selectedValues) != -1) {
+                            $(this).prop('checked', true);
+                            $(this).parent().parent().parent().addClass("active");
+                        }
+                        else {
+                            $(this).parent().parent().parent().removeClass("active");
+                        }
+                    });
+                    $(s).val(selectedValues);
+
+
+                    $("#" + s_ages.attr("Id") + " option:selected").removeAttr("selected");
+
+                    $ul = $(s_ages).parent().find('ul');
+                    $input = $ul.find('input[type=checkbox]');
+                    selectedValues = data.CompAgesIds;
+                    $input.prop('checked', false);
+                    $input.each(function (index) {
+                        var hid = $(this).attr("value");
+                        if ($.inArray(hid, selectedValues) != -1) {
+                            $(this).prop('checked', true);
+                            $(this).parent().parent().parent().addClass("active");
+                        }
+                        else {
+                            $(this).parent().parent().parent().removeClass("active");
+                        }
+                    });
+                    $(s_ages).val(selectedValues);
+
+                    //clear values of main form 
+                    $ul = $("#unionheat_" + expId).parent().find('ul');
+                    $input = $ul.find('input[type=checkbox]');
+                    $input.prop('checked', false);
+                    $input.each(function (index) {
+                            $(this).parent().parent().parent().removeClass("active");                        
+                    });
+                    var empty = [];
+                    $("#unionheat_" + expId).val(empty);
+                    $("#compheat_" + expId).val("");
+                }
+                else {
+                    alert(data.Message);
+                }
+                $(ldr).hide();
+            }
+        });
+    });
+
+        function createSingleSelectLevelDropddown(expId, compHeatId, compHeatName, levels) {
+            var s = $('<select />');
+
+            $('<option />', { value: '', text: '@Messages.Select' }).appendTo(s);
+
+            for (var i = 0; i < levels.length; i++) {
+                var val = levels[i];
+                if (val.Selected) {
+                    $('<option />', { value: val.Value, text: val.Text }).attr("selected","selected").appendTo(s);
+                }
+                else {
+                    $('<option />', { value: val.Value, text: val.Text }).appendTo(s);
+                }
+                
+
+            }
+
+            var id = "complevel_" + expId + "_" + compHeatId;
+            s.attr("id", id);
+            s.attr("class", "form-control levelSelection");
+            s.attr("data-expId", expId);
+            s.attr("data-compHeatId", compHeatId);
+            s.css("width", "60%");
+
+            return s;
+        }
+
+        function createMultiselectHeatDropdown(expId, compHeatId, compHeatName, unionHeats) {
+            var s = $('<select />');
+
+            $('<option />', { value: '', text: '@Messages.SelectAllHeats' }).appendTo(s);
+
+            for (var i = 0; i < unionHeats.length; i++) {
+                var val = unionHeats[i];
+                $('<option />', { value: val.DisciplineId, text: val.Name }).appendTo(s);
+
+            }
+
+            var id = "unionheat_" + expId + "_" + compHeatId;
+            s.attr("id", id);
+            s.attr("class", "form-control");
+            s.attr("multiple", "multiple");
+            s.attr("data-expId", expId);
+            s.attr("data-compHeatId", compHeatId);
+
+            return s;
+        }
+
+        function createMultiselectAgesDropdown(expId, compHeatId, compHeatName, compAges) {
+            var s = $('<select />');
+
+            $('<option />', { value: '', text: '@Messages.SelectAllHeats' }).appendTo(s);
+
+            for (var i = 0; i < compAges.length; i++) {
+                var val = compAges[i];
+                $('<option />', { value: val.Value, text: val.Text }).appendTo(s);
+
+            }
+
+            var id = "compage_" + expId + "_" + compHeatId;
+            s.attr("id", id);
+            s.attr("class", "form-control");
+            s.attr("multiple", "multiple");
+            s.attr("data-expId", expId);
+            s.attr("data-compHeatId", compHeatId);
+
+            return s;
+        }
+
+     function initializeMultiselectHeatDropdown(s) {
+         s.multiselect(multiSelectObj);
+
+        }
+
+        function initializeMultiselectAgesDropdown(s) {
+            s.multiselect(multiSelectAgesObj);
+
+        }
+
+        var multiSelectObj = {
+            enableCaseInsensitiveFiltering: false,
+            multiselect: true,
+            buttonText: function (options, select) {
+                return '@Messages.Heats';
+            },
+            onDropdownHidden: function (options, select) {
+                var select = $(this)[0].$select[0];
+                var expId = $(select).attr("data-expId");
+                var compHeatId = $(select).attr("data-compHeatId");
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+
+                if (values == null || values.length == 0) {
+                    alert("@Messages.Bicycle_HeatsRequired");
+                }
+                else {
+                    if (isAnythingChanged) {
+                        $.ajax({
+                            url: '/Disciplines/UpdateCompetitionExpertiseHeat',
+                            data: {
+                                leagueId: "@Model.CompetitionId",
+                                expId: expId,
+                                compHeatId: compHeatId,
+                                unionHeatIds: values
+                            },
+                            type: 'POST',
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.Success) {
+                                    alert("@Messages.DataSavedSuccess");
+                                    isAnythingChanged = false;
+                                }
+                                else {
+                                    alert(data.Message);
+                                }
+                            }
+                        });
+                    }
+                }
+            },
+            onChange: function (option, checked) {
+                isAnythingChanged = true;
+                var select = $(this)[0].$select[0];
+                var checkboxClickedValue = $(option).val();
+                var $ul = $(select).parent().find('ul');
+                if (checkboxClickedValue == "") {
+                    var $input = $ul.find('input[type=checkbox]');
+                    var selectedValues = [];
+                    if (checked) {
+                        $input.each(function (index) {
+                            if (index > 0)
+                                selectedValues.push($(this).val());
+                        });
+
+                        $input.prop('checked', true);
+                        $input.each(function (index) {
+                            $(this).parent().parent().parent().attr("class", "active");
+                        });
+                        $(select).val(selectedValues);
+
+                    } else {
+                        $input.prop('checked', false);
+                        $input.each(function (index) {
+                            $(this).parent().parent().parent().removeClass("active");
+                        });
+                        $(select).val(selectedValues);
+                    }
+                }
+                if (!checked) {
+                    var $selectAllInput = $ul.find('input[value=""]');
+                    $selectAllInput.prop('checked', false);
+                    $selectAllInput.closest('label').parent().parent().removeClass('active');
+                }
+
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        };
+
+        var multiSelectAgesObj = {
+            enableCaseInsensitiveFiltering: false,
+            multiselect: true,
+            buttonText: function (options, select) {
+                return '@Messages.Categories';
+            },
+            onDropdownHidden: function (options, select) {
+                var select = $(this)[0].$select[0];
+                var expId = $(select).attr("data-expId");
+                var compHeatId = $(select).attr("data-compHeatId");
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+
+                if (values == null || values.length == 0) {
+                    alert("@Messages.CategoryRequired");
+                }
+                else {
+                    if (isAnythingChanged) {
+                        $.ajax({
+                            url: '/Disciplines/UpdateCompetitionExpertiseHeatAges',
+                            data: {
+                                leagueId: "@Model.CompetitionId",
+                                expId: expId,
+                                compHeatId: compHeatId,
+                                agesIds: values
+                            },
+                            type: 'POST',
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.Success) {
+                                    alert("@Messages.DataSavedSuccess");
+                                    isAnythingChanged = false;
+                                }
+                                else {
+                                    alert(data.Message);
+                                }
+                            }
+                        });
+                    }
+                }
+            },
+            onChange: function (option, checked) {
+                isAnythingChanged = true;
+                var select = $(this)[0].$select[0];
+                var checkboxClickedValue = $(option).val();
+                var $ul = $(select).parent().find('ul');
+                if (checkboxClickedValue == "") {
+                    var $input = $ul.find('input[type=checkbox]');
+                    var selectedValues = [];
+                    if (checked) {
+                        $input.each(function (index) {
+                            if (index > 0)
+                                selectedValues.push($(this).val());
+                        });
+
+                        $input.prop('checked', true);
+                        $input.each(function (index) {
+                            $(this).parent().parent().parent().attr("class", "active");
+                        });
+                        $(select).val(selectedValues);
+
+                    } else {
+                        $input.prop('checked', false);
+                        $input.each(function (index) {
+                            $(this).parent().parent().parent().removeClass("active");
+                        });
+                        $(select).val(selectedValues);
+                    }
+                }
+                if (!checked) {
+                    var $selectAllInput = $ul.find('input[value=""]');
+                    $selectAllInput.prop('checked', false);
+                    $selectAllInput.closest('label').parent().parent().removeClass('active');
+                }
+
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        };
+
+
+    $('#csvGenerationBtn').click(function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        $("#CSVType").val("csv");
+        $('#leagues_csv').val(JSON.stringify(competitionsToMergeWithCSV));
+        $("#form_csv").submit();
+        return false;
+    });
+
+    $(".addHeatCollapse").on("click", function () {
+        var competitionId = $(this).attr("data-id");
+        var elementId = "collapse_" + competitionId;
+        $('tr[name =' + elementId + ']').toggle();
+        //if ($(elementId).find(".multiselect-container").length <= 0) {
+        //    InitializeRegisterMultiselects(elementId);
+        //}
+    });
+
+    $(".levelSelection").on("change", updateCompetitionExpLevel);
+
+    function updateCompetitionExpLevel() {
+        var expId = $(this).attr("data-expId");
+        var compHeatId = $(this).attr("data-compHeatId");
+        var levelId = $(this).val();
+            $.ajax({
+                url: '/Disciplines/UpdateCompetitionExpertiseHeatLevel',
+                data: {
+                    leagueId: "@Model.CompetitionId",
+                    expId: expId,
+                    compHeatId: compHeatId,
+                    levelId: levelId
+                },
+                type: 'POST',
+                dataType: 'json',
+                success: function (data) {
+                    if (data.Success) {
+                        alert("@Messages.DataSavedSuccess");
+                    }
+                    else {
+                        alert(data.Message);
+                    }
+                }
+        });
+    }
+
+    $('#photoFinishBtn').click(function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        $("#CSVType").val("photofinish");
+        $('#leagues_csv').val(JSON.stringify(competitionsToMergeWithCSV));
+        $("#form_csv").submit();
+        return false;
+    });
+
+    $(".frm-date-session").datetimepicker({
+        format: 'd/m/Y H:i',
+        formatTime: 'H:i',
+        formatDate: 'd/m/Y',
+        step: 15,
+        closeOnDateSelect: false,
+        onChangeDateTime: function () {
+            $(this).data("input").trigger("changedatetime.xdsoft");
+            $(this).data("input").parent().parent().find(".edit_session_td button").removeAttr("disabled");
+        },
+        scrollMonth: false,
+        scrollTime: false,
+        scrollInput: false
+	});
+
+	$('#formImportCategoryExcel input[type=file]').change(function (event) {
+		var isValidExtension = checkFileExtension(event);
+		var sender = window.SenderButtonToDisable;
+		window.SenderButtonToDisable = null;
+
+		if (isValidExtension) {
+			$(sender).addClass('disabled').attr('disabled', 'disabled');
+			var formData = new FormData($(this).closest('form')[0]);
+			$.ajax({
+				type: "POST",
+				url: $(this).closest('form').attr('action'),
+				contentType: false,
+				processData: false,
+				data: formData,
+				enctype: 'multipart/form-data',
+				cache: false,
+				timeout: 600000,
+			})
+			.done(function (data) {
+				// well, 
+			})
+			.fail(function (xhr, status, error) {
+				alert(xhr.statusText + ' ' + error);
+			})
+			.always(function (s) {
+				$(sender).removeClass('disabled').removeAttr('disabled');
+			});
+		} else {
+			console.log('not valid extension');
+		}
+	});
+
+	function importDisciplinesFromExcel(sender, clubId, disciplineId, leagueId, seasonId) {
+		var formName = 'formImportCategoryExcel';
+		$('#' + formName + ' input[name=clubId]').val(clubId);
+		$('#' + formName + ' input[name=disciplineId]').val(disciplineId);
+		$('#' + formName + ' input[name=leagueId]').val(leagueId);
+		$('#' + formName + ' input[name=seasonId]').val(seasonId);
+		$('#' + formName + ' input[type=file]').click();
+		window.SenderButtonToDisable = sender;
+	}
+
+	// Vitaly: it's not Ok, there should be a shared .js repo for helpers like the one below.
+    function checkFileExtension(sender) {
+        var validExts = new Array(".xlsx", ".xls");
+        var file = $(sender.target).prop('files');
+        if (file.length > 0) {
+            var fileExt = file[0].name;
+            fileExt = fileExt.substring(fileExt.lastIndexOf('.'));
+            if (validExts.indexOf(fileExt) < 0) {
+                alert("Invalid file selected, valid files are of " +
+                    validExts.toString() + " types.");
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            alert('No file selected');
+            return false;
+        }
+
+    }
+
+</script>

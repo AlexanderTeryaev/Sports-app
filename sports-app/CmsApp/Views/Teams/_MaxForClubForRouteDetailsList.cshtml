@@ -1,0 +1,62 @@
+﻿@model List<CompetitionRouteClubDTO>
+@{
+    string routeName = "MaxForClubForRouteDetails";
+    if (ViewBag.IsTeam) {
+        routeName = "MaxForClubForTeamRouteDetails";
+    }
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <h4 class="modal-title">@ViewBag.Title</h4>
+</div>
+<div class="modal-body">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>@Messages.ClubName</th>
+                    <th>@Messages.MaximumCompetitionRegistrationsAllowed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    using (Ajax.BeginForm(routeName, "Teams", new AjaxOptions { HttpMethod = "Post", OnComplete="club_maxregistrations_saved" }, new { id = "form_" + item.ClubId }))
+                    {
+                        <tr>
+                            <td>
+                                @item.ClubName
+                            </td>
+                            <td>
+                                @Html.TextBox("MaxRegistrationsAllowed", item.MaxRegistrationsAllowed, new { @form = "form_" + item.ClubId , @class = "form-control"})
+                            </td>
+                            @Html.Hidden("ClubId", item.ClubId, new { @form = "form_" + item.ClubId })
+                            @Html.Hidden("CompetitionId", item.CompetitionId, new { @form = "form_" + item.ClubId })
+                            <td>
+                                <button form="form_@(item.ClubId)" class="btn btn-primary btn-save glyphicon glyphicon-saved btn"></button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+</div>
+<script>
+    function club_maxregistrations_saved(data) {
+        var jsonResponse = data.responseJSON;
+        if (jsonResponse.Success) {
+            var button_clicked = $("button[form='form_" + jsonResponse.ClubId + "']");
+            button_clicked.removeClass('btn-primary btn-save');
+            button_clicked.addClass('btn-success');
+        } else {
+            alert(jsonResponse.Message);
+        }
+    }
+</script>

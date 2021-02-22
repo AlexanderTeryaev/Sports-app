@@ -1,0 +1,1380 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
+  <Import Project="..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props" Condition="Exists('..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props')" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{34C25D92-4C12-403D-B340-7D0BCAD316B5}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CmsApp</RootNamespace>
+    <AssemblyName>CmsApp</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <MvcBuildViews>false</MvcBuildViews>
+    <UseIISExpress>true</UseIISExpress>
+    <IISExpressSSLPort>
+    </IISExpressSSLPort>
+    <IISExpressAnonymousAuthentication>
+    </IISExpressAnonymousAuthentication>
+    <IISExpressWindowsAuthentication>
+    </IISExpressWindowsAuthentication>
+    <IISExpressUseClassicPipelineMode>
+    </IISExpressUseClassicPipelineMode>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <UseGlobalApplicationHostFile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <TypeScriptToolsVersion>2.3</TypeScriptToolsVersion>
+    <Use64BitIISExpress />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Antlr3.Runtime, Version=3.5.0.2, Culture=neutral, PublicKeyToken=eb42632606e9261f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AutoMapper, Version=6.0.2.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\AutoMapper.6.0.2\lib\net45\AutoMapper.dll</HintPath>
+    </Reference>
+    <Reference Include="AWSSDK.Core, Version=3.3.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604, processorArchitecture=MSIL">
+      <HintPath>..\packages\AWSSDK.Core.3.3.8\lib\net45\AWSSDK.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AWSSDK.SimpleNotificationService, Version=3.3.0.0, Culture=neutral, PublicKeyToken=885c28607f98e604, processorArchitecture=MSIL">
+      <HintPath>..\packages\AWSSDK.SimpleNotificationService.3.3.0.7\lib\net45\AWSSDK.SimpleNotificationService.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="ClosedXML, Version=0.93.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ClosedXML.0.93.1\lib\net40\ClosedXML.dll</HintPath>
+    </Reference>
+    <Reference Include="Common.Logging, Version=3.3.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.3.3.1\lib\net40\Common.Logging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Common.Logging.Core, Version=3.3.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Common.Logging.Core.3.3.1\lib\net40\Common.Logging.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml, Version=2.7.2.0, Culture=neutral, PublicKeyToken=8fb06cb64d019a17, processorArchitecture=MSIL">
+      <HintPath>..\packages\DocumentFormat.OpenXml.2.7.2\lib\net40\DocumentFormat.OpenXml.dll</HintPath>
+    </Reference>
+    <Reference Include="DotNetZip, Version=1.10.1.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
+      <HintPath>..\packages\DotNetZip.1.10.1\lib\net20\DotNetZip.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="ExcelNumberFormat, Version=1.0.3.0, Culture=neutral, PublicKeyToken=23c6f5d73be07eca, processorArchitecture=MSIL">
+      <HintPath>..\packages\ExcelNumberFormat.1.0.3\lib\net20\ExcelNumberFormat.dll</HintPath>
+    </Reference>
+    <Reference Include="FastMember.Signed, Version=1.3.0.0, Culture=neutral, PublicKeyToken=9e8f22703bef9a29, processorArchitecture=MSIL">
+      <HintPath>..\packages\FastMember.Signed.1.3.0\lib\net45\FastMember.Signed.dll</HintPath>
+    </Reference>
+    <Reference Include="FluentScheduler, Version=5.1.4.0, Culture=neutral, PublicKeyToken=b76503528a14ebd1, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentScheduler.5.1.4\lib\net40\FluentScheduler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="GridMvc">
+      <HintPath>..\packages\Grid.Mvc.3.0.0\lib\net40\GridMvc.dll</HintPath>
+    </Reference>
+    <Reference Include="itextsharp, Version=5.5.13.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.13\lib\itextsharp.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=2.0.7.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.7\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Identity.Core, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Identity.Core.2.2.2\lib\net45\Microsoft.AspNet.Identity.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Identity.EntityFramework, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Identity.EntityFramework.2.2.2\lib\net45\Microsoft.AspNet.Identity.EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.Identity.Owin, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Identity.Owin.2.2.2\lib\net45\Microsoft.AspNet.Identity.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=1.0.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Owin, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.3.1.0\lib\net45\Microsoft.Owin.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Host.HttpListener, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Host.HttpListener.3.1.0\lib\net45\Microsoft.Owin.Host.HttpListener.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Host.SystemWeb, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Host.SystemWeb.3.1.0\lib\net45\Microsoft.Owin.Host.SystemWeb.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Hosting, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Hosting.3.1.0\lib\net45\Microsoft.Owin.Hosting.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.3.1.0\lib\net45\Microsoft.Owin.Security.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Cookies, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.Cookies.3.1.0\lib\net45\Microsoft.Owin.Security.Cookies.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Facebook, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.Facebook.3.1.0\lib\net45\Microsoft.Owin.Security.Facebook.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Google, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.Google.3.1.0\lib\net45\Microsoft.Owin.Security.Google.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.MicrosoftAccount, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.MicrosoftAccount.3.1.0\lib\net45\Microsoft.Owin.Security.MicrosoftAccount.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.OAuth, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.OAuth.3.1.0\lib\net45\Microsoft.Owin.Security.OAuth.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Twitter, Version=3.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.Twitter.3.1.0\lib\net45\Microsoft.Owin.Security.Twitter.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="OfficeGuy.APIs, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OfficeGuy.APIs.1.2.1\lib\OfficeGuy.APIs.dll</HintPath>
+    </Reference>
+    <Reference Include="Omu.ValueInjecter">
+      <HintPath>..\Libs\ValueInjecter\Omu.ValueInjecter.dll</HintPath>
+    </Reference>
+    <Reference Include="PayPal, Version=1.9.1.0, Culture=neutral, PublicKeyToken=5b4afc1ccaef40fb, processorArchitecture=MSIL">
+      <HintPath>..\packages\PayPal.1.9.1\lib\net45\PayPal.dll</HintPath>
+    </Reference>
+    <Reference Include="Quartz, Version=2.5.0.0, Culture=neutral, PublicKeyToken=f6b8c98a402cc8a4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Quartz.2.5.0\lib\net40\Quartz.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Net.Http.Formatting, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.3\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.Helpers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Http, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.3\lib\net45\System.Web.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.Owin">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Owin.5.2.3\lib\net45\System.Web.Http.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.WebHost, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.3\lib\net45\System.Web.Http.WebHost.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.2.3\lib\net45\System.Web.Mvc.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Razor.3.2.3\lib\net45\System.Web.Razor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Abstractions" />
+    <Reference Include="System.Web.Routing" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http">
+    </Reference>
+    <Reference Include="System.Web.Optimization">
+      <HintPath>..\packages\Microsoft.AspNet.Web.Optimization.1.1.3\lib\net40\System.Web.Optimization.dll</HintPath>
+    </Reference>
+    <Reference Include="WebGrease, Version=1.6.5135.21930, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Owin">
+      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="App_GlobalResources\AppCss.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AppCss.resx</DependentUpon>
+    </Compile>
+    <Compile Include="App_GlobalResources\Messages.designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Messages.resx</DependentUpon>
+    </Compile>
+    <Compile Include="App_GlobalResources\Messages.uk-UA.designer.cs">
+      <DependentUpon>Messages.uk-UA.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="App_GlobalResources\Messages.en-US.designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Messages.en-US.resx</DependentUpon>
+    </Compile>
+    <Compile Include="App_Start\BundleConfig.cs" />
+    <Compile Include="App_Start\FilterConfig.cs" />
+    <Compile Include="App_Start\MigrationMedExamDate.cs" />
+    <Compile Include="App_Start\MigrationMedicalCertApprovements.cs" />
+    <Compile Include="App_Start\MigrationPlayersIdFile.cs" />
+    <Compile Include="App_Start\MigrationTeamPlayersAddLeagueIdAndClubId.cs" />
+    <Compile Include="App_Start\MigrationUserFullName.cs" />
+    <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Controllers\ActivityController.cs" />
+    <Compile Include="Controllers\AdminController.cs" />
+    <Compile Include="Controllers\AgesController.cs" />
+    <Compile Include="Controllers\AuditoriumsController.cs" />
+    <Compile Include="Controllers\ClubsRowingController.cs" />
+    <Compile Include="Controllers\OfficeGuyController.cs" />
+    <Compile Include="Controllers\AdminRequestsController.cs" />
+    <Compile Include="Controllers\BenefitsController.cs" />
+    <Compile Include="Helpers\ActivityHelpers\ActivityControllerExtension.cs" />
+    <Compile Include="Helpers\ActivityHelpers\CustomPriceHelper.cs" />
+    <Compile Include="Helpers\ActivityHelpers\DefaultActivityForm.cs" />
+    <Compile Include="Helpers\Extensions\StringExtensions.cs" />
+    <Compile Include="Controllers\PricesController.cs" />
+    <Compile Include="Helpers\OfficeGuyHelper.cs" />
+    <Compile Include="Helpers\PayPalHelper.cs" />
+    <Compile Include="Helpers\PhotofinishErrorPdf.cs" />
+    <Compile Include="Helpers\PlayerHeatTypeHelper.cs" />
+    <Compile Include="Helpers\PlayerKitHelper.cs" />
+    <Compile Include="Helpers\Utils.cs" />
+    <Compile Include="Models\ActivityFormGetCompetitionCategoriesModel.cs" />
+    <Compile Include="Models\BicycleFriendshipPaymentsModel.cs" />
+    <Compile Include="Models\ActivityRegistrationStatusPageModel.cs" />
+    <Compile Include="Models\BenefitModel.cs" />
+    <Compile Include="Models\BenefitForm.cs" />
+    <Compile Include="Models\FriendshipPaymentDialogModel.cs" />
+    <Compile Include="Models\ImportAccountingBalanceViewModel.cs" />
+    <Compile Include="Models\Mappers\BenefitMapper.cs" />
+    <Compile Include="Models\MedicalInstituteModel.cs" />
+    <Compile Include="Models\OfficeGuyPaymentSuccessfulModel.cs" />
+    <Compile Include="Models\PhotoFinishReportItem.cs" />
+    <Compile Include="Models\Pager.cs" />
+    <Compile Include="Models\TrainingForm.cs" />
+    <Compile Include="Models\SummaryReportRow.cs" />
+    <Compile Include="Models\PricesTabViewModel.cs" />
+    <Compile Include="Models\DisciplineTabViewModel.cs" />
+    <Compile Include="Models\TrainingsPageModel.cs" />
+    <Compile Include="Models\TravelSectionModel.cs" />
+    <Compile Include="Models\RefreshTravelResultsModel.cs" />
+    <Compile Include="Controllers\RegionalController.cs" />
+    <Compile Include="Controllers\ClubsController.cs" />
+    <Compile Include="Controllers\CoachController.cs" />
+    <Compile Include="Helpers\ExportRefereesCompetitionHelper.cs" />
+    <Compile Include="Helpers\ExportRefereesHelper.cs" />
+    <Compile Include="Helpers\LiqPayHelper.cs" />
+    <Compile Include="Helpers\Caching.cs" />
+    <Compile Include="Models\RefereeSalaryReportModel.cs" />
+    <Compile Include="Models\RegionalImageType.cs" />
+    <Compile Include="Models\RegionalsForm.cs" />
+    <Compile Include="Helpers\StartListCSVHelper.cs" />
+    <Compile Include="Helpers\RefereeFormPdfHelper.cs" />
+    <Compile Include="Helpers\StartListPdfHelper.cs" />
+    <Compile Include="Helpers\EntryListPdfHelper.cs" />
+    <Compile Include="Helpers\PaymentReportPdfExportHelper.cs" />
+    <Compile Include="Helpers\LocaleHelper.cs" />
+    <Compile Include="Models\CompetitionResultForm.cs" />
+    <Compile Include="Controllers\DepartmentsController.cs" />
+    <Compile Include="Controllers\ResourcesController.cs" />
+    <Compile Include="Controllers\BannersController.cs" />
+    <Compile Include="Controllers\VehiclesController.cs" />
+    <Compile Include="Helpers\ActivityCustomFieldsHelper.cs" />
+    <Compile Include="Helpers\ActivesExportPdfHelper.cs" />
+    <Compile Include="Helpers\AthletesFilter.cs" />
+    <Compile Include="Helpers\ClubActivityReportService.cs" />
+    <Compile Include="Helpers\ClubTrainingService.cs" />
+    <Compile Include="Controllers\CommentsController.cs" />
+    <Compile Include="Controllers\CommonController.cs" />
+    <Compile Include="Controllers\ContactsController.cs" />
+    <Compile Include="Controllers\DisciplinesController.cs" />
+    <Compile Include="Controllers\ErrorController.cs" />
+    <Compile Include="Controllers\EventsController.cs" />
+    <Compile Include="Controllers\GameCycleController.cs" />
+    <Compile Include="Controllers\GamesController.cs" />
+    <Compile Include="Controllers\GroupsController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\JobsController.cs" />
+    <Compile Include="Controllers\LeagueRankController.cs" />
+    <Compile Include="Controllers\LeaguesController.cs" />
+    <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\NotAuthorizedController.cs" />
+    <Compile Include="Controllers\NotificationsController.cs" />
+    <Compile Include="Controllers\PlayersController.cs" />
+    <Compile Include="Controllers\PositionsController.cs" />
+    <Compile Include="Controllers\SchedulesController.cs" />
+    <Compile Include="Controllers\SearchController.cs" />
+    <Compile Include="Controllers\SeasonsController.cs" />
+    <Compile Include="Controllers\SectionsController.cs" />
+    <Compile Include="Controllers\SettingsController.cs" />
+    <Compile Include="Controllers\StagesController.cs" />
+    <Compile Include="Controllers\TeamPlayersController.cs" />
+    <Compile Include="Controllers\TeamsAuditoriumsController.cs" />
+    <Compile Include="Controllers\TeamsController.cs" />
+    <Compile Include="Controllers\UnionsController.cs" />
+    <Compile Include="Controllers\UsersController.cs" />
+    <Compile Include="Controllers\WorkerHomeController.cs" />
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\ActionFilters.cs" />
+    <Compile Include="Helpers\ActivityExtension.cs" />
+    <Compile Include="Helpers\ActivityFormControlType.cs" />
+    <Compile Include="Helpers\ActivityFormType.cs" />
+    <Compile Include="Helpers\AppAuthorizeAttribute.cs" />
+    <Compile Include="Helpers\AppFunc.cs" />
+    <Compile Include="Helpers\AppUserAuthorize.cs" />
+    <Compile Include="Helpers\CardComHelper.cs" />
+    <Compile Include="Helpers\ColumnsHelper.cs" />
+    <Compile Include="Helpers\CookiesHelper.cs" />
+    <Compile Include="Helpers\CrossesStageHelper.cs" />
+    <Compile Include="Helpers\CustRangeAttributeAdapter.cs" />
+    <Compile Include="Helpers\CustRequiredAttributeAdapter.cs" />
+    <Compile Include="Helpers\DataNotations\UnAssignedTeamPlayerToClubByPass.cs" />
+    <Compile Include="Helpers\DataNotations\UnAssignedTeamPlayerToClub.cs" />
+    <Compile Include="Helpers\DataNotations\NumberIsValid.cs" />
+    <Compile Include="Helpers\DataNotations\UriAttribute.cs" />
+    <Compile Include="Helpers\DateModelBinder.cs" />
+    <Compile Include="Helpers\DateRangeValidateAttribute.cs" />
+    <Compile Include="Helpers\DateTimeHelper.cs" />
+    <Compile Include="Helpers\DeskService.cs" />
+    <Compile Include="Helpers\DistanceHelper.cs" />
+    <Compile Include="Helpers\ExportToPdfHelper.cs" />
+    <Compile Include="Helpers\FileUtil.cs" />
+    <Compile Include="Helpers\GamesStaticticsService.cs" />
+    <Compile Include="Helpers\GlobVars.cs" />
+    <Compile Include="Helpers\Holidays.cs" />
+    <Compile Include="Helpers\IgnoreNulls.cs" />
+    <Compile Include="Helpers\ImageResult.cs" />
+    <Compile Include="Helpers\ImportExportPlayersHelper.cs" />
+    <Compile Include="Helpers\ImportExportVehiclesHelper.cs" />
+    <Compile Include="Helpers\Injections\CloneInjection.cs" />
+    <Compile Include="Helpers\KarateRefereeRanksHelper.cs" />
+    <Compile Include="Helpers\LangHelper.cs" />
+    <Compile Include="Helpers\LeagueRankExportHelper.cs" />
+    <Compile Include="Helpers\LoginService.cs" />
+    <Compile Include="Helpers\NullableInjection.cs" />
+    <Compile Include="Helpers\PageHelper.cs" />
+    <Compile Include="Helpers\PlayerFileHelper.cs" />
+    <Compile Include="Helpers\PlayerPriceHelper.cs" />
+    <Compile Include="Helpers\RazorViewHelper.cs" />
+    <Compile Include="Helpers\RefereeService.cs" />
+    <Compile Include="Helpers\ModelStateAttributes\RestoreModelStateFromTempDataAttribute.cs" />
+    <Compile Include="Helpers\ModelStateAttributes\SetTempDataModelStateAttribute.cs" />
+    <Compile Include="Helpers\SimpleAuthorizationServerProvider.cs" />
+    <Compile Include="Helpers\TennisLeagueHelper.cs" />
+    <Compile Include="Helpers\AthleteNumberProductionPdfExportHelper.cs" />
+    <Compile Include="Helpers\TournamentRosterPdfExportHelper.cs" />
+    <Compile Include="Helpers\UIHelpers.cs" />
+    <Compile Include="Helpers\PDFFooter.cs" />
+    <Compile Include="Helpers\UnionCalendarHelper.cs" />
+    <Compile Include="Models\ActivityCustomPriceModel.cs" />
+    <Compile Include="Models\ActivityForm.cs" />
+    <Compile Include="Models\ActivityFormControlTemplateModel.cs" />
+    <Compile Include="Models\ActivityFormCustomField.cs" />
+    <Compile Include="Models\ActivityFormEditModel.cs" />
+    <Compile Include="Models\ActivityFormGetUnionClubUserModel.cs" />
+    <Compile Include="Models\ActivityFormGetUnionCustomGroupUserModel.cs" />
+    <Compile Include="Models\ActivityFormGetUnionCustomPersonalPlayerUserModel.cs" />
+    <Compile Include="Models\ActivityFormGetClubPlayerUserModel.cs" />
+    <Compile Include="Models\ActivityFormGetPlayerUserModel.cs" />
+    <Compile Include="Models\ActivityFormGetTeamManagerUserModel.cs" />
+    <Compile Include="Models\ActivityFormGetUnionPersonalClubUserModel.cs" />
+    <Compile Include="Models\ActivityFormPublish.cs" />
+    <Compile Include="Models\ActivityFormPublishSubmitModel.cs" />
+    <Compile Include="Models\ActivityFormReadOnlyFile.cs" />
+    <Compile Include="Models\ActivityFormSuccessResultModel.cs" />
+    <Compile Include="Models\ActivityRegistrationsStatusModel.cs" />
+    <Compile Include="Models\ActivitySelectTeamsDropdown.cs" />
+    <Compile Include="Models\ActivityViewModel.cs" />
+    <Compile Include="Models\AddTeamPenaltyModel.cs" />
+    <Compile Include="Models\AgeViewModel.cs" />
+    <Compile Include="Models\AthletesModel.cs" />
+    <Compile Include="Models\AddSchoolModel.cs" />
+    <Compile Include="Models\AddTeamToSchoolModel.cs" />
+    <Compile Include="Models\AthleticRegListModel.cs" />
+    <Compile Include="Models\AttandanceViewModel.cs" />
+    <Compile Include="Models\AttendanceViewModel.cs" />
+    <Compile Include="Models\AuditoriumForm.cs" />
+    <Compile Include="Models\AuthRepository.cs" />
+    <Compile Include="Models\BenefactorViewModel.cs" />
+    <Compile Include="Models\CompetitionRouteClubDTO.cs" />
+    <Compile Include="Models\EditRegionalViewModel.cs" />
+    <Compile Include="Models\LiqPayPaymentStatusUpdate.cs" />
+    <Compile Include="Models\LiqPayPaymentStatusUpdateData.cs" />
+    <Compile Include="Models\RegisterPlayerToCompDTO.cs" />
+    <Compile Include="Models\ClubAuditoriumsViewModel.cs" />
+    <Compile Include="Models\ClubCalendarViewModel.cs" />
+    <Compile Include="Models\ClubDetailsForm.cs" />
+    <Compile Include="Models\ClubMainTabForm.cs" />
+    <Compile Include="Models\ClubPaymentViewModel.cs" />
+    <Compile Include="Models\ClubsForm.cs" />
+    <Compile Include="Models\ClubsViewModel.cs" />
+    <Compile Include="Models\ClubTeamsForm.cs" />
+    <Compile Include="Models\ClubTrainingDaysViewModel.cs" />
+    <Compile Include="Models\ClubTrainingsViewModel.cs" />
+    <Compile Include="Models\ClubTrainingViewModel.cs" />
+    <Compile Include="Models\CommentsSearch.cs" />
+    <Compile Include="Models\CompetitionAgeViewModel.cs" />
+    <Compile Include="Models\CompetitionDisciplineListModel.cs" />
+    <Compile Include="Models\CompetitionDisciplineViewModel.cs" />
+    <Compile Include="Models\CompetitionForm.cs" />
+    <Compile Include="Models\DaysForHostingViewModel.cs" />
+    <Compile Include="Models\DepartmentSettings.cs" />
+    <Compile Include="Models\DepartmentsForm.cs" />
+    <Compile Include="Models\DistanceFormViewModel.cs" />
+    <Compile Include="Models\EditDisciplineViewModel.cs" />
+    <Compile Include="Models\EditClubViewModel.cs" />
+    <Compile Include="Models\EventForm.cs" />
+    <Compile Include="Models\EventModel.cs" />
+    <Compile Include="Models\ExportImageModel.cs" />
+    <Compile Include="Models\ExportTeamTrainingsToExcel.cs" />
+    <Compile Include="Models\GalleryForm.cs" />
+    <Compile Include="Helpers\DataNotations\RequiredIfUsedAttribute.cs" />
+    <Compile Include="Models\TabLoaderParams.cs" />
+    <Compile Include="Models\TennisGameCycleForm.cs" />
+    <Compile Include="Models\GameCycleForm.cs" />
+    <Compile Include="Models\GameForm.cs" />
+    <Compile Include="Models\GameSetForm.cs" />
+    <Compile Include="Models\GamesUrlForm.cs" />
+    <Compile Include="Models\GroupsForm.cs" />
+    <Compile Include="Models\ImportGymnasticsViewModel.cs" />
+    <Compile Include="Models\ImportPlayersImageViewModel.cs" />
+    <Compile Include="Models\ImportPlayersViewModel.cs" />
+    <Compile Include="Models\ImportVehiclesModel.cs" />
+    <Compile Include="Models\IntrumentForm.cs" />
+    <Compile Include="Models\JobForm.cs" />
+    <Compile Include="Models\JsonGridItem.cs" />
+    <Compile Include="Models\DisciplineDetailsForm.cs" />
+    <Compile Include="Models\LeagueDetailsForm.cs" />
+    <Compile Include="Models\LeagueNavView.cs" />
+    <Compile Include="Models\HandlingFeeModel.cs" />
+    <Compile Include="Models\MemberFeeModel.cs" />
+    <Compile Include="Models\OfficialsSettingsModel.cs" />
+    <Compile Include="Models\PlayerAchievementViewItem.cs" />
+    <Compile Include="Models\PlayerFileModel.cs" />
+    <Compile Include="Models\LeaguePlayerPrice.cs" />
+    <Compile Include="Models\PlayerTeamApproveRetirementForm.cs" />
+    <Compile Include="Models\PlayerTeamRetirementForm.cs" />
+    <Compile Include="Models\PositionStatusForm.cs" />
+    <Compile Include="Models\RegistrationStatusViewModel.cs" />
+    <Compile Include="Models\RoutesControlForm.cs" />
+    <Compile Include="Models\SalaryReportForm.cs" />
+    <Compile Include="Models\SaveActivityFormModel.cs" />
+    <Compile Include="Models\TennisGameViewModel.cs" />
+    <Compile Include="Models\TennisLeagueViewModel.cs" />
+    <Compile Include="Models\SchoolTeamsModel.cs" />
+    <Compile Include="Models\SectionModel.cs" />
+    <Compile Include="Models\SportRankViewModel.cs" />
+    <Compile Include="Models\ClubRegistration.cs" />
+    <Compile Include="Models\BannerForm.cs" />
+    <Compile Include="Models\TeamGalleriesForm.cs" />
+    <Compile Include="Models\TeamGalleryForm.cs" />
+    <Compile Include="Models\TeamRegistration.cs" />
+    <Compile Include="Models\TeamSchedules.cs" />
+    <Compile Include="Models\TeamStagePenaltiesModel.cs" />
+    <Compile Include="Models\TeamStatisticsForm.cs" />
+    <Compile Include="Models\TeamTrainingForm.cs" />
+    <Compile Include="Models\TeamTrainingViewModel.cs" />
+    <Compile Include="Models\TeamViewModel.cs" />
+    <Compile Include="Models\TournamentsPDF.cs" />
+    <Compile Include="Models\LoginForm.cs" />
+    <Compile Include="Models\ManagedItemViewModels.cs" />
+    <Compile Include="Models\Mappers\EventMapper.cs" />
+    <Compile Include="Models\Mappers\PlayerHistoryMapper.cs" />
+    <Compile Include="Models\Mappers\TeamScheduleScrapperMapper.cs" />
+    <Compile Include="Models\Mappers\TeamStandingMapper.cs" />
+    <Compile Include="Models\MediaForm.cs" />
+    <Compile Include="Models\MovePlayerForm.cs" />
+    <Compile Include="Models\MoveTeamToLeagueViewModel.cs" />
+    <Compile Include="Models\NotificationsViewModel.cs" />
+    <Compile Include="Models\NotificationsForm.cs" />
+    <Compile Include="Models\PageForm.cs" />
+    <Compile Include="Models\PasswordRecoveryViewModel.cs" />
+    <Compile Include="Models\PlayerForm.cs" />
+    <Compile Include="Models\PlayerHistoryFormView.cs" />
+    <Compile Include="Models\PositionsForm.cs" />
+    <Compile Include="Models\Schedules.cs" />
+    <Compile Include="Models\SearchForm.cs" />
+    <Compile Include="Models\SearchViewModels.cs" />
+    <Compile Include="Models\SeasonModels.cs" />
+    <Compile Include="Models\SeasonViewModel.cs" />
+    <Compile Include="Models\TeamNavView.cs" />
+    <Compile Include="Models\TeamsAuditoriumForm.cs" />
+    <Compile Include="Models\TeamScheduleForm.cs" />
+    <Compile Include="Models\TeamStandingsForm.cs" />
+    <Compile Include="Models\TeamStandingsGameForm.cs" />
+    <Compile Include="Models\TrainingDaysSettingViewModel.cs" />
+    <Compile Include="Models\TrainingSettingForm.cs" />
+    <Compile Include="Models\UnionCalendarViewModel.cs" />
+    <Compile Include="Models\UnionClubPlayerPrice.cs" />
+    <Compile Include="Models\UnionCompetitionForm.cs" />
+    <Compile Include="Models\UnionFormModel.cs" />
+    <Compile Include="Models\UnionPriceModel.cs" />
+    <Compile Include="Models\UnionTennisRankForm.cs" />
+    <Compile Include="Models\UpdateStageModel.cs" />
+    <Compile Include="Models\VehicleModel.cs" />
+    <Compile Include="Models\WeightLiftingResultsForm.cs" />
+    <Compile Include="Models\WeightLiftingSessionForm.cs" />
+    <Compile Include="Models\WorkerModels.cs" />
+    <Compile Include="Models\TeamForm.cs" />
+    <Compile Include="Models\UnionForm.cs" />
+    <Compile Include="Models\UserForm.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\EmailService.cs" />
+    <Compile Include="Services\VehicleService.cs" />
+    <Compile Include="Startup.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Content\cropper\cropper.css" />
+    <Content Include="Content\cropper\cropper.js" />
+    <Content Include="Content\cropper\cropper.min.css" />
+    <Content Include="Content\cropper\cropper.min.js" />
+    <Content Include="Content\css\asc.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\css\bg.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\css\bootstrap-editable.css" />
+    <Content Include="Content\css\bootstrap-multiselect.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\css\bootstrap-rtl.css" />
+    <Content Include="Content\css\bootstrap-rtl.min.css" />
+    <Content Include="Content\css\bootstrap-switch.css" />
+    <Content Include="Content\css\bootstrap-theme.css" />
+    <Content Include="Content\css\bootstrap-theme.min.css" />
+    <Content Include="Content\css\bootstrap.css" />
+    <Content Include="Content\css\bootstrap.min.css" />
+    <Content Include="Content\css\buttons.dataTables.min.css" />
+    <Content Include="Content\css\colReorder.dataTables.min.css" />
+    <Content Include="Content\css\dataTables.bootstrap.css" />
+    <Content Include="Content\css\dataTables.bootstrap.min.css" />
+    <Content Include="Content\css\datepicker.css" />
+    <Content Include="Content\css\datepicker3.css" />
+    <Content Include="Content\css\desc.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\css\fileupload.css" />
+    <Content Include="Content\css\Gridmvc.css" />
+    <Content Include="Content\css\jquery.bracket.min.css" />
+    <Content Include="Content\css\jquery.dataTables.css" />
+    <Content Include="Content\css\jquery.timesetter.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\css\print.css" />
+    <Content Include="Content\css\rtl-fix.css" />
+    <Content Include="Content\css\style.css" />
+    <Content Include="Content\css\tablesorter.css" />
+    <Content Include="Content\css\zabuto_calendar.min.css" />
+    <Content Include="Content\fonts\glyphicons-halflings-regular.svg" />
+    <Content Include="Content\images\bg-img.jpg" />
+    <Content Include="Content\images\bg-img1.jpg" />
+    <Content Include="Content\images\en.png" />
+    <Content Include="Content\images\favicon.ico" />
+    <Content Include="Content\images\header-profile.png" />
+    <Content Include="Content\images\LiqpayMethods.jpg" />
+    <Content Include="Content\images\logo-athletics.png" />
+    <Content Include="Content\images\logo.png" />
+    <Content Include="Content\images\ua.png" />
+    <Content Include="Content\js\activityClubPlayersFormPublished.js" />
+    <Content Include="Content\js\activityDepartmentClubCustomPlayersFormPublished.js" />
+    <Content Include="Content\js\activityDepartmentClubPlayersFormPublished.js" />
+    <Content Include="Content\js\activityFormPublishedCommon.js" />
+    <Content Include="Content\js\activityUnionPlayerToClubFormPublished.js" />
+    <Content Include="Content\js\activityUnionClubsFormPublished.js" />
+    <Content Include="Content\js\activityUnionCustomTeamsFormPublished.js" />
+    <Content Include="Content\js\activityUnionCustomPersonalFormPublished.js" />
+    <Content Include="Content\js\activityFormBuilder.js" />
+    <Content Include="Content\js\activityClubCustomPlayersFormPublished.js" />
+    <Content Include="Content\js\activityPlayersFormPublished.js" />
+    <Content Include="Content\js\activityTeamsFormPublished.js" />
+    <Content Include="Content\js\activityRegistrationStatus.js" />
+    <Content Include="Content\js\bootstrap-editable.min.js" />
+    <Content Include="Content\js\bootstrap-switch.js" />
+    <Content Include="Content\js\bootstrap-multiselect.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\bracketsmodified.js" />
+    <Content Include="Content\js\buttons.flash.min.js" />
+    <Content Include="Content\js\buttons.html5.min.js" />
+    <Content Include="Content\js\buttons.print.min.js" />
+    <Content Include="Content\js\dataTables.buttons.min.js" />
+    <Content Include="Content\js\dataTables.colReorder.min.js" />
+    <Content Include="Content\js\dataTables.scroller.min.js" />
+    <Content Include="Content\js\domJSON.min.js" />
+    <Content Include="Content\js\jquery-3.2.0.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\jquery-migrate-1.2.1.min.js" />
+    <Content Include="Content\js\jquery.inputmask.bundle.js" />
+    <Content Include="Content\js\jquery.lazy.min.js" />
+    <Content Include="Content\js\jquery.timesetter.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\js\jszip.min.js" />
+    <Content Include="Content\js\moment-with-locales.min.js" />
+    <Content Include="Content\js\pdfmake.min.js" />
+    <Content Include="Content\js\vfs_fonts.js" />
+    <Content Include="Content\js\zabuto_calendar.min.js" />
+    <Content Include="Content\loglig_design\img\FB-f-Logo__white_50.png" />
+    <Content Include="Content\images\he.png" />
+    <Content Include="Content\images\iphone.png" />
+    <Content Include="Content\js\bootstrap.js" />
+    <Content Include="Content\js\bootstrap.min.js" />
+    <Content Include="Content\js\brackets.min.js" />
+    <Content Include="Content\js\dragdivscroll.js" />
+    <Content Include="Content\js\gridmvc.js" />
+    <Content Include="Content\js\gridmvc.lang.he.js" />
+    <Content Include="Content\js\gridmvc.lang.ru.js" />
+    <Content Include="Content\js\jquery-1.11.1.js" />
+    <Content Include="Content\js\jquery-1.11.1.min.js" />
+    <Content Include="Content\js\jquery-ui-1.10.4.custom.js" />
+    <Content Include="Content\js\jquery-ui-1.10.4.custom.min.js" />
+    <Content Include="Content\js\jquery-ui.min.js" />
+    <Content Include="Content\js\jquery.bracket.min.js" />
+    <Content Include="Content\js\jquery.form.js" />
+    <Content Include="Content\js\jquery.unobtrusive-ajax.js" />
+    <Content Include="Content\js\jquery.unobtrusive-ajax.min.js" />
+    <Content Include="Content\js\jquery.validate.js" />
+    <Content Include="Content\js\jquery.validate.min.js" />
+    <Content Include="Content\js\jquery.validate.unobtrusive.bootstrap.js" />
+    <Content Include="Content\js\jquery.validate.unobtrusive.bootstrap.min.js" />
+    <Content Include="Content\js\jquery.validate.unobtrusive.js" />
+    <Content Include="Content\js\jquery.validate.unobtrusive.min.js" />
+    <Content Include="Content\js\main.js" />
+    <Content Include="Content\js\messages_en.js" />
+    <Content Include="Content\js\messages_he.js" />
+    <Content Include="Content\js\npm.js" />
+    <Content Include="Content\loglig_design\css\animate.min.css" />
+    <Content Include="Content\loglig_design\css\bootstrap.css" />
+    <Content Include="Content\loglig_design\css\bootstrap.min.css" />
+    <Content Include="Content\loglig_design\css\creative.css" />
+    <Content Include="Content\loglig_design\font-awesome\css\font-awesome.css" />
+    <Content Include="Content\loglig_design\font-awesome\css\font-awesome.min.css" />
+    <Content Include="Content\loglig_design\font-awesome\fonts\fontawesome-webfont.svg" />
+    <Content Include="Content\loglig_design\fonts\glyphicons-halflings-regular.svg" />
+    <Content Include="Content\loglig_design\img\gymnastic-logo.png" />
+    <Content Include="Content\loglig_design\img\handicap-logo.png" />
+    <Content Include="Content\loglig_design\img\header.jpg" />
+    <Content Include="Content\loglig_design\img\img_logo.png" />
+    <Content Include="Content\loglig_design\img\isrwp-logo.jpg" />
+    <Content Include="Content\loglig_design\img\Logo2019uci.png" />
+    <Content Include="Content\loglig_design\img\logo-2-imsf.png" />
+    <Content Include="Content\loglig_design\img\logo-athletics.png" />
+    <Content Include="Content\loglig_design\img\logo-basketball-handicap.png" />
+    <Content Include="Content\loglig_design\img\logo-HaifaCarmel.jpg" />
+    <Content Include="Content\loglig_design\img\logo-HapoelJerusalem.jpg" />
+    <Content Include="Content\loglig_design\img\logo-isa.png" />
+    <Content Include="Content\loglig_design\img\logo-kadooreshet.jpg" />
+    <Content Include="Content\loglig_design\img\logo-karate.jpg" />
+    <Content Include="Content\loglig_design\img\logo-maccabi-haifa.png" />
+    <Content Include="Content\loglig_design\img\logo-volleyball.jpg" />
+    <Content Include="Content\loglig_design\img\tennis-logo.jpg" />
+    <Content Include="Content\loglig_design\img\Uci.jpeg" />
+    <Content Include="Content\loglig_design\js\bootstrap.js" />
+    <Content Include="Content\loglig_design\js\bootstrap.min.js" />
+    <Content Include="Content\loglig_design\js\cbpAnimatedHeader.js" />
+    <Content Include="Content\loglig_design\js\classie.js" />
+    <Content Include="Content\loglig_design\js\creative.js" />
+    <Content Include="Content\loglig_design\js\jquery.easing.min.js" />
+    <Content Include="Content\loglig_design\js\jquery.fittext.js" />
+    <Content Include="Content\loglig_design\js\jquery.js" />
+    <Content Include="Content\loglig_design\js\wow.min.js" />
+    <Content Include="Content\typeahead\bloodhound.js" />
+    <Content Include="Content\typeahead\bloodhound.min.js" />
+    <Content Include="Content\typeahead\typeahead.bundle.js" />
+    <Content Include="Content\typeahead\typeahead.bundle.min.js" />
+    <Content Include="Content\typeahead\typeahead.jquery.js" />
+    <Content Include="Content\typeahead\typeahead.jquery.min.js" />
+    <Content Include="Content\typeahead\typeahead-bootstrap.css" />
+    <Content Include="favicon.ico" />
+    <Content Include="Global.asax" />
+    <Content Include="phantomjs.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\bootstrap.js" />
+    <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="Content\js\dataTables.bootstrap.min.js" />
+    <Content Include="Scripts\bracketsmodified.js" />
+    <Content Include="Scripts\dataTables.bootstrap.js" />
+    <Content Include="Scripts\datetimepicker\jquery.datetimepicker.full.js" />
+    <Content Include="Scripts\datetimepicker\jquery.datetimepicker.full.min.js" />
+    <Content Include="Scripts\datetimepicker\jquery.datetimepicker.min.css" />
+    <Content Include="Scripts\datetimepicker\jquery.datetimepicker.min.js" />
+    <Content Include="Scripts\gridmvc.js" />
+    <Content Include="Scripts\gridmvc.lang.he.js" />
+    <Content Include="Scripts\gridmvc.lang.ru.js" />
+    <Content Include="Scripts\gridmvc.min.js" />
+    <Content Include="Content\js\jquery.dataTables.min.js" />
+    <Content Include="Scripts\jquery-migrate-1.2.1.min.js" />
+    <Content Include="Scripts\jquery.dataTables.js" />
+    <Content Include="Scripts\jquery.tablesorter.js" />
+    <Content Include="Scripts\jquery.tablesorter.min.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\jquery.unobtrusive-ajax.js" />
+    <Content Include="Scripts\jquery.unobtrusive-ajax.min.js" />
+    <Content Include="Scripts\jquery.validate.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.bootstrap.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.bootstrap.min.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="Scripts\moment-with-locales.js" />
+    <Content Include="Scripts\moment-with-locales.min.js" />
+    <Content Include="Scripts\moment.js" />
+    <Content Include="Scripts\moment.min.js" />
+    <Content Include="Scripts\npm.js" />
+    <Content Include="Scripts\pages\commonLib.js" />
+    <Content Include="Scripts\pages\editgroups.js" />
+    <Content Include="Scripts\pages\eventsList.js" />
+    <Content Include="Scripts\pages\gameCycleList.js" />
+    <Content Include="Scripts\pages\gcEdit.js" />
+    <Content Include="Scripts\pages\individualSports.js" />
+    <Content Include="Scripts\pages\weightLiftingResults.js" />
+    <Content Include="Scripts\pages\leagueEdit.js" />
+    <Content Include="Scripts\pages\ranksFeature.js" />
+    <Content Include="Scripts\pages\officialsFeature.js" />
+    <Content Include="Scripts\pages\schedulesCtrl.js" />
+    <Content Include="Scripts\pages\scrappingTeamClubs.js" />
+    <Content Include="Scripts\pages\tennisleaguegame.js" />
+    <Content Include="Scripts\pages\tpList.js" />
+    <Content Include="Scripts\Print.js" />
+    <Content Include="Scripts\trainings.js" />
+    <Content Include="Scripts\weekly-appointment-picker.js" />
+    <Content Include="Static\404.html" />
+    <Content Include="Static\500.html" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomLink.cshtml" />
+    <Content Include="Views\Activity\RegistrationStatusPage.cshtml" />
+    <Content Include="Views\Activity\RegistrationStatusPageLayout.cshtml" />
+    <Content Include="Views\Activity\Status\Common\Headers\_RegistrationAllCustomPricesHeader.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_RegistrationAllCustomPrices.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_RenderCompetitionName.cshtml" />
+    <Content Include="Views\Activity\_SendNotificationToSelected.cshtml" />
+    <None Include="Views\AdminRequests\Success.cshtml" />
+    <Content Include="Views\Unions\_Details.cshtml" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Views\Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Views\Shared\EditorTemplates\PdfUpload.cshtml" />
+    <Content Include="Views\Unions\_BicycleCompetitionAges.cshtml" />
+    <Content Include="Views\OfficeGuy\PaymentSuccessful.cshtml" />
+    <Content Include="Views\Benefits\_AddBenefit.cshtml" />
+    <Content Include="Views\Benefits\_Benefits.cshtml" />
+    <Content Include="Views\Benefits\List.cshtml" />
+    <Content Include="Views\Unions\_MedicalInstitutes.cshtml" />
+    <Content Include="Views\Players\_FriendshipPayments.cshtml" />
+    <Content Include="Views\Clubs\_BicycleCompetitionRow.cshtml" />
+    <Content Include="Views\GameCycle\BasketBallWaterPolo\_WaterpoloStatistics.cshtml" />
+    <Content Include="Views\GameCycle\_PlayersWStatisticsRow.cshtml" />
+    <Content Include="Views\Clubs\_ClimbingCompetitionRow.cshtml" />
+    <Content Include="Views\OfficeGuy\_FrienshipPaymentDialog.cshtml" />
+    <Content Include="Views\Players\_UciCard.cshtml" />
+    <Content Include="Views\Clubs\_ImportAccountingBalances.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\ClubRowing\" />
+    <Folder Include="Views\MessagesResource\" />
+    <Folder Include="Views\SendMail\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="packages.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Content\fonts\glyphicons-halflings-regular.eot" />
+    <Content Include="Content\fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="Content\fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="ConnStr.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Views\Comments\Index.cshtml" />
+    <Content Include="Views\Contacts\Index.cshtml" />
+    <Content Include="Views\Jobs\_List.cshtml" />
+    <Content Include="Views\Leagues\Edit.cshtml" />
+    <Content Include="Views\Leagues\_CreateForm.cshtml" />
+    <Content Include="Views\Leagues\_Details.cshtml" />
+    <Content Include="Views\Login\Index.cshtml" />
+    <Content Include="Views\Main\Index.cshtml" />
+    <Content Include="Views\Sections\Index.cshtml" />
+    <Content Include="Views\Settings\Index.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\ImageUpload.cshtml" />
+    <Content Include="Views\Shared\EditorTemplates\RichEditor.cshtml" />
+    <Content Include="Views\Shared\Error.cshtml" />
+    <Content Include="Views\Shared\_ConfirmAlert.cshtml" />
+    <Content Include="Views\Shared\_Grid.cshtml" />
+    <Content Include="Views\Shared\_GridPager.cshtml" />
+    <Content Include="Views\Shared\_JsReload.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Shared\_Logged.cshtml" />
+    <Content Include="Views\Shared\_Navbar.cshtml" />
+    <Content Include="Views\Shared\_TopMenu.cshtml" />
+    <Content Include="Views\Users\Index.cshtml" />
+    <Content Include="Views\Users\_Edit.cshtml" />
+    <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Settings.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Views\Players\Edit.cshtml" />
+    <Content Include="Views\Sections\Edit.cshtml" />
+    <Content Include="Views\Unions\_List.cshtml" />
+    <Content Include="Views\Unions\Edit.cshtml" />
+    <Content Include="Views\Unions\_Leagues.cshtml" />
+    <Content Include="Views\Teams\_List.cshtml" />
+    <Content Include="Views\Games\_Edit.cshtml" />
+    <Content Include="Views\Plan\index.cshtml" />
+    <Content Include="Views\Plan\EmailTeamplate.cshtml" />
+    <Content Include="Views\Teams\Edit.cshtml" />
+    <Content Include="Views\Teams\_Details.cshtml" />
+    <Content Include="Views\Auditoriums\_List.cshtml" />
+    <Content Include="Views\TeamsAuditoriums\_List.cshtml" />
+    <Content Include="Views\Positions\_List.cshtml" />
+    <Content Include="Views\TeamPlayers\_List.cshtml" />
+    <Content Include="Views\TeamPlayers\_Edit.cshtml" />
+    <Content Include="Views\TeamPlayers\_EditPlayer.cshtml" />
+    <Content Include="Views\Schedules\_Groups.cshtml" />
+    <Content Include="Views\Stages\_List.cshtml" />
+    <Content Include="Views\Groups\_Edit.cshtml" />
+    <Content Include="Views\Groups\_List.cshtml" />
+    <Content Include="Views\WorkerHome\Index.cshtml" />
+    <Content Include="Views\Search\Index.cshtml" />
+    <Content Include="Views\GameCycle\Edit.cshtml" />
+    <Content Include="Views\GameCycle\_Game.cshtml" />
+    <Content Include="Views\GameCycle\_GameSetForm.cshtml" />
+    <Content Include="Views\GameCycle\_GameSetList.cshtml" />
+    <Content Include="Content\loglig_design\font-awesome\fonts\fontawesome-webfont.eot" />
+    <Content Include="Content\loglig_design\font-awesome\fonts\fontawesome-webfont.ttf" />
+    <Content Include="Content\loglig_design\font-awesome\fonts\fontawesome-webfont.woff" />
+    <Content Include="Content\loglig_design\font-awesome\fonts\fontawesome-webfont.woff2" />
+    <Content Include="Content\loglig_design\font-awesome\fonts\FontAwesome.otf" />
+    <Content Include="Content\loglig_design\fonts\glyphicons-halflings-regular.eot" />
+    <Content Include="Content\loglig_design\fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="Content\loglig_design\fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="Content\loglig_design\fonts\glyphicons-halflings-regular.woff2" />
+    <Content Include="log4net.config" />
+    <Content Include="Content\fonts\ARIALUNI.TTF" />
+    <Content Include="Content\excelfiles\import-players-tennis.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\excelfiles\import-players.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\excelfiles\gymnastics_form.xlsx" />
+    <Content Include="Content\excelfiles\english_tennis_category_excel.xlsx" />
+    <Content Include="Content\excelfiles\hebrew_tennis_category_excel.xlsx" />
+    <Content Include="Content\fonts\Arial-Regular.ttf" />
+    <Content Include="Content\fonts\ARIAL.TTF" />
+    <None Include="job_scheduling_data_2_0.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Properties\PublishProfiles\CMS.pubxml" />
+    <None Include="Properties\PublishProfiles\Dev WebDeploy.pubxml" />
+    <None Include="Properties\PublishProfiles\Prod WebDeploy.pubxml" />
+    <None Include="Properties\PublishProfiles\Production 144 CMS.pubxml" />
+    <None Include="Properties\PublishProfiles\Production 145 CMS.pubxml" />
+    <Content Include="Views\TeamPlayers\_EditPlayerFormBody.cshtml" />
+    <Content Include="Views\NotAuthorized\Index.cshtml" />
+    <Content Include="Views\Schedules\_AddNewForm.cshtml" />
+    <Content Include="Views\Schedules\_TeamsView.cshtml" />
+    <Content Include="Views\Schedules\_TeamList.cshtml" />
+    <Content Include="Views\LeagueRank\_Details.cshtml" />
+    <Content Include="Views\Error\NotFound.cshtml" />
+    <Content Include="Views\Error\Internal.cshtml" />
+    <Content Include="Views\Jobs\_CreateWorker.cshtml" />
+    <Content Include="Views\Jobs\_WorkerList.cshtml" />
+    <None Include="Properties\PublishProfiles\QA CMS.pubxml" />
+    <Content Include="Views\Jobs\_EditWorker.cshtml" />
+    <Content Include="Views\Schedules\_ChronologicalList.cshtml" />
+    <Content Include="Views\Users\PasswordRecovery.cshtml" />
+    <Content Include="Views\GameCycle\_PotentialTeams.cshtml" />
+    <Content Include="Views\Notifications\_AddNew.cshtml" />
+    <Content Include="Views\Notifications\_List.cshtml" />
+    <Content Include="Views\Groups\_EditPoints.cshtml" />
+    <Content Include="Views\Sections\_List.cshtml" />
+    <Content Include="Views\Stages\_Settings.cshtml" />
+    <Content Include="Views\Stages\_Close.cshtml" />
+    <Content Include="Views\Schedules\_List.cshtml" />
+    <Content Include="Views\Terms\index.cshtml" />
+    <Content Include="Views\Thanks\Index.cshtml" />
+    <Content Include="Views\Seasons\_List.cshtml" />
+    <Content Include="Views\Seasons\_CreateSeason.cshtml" />
+    <Content Include="Views\Teams\_MoveTeamToLeaguePartial.cshtml" />
+    <Content Include="Views\Clubs\_List.cshtml" />
+    <Content Include="Views\Clubs\Edit.cshtml" />
+    <Content Include="Views\Clubs\_Details.cshtml" />
+    <Content Include="Views\Clubs\_MainTab.cshtml" />
+    <Content Include="Views\Clubs\_ClubTeams.cshtml" />
+    <Content Include="Views\Jobs\_ClubWorkerList.cshtml" />
+    <Content Include="Views\Jobs\_CreateClubWorker.cshtml" />
+    <Content Include="Views\Unions\_ClubLeagues.cshtml" />
+    <Content Include="Views\TeamPlayers\_MovePlayerToTeam.cshtml" />
+    <Content Include="Views\Clubs\EditTeamClub.cshtml" />
+    <Content Include="Views\Logineng\index.cshtml" />
+    <Content Include="Views\LeagueRank\Waterpolo\_Details.cshtml" />
+    <Content Include="Views\LeagueRank\BasketBall\_Details.cshtml" />
+    <Content Include="Views\GameCycle\BasketBallWaterPolo\_GameSetList.cshtml" />
+    <Content Include="Views\GameCycle\BasketBallWaterPolo\Edit.cshtml" />
+    <Content Include="Views\GameCycle\BasketBallWaterPolo\_GameSetForm.cshtml" />
+    <Content Include="Views\Sections\BasketBallWaterpolo\_List.cshtml" />
+    <Content Include="Views\Schedules\BasketBallWaterPolo\_List.cshtml" />
+    <Content Include="Views\Schedules\BasketBallWaterPolo\_ChronologicalList.cshtml" />
+    <Content Include="Views\Schedules\BasketBallWaterPolo\_TeamList.cshtml" />
+    <Content Include="Views\LeagueRank\Netball_VolleyBall\_Details.cshtml" />
+    <Content Include="Views\Schedules\GamesUrlS\Index.cshtml" />
+    <Content Include="Views\Teams\Standings.cshtml" />
+    <Content Include="Views\Teams\Standings\_StandingsUrl.cshtml" />
+    <Content Include="Views\Events\_AddEvent.cshtml" />
+    <Content Include="Views\Shared\_ShedulesDateConditions.cshtml" />
+    <Content Include="Views\Shared\_LeagueArenaChoice.cshtml" />
+    <Content Include="Views\Events\_Events.cshtml" />
+    <Content Include="Views\Events\List.cshtml" />
+    <Content Include="Views\Teams\TeamStandings.cshtml" />
+    <Content Include="Views\Players\_ImportPlayers.cshtml" />
+    <Content Include="Views\Players\_ImportPlayersImage.cshtml" />
+    <Content Include="Views\Teams\_Benefactor.cshtml" />
+    <Content Include="Views\TeamPlayers\_Notification.cshtml" />
+    <Content Include="Views\TeamPlayers\_ExportList.cshtml" />
+    <Content Include="Views\Shared\_LoadingDialog.cshtml" />
+    <Content Include="Views\Activity\_List.cshtml" />
+    <Content Include="Views\Activity\_Edit.cshtml" />
+    <Content Include="Views\Activity\_ExportList.cshtml" />
+    <Content Include="Views\Activity\ActivityList.cshtml" />
+    <Content Include="Views\Players\_Achievements.cshtml" />
+    <Content Include="Views\Players\_TeamRetirement.cshtml" />
+    <Content Include="Views\Players\_TeamApproveRetirement.cshtml" />
+    <Content Include="Views\Activity\_EditBranch.cshtml" />
+    <Content Include="Views\Activity\_DeleteBranch.cshtml" />
+    <Content Include="Views\Activity\_DeleteActivity.cshtml" />
+    <Content Include="Views\Activity\_ActivityForm.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_BasicInput.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_BasicDropdownSelect.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_PaymentByBenefactor.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_BasicFileInput.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_BasicTextArea.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_BasicYesNoDropdown.cshtml" />
+    <Content Include="Views\Activity\ActivityFormPublished.cshtml" />
+    <Content Include="Views\Shared\_ActivityFormPublishLayout.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Common\_FieldNote.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_BasicDateInput.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Shared\_GuestTeam.cshtml" />
+    <Content Include="Views\Shared\_HomeTeam.cshtml" />
+    <Content Include="Views\Activity\_RegistrationStatus.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_TeamsRegistrationStatusData.cshtml" />
+    <Content Include="tsconfig.json" />
+    <Content Include="Views\Activity\ActivityFormPublishedSubmitResult.cshtml" />
+    <Content Include="Views\Activity\PaymentSuccess.cshtml" />
+    <Content Include="Views\Activity\PaymentFailure.cshtml" />
+    <Content Include="Views\Teams\TrainingSettings.cshtml" />
+    <Content Include="Views\Teams\_TrainingTeams.cshtml" />
+    <Content Include="Views\Teams\TeamTrainings.cshtml" />
+    <Content Include="Views\Clubs\TeamTrainings.cshtml" />
+    <Content Include="Views\Clubs\Calendar.cshtml" />
+    <Content Include="Views\Clubs\ClubTrainings.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_PlayerRegistrationStatusData.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomTextBox.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomTextArea.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomControlOptions.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomDropdown.cshtml" />
+    <Content Include="Views\Disciplines\_List.cshtml" />
+    <Content Include="Views\Disciplines\Edit.cshtml" />
+    <Content Include="Views\Disciplines\_Details.cshtml" />
+    <Content Include="Views\Unions\_Calendar.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomText.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Common\_RequiredSwitch.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Common\_DisabledSwitch.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Common\_ValidationMessage.cshtml" />
+    <Content Include="Views\Shared\_HomeAthlete.cshtml" />
+    <Content Include="Views\Shared\_GuestAthlete.cshtml" />
+    <Content Include="Views\Clubs\_SchoolTeams.cshtml" />
+    <Content Include="Views\Clubs\_AddSchool.cshtml" />
+    <Content Include="Views\Clubs\_AddTeamToSchool.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_ClubPlayerRegistrationStatusData.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomCheckBox.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomFileReadonly.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomDropdownMultiselect.cshtml" />
+    <Content Include="Views\Shared\_Referee.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_BasicCheckbox.cshtml" />
+    <Content Include="Views\Players\_ExportPlayersImages.cshtml" />
+    <Content Include="Views\Shared\_ShowUnionForms.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_UnionCustomPersonalRegistrationStatusData.cshtml" />
+    <Content Include="Views\Departments\_List.cshtml" />
+    <Content Include="Views\Players\_List.cshtml" />
+    <Content Include="Views\Players\_ExportList.cshtml" />
+    <Content Include="Views\Teams\_TeamStatistics.cshtml" />
+    <Content Include="Views\Shared\_Desk.cshtml" />
+    <Content Include="Views\Jobs\_ExportList.cshtml" />
+    <Content Include="Views\Jobs\_DistanceForm.cshtml" />
+    <Content Include="Views\Jobs\_OfficialsReport.cshtml" />
+    <Content Include="Views\Jobs\_DistanceTableInstance.cshtml" />
+    <Content Include="Views\Shared\_Ranks.cshtml" />
+    <Content Include="Views\Players\_DisicplinesRanks.cshtml" />
+    <Content Include="Views\Unions\_ImportFiles.cshtml" />
+    <Content Include="Views\Activity\_ManageCustomPrices.cshtml" />
+    <Content Include="Views\Activity\_CustomPriceTemplate.cshtml" />
+    <Content Include="Views\Shared\_LoadingIndicator.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomPrice.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_UnionCustomGroupSettings.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_UnionCustomPersonalSettings.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_UnionCustomGroupRegistrationStatusData.cshtml" />
+    <Content Include="Views\Teams\_RoutesList.cshtml" />
+    <Content Include="Views\Teams\_CreateRoute.cshtml" />
+    <Content Include="Views\Clubs\_CompetitionsList.cshtml" />
+    <Content Include="Views\Clubs\_CompetitionDetails.cshtml" />
+    <Content Include="Views\Clubs\_PlayersRegistrationList.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_PlayerEscortSelector.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_ClubPlayerSettings.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_DepartmentClubPlayerSettings.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_DepartmentClubCustomPlayerRegistrationStatusData.cshtml" />
+    <Content Include="Views\Jobs\_KarateRefereesRanks.cshtml" />
+    <Content Include="Views\Teams\_TeamRegDataPanel.cshtml" />
+    <Content Include="Views\Leagues\_LeagueStatistics.cshtml" />
+    <Content Include="Views\GameCycle\BasketBallWaterPolo\_GameStatistics.cshtml" />
+    <Content Include="Views\LeagueRank\_PlayoffRankTable.cshtml" />
+    <Content Include="Views\GameCycle\_PlayersStatisticsRow.cshtml" />
+    <Content Include="Views\Clubs\_UnionLeagues.cshtml" />
+    <Content Include="Views\Clubs\_TennisRegistrationList.cshtml" />
+    <Content Include="Views\Clubs\_TrainingTeam.cshtml" />
+    <Content Include="Views\Teams\_TennisRegistrationList.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_UnionClubRegistrationStatusData.cshtml" />
+    <Content Include="Views\Clubs\_ClubRegDataPanel.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_UnionClubSettings.cshtml" />
+    <Content Include="Views\Jobs\_RefereesList.cshtml" />
+    <Content Include="Views\LeagueRank\_PositionSettings.cshtml" />
+    <Content Include="Views\Disciplines\_Instruments.cshtml" />
+    <Content Include="Views\Teams\_RoutesRefereeRegistrations.cshtml" />
+    <Content Include="Views\Clubs\_PlayersOrder.cshtml" />
+    <Content Include="Views\Clubs\_ImportGymnastics.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomFileUpload.cshtml" />
+    <Content Include="Views\Activity\_RenderCustomFields.cshtml" />
+    <Content Include="Views\LeagueRank\_AddPenalty.cshtml" />
+    <Content Include="Views\LeagueRank\_TeamPenalties.cshtml" />
+    <Content Include="Views\Teams\SoccerTeamStandings.cshtml" />
+    <Content Include="Views\Teams\SoccerStandings.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_UnionPlayerToClubSettings.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Specific\_InsuranceOrSchoolInsurance.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_UnionPlayerToClubRegistrationStatusData.cshtml" />
+    <Content Include="Views\Vehicles\_List.cshtml" />
+    <Content Include="Views\Vehicles\_Create.cshtml" />
+    <Content Include="Views\Vehicles\_DriverDetails.cshtml" />
+    <Content Include="Views\Vehicles\_VehicleLicense.cshtml" />
+    <Content Include="Views\Vehicles\_VehicleDetails.cshtml" />
+    <Content Include="Views\Vehicles\_EngineDetails.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Specific\_TenicardPrice.cshtml" />
+    <Content Include="Views\Vehicles\_ImportVehicles.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Specific\_Gender.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Specific\_RegularOrCompetitiveMemberPrice.cshtml" />
+    <Content Include="Views\Activity\ActivityFormBlank.cshtml" />
+    <Content Include="Views\Unions\_Competitions.cshtml" />
+    <Content Include="Views\Clubs\_MartialArtsCompetitionsList.cshtml" />
+    <Content Include="Views\Players\_RegisteredPlayers.cshtml" />
+    <Content Include="Views\Players\_ImportSportsmen.cshtml" />
+    <Content Include="Views\Banners\_List.cshtml" />
+    <Content Include="Views\Teams\TeamGallery.cshtml" />
+    <Content Include="Views\Players\_Penalties.cshtml" />
+    <Content Include="Views\Players\_PenaltyItem.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_ClubCustomPlayerRegistrationStatusData.cshtml" />
+    <Content Include="Views\Activity\StatusesByType\_DepartmentClubPlayerRegistrationStatusData.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_ClubCustomPlayerSettings.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_DepartmentClubCustomPlayerSettings.cshtml" />
+    <Content Include="Views\Unions\_TennisPointSettingsForm.cshtml" />
+    <Content Include="Views\Schedules\_TennisGroups.cshtml" />
+    <Content Include="Views\Stages\_TennisList.cshtml" />
+    <Content Include="Views\Groups\_TennisGroupEdit.cshtml" />
+    <Content Include="Views\Groups\_TennisList.cshtml" />
+    <Content Include="Views\Games\_TennisGamesEdit.cshtml" />
+    <Content Include="Views\Schedules\_TennisList.cshtml" />
+    <Content Include="Views\LeagueRank\_TennisDetails.cshtml" />
+    <Content Include="Views\LeagueRank\_TennisPlayoffRankTable.cshtml" />
+    <Content Include="Views\LeagueRank\_TennisUnionRankTable.cshtml" />
+    <Content Include="Views\Players\ImportInitialApprovalDate.cshtml" />
+    <Content Include="Views\Sections\_SectionList.cshtml" />
+    <Content Include="Views\Ages\_List.cshtml" />
+    <Content Include="Views\Clubs\_FlowersList.cshtml" />
+    <Content Include="Views\TeamPlayers\_NotificationMultiple.cshtml" />
+    <Content Include="Views\Leagues\_DaysForHosting.cshtml" />
+    <Content Include="Views\TeamPlayers\_Error.cshtml" />
+    <Content Include="Views\GameCycle\_EditTennisLeague.cshtml" />
+    <Content Include="Views\Activity\_RenderCustomFieldsHeaders.cshtml" />
+    <Content Include="Views\GameCycle\_PairGamePartial.cshtml" />
+    <Content Include="Views\WorkerHome\RefereeLeagues.cshtml" />
+    <Content Include="Views\Banners\Edit.cshtml" />
+    <Content Include="Views\LeagueRank\Tennis\_LeagueDetails.cshtml" />
+    <Content Include="Views\LeagueRank\Tennis\_PlayoffTennisRankTable.cshtml" />
+    <Content Include="Views\LeagueRank\_WaterBasketRanksTable.cshtml" />
+    <Content Include="Views\LeagueRank\_RanksTable.cshtml" />
+    <Content Include="Views\Activity\ActivitySettings\_UnionPersonalSettings.cshtml" />
+    <Content Include="Views\GameCycle\_EditGamePartial.cshtml" />
+    <Content Include="Views\GameCycle\BasketBallWaterPolo\_EditGamePartial.cshtml" />
+    <Content Include="Views\Leagues\_Disciplines.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_Create.cshtml" />
+    <Content Include="Views\Clubs\_GymnasticCompetitionRow.cshtml" />
+    <Content Include="Views\Clubs\_AthleticsCompetitionRow.cshtml" />
+    <Content Include="Views\Clubs\_AthleticsRegistrationList.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_PlayerLockedSign.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\_BasicDropdownMultiselect.cshtml" />
+    <Content Include="Views\Leagues\_ImportTennisCompetitionPlayers.cshtml" />
+    <Content Include="Views\Leagues\_TennisCompetitionPlayersList.cshtml" />
+    <Content Include="Views\Leagues\_LevelDatesSettings.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_PlayerRegisteredMoreThanOnce.cshtml" />
+    <Content Include="Views\Clubs\_MartialArtsPayment.cshtml" />
+    <Content Include="Views\Clubs\_ClubBalance.cshtml" />
+    <Content Include="Views\Players\_ImportAthletesNumbers.cshtml" />
+    <Content Include="Views\Unions\EditReferees.cshtml" />
+    <Content Include="Views\Coach\Index.cshtml" />
+    <Content Include="Views\Coach\_EditCoach.cshtml" />
+    <Content Include="Views\Shared\_TeamRanks.cshtml" />
+    <Content Include="Views\LeagueRank\_RankedStanding.cshtml" />
+    <Content Include="Views\Players\_DisicplinesTeamRanks.cshtml" />
+    <Content Include="Views\Clubs\_WeightLiftingCompetitionRow.cshtml" />
+    <Content Include="Views\Shared\_TabLoader.cshtml" />
+    <Content Include="Views\Players\_ImportClubFiles.cshtml" />
+    <Content Include="Views\Teams\_CreateTeamRoute.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_DisciplinesResults.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_ImportCompetitionResults.cshtml" />
+    <Content Include="Views\Teams\_MaxForClubForRouteDetailsList.cshtml" />
+    <Content Include="Views\Teams\_DuplicateRoutes.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\HeatWindLoop.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_WeightLiftingSessionsTable.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_SessionsRegistrationList.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_WeighLiftingResults.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_Startlist.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_WeighLiftingResultsBySession.cshtml" />
+    <Content Include="Views\LeagueRank\_AthleticRanksTable.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_RenderTeamName.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_RenderClubName.cshtml" />
+    <Content Include="Views\Regional\_ListRegionals.cshtml" />
+    <Content Include="Views\Regional\Edit.cshtml" />
+    <Content Include="Views\Regional\_Details.cshtml" />
+    <Content Include="Views\Regional\_ListClubs.cshtml" />
+    <Content Include="Views\Clubs\_SwimmingCompetitionRow.cshtml" />
+    <Content Include="Views\LeagueRank\_AthleticLeagueCompetitionRanks.cshtml" />
+    <Content Include="Views\WorkerHome\_SalaryReports.cshtml" />
+    <Content Include="Views\Activity\ActivityForm\ControlTemplates\Custom\_CustomTextMultiline.cshtml" />
+    <Content Include="Views\LeagueRank\_AthleticCombinedRanks.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_RenderPlayerName.cshtml" />
+    <Content Include="Views\Disciplines\_DistanceTable.cshtml" />
+    <Content Include="Views\Clubs\_RowingCompetitionRow.cshtml" />
+    <Content Include="Views\Shared\_LoginForm.cshtml" />
+    <Content Include="Views\Shared\_LoginForgotForm.cshtml" />
+    <Content Include="Views\Shared\_LoginResetForm.cshtml" />
+    <Content Include="Views\Jobs\_TravelInformation.cshtml" />
+    <Content Include="Views\Activity\Status\Common\Headers\_RenderPlayerParentsHeader.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_RenderPlayerParentsData.cshtml" />
+    <Content Include="Views\Activity\Status\Specific\UkraineGymnastic\Headers\_RenderUkraineIdentCardAndLicenseDateHeaders.cshtml" />
+    <Content Include="Views\Activity\Status\Specific\UkraineGymnastic\_RenderUkraineIdentCardAndLicenseDateData.cshtml" />
+    <Content Include="Views\Clubs\_ExportToto.cshtml" />
+    <Content Include="Views\Disciplines\_FriendshipTypesList.cshtml" />
+    <Content Include="Views\Prices\_ChipPricesList.cshtml" />
+    <Content Include="Views\Prices\_FriendshipPricesList.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_DisciplineLiveResults.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\_DisciplineLiveResults_6.cshtml" />
+    <Content Include="Views\Clubs\_TeamNumberPerClub.cshtml" />
+    <Content Include="Views\Unions\_Records.cshtml" />
+    <Content Include="Views\Activity\Status\Common\Headers\_RenderCardComInvoiceNumberAndNumberOfPaymentsHeader.cshtml" />
+    <Content Include="Views\Activity\Status\Common\_RenderCardComInvoiceNumberAndNumberOfPayments.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\Heats.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\HeatLanesList.cshtml" />
+    <Content Include="Views\Leagues\Disciplines\ChangeSwimmerModel.cshtml" />
+    <Content Include="Views\Clubs\_TeamNumberPerClubForAllBoats.cshtml" />
+    <Content Include="Views\Clubs\_AddTraining.cshtml" />
+    <Content Include="Views\Players\FriendshipCard.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="App_GlobalResources\Messages.resx">
+      <Generator>GlobalResourceProxyGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Messages.designer.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AppData\AppModel.csproj">
+      <Project>{d4520ce6-76d8-4d61-bd7e-814460f8fa3f}</Project>
+      <Name>AppModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DataService\DataService.csproj">
+      <Project>{3ac2c1e0-e9fd-44b2-9aef-b78aa145c6e5}</Project>
+      <Name>DataService</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MetascanHelper\MetascanHelper.csproj">
+      <Project>{7b6d2a38-df20-457a-96a6-eec37ae4dfb5}</Project>
+      <Name>MetascanHelper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PushServiceLib\PushServiceLib.csproj">
+      <Project>{4a86a3c6-e144-495b-bcd0-84c16559e2fd}</Project>
+      <Name>PushServiceLib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="App_GlobalResources\AppCss.resx">
+      <Generator>GlobalResourceProxyGenerator</Generator>
+      <LastGenOutput>AppCss.Designer.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="App_GlobalResources\Messages.en-US.resx">
+      <Generator>GlobalResourceProxyGenerator</Generator>
+      <LastGenOutput>Messages.en-US.designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\AWSSDK.SimpleNotificationService.3.3.0.7\analyzers\dotnet\cs\AWSSDK.SimpleNotificationService.CodeAnalysis.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="Content\app\commonLib.ts" />
+    <TypeScriptCompile Include="Content\app\editgroups.ts" />
+    <TypeScriptCompile Include="Content\app\benefitsList.ts" />
+    <TypeScriptCompile Include="Content\app\eventsList.ts" />
+    <TypeScriptCompile Include="Content\app\gameCycleList.ts" />
+    <TypeScriptCompile Include="Content\app\gcEdit.ts" />
+    <TypeScriptCompile Include="Content\app\leagueEdit.ts" />
+    <TypeScriptCompile Include="Content\app\scrappingTeamClubs.ts" />
+    <TypeScriptCompile Include="Content\app\tpList.ts" />
+    <TypeScriptCompile Include="Scripts\typings\jquery\jquery.d.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="App_GlobalResources\Messages.uk-UA.resx">
+      <Generator>GlobalResourceProxyGenerator</Generator>
+      <LastGenOutput>Messages.uk-UA.designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <Target Name="MvcBuildViews" AfterTargets="AfterBuild" Condition="'$(MvcBuildViews)'=='true'">
+    <AspNetCompiler VirtualPath="temp" PhysicalPath="$(WebProjectOutputDir)" />
+  </Target>
+  <Target Name="CopyRoslynFiles" AfterTargets="AfterBuild" Condition="!$(Disable_CopyWebApplication) And '$(OutDir)' != '$(OutputPath)'">
+    <ItemGroup>
+      <RoslynFiles Include="$(CscToolPath)\*" />
+    </ItemGroup>
+    <MakeDir Directories="$(WebProjectOutputDir)\bin\roslyn" />
+    <Copy SourceFiles="@(RoslynFiles)" DestinationFolder="$(WebProjectOutputDir)\bin\roslyn" SkipUnchangedFiles="true" Retries="$(CopyRetryCount)" RetryDelayMilliseconds="$(CopyRetryDelayMilliseconds)" />
+</Target>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>0</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:6464/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>http://localhost:4005/</CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target> -->
+</Project>

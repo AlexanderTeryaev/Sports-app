@@ -1,0 +1,87 @@
+﻿@using AppModel
+@using DataService.DTO
+@using CmsApp.Helpers
+@model GamePartialModel
+
+<td class="text-center">
+    @if (Model.HomeAthleteId.HasValue)
+    {
+        var homeAthleteDetails = Model.TeamsPlayer1?.User;
+        var athleteName = homeAthleteDetails.FullName;
+        <label class="home-team-label">
+            @if (Model.isWaitingDivision && Model.GroupId > 0)
+                { 
+                @*Look here if we need to change any values*@
+                <a href="javascript:gcList.unlockHomeTeam(@Model.CycleId)"><i class="fa fa-lock"></i></a>}
+            <span class="home-team-text">@athleteName</span>
+        </label>
+        if (Model.isWaitingDivision && Model.GroupId > 0)
+        {
+            @*Here were changes!*@
+            <span class="input-group home-team-drop-down" style="display: none">
+                <a href="javascript:gcList.lockHomeTeam(@Model.CycleId)"><i class="fa fa-unlock"></i></a>
+                @Html.DropDownList("HomeAthleteId",
+                        new SelectList(Model.athletesByGroups[Model.GroupId ?? 0],
+                            nameof(AthleteShortDTO.AthleteId), nameof(AthleteShortDTO.Title), Model.TeamsPlayer1.Id),
+                        new
+                        {
+                            @class = "form-control home-team-id",
+                            @form = "gamefrm" + Model.CycleId,
+                            @onchange = $"gcList.HomeTeamChanged({Model.CycleId}, this.options[this.selectedIndex].innerText)"
+                        })
+            </span>
+        }
+
+        if (Model.GoldenSet != null && Model.GoldenSet.HomeTeamScore > Model.GoldenSet.GuestTeamScore)
+        {
+            <span class="label label-warning">@Messages.GoldenSet</span>
+        }
+
+        if (Model.TechnicalWinnnerId == Model.TeamsPlayer1.Id)
+        {
+            <span class="label label-success">@Messages.TechWin</span>
+        }
+    }
+    else if (Model.HomeTeamPos.HasValue)
+    {
+        <label class="home-team-label">
+            <span class="home-team-text">@UIHelpers.GetAthletePosition(Model.HomeTeamPos.Value)</span>
+        </label>
+    }
+    else if (Model.PlayoffBracket?.Parent1 != null && Model.PlayoffBracket.Type == (int)PlayoffBracketType.Winner &&
+             Model.PlayoffBracket.Parent1.Team2GroupPosition == 0 && Model.PlayoffBracket.Parent1.Team1GroupPosition.HasValue)
+    {
+        <label class="home-team-label">
+            @*Change here values*@
+            <span class="home-team-text">@UIHelpers.GetAthletePosition(Model.PlayoffBracket.Parent1.Team1GroupPosition.Value)</span>
+        </label>
+    }
+    else if (Model.PlayoffBracket?.Parent1 != null && Model.PlayoffBracket.Type == (int)PlayoffBracketType.Winner &&
+             Model.PlayoffBracket.Parent1.Team1GroupPosition == 0 && Model.PlayoffBracket.Parent1.Team2GroupPosition.HasValue)
+    {
+        <label class="home-team-label">
+            <span class="home-team-text">@UIHelpers.GetAthletePosition(Model.PlayoffBracket.Parent1.Team2GroupPosition.Value)</span>
+        </label>
+    }
+    else if (@Model.PlayoffBracket != null)
+    {
+        if (Model.PlayoffBracket.Type == (int)AppModel.PlayoffBracketType.Winner)
+        {
+            <a href="@Url.Action("PotentialTeams", "GameCycle", new { id = Model.PlayoffBracket.Id, index = 1 })"
+               data-target="#barcket-potential-teams"
+               data-toggle="modal">@Messages.Winner</a>
+        }
+        else if (Model.PlayoffBracket.Type == (int)AppModel.PlayoffBracketType.Loseer || Model.PlayoffBracket.Type == (int)AppModel.PlayoffBracketType.Condolence3rdPlaceBracket)
+        {
+            <a href="@Url.Action("PotentialTeams", "GameCycle", new { id = Model.PlayoffBracket.Id, index = 1 })"
+               data-target="#barcket-potential-teams"
+               data-toggle="modal">@Messages.Loser</a>
+        }
+        else
+        {
+            @("--")
+        }
+    }
+</td>
+
+

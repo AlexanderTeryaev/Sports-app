@@ -1,0 +1,266 @@
+﻿@model UnionCompetitionForm
+@{
+    var hasSportsmen = false;
+    bool isHebrew = Request.IsHebrew();
+    var competitions = Model.Competitions;
+    if (Model.IsAthletics)
+    {
+        competitions = Model.Competitions.Where(c => c.StartRegistrationDate != null).OrderBy(c => c.StartDate ?? DateTime.MaxValue).ToList();
+    }
+
+    var numbers = Enumerable.Range(0, 50);
+
+    var isClubManager = User.CurrentTopClubLevelJob(Model.ClubId) == JobRole.ClubManager;
+
+}
+<style>
+    .row-margin-bottom {
+        margin-bottom: 5px;
+    }
+</style>
+
+@foreach (var competition in competitions)
+{
+<tr class="@(competition.IsEnded ? "isEnded" : string.Empty) @(competition.IsStarted ? string.Empty : "isNotStarted") @(competition.IsMaxed ? "isMaxed" : string.Empty)">
+    <td>
+        <a data-id="@competition.LeagueId" class="btn btn-primary information">
+            <i class="glyphicon glyphicon-info-sign" name="info-icon"></i>
+            <i class="fa fa-spin fa-spinner" name="spinner" style="display:none"></i>
+        </a>
+    </td>
+    <td>
+        <a href="@Url.Action("AthleticsRegistrationList", "Clubs", new { clubId = Model.ClubId, seasonId = Model.SeasonId, leagueId = competition.LeagueId })" style="color:#ffffff;"
+           data-toggle="modal"
+           data-target="#athleticsregistrationlist"
+           data-ajax-update="#athleticsregistrationlist_pl"
+           data-ajax="true"
+           class="btn btn-primary">
+            @Messages.Status
+        </a>
+    </td>
+    <td>@competition.StartDate</td>
+    <td>
+        <b>@competition.CompetitionName</b>
+    </td>
+    <td>@competition.EndDate</td>
+    <td>@competition.StartRegistrationDate</td>
+    <td>@competition.EndRegistrationDate</td>
+    <td>@competition.Place</td>
+    <td>
+        @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager))
+        {
+            <a data-id="@competition.LeagueId" class="btn btn-primary is_admin register">@Messages.Register</a>
+        }
+        else
+        {
+            if (competition.EndDate.HasValue && DateTime.Compare(competition.EndDate.Value, DateTime.Now) >= 0)
+            {
+                <a data-id="@competition.LeagueId" class="btn btn-primary register">@Messages.Register</a>
+            }
+            else
+            {
+                <a data-id="@competition.LeagueId" class="btn btn-primary register" disabled>@Messages.Register</a>
+            }
+        }
+    </td>
+
+</tr>
+    if (competition.CompetitionDisciplines.Any())
+                            {
+        <tr style="display:none" id="collapse_@competition.LeagueId" class="@(competition.NoTeamRegistration ? "no-team-registration" : "")">
+            <td colspan="8">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="row" style="margin-bottom:20px;">
+                            <div class="col-sm-2">
+                                <strong>@Messages.Boat</strong>
+                            </div>
+                            <div class="col-sm-2">
+                                <strong>@Messages.Distance</strong>
+                            </div>
+                            <div class="col-sm-1">
+                                <strong>@Messages.Category</strong>
+                            </div>
+                            <div class="col-sm-1">
+                                <strong>@Messages.MaxSportsmen</strong>
+                            </div>
+                            <div class="col-sm-2">
+                                <strong>@Messages.StartTime</strong>
+                            </div>
+                            <div class="col-sm-1" style="background-color: bisque; @(competition.NoTeamRegistration ? "display: none;" : "")">
+                                <strong>@Messages.TeamRegistration</strong>
+                            </div>
+                            <div class="col-sm-1" style="background-color: lightblue; @(competition.NoTeamRegistration ? "display: none;" : "")">
+                                <strong>@Messages.SportsmansRegistration</strong>
+                            </div>
+                        </div>
+                        @{
+                            var regPlayers = competition.CompetitionDisciplines.SelectMany(x => x.RegisteredPlayers.Where(r => r.IsCoxwain == false)).Select(rpl => rpl.UserId).ToList();
+                            var regCoxwains = competition.CompetitionDisciplines.SelectMany(x => x.RegisteredPlayers.Where(r => r.IsCoxwain == true)).Select(rpl => rpl.UserId).ToList();
+                        }
+
+                        @foreach (var discipline in competition.CompetitionDisciplines.Where(cd => !cd.IsDeleted))
+                        {
+                            var sortedPlayers = discipline.DisciplinePlayers;
+
+
+                            <div class="row category-container" style="margin-bottom:30px;" ref-mixed="@discipline.IsMixed.ToString()">
+                                <div class="col-sm-2">
+                                    <text>@UIHelpers.GetCompetitionDisciplineName(discipline.DisciplineId)</text>
+                                </div>
+                                <div class="col-sm-2">
+                                    <text>@discipline.DistanceName</text>
+                                </div>
+                                <div class="col-sm-1">
+                                    <text>@UIHelpers.GetCompetitionCategoryName(discipline.CategoryId)</text>
+                                </div>
+                                <div class="col-sm-1">
+                                    @{
+                                        // var maxSportsman = UIHelpers.GetMinimumBetweenMaxSportsmenAndBoatNumber(discipline.DisciplineId, discipline.MaxSportsmen);
+                                        var maxSportsman = discipline.NumberofSportsmen;
+                                    }
+                                    <text>@maxSportsman</text>
+                                </div>
+                                <div class="col-sm-2">
+                                    <text>
+                                        @if (discipline.StartTime.HasValue)
+                                        {@discipline.StartTime}
+                                </text>
+                            </div>
+                            <div class="col-sm-4" id="row_disc_@discipline.Id">
+                                <div class="row" style="@(competition.NoTeamRegistration ? "display: none;" : "")">
+                                    <div class="col-sm-3">
+                                        @{
+                                            var teamRegistrationList = new SelectList(numbers, discipline.TeamRegistration);
+                                            var disabledAttrTeamsRegNum = false;
+                                            var disabledAttrTeamsRegSpo = "";
+                                            if (competition.StartTeamRegistrationDate.HasValue && competition.EndTeamRegistrationDate.HasValue && isClubManager)
+                                            {
+                                                if (DateTime.Compare(competition.StartTeamRegistrationDate.Value, DateTime.Now) > 0 ||
+                                                   DateTime.Compare(competition.EndTeamRegistrationDate.Value, DateTime.Now) < 0)
+                                                {
+                                                    disabledAttrTeamsRegNum = true;
+                                                }
+                                            }
+                                            if (competition.StartRegistrationDate.HasValue && competition.EndRegistrationDate.HasValue && isClubManager)
+                                            {
+                                                if (DateTime.Compare(competition.StartRegistrationDate.Value, DateTime.Now) > 0 ||
+                                                   DateTime.Compare(competition.EndRegistrationDate.Value, DateTime.Now) < 0)
+                                                {
+                                                    disabledAttrTeamsRegSpo = "disabled";
+                                                }
+                                            }
+
+                                        }
+
+                                        @if (!disabledAttrTeamsRegNum)
+                                        {
+                                            @Html.DropDownList("TeamRegistration", teamRegistrationList, new { @class = "form-control registerTeamNum", data_discipline = discipline.Id, data_club = Model.ClubId })
+                                        }
+                                        else
+                                        {
+                                            @Html.DropDownList("TeamRegistration", teamRegistrationList, new { @class = "form-control registerTeamNum", data_discipline = discipline.Id, data_club = Model.ClubId, @disabled = "disabled" })
+                                        }
+
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <a @disabledAttrTeamsRegSpo data-id="@discipline.Id" club-id="@Model.ClubId" data-maxsportsmen="@maxSportsman" data-coxwain="@discipline.Coxwain" data-league="@discipline.CompetitionId" class="btn btn-default append-teams">@Messages.AddCrew</a>
+                                    </div>
+                                </div>
+
+                                @foreach (var team in discipline.DisciplineTeams)
+                                {
+                                    
+                                    var selectedPlayers = discipline.RegisteredPlayers.Where(x => x.TeamId == team.TeamId && x.IsCoxwain == false).Select(rpl => rpl.UserId);
+                                    var selectedPlayersCount = selectedPlayers.Count();
+                                    var disPla = regPlayers.Except(selectedPlayers);
+                                    var players = new MultiSelectList(sortedPlayers,
+                                        nameof(DataService.DTO.PlayerShortDTO.UserId), nameof(DataService.DTO.PlayerShortDTO.UserNameAge), nameof(DataService.DTO.PlayerShortDTO.TeamTitle),
+                                        selectedPlayers, disPla).ToList();
+                                    
+                                    if (players.Any())
+                                    {
+                                        players.Insert(0, new SelectListItem() { Text = Messages.SelectAllPlayers, Value = "" });
+                                    }
+                                    var idP = "playersReg_" + discipline.Id + "_" + team.TeamId;
+
+                                    <div class="row row-margin-bottom">
+                                        @if (competition.NoTeamRegistration != true)
+                                        {
+                                            <div class="col-sm-3"></div>
+                                            <div class="col-sm-2">
+                                                <a disabled data-id="Bla" class="btn btn-default">@Messages.Team @team.TeamNumber</a>
+                                            </div>
+                                        }
+                                        <div class="col-sm-3">
+                                            @Html.DropDownList(idP, players, new
+                                        {
+                                            @class = $"form-control atleticsIds",
+                                            @multiple = "multiple",
+                                            data_discipline = discipline.Id,
+                                            data_clubId = Model.ClubId,
+                                            data_maxsportsmen = maxSportsman,
+                                            data_league = discipline.CompetitionId,
+                                            data_teamId = team.TeamId,
+                                            data_coxwain = discipline.Coxwain,
+                                            data_selectedCount = selectedPlayersCount
+                                        })
+                                        </div>
+                                        @if (discipline.Coxwain)
+                                        {
+                                            var selectedCoxwain = discipline.RegisteredPlayers.Where(x => x.TeamId == team.TeamId && x.IsCoxwain == true).Select(rpl => rpl.UserId);
+                                            var selectedCoxwainCount = selectedCoxwain.Count();
+                                            var disCox = regCoxwains.Except(selectedCoxwain);
+                                            var coxwain = new MultiSelectList(sortedPlayers,
+                                                nameof(DataService.DTO.PlayerShortDTO.UserId), nameof(DataService.DTO.PlayerShortDTO.UserName), nameof(DataService.DTO.PlayerShortDTO.TeamTitle),
+                                                selectedCoxwain, disCox).ToList();
+                                            
+                                            var id = "coxwainReg_" + discipline.Id + "_" + team.TeamId;
+
+                                            <div class="col-sm-3">
+                                                @Html.DropDownList(id, coxwain, new
+                                           {
+                                               @class = $"form-control coxwainIds",
+                                               @multiple = "multiple",
+                                               data_discipline = discipline.Id,
+                                               data_clubId = Model.ClubId,
+                                               data_maxsportsmen = 1,
+                                               data_league = discipline.CompetitionId,
+                                               data_teamId = team.TeamId,
+                                               data_selectedCount = selectedCoxwainCount
+                                           })
+
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                        </div>
+                    }
+                    </div>
+                </div>
+            </td>
+        </tr>
+    }
+    else
+    {
+        <tr style="display:none" id="collapse_@competition.LeagueId">
+            <td colspan="8">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="row" style="margin-bottom:20px;">
+                            <div class="col-sm-12">
+                                @Messages.NoDisciplinesForThisCompetition
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <button class="btn btn-danger cancel">@Messages.Cancel</button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    }
+
+}

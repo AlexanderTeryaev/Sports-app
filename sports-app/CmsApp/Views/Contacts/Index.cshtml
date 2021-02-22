@@ -1,0 +1,106 @@
+﻿@model IQueryable<AppModel.Contacts>
+
+<h3 class="sub-header-t">פניות מטופס צור קשר</h3>
+
+<ul class="nav nav-tabs top-tabs" data-val="@(Request.Params["isArchive"] == "True" ? "1" : "0")">
+    <li><a href="@Url.Action("Index")"> דואר נכנס</a></li>
+    <li><a href="@Url.Action("Index", new { isArchive = true })">ארכיון</a></li>
+</ul>
+
+<form class="form-inline filters" role="form">
+    @Html.Hidden("IsArchive")
+    <div class="form-group">
+        <label>הצג:</label>
+        @Html.DropDownList("GridNum", null, null, new { @class = "form-control combo" })
+    </div>
+    <div class="form-group">
+        <div class="input-group">
+            @Html.TextBox("Search", "", new { @class = "form-control", size = 35, placeholder = "חיפוש" })
+            <div class="input-group-btn">
+                <button type="submit" class="btn btn-primary">
+                    <i class="glyphicon glyphicon-search"></i> חפש
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="form-group pull-left last">
+        <a href="@Url.Action("Export")" class="btn btn-success">
+            <i class="glyphicon glyphicon-export"></i> ייצוא לאקסל
+        </a>
+    </div>
+    <div class="form-group pull-left">
+        <a href="@Url.Action("RemoveAll")" data-form="link" class="btn btn-danger btn-act">
+            <i class="glyphicon glyphicon-remove"></i> העבר הכל לארכיון
+        </a>
+    </div>
+</form>
+
+@Html.Grid(Model).Columns(c =>
+{
+    c.Add(m => m.ContactId).Titled("#").Sortable(true).SetWidth(80);
+    c.Add(m => m.SendDate).Titled("תאריך").Sortable(true).SetWidth(140)
+        .Encoded(false)
+        .Sanitized(false)
+        .RenderValueAs(m => ShowDate(m));
+    c.Add(m => m.FullName).Titled("שם").Sortable(true);
+    c.Add(m => m.LastName).Titled("שם משפחה").Sortable(true);
+    //c.Add(m => m.Company).Titled("חברה").Sortable(true);
+    //c.Add(m => m.Phone).Titled("טלפון").Sortable(true).SetWidth(80);
+    c.Add(m => m.Email).Titled("אימייל").Sortable(true);
+    c.Add().Titled("פירסום").Encoded(false)
+       .Sanitized(false)
+       .SetWidth(85)
+       .Css("text-center")
+       .RenderValueAs(m => @<i class="glyphicon @(m.IsGetAds ? "glyphicon-ok-sign text-success" : "glyphicon-remove-sign text-danger")"></i>);
+    c.Add().Titled("טופל").Encoded(false)
+        .Sanitized(false)
+        .SetWidth(75)
+        .Css("text-center")
+        .RenderValueAs(m => @<input name="IsDone" 
+                                    class="active-check" 
+                                    data-act="@Url.Action("Update", new { id = m.ContactId })" 
+                                    checked="@m.IsDone" value="true" type="checkbox" />);
+    c.Add().Encoded(false).Sanitized(false)
+        .SetWidth(30)
+        .RenderValueAs(m => @<a href="@Url.Action("Edit", new { id = m.ContactId })" class="btn btn-primary btn-open" 
+            data-target="#contdetails" 
+            data-toggle="modal"><i class="glyphicon glyphicon-eye-open"></i></a>);
+
+    if (User.IsInRole("admins"))
+    {
+        c.Add().Encoded(false).Sanitized(false).SetWidth(30).RenderValueAs(m => ColDelete(m));
+    }
+
+}).EmptyText(Messages.NoDataFound).WithPaging(ViewBag.PageSize)
+
+@helper ShowDate(AppModel.Contacts c)
+{
+    if (c.IsDone) {
+        <span title="טופל בתאריך @c.DoneDate">@c.SendDate.ToString("g")</span>
+    }
+    else {
+        <b title="חדש">@c.SendDate.ToString("g")</b>
+    }
+}
+
+@helper ColDelete(AppModel.Contacts m)
+{
+    if (m.IsArchive)
+    {
+        <a href="@Url.Action("Move", new { id = m.ContactId, archive = false })" class="btn btn-success">
+            <i class="glyphicon glyphicon-repeat"></i>
+        </a>
+    }
+    else
+    {
+        <a data-form="link" href="@Url.Action("Move", new { id = m.ContactId, archive = true })" data-alert="@Messages.DeleteConfirm" class="btn btn-danger btn-delete">
+            <i class="glyphicon glyphicon-trash"></i>
+        </a>
+    }
+}
+
+<div class="modal fade" id="contdetails" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content"></div>
+    </div>
+</div>

@@ -1,0 +1,48 @@
+﻿@using AppModel
+@using Resources
+@model System.Collections.Generic.List<RowingDistance>
+<h4>@Messages.RowingDistanceTable</h4>
+<table style="text-align:center;" class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>@Messages.Name</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+        <tr>
+            <td>@item.Id</td>
+            <td>@Html.TextBox("name", item.Name, new { form="dis_" + item.Id, @class="form-control"})</td>
+            <td>
+                @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+                {
+                    using (Ajax.BeginForm("EditDistance", "Disciplines", new { Id = item.Id }, new AjaxOptions {}, new { id = "dis_" + item.Id, style="display:inline;"}))
+                    {
+                        <button class="@AppCss.Save" style="display:inline;"></button>
+                    }
+
+                    <a href="@Url.Action("DeleteDistance","Disciplines", new {Id = item.Id, seasonId = ViewBag.SeasonId})" class="@AppCss.Delete"
+                       data-ajax-confirm="@Messages.DeleteConfirm"
+                       data-ajax-update="#distance_data"
+                       data-ajax="true"></a>
+                }
+            </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <td></td>
+            <td> <input type="text" name="name" class="form-control" form="dis_create"/></td>
+            <td>
+                @using (Ajax.BeginForm("CreateDistance", "Disciplines", new { seasonId = ViewBag.SeasonId}, new AjaxOptions { UpdateTargetId = "distance_data", InsertionMode = InsertionMode.Replace }, new { id = "dis_create"}))
+                {
+                    <button class="@AppCss.Save"></button>
+                }
+            </td>
+        </tr>
+    </tfoot>
+</table>

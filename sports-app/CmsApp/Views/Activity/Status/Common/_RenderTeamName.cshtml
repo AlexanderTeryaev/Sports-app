@@ -1,0 +1,38 @@
+﻿@model Tuple<ActivityRegistrationItem, int?, int?>
+
+@{
+    var teamUrl = string.Empty;
+    if (Model.Item1.IsTennisCompetition)
+    {
+        teamUrl = Url.Action("Edit", "Teams",
+            new
+            {
+                id = Model.Item1.TeamId,
+                seasonId = Model.Item3,
+                unionId = Model.Item2,
+                currentLeagueId = Model.Item1.LeagueId,
+                clubId = Model.Item1.ClubId,
+                isTennisCompetition = 1
+            });
+    }
+    else
+    {
+        teamUrl = Url.Action("Edit", "Teams",
+            new
+            {
+                id = Model.Item1.TeamId,
+                seasonId = Model.Item3,
+                unionId = Model.Item2,
+                currentLeagueId = Model.Item1.LeagueId,
+                clubId = Model.Item1.ClubId
+            });
+    }
+}
+
+<td data-search="@(Model.Item1.Team?.Replace("\"", "{QUOTE}")?.Trim())" style="font-weight: bold;">
+    <span>@Model.Item1.Team</span>
+    <a class="glyphicon glyphicon-new-window action-link"
+       href="@teamUrl"
+       target="_blank">
+    </a>
+</td>

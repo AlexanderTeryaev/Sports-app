@@ -1,0 +1,110 @@
+﻿@model LeagueCreateForm
+@{
+    var gendersList = Model.Genders.Select(r => new SelectListItem
+    {
+        Value = r.Value,
+        Text = LangHelper.GetGender(r.Text)
+    });
+    var competitionsList = Model.LeaguesForDuplicate.Count > 0
+            ? Model.LeaguesForDuplicate.Select(r => new SelectListItem
+            {
+                Value = r.LeagueId.ToString(),
+                Text = r.Name
+            })
+            : null;
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+    <h4 class="modal-title">@if (Model.Section == SectionAliases.Gymnastic || Model.Section == SectionAliases.Surfing || Model.Section == GamesAlias.WaveSurfing || Model.IsTennisCompetition == 1 || Model.Section == GamesAlias.WeightLifting || Model.Section == GamesAlias.Athletics || Model.Section == GamesAlias.Swimming || Model.Section == GamesAlias.Rowing || Model.Section == GamesAlias.Climbing || Model.Section == GamesAlias.Bicycle) { @Messages.CreateCompetition } else if (Model.Section == GamesAlias.Tennis) { @Messages.CreateLeague} else { @Messages.CreateTournament }</h4>
+</div>
+
+<form id="leagueform" method="post" autocomplete="off" action="@Url.Action("Create")">
+    <div class="modal-body">
+        <div class="form-group">
+            <label class="control-label">@Messages.Title:</label>
+            @Html.TextBoxFor(m => m.Name, new { @class = "form-control nameCompetition" })
+            @Html.ValidationMessageFor(m => m.Name)
+        </div>
+        @if ((Model.Section != SectionAliases.Tennis || Model.IsTennisCompetition == 0)
+            && !Model.Section.Equals(GamesAlias.Athletics)
+            && !Model.Section.Equals(GamesAlias.WeightLifting, StringComparison.CurrentCultureIgnoreCase)
+            && !Model.Section.Equals(GamesAlias.Swimming)
+            && !Model.Section.Equals(GamesAlias.Rowing)
+            && !Model.Section.Equals(GamesAlias.Climbing)
+            && !Model.Section.Equals(GamesAlias.Bicycle))
+        {
+            <div class="form-group">
+                <label class="control-label">@Messages.Gender:</label>
+                @Html.DropDownListFor(m => m.GenderId, gendersList, new { @class = "form-control" })
+            </div>
+            <div class="form-group">
+                <label class="control-label">@Messages.Ages:</label>
+                @Html.DropDownListFor(m => m.AgeId, Model.Ages, new { @class = "form-control" })
+            </div>
+        }
+        @if (Model.IsHandicapEnabled)
+        {
+            <div class="form-group">
+                <label class="control-label">@Messages.MaximumHandicapScoreValue:</label>
+                @Html.TextBoxFor(m => m.MaximumHandicapScoreValue, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.MaximumHandicapScoreValue)
+            </div>
+        }
+        @if (competitionsList != null)
+        {
+            <div class="form-group">
+                <label class="control-label">@Messages.DuplicateCompetition:</label>
+                @Html.DropDownListFor(m => m.DuplicateLeagueId, competitionsList, Messages.Select, new { @class = "form-control" })
+            </div>
+        }
+        @if (Model.Section.Equals(GamesAlias.Climbing))
+        {
+            <div class="form-group">
+                <label class="control-label">@Messages.Discipline:</label>
+                @Html.DropDownListFor(m => m.DisciplineId, Model.Disciplines, Messages.Select, new { @class = "form-control" })
+            </div>
+        }
+        @if (Model.Section.Equals(GamesAlias.Bicycle))
+        {
+            <div class="form-group">
+                <label class="control-label">@Messages.Type:</label>
+                @Html.DropDownListFor(m => m.BicycleCompetitionDisciplineId, Model.BicycleDisciplines, Messages.Select, new { @class = "form-control" })
+            </div>
+            <div class="form-group">
+                <label class="control-label">@Messages.Level:</label>
+                @Html.DropDownListFor(m => m.LevelId, Model.Levels, Messages.Select, new { @class = "form-control" })
+            </div>
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        <i class="fa fa-spin fa-spinner" id="spinner_create_new_competition" style="display:none"></i>
+        <button class="btn btn-primary" id="create_new_competition_btn" onclick="$('#create_new_competition_btn').hide();$('#spinner_create_new_competition').show();">@Messages.Save</button>
+    </div>
+    @Html.HiddenFor(m => m.UnionId)
+    @if (!Model.Section.Equals(GamesAlias.Climbing))
+    {
+        @Html.HiddenFor(m => m.DisciplineId)
+    }
+    @Html.HiddenFor(m => m.ClubId)
+    @Html.HiddenFor(m => m.SeasonId)
+    @Html.HiddenFor(m => m.Et)
+    @Html.HiddenFor(m => Model.Section)
+    @Html.HiddenFor(m => Model.IsTennisCompetition)
+</form>
+
+<script>
+    $('#leagueform').validateBootstrap(true);
+
+    $(document).ready(function () {
+
+        $('.nameCompetition').on('change', function () {
+            var val = $(this).val();
+            if (val != null && val != "") {
+                $('#create_new_competition_btn').show();
+                $('#spinner_create_new_competition').hide();
+            }
+        });
+    });
+</script>

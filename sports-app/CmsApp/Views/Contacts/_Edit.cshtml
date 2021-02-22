@@ -1,0 +1,48 @@
+﻿@model AppModel.Contacts
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">פרטים</h4>
+</div>
+<div class="modal-body">
+    <div class="form-group">
+        <label class="control-label">תאריך:</label> @Model.SendDate.ToString("g")
+    </div>
+    <div class="form-group">
+        <label class="control-label">שם:</label> @Model.FullName
+    </div>
+    <div class="form-group">
+        <label class="control-label">שם משפחה:</label> @Model.LastName
+    </div>
+    <!--div class="form-group">
+        <label class="control-label">חברה:</label> @Model.Company
+    </div-->
+    <div class="form-group">
+        <label class="control-label">אימייל:</label> @Model.Email
+    </div>
+    <div class="form-group">
+        <label class="control-label">טלפון:</label> @Model.Phone
+    </div>
+    <div class="form-group">
+        <label class="control-label">סוג מדיה:</label> @(Model.IsMobile ? "מובייל" : "ווב")
+    </div>
+    @if (Model.CampId.HasValue)
+    {
+        <div class="form-group">
+            <label class="control-label">תאריך פרסום הקמפיין:</label> @Model.Campaigns.AddDate.ToString("d")
+        </div>
+        <div class="form-group">
+            <label class="control-label">שם קמפיין:</label> @Model.Campaigns.Name
+        </div>
+        <div class="form-group">
+            <label class="control-label">מקור הגעה:</label> @Model.Campaigns.Referrer
+        </div>
+    }
+    <!--div class="form-group">
+        <label class="control-label">הודעה:</label> @Model.Message
+    </div-->
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">סגור</button>
+</div>
+@Html.HiddenFor(m => m.ContactId)

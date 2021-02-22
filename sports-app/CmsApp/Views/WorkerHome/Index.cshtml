@@ -1,0 +1,177 @@
+﻿@model List<ManagedItemViewModel>
+@{
+    var hasBlockades = false;
+    var isMultiple = ViewBag.IsMultiple != null && ViewBag.IsMultiple == true;
+    var isPlayer = ViewBag.IsPlayer ?? false;
+    var className = isMultiple ? "col-lg-12" : "col-lg-6";
+    var isAllIndividualUnions = Model.All(i => i.Section?.IsIndividual == true);
+    var shouldShowStartEndCompetitionDates = isAllIndividualUnions && Model.Any(i => i.JobRole == JobRole.Referee);
+    var messages = Model.Where(c => !string.IsNullOrEmpty(c.KarateClubMessage)).Select(c => c.KarateClubMessage);
+}
+<h2 class="sub-header">@ViewBag.Title</h2>
+
+<div class="row offset-2">
+    @{ Html.RenderAction("SalaryReports", "WorkerHome", new { userId = ViewBag.UserId });}
+
+    <div class="@className" id="WorkerMain">
+        @if (isPlayer)
+        {
+            <a style="margin-bottom: 20px;" href="@Url.Action("Edit", "Players", new {id = ViewBag.UserId, seasonId = ViewBag.LatestSeasonId})" class="btn btn-primary">@Messages.PlayersProfile</a>
+        }
+        <table class="table table-bordered">
+            @if (isMultiple)
+            {
+                <thead>
+                    <tr>
+                        <th>@Messages.SectionName</th>
+                        @if (Model.Any(x => !string.IsNullOrWhiteSpace(x.RegionName)))
+                        {
+                            <th>@Messages.RegionalName</th>
+                        }
+                        <th>@Messages.Union</th>
+                        <th>@Messages.ClubName</th>
+                        <th>@(isAllIndividualUnions ? Messages.CompetitionName : Messages.LeagueName)</th>
+                        @if (shouldShowStartEndCompetitionDates)
+                        {
+                            <th>@Messages.StartDate</th>
+                            <th>@Messages.EndDate</th>
+                        }
+                        <th>@Messages.TeamName</th>
+                        <th>@Messages.Season</th>
+                        <th>@Messages.RolesTypes</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            }
+            <tbody>
+                @if (isMultiple)
+                {
+                    foreach (var m in Model)
+                    {
+                        if (!string.IsNullOrEmpty(m.Url))
+                        {
+                            var rowStyle = m.SeasonId == ViewBag.LatestSeasonId ? "background: lightgreen;" : "";
+                <tr style="@rowStyle">
+                    <td>@m.SectionName</td>
+                    @if (Model.Any(x => !string.IsNullOrWhiteSpace(x.RegionName)))
+                    {
+                        <td>@m.RegionName</td>
+                    }
+                    <td>@m.UnionName</td>
+                    <td>@m.ClubName</td>
+                    <td>@m.LeagueName</td>
+                    @if (shouldShowStartEndCompetitionDates)
+                    {
+                        <td>@m.LeagueStartDate</td>
+                        <td>@m.LeagueEndDate</td>
+                    }
+                    <td>@m.TeamName</td>
+                    <td>@m.SeasonName</td>
+                    <td>@m.JobName</td>
+                    <td>
+                        <a class="btn btn-primary" href="@m.Url">@Messages.Details</a>
+                    </td>
+                </tr>
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var m in Model)
+                    {
+                        <tr>
+                            <td>@m.Name</td>
+                            @if (!string.IsNullOrWhiteSpace(m.UnionName))
+                            {
+                                <td>@m.UnionName</td>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(m.LeagueName))
+                            {
+                                <td>@m.LeagueName</td>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(m.SeasonName))
+                            {
+                                <td>@m.SeasonName</td>
+                            }
+                            <td>
+                                <a class="btn btn-primary" href="@Url.Action("Edit", m.Controller, new {id = m.Id, seasonId = m.SeasonId, currentLeagueId = m.LeagueId, clubId = m.ClubId, unionId = m.UnionId, roleType = m.JobRole, showAlerts = true})">פרטים</a>
+                            </td>
+                        </tr>
+                    }
+                }
+
+            </tbody>
+        </table>
+    </div>
+</div>
+@*Blockades modal*@
+<div class="modal fade" id="unBlockadedPlayersList" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">@Messages.UnblockadedPlayers</h4>
+            </div>
+            <div class="modal-body">
+                @foreach (var m in Model)
+                {
+                    if (m.Unblockaded.Count > 0)
+                    {
+                        hasBlockades = true;
+                        <h4 style="text-align:center">@m.Name:</h4>
+                        foreach (var unionBlockade in m.Unblockaded)
+                        {
+                            <p>@String.Format(Messages.UnblockadedStatusMessage, unionBlockade.UserName, unionBlockade.TeamTitle)</p>
+                        }
+                    }
+                    <hr />
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="karateclubsmodal" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="karateclubsmodal_pl">
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <p id="modal-info-text"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var messages = null;
+</script>
+@if (messages != null && messages.Any())
+{
+    <script>
+        messages = [];
+    </script>
+    foreach (var message in messages)
+    {
+        <script>
+            messages.push("@message");
+        </script>
+    }
+}
+
+<script>
+            $(document).ready(function () {
+                if ("@hasBlockades" === "True"){
+                $("#unBlockadedPlayersList").modal('show');
+            }
+            if (messages) {
+                for (var i = 0; i < messages.length; i++) {
+                    $("#modal-info-text").append(messages[i] + "<br/> <br/>");
+                }
+                $("#karateclubsmodal").modal({ backdrop: 'static', keyboard: false });
+                $("#karateclubsmodal").modal("show");
+            }
+        })
+</script>
+

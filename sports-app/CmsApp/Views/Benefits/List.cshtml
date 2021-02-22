@@ -1,0 +1,20 @@
+﻿@model BenefitModel
+@{
+    bool userIsEditor = User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers);
+    string publishVisible = userIsEditor ? "visible" : "hidden";
+}
+
+@if (userIsEditor)
+{
+    <a href="@Url.Action("AddBenefit", "Benefits", new { seasonId = Model.SeasonId, unionId = Model.UnionId })"
+       data-target="#addbenefit"
+       data-toggle="modal"
+       class="btn btn-primary btn-edit">
+        @Messages.AddBenefit
+    </a>
+}
+
+<div id="benefit_list">
+    @Html.Action("List", "Benefits", new { seasonId = Model.SeasonId, unionId = Model.UnionId })
+</div>
+

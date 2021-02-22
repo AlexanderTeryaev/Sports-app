@@ -1,0 +1,117 @@
+﻿@using DataService.DTO
+@model List<CombinedPlayerRankDto>
+@{
+    var index = 0;
+}
+<style>
+    .combined_tr td{
+    width:1%;
+    white-space:nowrap;
+    direction:ltr;
+    }
+</style>
+@if (Model.Count > 0)
+{
+    <div class="col-sm-12" style="margin:10px;">
+        <div class="row">
+            <a href="@GlobVars.SiteUrl/LeagueRank/AthleticsCombinedRanking/@ViewBag.LeagueId?seasonId=@ViewBag.SeasonId" target="_blank" class="btn btn-primary">@Messages.ExternalLink - @Messages.MultiBattle</a>
+        </div>
+        
+        <div class="row">
+            <h4>@(Messages.MultiBattle)</h4>
+            @if (Model.Where(c => c.GenderId == 1).Count() > 0)
+            {
+            var multiBattleDisciplinesNameList = ViewBag.MultiBattleDisciplinesNameListForMen;
+            <div class="col-sm-10">
+                <h5>@(Messages.Men)</h5>
+                <table class="table table-bordered tableRank">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>@Messages.AthleteNumber</th>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.YearOfBirth</th>
+                            <th>@Messages.Club</th>
+                            @foreach (var name in multiBattleDisciplinesNameList)
+                            {
+                                <th>@name</th>
+                            }
+                            <th>@Messages.Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Where(c => c.GenderId == 1))
+                        {
+                            index += 1;
+                            <tr class="combined_tr">
+                                <td>@index</td>
+                                @{
+                                    var athleteNumber = row.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                }
+                                <td>@(athleteNumber)</td>
+                                <td>@(row.User.FullName)</td>
+                                <td>@(row.User.BirthDay.HasValue ? row.User.BirthDay.Value.Year.ToString() : "")</td>
+                                <td>@(row.ClubName)</td>
+                                @for (var i = 0; i < multiBattleDisciplinesNameList.Count; i++)
+                                {
+                                    var wind = row.Winds[i].HasValue ? (row.Winds[i] < 0 ? row.Winds[i].ToString() : "+" + row.Winds[i].ToString()) : "";
+                                    <td>@UIHelpers.GetCompetitionDisciplineResultString(row.Results[i], row.Formats[i]) @(row.Winds[i].HasValue ? $"/ {wind}" : "")<br />@(row.Points[i])</td>
+                                }
+                                <td>@(Decimal.Round(row.SumPoints))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            }
+            <br />
+            @if (Model.Where(c => c.GenderId == 0).Count() > 0)
+            {
+                index = 0;
+            var multiBattleDisciplinesNameList = ViewBag.MultiBattleDisciplinesNameListForWomen;
+            <div class="col-sm-10">
+                <h5>@(Messages.Women)</h5>
+                <table class="table table-bordered tableRank">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>@Messages.AthleteNumber</th>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.YearOfBirth</th>
+                            <th>@Messages.Club</th>
+                            @foreach (var name in multiBattleDisciplinesNameList)
+                            {
+                                <th>@name</th>
+                            }
+                            <th>@Messages.Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Where(c => c.GenderId == 0))
+                        {
+                            index += 1;
+                            <tr class="combined_tr">
+                                <td>@index</td>
+                                @{
+                                    var athleteNumber = row.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                }
+                                <td>@(athleteNumber)</td>
+                                <td>@(row.User.FullName)</td>
+                                <td>@(row.User.BirthDay.HasValue ? row.User.BirthDay.Value.Year.ToString() : "")</td>
+                                <td>@(row.ClubName)</td>
+                                @for (var i = 0; i < multiBattleDisciplinesNameList.Count; i++)
+                                {
+                                    var wind = row.Winds[i].HasValue ? (row.Winds[i] < 0 ? row.Winds[i].ToString() : "+" + row.Winds[i].ToString()) : "";
+                                    <td>@UIHelpers.GetCompetitionDisciplineResultString(row.Results[i], row.Formats[i]) @(row.Winds[i].HasValue ? $"/ {wind}" : "")<br />@(row.Points[i])</td>
+                                }
+                                <td>@(Decimal.Round(row.SumPoints))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            }
+        </div>
+    </div>
+}
+

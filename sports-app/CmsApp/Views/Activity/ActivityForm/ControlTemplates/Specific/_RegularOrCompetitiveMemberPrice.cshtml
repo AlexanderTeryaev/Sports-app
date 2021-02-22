@@ -1,0 +1,31 @@
+﻿@using System.Globalization
+@model ActivityFormControlTemplateModel
+
+@{
+    var controlEnabled = (!Model.IsPublish || !Model.IsDisabled) && !Model.IsDisabledBySettings;
+}
+
+<div class="control well well-sm @(controlEnabled ? "" : "hidden")" data-type="@ActivityFormControlType.RegularOrCompetitiveMemberPrice" data-fieldnote="@Model.FieldNote" data-hasoptions="@Model.HasOptions" data-isdisabled="@Model.IsDisabled" data-isrequired="@Model.IsRequired" data-canberequired="@Model.CanBeRequired" data-canbedisabled="@Model.CanBeDisabled" @Model.GetDataAttributesForLabels() data-propertyname="@Model.PropertyName" data-isreadonly="@Model.IsReadOnly">
+    @if (controlEnabled)
+    {
+        <label for="buildForm-body-@Model.PropertyName" class="control-label">@Model.GetLabelText():</label>
+        <input id="buildForm-body-@Model.PropertyName" name="@Model.PropertyName" type="text" class="form-control" data-val-required="@Messages.PropertyValueRequired" data-val="@(Model.IsRequired ? "true" : "false")" @(Model.IsReadOnly ? "readonly" : "") />
+
+        if (Model.CustomFlag)
+        {
+            <label for="buildForm-body-@Model.PropertyName-competitive" style="display: inline-block">
+                @Html.CheckBox("IsCompetitiveMember", true, new { disabled = "disabled", id = $"buildForm-body-{Model.PropertyName}-competitive" })
+                @(Messages.ResourceManager.GetString(nameof(Messages.Player_CompetitiveMember),
+                          CultureInfo.CreateSpecificCulture(LocaleHelper.GetLocale(Model.Culture))))
+            </label>
+        }
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_ValidationMessage", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_RequiredSwitch", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_DisabledSwitch", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Custom/_CustomControlOptions", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_FieldNote", Model)
+    }
+</div>

@@ -1,0 +1,1 @@
+ALTER TABLE [LogLig].[dbo].[GamesCycles] ADD Remark NVARCHAR(MAX) NULL

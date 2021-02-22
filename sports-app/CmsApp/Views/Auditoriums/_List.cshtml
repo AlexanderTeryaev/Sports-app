@@ -1,0 +1,357 @@
+﻿@model AuditoriumForm
+@{
+    var savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+
+}
+<a href="#" id="arena_print" class="btn btn-info">
+    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+</a>
+<table id="auditoriumTable" class="table table-bordered offset-3">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>
+                @Messages.Name
+            </th>
+            <th>
+                @Messages.Address
+            </th>
+            @if (Model.SectionAlias == GamesAlias.Climbing)
+            {
+                <th>
+                    @Messages.Type
+                </th>
+            }
+            @if (Model.SectionAlias == GamesAlias.Swimming)
+            {
+                <th>
+                    @Messages.LanesNumber
+                </th>
+                <th>
+                    @Messages.Length
+                </th>
+                <th>
+                    @Messages.Heated
+                </th>
+                <th>
+                    @Messages.IndoorOutdoor
+                </th>
+            }
+            <th class="remove_print"></th>
+            <th class="remove_print"></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var m in Model.Auditoriums)
+    {
+        var frmid = "hallsform" + m.AuditoriumId;
+        <tr>
+            <td name="AuditId">@m.AuditoriumId</td>
+            @using (Ajax.BeginForm("Create", "Auditoriums", new AjaxOptions { UpdateTargetId = "auditoriums" }, new { id = frmid }))
+            {
+                <td>
+                    <div class="form-group" style="margin-bottom:0px">
+                        <input type="text" name="Name" value="@m.Name" form="@frmid" class="form-control txt-auditorium-name" />
+                        @Html.ValidationMessage("Name")
+                    </div>
+                </td>
+                <td>
+                    <div class="form-group" style="margin-bottom: 0px">
+                        <input type="text" name="Address" value="@m.Address" form="@frmid" class="txt-auditorium-adress form-control" oninvalid="this.setCustomValidity('@Messages.AddressModelStateError.Replace("{0}",Messages.Auditoriums.ToLowerInvariant())')" required />
+                        @Html.ValidationMessage("Address")
+                    </div>
+                </td>
+                if (Model.SectionAlias == GamesAlias.Climbing)
+                {
+                    var disciplines = new SelectList(Model.Disciplines, nameof(DataService.DTO.DisciplineDTO.DisciplineId), nameof(DataService.DTO.DisciplineDTO.Name), m.DisciplineId);
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            @Html.DropDownList("DisciplineId", disciplines, Messages.Select, new { @class = "form-control disciplinesSearchList", @form=frmid })
+                        </div>
+                    </td>
+                }
+                if (Model.SectionAlias == GamesAlias.Swimming)
+                {
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            <input type="number" name="LanesNumber" value="@m.LanesNumber" form="@frmid" class="form-control" />
+                            @Html.ValidationMessage("LanesNumber")
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            <input type="number" name="Length" value="@m.Length" form="@frmid" class="form-control" />
+                            @Html.ValidationMessage("Length")
+                        </div>
+                    </td>
+                    <td>
+                        @{
+                            var isHeated = new List<SelectListItem>
+                            {
+                                new SelectListItem{ Value = "0", Text = Messages.No, Selected = !m.IsHeated},
+                                new SelectListItem{ Value = "1", Text = Messages.Yes , Selected = m.IsHeated}
+
+                            };
+
+                        }
+                        @Html.DropDownList("DropIsHeated", isHeated, null, new { @class = "form-control", @form = @frmid, onchange = "isHeatedChanged(this)" })
+                    </td>
+                    <td>
+                        @{
+                            var indoorOutdoor = new List<SelectListItem>
+                                        {
+                                            new SelectListItem{ Value = "0", Text = Messages.Outdoor, Selected = !m.IsIndoor},
+                                            new SelectListItem{ Value = "1", Text = Messages.Indoor , Selected = m.IsIndoor}
+
+                                        };
+
+                        }
+                        @Html.DropDownList("DropIndoorOutdoor", indoorOutdoor, null, new { @class = "form-control", @form = @frmid, onchange = "indoorOutdoorChanged(this)" })
+                    </td>
+                }
+                @Html.HiddenFor(x => x.UnionId, new { form = frmid })
+                <input type="hidden"id = "isIndoor_@frmid", name = "IndoorOutdoor" form="@frmid" value="@m.IsIndoor" />
+                <input type="hidden"id = "isHeated_@frmid", name = "IsHeated" form="@frmid" value="@m.IsHeated" />
+                @Html.HiddenFor(x => x.SeasonId, new { form = frmid })
+                @Html.HiddenFor(x => x.ClubId, new { form = frmid })
+            }
+            <td class="remove_print">
+                <input type="hidden" name="AuditoriumId" form="@frmid" value="@m.AuditoriumId" />
+                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                {
+                    var idd = "Save" + frmid;
+                    <button class="btn-save-record btn btn-primary btn-save glyphicon glyphicon-saved" form="@frmid" id="@idd" disabled="disabled"></button>
+                }
+            </td>
+            <td class="remove_print">
+                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                {
+                    <a href="@Url.Action("Delete", new { id = m.AuditoriumId, unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId, clubId = ViewBag.ClubId })" class="@AppCss.Delete"
+                       data-ajax-confirm="@Messages.DeleteConfirm"
+                       data-ajax-update="#auditoriums"
+                       data-ajax="true"></a>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <tfoot class="remove_print">
+        @using (Ajax.BeginForm("Create", "Auditoriums", new AjaxOptions { UpdateTargetId = "auditoriums" }, new { id = "hallsform" }))
+        {
+            <tr>
+                <td>@Messages.AddNew</td>
+
+                <td>
+                    <div class="form-group">
+                        @Html.TextBoxFor(m => m.Name, new { @class = "form-control", maxlength = 80, form = "hallsform", required = "required" })
+                        @Html.ValidationMessageFor(m => m.Name)
+                    </div>
+                </td>
+                <td>
+                    <div class="form-group">
+                        <div id="locationField">
+                            <input id="auditoriumAddress" form="hallsform" placeholder="@Messages.AutocompleteAddress" name="Address" class="form-control" type="text" oninvalid="this.setCustomValidity('@Messages.AddressModelStateError.Replace("{0}", Messages.Auditoriums.ToLowerInvariant())')" required />
+                        </div>
+                    </div>
+                </td>
+                @if (Model.SectionAlias == GamesAlias.Climbing)
+                {
+                    var disciplines = new SelectList(Model.Disciplines, nameof(DataService.DTO.DisciplineDTO.DisciplineId), nameof(DataService.DTO.DisciplineDTO.Name));
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            @Html.DropDownList("DisciplineId", disciplines, Messages.Select, new { @class = "form-control disciplinesSearchList", @name = "DisciplineId", @form = "hallsform" })
+                        </div>
+                    </td>
+                }
+                @if (Model.SectionAlias == GamesAlias.Swimming)
+                {
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            <input type="number" name="LanesNumber" form="hallsform" class="form-control" />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            <input type="number" name="Length" form="hallsform" class="form-control" />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            @{
+                                var isHeated = new List<SelectListItem>
+                                {
+                                    new SelectListItem{ Value = "0", Text = Messages.No, Selected = true},
+                                    new SelectListItem{ Value = "1", Text = Messages.Yes }
+
+                                };
+
+                            }
+                            @Html.DropDownList("IsHeated", isHeated, null, new { @class = "form-control", @form = "hallsform" })
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            @{
+                                var indoorOutdoor = new List<SelectListItem>
+                                {
+                                    new SelectListItem{ Value = "0", Text = Messages.Outdoor, Selected = true},
+                                    new SelectListItem{ Value = "1", Text = Messages.Indoor }
+
+                                };
+
+                            }
+                            @Html.DropDownList("IndoorOutdoor", indoorOutdoor, null, new { @class = "form-control", @form = "hallsform" })
+                        </div>
+                    </td>
+                }
+                <td>
+                    <button type="submit" class="btn btn-primary" form="hallsform">@Messages.Save</button>
+                </td>
+                <td>
+                    @Html.HiddenFor(m => m.AuditoriumId, new { form = "hallsform" })
+                    @Html.HiddenFor(m => m.UnionId, new { form = "hallsform" })
+                    @Html.HiddenFor(x => x.SeasonId, new { form = "hallsform" })
+                    @Html.HiddenFor(x => x.ClubId, new { form = "hallsform" })
+                </td>
+            </tr>
+        }
+        </tfoot>
+    }
+</table>
+<script>
+    var autocomplete;
+    function initialize() {
+        autocomplete = new google.maps.places.Autocomplete(
+            (document.getElementById('auditoriumAddress')),
+            { types: ['geocode'] });
+        google.maps.event.addListener(autocomplete, 'place_changed', function () {
+        });
+    }
+    $(document).ready(function () {
+        initialize();
+
+        $(".disciplinesSearchList").multiselect({
+            numberDisplayed: 1,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            onChange: function () {
+                var select = $(this)[0].$select[0];
+                var frmId = $(select).attr("form");
+                $("#Save" + frmId).removeAttr("disabled");
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+    });
+</script>
+<script>
+    @if(Model.SectionAlias == SectionAliases.Climbing)
+    {
+        <text>
+        var isClimbing = true;
+        </text>
+    }
+    else
+    {
+        <text>
+        var isClimbing = false;
+        </text>
+    }
+    $('#arena_print').click(function () {
+        var tbl = $('div.active').find('table');
+        if (tbl.length > 0) {
+            arenaPrint(tbl);
+        }
+    });
+    function indoorOutdoorChanged(selectObject) {
+        var selectedOption = selectObject.selectedOptions[0].value;
+        var frmId = $(selectObject).attr("form");
+        if (selectedOption == "0") {
+            $('#isIndoor_' + frmId).val(0);
+        } else {
+            $('#isIndoor_' + frmId).val(1);
+        }
+        $("#Save" + frmId).removeAttr("disabled");
+    };
+    function isHeatedChanged(selectObject) {
+            var selectedOption = selectObject.selectedOptions[0].value;
+            var frmId = $(selectObject).attr("form");
+            if (selectedOption == "0") {
+                $('#isHeated_' + frmId).val(0);
+            } else {
+                $('#isHeated_' + frmId).val(1);
+            }
+            $("#Save" + frmId).removeAttr("disabled");
+        };
+    
+    function arenaPrint(el) {
+        var wnd = window.open('', 'Arena', 'height=600, width=600');
+        wnd.document.write('<html><head><title>Arena</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+        var TableData = new Array();
+
+        $("#auditoriumTable tbody tr").each(function (row, tr) {
+            TableData[row] = {
+                "id": $($(tr).find('td[name=AuditId]')).text(),
+                "name": $($(tr).find('input[name=Name]')).val(),
+                "address": $($(tr).find('input[name=Address]')).val(),
+                "type": $($(tr).find('select[name=DisciplineId] :selected')).text()
+            }
+        });
+        wnd.document.write('<table class="table table-bordered offset-3"><thead>');
+        wnd.document.write("<tr>");
+        wnd.document.write("<th>" + "#" + "</th>");
+        wnd.document.write("<th>" + "@Messages.Name" + "</th>");
+        wnd.document.write("<th>" + "@Messages.Address" + "</th>");
+        if (isClimbing) wnd.document.write("<th>" + "@Messages.Type" + "</th>");
+        wnd.document.write("</tr>");
+        wnd.document.write('</thead><tbody>');
+        for (var i = 0; i < TableData.length; i++) {
+            wnd.document.write("<tr>");
+            wnd.document.write("<td>" + TableData[i].id + "</td>");
+            wnd.document.write("<td>" + TableData[i].name + "</td>");
+            wnd.document.write("<td>" + TableData[i].address + "</td>");
+            if (isClimbing) {
+                if (TableData[i].type != "@Messages.Select")
+                    wnd.document.write("<td>" + TableData[i].type + "</td>");
+                else 
+                    wnd.document.write("<td></td>");
+            } 
+            wnd.document.write("</tr>");
+        }
+        wnd.document.write('</tbody></table>');
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 200);
+    }
+
+    $(document).ready(function () {
+        //$('.txt-auditorium-adress').on('keyup', function () {
+        //    var saveButton = $(this).parent().parent().parent().find('.btn-save-record');
+        //    $(saveButton).removeClass('btn-primary btn-save');
+        //    $(saveButton).addClass('btn-success');
+        //});
+        $('.txt-auditorium-name').change(function () {
+            var frmId = $(this).attr("form");
+            $("#Save" + frmId).removeAttr("disabled");
+        })
+        $('.txt-auditorium-adress').change(function () {
+            var frmId = $(this).attr("form");
+            $("#Save" + frmId).removeAttr("disabled");
+        })
+    });
+</script>
+
+

@@ -1,0 +1,686 @@
+﻿
+@model EditUnionForm
+@{
+    var blockades = Session["UnblockadedPlayers"] as List<DataService.DTO.PlayersBlockadeShortDTO>;
+    var hasBlockades = blockades != null && blockades.Count > 0 ? true : false;
+    var isUnionViewer = ViewBag.IsUnionViewer != null ? ViewBag.IsUnionViewer : false;
+    string leagueCapture, tournamentCapture, teamsValue, createValue, exportValue, addTorunament = string.Empty;
+    UIHelpers.GetUnionClubInfoCaption(Model.SectionAlias, out tournamentCapture, out leagueCapture, out teamsValue, out createValue, out exportValue, out addTorunament);
+    string divSize = Model.SectionIsIndividual ? "col-sm-12" : "col-sm-9";
+    bool isRefereeRole = User.HasTopLevelJob(JobRole.RefereeAssignment);
+    bool isValidToShowRegionalfederations = false;
+    isValidToShowRegionalfederations = ViewBag.IsRegionallevelEnabled  ;
+
+}
+@Html.HiddenFor(m => m.SeasonId)
+<link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
+<link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" media="print" rel="stylesheet" />
+<div class="row">
+    <div class="col-lg-8">
+        <h3 class="sub-header">
+            @{
+                if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+                {
+
+                    <a href="@Url.Action("Edit", "Sections", new {id = Model.SectionId})">@Model.SectionName</a>
+                }
+                else
+                {
+                    @Model.SectionName
+                }
+            }
+            &raquo; @Model.UnionName
+        </h3>
+    </div>
+
+    @if (User.IsInAnyRole(AppRole.Admins))
+    {
+        <div class="col-lg-2">
+            <div class="form-group" style="margin-top: 20px">
+                <a class="btn btn-default" data-toggle="modal" data-target="#importImgModal">@Messages.ImportPlayerImages</a>
+                <a class="btn btn-default" data-toggle="modal" data-target="#importIDFilesModal">@Messages.ImportIdFiles</a>
+            </div>
+            @Html.Partial("_ImportFiles")
+        </div>
+    }
+
+    <div class="col-lg-2">
+        <div class="form-group" style="margin-top: 20px">
+            @Html.DropDownListFor(m => m.SeasonId, new SelectList(Model.Seasons, "Id", "Name"), new { @class = "form-control", @id = "ddlSeasons" })
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" id="section_tabs" role="tablist">
+    <li class="active"><a href="#details" data-toggle="tab">@Messages.Info</a></li>
+
+    @if (isValidToShowRegionalfederations)
+    {
+        <li><a href="#regionalfed" data-toggle="tab">Regional federations</a></li>
+    }
+    @if (!isRefereeRole)
+    {
+        <li><a href="#clubs" data-toggle="tab">@(!string.Equals(Model.SectionAlias, SectionAliases.Surfing, StringComparison.OrdinalIgnoreCase) ? Messages.ClubsInSection : Messages.SurfingClub)</a></li>
+     <!-- <li><a href="#flowers" data-toggle="tab">@Messages.FlowersOfSport</a></li>  -->  
+        if (Model.SectionAlias != GamesAlias.WeightLifting)
+        {
+            if (Model.HasDisciplines && Model.UnionId != 37)
+            {
+                <li><a href="#disciplines" data-toggle="tab">@Messages.Disciplines</a></li>
+            }
+            else if (!Model.HasDisciplines && Model.UnionId != 37)
+            {
+                <li><a href="#leagues" data-toggle="tab">@leagueCapture</a></li>
+            }
+        }
+    }
+    @if (Model.SectionAlias.Equals(GamesAlias.Athletics) || Model.SectionAlias.Equals(GamesAlias.WeightLifting, StringComparison.OrdinalIgnoreCase))
+    {
+        <li><a href="#competitions" data-toggle="tab">@Messages.Competitions</a></li>
+       @*<li><a href="#leagues" data-toggle="tab">@Messages.Leagues</a></li>*@
+    }
+
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        <li><a href="#userstab" data-toggle="tab">@Messages.Workers</a></li>
+
+        if (Model.UnionId == 37 || Model.UnionId == 52)
+        {
+            <li>
+                <a href="#referees" data-toggle="tab">
+                    @if (Model.UnionId == 37)
+                    {
+                    @Messages.Referees
+                    }
+                    else if (Model.UnionId == 52)
+                    {
+                    @Messages.RefereesCoaches
+                    }
+                </a>
+            </li>
+        }
+    }
+
+    @if (!Model.IsCatchBall)
+    {
+        string caption = UIHelpers.GetPlayerCaption(Model.SectionAlias);
+
+        if (Model.SectionIsIndividual && Model.SectionAlias != GamesAlias.Gymnastic && Model.SectionAlias != GamesAlias.Tennis)
+        {
+            caption = Messages.Sportsmans;
+        }
+
+        if (Model.SectionAlias.Equals(GamesAlias.Athletics))
+        {
+            caption = Messages.Athletes;
+        }
+        if (!isRefereeRole)
+        { 
+            <li><a href="#players" data-toggle="tab">@caption</a></li>
+        }
+    }
+    @if (string.Equals(Model.SectionAlias, GamesAlias.Motorsport, StringComparison.OrdinalIgnoreCase))
+    {
+        <li><a href="#vehicles" data-toggle="tab">@Messages.Vehicles</a></li>
+    }
+
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        if (!string.Equals(Model.SectionAlias, SectionAliases.Surfing, StringComparison.OrdinalIgnoreCase))
+        {
+            <li><a href="#auditoriums" data-toggle="tab">@UIHelpers.GetAuditoriumCaption(Model.SectionAlias)</a></li>
+        }
+        if (!Model.HasDisciplines)
+        {
+            <li><a href="#schedules" data-toggle="tab">@Messages.GamesTable</a></li>
+        }
+    }
+    @if (!Model.HasDisciplines && !string.Equals(Model.SectionAlias, SectionAliases.Surfing, StringComparison.OrdinalIgnoreCase))
+    {
+        <li>
+            <a href="#eilatTournament" data-toggle="tab">
+                @if (Model.IsCatchBall)
+                {
+                    @Messages.EilatTournament
+                }
+                else if (Model.SectionId == 6)
+                {
+                    @Messages.Competitions
+                }
+                else
+                {
+                    @tournamentCapture
+                }
+
+            </a>
+        </li>
+    }
+    @if (string.Equals(Model.SectionAlias, SectionAliases.Tennis, StringComparison.OrdinalIgnoreCase))
+    {
+        <li><a href="#tennisrankings" data-toggle="tab">@Messages.CompetitionTable</a></li>
+    }
+    <li><a href="#seasons" data-toggle="tab">@Messages.Seasons</a></li>
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        <li><a href="#notifications" data-toggle="tab">@Messages.Notifications</a></li>
+    }
+    @if (ViewBag.JobRole == JobRole.UnionManager || User.IsInAnyRole(AppRole.Admins) || isUnionViewer)
+    {
+        <li><a href="#activities" data-toggle="tab">@Messages.ManageActivities</a></li>
+    }
+    @*
+        @if (ViewBag.JobRole == JobRole.UnionManager || User.IsInAnyRole(AppRole.Admins) || isUnionViewer)
+        {
+            <li><a href="#banners" data-toggle="tab">@Messages.Banner</a></li>
+        }
+    *@
+    @if (Model.HasDisciplines && (ViewBag.JobRole == JobRole.UnionManager || User.IsInAnyRole(AppRole.Admins)))
+    {
+        <li id="unioncalendarview"><a href="#calendar-sector" data-toggle="tab">@Messages.Calendar</a></li>
+    }
+</ul>
+
+<div id="groupmodal" class="tab-content row offset-3">
+    <div class="tab-pane fade in active col-sm-12" id="details">
+        @*@Html.Action("Details", new { id = Model.UnionId, seasonId = Model.SeasonId })*@
+        <div class="row" id="details-tab">
+            @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("Details", new { id = Model.UnionId, seasonId = Model.SeasonId }),
+               DataElementId = "details-tab"
+           })
+        </div>
+
+    </div>
+	@if (isValidToShowRegionalfederations)
+    {
+    <div class="tab-pane fade @divSize" id="regionalfed">
+        <div id="union_regionalfed">           
+            <div class="row" id="regionalfed-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("ListRegional", "Regional", new { id = Model.UnionId, seasonId = Model.SeasonId }),
+               DataElementId = "regionalfed-tab"
+           })
+            </div>
+
+        </div>
+    </div>
+    }
+    @if(!isRefereeRole)
+    {
+    <div class="tab-pane fade @divSize" id="clubs">
+        <div id="union_clubs">
+            @*@Html.Action("ListByUnion", "Clubs", new { id = Model.UnionId, seasonId = Model.SeasonId })*@
+            <div class="row" id="clubs-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("ListByUnion", "Clubs", new { id = Model.UnionId, seasonId = Model.SeasonId }),
+                   DataElementId = "clubs-tab"
+               })
+            </div>
+
+        </div>
+    </div>
+ <!--  <div class="tab-pane fade col-sm-12" id="flowers">
+        <div id="flowers_of_sport">
+            @*@Html.Action("ListByUnion", "Clubs", new { id = Model.UnionId, seasonId = Model.SeasonId, isFlowersOfSport = true })*@
+            <div class="row" id="flowers-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("ListByUnion", "Clubs", new { id = Model.UnionId, seasonId = Model.SeasonId, isFlowersOfSport = true }),
+               DataElementId = "flowers-tab"
+           })
+            </div>
+
+        </div>
+    </div> --> 
+    }
+
+    @if (Model.HasDisciplines && Model.SectionAlias != GamesAlias.WeightLifting)
+    {
+        <div class="tab-pane fade col-sm-12" id="disciplines">
+            @*@Html.Action("ListBySection", "Disciplines", new { sectionId = Model.SectionId, unionId = Model.UnionId })*@
+            <div class="row">
+                <div class="col-sm-6" id="disciplines-tab">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("ListBySection", "Disciplines", new { sectionId = Model.SectionId, unionId = Model.UnionId }),
+                       DataElementId = "disciplines-tab"
+                   })
+                </div>
+                @if (Model.SectionAlias.Equals(GamesAlias.Athletics))
+                {
+                    <div class="col-sm-6">
+                        <h3>@Messages.Settings</h3>
+                        <h4>@Messages.MeasurementFormat</h4>
+                        <table style="direction:ltr;text-align:center;" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>@Messages.Input</th>
+                                    <th>@Messages.Format</th>
+                                    <th>@Messages.Measure</th>
+                                    <th>@Messages.Type</th>
+                                    <th>@Messages.Sorting</th>
+                                    <th>@Messages.MeasureNo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@@.@@")</text></td>
+                                    <td style="direction:ltr;">00.00</td>
+                                    <td style="direction:ltr;">SS.mm</td>
+                                    <td>זמן</td>
+                                    <td>נמוך</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@:@@.@@")</text></td>
+                                    <td style="direction:ltr;">0:00.00</td>
+                                    <td style="direction:ltr;">M:SS.mm</td>
+                                    <td>זמן</td>
+                                    <td>נמוך</td>
+                                    <td>2</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@@:@@.@@")</text></td>
+                                    <td style="direction:ltr;">00:00.00</td>
+                                    <td style="direction:ltr;">MM:SS.mm</td>
+                                    <td>זמן</td>
+                                    <td>נמוך</td>
+                                    <td>3</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@@:@@:@@.@@")</text></td>
+                                    <td style="direction:ltr;">00:00:00.00</td>
+                                    <td style="direction:ltr;">HH:MM:SS.mm</td>
+                                    <td>זמן</td>
+                                    <td>נמוך</td>
+                                    <td>4</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@@:@@:@@")</text></td>
+                                    <td style="direction:ltr;">00:00:00</td>
+                                    <td style="direction:ltr;">HH:MM:SS</td>
+                                    <td>זמן</td>
+                                    <td>נמוך</td>
+                                    <td>5</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@.@@")</text></td>
+                                    <td style="direction:ltr;">0.00</td>
+                                    <td></td>
+                                    <td>מרחק</td>
+                                    <td>גבוה</td>
+                                    <td>6</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@@.@@")</text></td>
+                                    <td style="direction:ltr;">00.00</td>
+                                    <td></td>
+                                    <td>מרחק</td>
+                                    <td>גבוה</td>
+                                    <td>7</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@,@@@")</text></td>
+                                    <td style="direction:ltr;">0,000</td>
+                                    <td style="direction:ltr;">P,ppp</td>
+                                    <td>נקודות</td>
+                                    <td>גבוה</td>
+                                    <td>8</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@@:@@")</text></td>
+                                    <td style="direction:ltr;">00:00</td>
+                                    <td style="direction:ltr;">MM:SS</td>
+                                    <td>זמן</td>
+                                    <td>נמוך</td>
+                                    <td>9</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@.@@")</text></td>
+                                    <td style="direction:ltr;">0.00</td>
+                                    <td></td>
+                                    <td>מרחק</td>
+                                    <td>גבוה</td>
+                                    <td>10</td>
+                                </tr>
+                                <tr>
+                                    <td style="direction:ltr;"><text>@Html.Raw("@@.@@")</text></td>
+                                    <td style="direction:ltr;">00.00</td>
+                                    <td></td>
+                                    <td>מרחק</td>
+                                    <td>גבוה</td>
+                                    <td>11</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="tab-pane fade  col-sm-9" id="leagues">
+            @*@Html.Action("Leagues", "Unions", new { id = Model.UnionId, seasonId = Model.SeasonId })*@
+            <div class="row" id="leagues-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("Leagues", "Unions", new { id = Model.UnionId, seasonId = Model.SeasonId }),
+                   DataElementId = "leagues-tab"
+               })
+            </div>
+
+        </div>
+    }
+    @if (Model.SectionAlias.Equals(GamesAlias.Athletics) || Model.SectionAlias.Equals(GamesAlias.WeightLifting, StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="tab-pane fade  col-sm-12" id="competitions">
+            @*@Html.Action("Competitions", "Unions", new { unionId = Model.UnionId, seasonId = Model.SeasonId })*@
+            <div class="row" id="competitions-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+                {
+                   ActionUrl = Url.Action("Competitions", "Unions", new { unionId = Model.UnionId, seasonId = Model.SeasonId }),
+                   DataElementId = "competitions-tab"
+                })
+            </div>
+
+        </div>
+        @*<div class="tab-pane fade  col-sm-9" id="leagues">
+                @Html.Action("Leagues", "Unions", new { id = Model.UnionId, seasonId = Model.SeasonId })
+            </div>*@
+    }
+
+    <div class="tab-pane fade col-sm-12" id="userstab">
+        <div id="workers_list">
+            @*@Html.Action("WorkerList", "Jobs", new { id = Model.UnionId, logicalName = LogicaName.Union, seasonId = Model.SeasonId, unionId = Model.UnionId })*@
+            <div class="row" id="userstab-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("WorkerList", "Jobs", new { id = Model.UnionId, logicalName = LogicaName.Union, seasonId = Model.SeasonId, unionId = Model.UnionId }),
+                   DataElementId = "userstab-tab"
+               })
+            </div>
+
+        </div>
+    </div>
+    @if (Model.UnionId == 37 || Model.UnionId == 52)
+    {
+        <div class="tab-pane fade col-sm-12" id="referees">
+            <div id="referee_list">
+                @Html.Action("WorkerList", "Jobs", new { id = Model.UnionId, logicalName = LogicaName.Union, seasonId = Model.SeasonId, onlyReferees = true, unionId = Model.UnionId })
+            </div>
+        </div>
+    }
+
+    @if (!Model.IsCatchBall)
+    {
+        <div class="tab-pane fade col-sm-12 offset-2" id="players">
+            <div class="players_list" id="players_list">
+                @Messages.Loading
+            </div>
+        </div>
+    }
+
+    @if (string.Equals(Model.SectionAlias, GamesAlias.Motorsport, StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="tab-pane fade col-sm-11 offset-2" id="vehicles">
+            <div id="vehicles_List">
+                @Html.Action("List", "Vehicles", new { id = Model.UnionId, seasonId = Model.SeasonId })
+            </div>
+        </div>
+    }
+
+    <div class="tab-pane fade col-sm-7" id="auditoriums">
+        @*@Html.Action("List", "Auditoriums", new { unionId = Model.UnionId, seasonId = Model.SeasonId })*@
+        <div class="row" id="auditoriums-tab">
+            @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("List", "Auditoriums", new { unionId = Model.UnionId, seasonId = Model.SeasonId }),
+               DataElementId = "auditoriums-tab"
+           })
+        </div>
+
+    </div>
+    <div class="tab-pane fade col-sm-12 offset-2" id="eilatTournament">
+        @if (Model.SectionId == 6)
+        {
+            @Html.Action("Competitions", "Unions", new { unionId = Model.UnionId, seasonId = Model.SeasonId })
+        }
+        else
+        {
+            @*@Html.Action("EilatTournament", "Unions", new { unionId = Model.UnionId, seasonId = Model.SeasonId })*@
+            <div class="row" id="eilatTournament-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("EilatTournament", "Unions", new { unionId = Model.UnionId, seasonId = Model.SeasonId }),
+                   DataElementId = "eilatTournament-tab"
+               })
+            </div>
+        }
+
+    </div>
+    @if (Model.SectionId == 6)
+    {
+        <div class="tab-pane fade col-sm-12 offset-2" id="tennisrankings">
+            @Html.Action("TennisUnionRankDetails", "LeagueRank", new { unionId = Model.UnionId, seasonId = Model.SeasonId })
+        </div>
+    }
+    @if (!string.Equals(Model.SectionAlias, SectionAliases.Surfing, StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="tab-pane fade col-sm-6" id="auditoriums">
+            @*@Html.Action("List", "Auditoriums", new { unionId = Model.UnionId, seasonId = Model.SeasonId })*@
+            <div class="row" id="auditoriums-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("List", "Auditoriums", new { unionId = Model.UnionId, seasonId = Model.SeasonId }),
+               DataElementId = "auditoriums-tab"
+           })
+            </div>
+
+        </div>
+    }
+
+    <div class="tab-pane fade" id="schedules">
+        @Html.Action("List", "Sections", new
+        {
+            model = new Schedules
+            {
+                UnionId = Model.UnionId
+            },
+            seasonId = Model.SeasonId
+        })
+        @*<div class="row" id="schedules-tab">
+                 @Html.Partial("_TabLoader", new TabLoaderParams
+            {
+                ActionUrl = Url.Action("List", "Sections", new { model = new Schedules {UnionId = Model.UnionId},seasonId = Model.SeasonId }),
+                DataElementId = "schedules-tab"
+            })
+             </div>*@
+
+    </div>
+
+    <div class="tab-pane fade col-sm-7 offset-2" id="seasons">
+        @*@Html.Action("List", "Seasons", new { entityId = Model.UnionId, logicalName = LogicaName.Union })*@
+        <div class="row" id="seasons-tab">
+            @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("List", "Seasons", new { entityId = Model.UnionId, logicalName = LogicaName.Union }),
+               DataElementId = "seasons-tab"
+           })
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="notifications">
+        @*@Html.Action("Add", "Notifications", new { entityId = Model.UnionId, logicalName = LogicaName.Union })*@
+        <div class="row" id="notifications-tab">
+            @Html.Partial("_TabLoader", new TabLoaderParams
+       {
+           ActionUrl = Url.Action("Add", "Notifications", new { entityId = Model.UnionId, logicalName = LogicaName.Union, seasonId=Model.SeasonId }),
+           DataElementId = "notifications-tab"
+       })
+        </div>
+
+    </div>
+    @if (ViewBag.JobRole == JobRole.UnionManager || User.IsInAnyRole(AppRole.Admins) || isUnionViewer)
+    {
+        <div class="tab-pane fade" id="activities">
+            <div id="activity-list">
+                @*@Html.Action("List", "Activity", new { unionId = Model.UnionId, seasonId = Model.SeasonId })*@
+                <div class="row" id="activity-list-tab">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("List", "Activity", new { unionId = Model.UnionId, seasonId = Model.SeasonId }),
+                       DataElementId = "activity-list-tab"
+                   })
+                </div>
+            </div>
+        </div>
+
+    }
+    @*
+        @if (ViewBag.JobRole == JobRole.UnionManager || User.IsInAnyRole(AppRole.Admins) || isUnionViewer)
+        {
+            <div class="tab-pane fade" id="banners">
+                @Html.Action("List", "Banners", new { parentId = Model.UnionId, isUnion = true })
+            </div>
+        }
+    *@
+    @if (Model.HasDisciplines && (ViewBag.JobRole == JobRole.UnionManager || User.IsInAnyRole(AppRole.Admins)))
+    {
+        <div class="tab-pane fade" id="calendar-sector">
+            <div id="union-calendar">
+                @*@Html.Action("Calendar", "Unions", new { unionId = Model.UnionId, seasonId = Model.SeasonId })*@
+                <div class="row" id="union-calendar-tab">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("Calendar", "Unions", new { unionId = Model.UnionId, seasonId = Model.SeasonId }),
+                       DataElementId = "union-calendar-tab"
+                   })
+                </div>
+
+            </div>
+        </div>
+    }
+</div>
+
+
+
+
+<div class="modal fade" id="newleague" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="banneredit" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="newpointsetting" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content"></div>
+    </div>
+</div>
+@*Blockades modal*@
+@if (hasBlockades && !User.IsInAnyRole(AppRole.Admins))
+{
+    <div class="modal fade" id="unBlockadedPlayersList" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">@Messages.Notifications</h4>
+                </div>
+                <div class="modal-body">
+                    @{
+                        var blocadesByType = blockades.GroupBy(b => b.BType);
+
+                        IGrouping<int, DataService.DTO.PlayersBlockadeShortDTO> gBlockades = null;
+                        IGrouping<int, DataService.DTO.PlayersBlockadeShortDTO> gMedCertExpireInMonth = null;
+                        foreach (var result in blocadesByType)
+                        {
+                            if (result.Key == BlockadeType.Blockade) {
+                                gBlockades = result;
+                            }
+                            if (result.Key == BlockadeType.MedicalExpiration)
+                            {
+                                gMedCertExpireInMonth = result;
+                            }
+                        }
+
+                    }
+                    @if (gBlockades != null)
+                    {
+                        <h4 class="modal-title">@Messages.UnblockadedPlayers</h4>
+                        foreach (var blockade in gBlockades)
+                        {
+                            <p>@String.Format(Messages.UnblockadedStatusMessage, blockade.UserName, blockade.TeamTitle)</p>
+                        }
+                    }
+                    @if (gMedCertExpireInMonth != null)
+                    {
+                        <h4 class="modal-title">@Messages.MedicalExpirationAlert</h4>
+                        foreach (var blockade in gMedCertExpireInMonth)
+                        {
+                            <p>@String.Format(Messages.MedicalCertExpirationSoonMessage, blockade.UserName, blockade.TeamTitle)</p>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    Session["UnblockadedPlayers"] = null;
+}
+
+@section scripts
+{
+    <script>
+        $('#ddlSeasons').change(function () {
+            var seasonId = $(this).val();
+            $.ajax({
+                url: '/Admin/SetUnionCurrentSeason',
+                type: 'POST',
+                dataType: 'JSON',
+                data: { seasonId },
+                success: function () {
+
+                }
+            });
+            window.location.href = '@Url.Action("Edit", new { id = Model.UnionId })?seasonId=' + seasonId;
+        });
+    </script>
+
+    <link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500">
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiwCq-EDCvfhQ786WvFgSQvrSxCgjzsYM&libraries=places"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.refereeids').multiselect();
+
+            var url = '@Html.Raw(Url.Action("List", "Players",
+                      new { id = Model.UnionId, logicalName = LogicaName.Union, seasonId = Model.SeasonId, isUnionViewer = isUnionViewer }))';
+            $("#players_list").load(url);
+            if ('@hasBlockades' == 'True')
+            {
+                $("#unBlockadedPlayersList").modal('show');
+            }
+            if ('@isUnionViewer' === "True") {
+                $("a").attr('disabled', true);
+                $(".btn").attr('disabled', true);
+                $(".export").attr('disabled', false);
+                $(".frm-date").attr('disabled', true);
+                $(".auditoriums-display").attr('disabled', true);
+                $("#arena_print").attr('disabled', false);
+                $("#groupform > div:nth-child(1) > div > table > tbody > tr > td:nth-child(5) > span > div > button").attr('disabled', false);
+                $("#date-to-div .btn").attr("disabled", false);
+                $(".club-details").attr("disabled", false);
+                $(".league-details").attr("disabled", false);
+                $('select[name="RefereeIds"]').attr('disabled', true);
+            }
+        });
+    </script>
+}

@@ -1,0 +1,360 @@
+﻿@using AppModel
+@model List<IGrouping<string, CompetitionDisciplineRegistration>>
+@{ 
+    bool isCallRoomManager = User.HasTopLevelJob(JobRole.CallRoomManager);
+    var athInHeatIndex = 0;
+
+    bool refereePermission = User.GetSessionWorkerValueOrTopLevelLeagueJob((int)ViewBag.LeagueId) == JobRole.Referee;
+    var disabledAttribute = refereePermission ? "disabled" : "";
+    var heatStartTimes = (List<CompetitionDisciplineHeatStartTime>)ViewBag.HeatStartTimes;
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9">
+            <h4 class="modal-title">@Messages.StartList - @ViewBag.DisciplineName - @ViewBag.CompetitionName - @ViewBag.CompetitionDate</h4>
+        </div>
+        <div class="pull-right" style="line-height:25px;">
+            <strong>@Messages.ParticipatingCount.ToLower(): <text id="athletics_count">@(ViewBag.PlayersCount ?? 0)</text></strong>
+        </div>
+    </div>
+</div>
+<style>
+    tr.heat_tr + tr.ui-sortable-handle > td {
+        border-top: 1px dashed #979fa7 !important;
+    }
+    tr.ui-sortable-handle > td {
+        border-bottom: 1px dashed #979fa7 !important;
+    }
+    tr.heat_tr_th > th {
+        text-align: center !important;
+    }
+</style>
+<div class="modal-body">
+    <div class="row col-sm-12" style="margin-bottom:10px;">
+        <a class="btn btn-primary btn-edit"
+           href='@Url.Action("GenerateStartList", "Leagues", new { id = ViewBag.CompetitionDisciplineId })'>
+            <i class="glyphicon glyphicon-download"></i>&nbsp @Messages.Export @Messages.StartList
+        </a>
+        @if (ViewBag.SectionAlias != SectionAliases.Climbing)
+        {
+            <a href="@Url.Action("GenerateDisciplineRefereeForm", "Leagues", new { id = ViewBag.CompetitionDisciplineId, onlyPresent = true })"
+               class="@AppCss.Edit glyphicon-signal"></a>
+
+            <a href="@GlobVars.SiteUrl/LeagueTable/StartList/@ViewBag.CompetitionDisciplineId" target="_blank" class="btn btn-primary pull-left">@Messages.ExternalLink</a>
+        }
+    </div>
+
+    @if (ViewBag.DisciplineRecord != null)
+    {
+     <div class="row" style="margin-top:20px;">
+        <div class="col-sm-12">
+            <table class="table table-bordered" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>@Messages.IsraeliRecord</th>
+                        <th>@Messages.CompetitionRecord</th>
+                        <th>@Messages.IntentionalIsraeliRecord</th>
+                        <th>@Messages.SeasonRecord</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @{
+                    var seasonRecord = (DisciplineRecord) ViewBag.DisciplineRecord;
+                }
+                <tr>
+                    <td>@ViewBag.DisciplineRecord.IsraeliRecord</td>
+                    <td>@ViewBag.DisciplineRecord.CompetitionRecord</td>
+                    <td>@ViewBag.DisciplineRecord.IntentionalIsraeliRecord</td>
+                    @if (seasonRecord!=null && seasonRecord.SeasonRecords !=null && seasonRecord.SeasonRecords.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId) != null)
+                    {
+                        <td>@seasonRecord.SeasonRecords.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId).SeasonRecord1</td>
+                    
+                    }
+                    else
+                    {
+                        <td></td>
+                    }
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>   
+    }
+
+
+    <div class="row" style="margin-top:20px;">
+        <div class="col-sm-12">
+            <table id="heats_table" class="table table-bordered" style="width:100%;">
+                <thead>
+                    <tr class="heat_tr_th">
+                        <th></th>
+                        <th></th>
+                        <th>#</th>
+                        @if (ViewBag.SectionAlias == SectionAliases.Climbing)
+                        {
+                            <th></th>
+                        }
+                        else
+                        {
+                            <th>@Messages.AthleteNumber</th>
+                        }
+                        <th>@Messages.Heat</th>
+                        @if (ViewBag.SectionAlias == SectionAliases.Climbing)
+                        {
+                            <th></th>
+                        }
+                        else
+                        {
+                            <th>@(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.OrderRaw : Messages.Lane)</th>
+                        }
+                        <th>@Messages.FullName</th>
+                        <th>@Messages.ClubName</th>
+                        <th>@Messages.Present</th>
+                        @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) || User.HasTopLevelJob(JobRole.LeagueManager))
+                        {
+                            <th class="remove_print"></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        string previousHeat = "";
+                    }
+                    @foreach (var group in Model)
+                    {
+
+                        string title = Messages.Heat + ": " + group.Key;
+                        previousHeat = group.Key;
+                        athInHeatIndex = 0;
+                    <tr class="heat_tr" value="@group.Key">
+                        <td>@group.Key </td>
+                        <td>@previousHeat</td>
+                        <td><b>@title</b></td>
+                        @{ 
+                           var heatStartDate = heatStartTimes.FirstOrDefault(h => h.HeatName == group.Key)?.StartTime ?? null;
+                        }
+                        <td><input type="text" class="form-control time-pick" data-heat="@group.Key" name="CompetitionDisciplineHeatStartTime" value="@(heatStartDate)" /></td>
+                        <td>  </td>
+                        <td>  </td>
+                        <td>  </td>
+                        <td>  </td>
+                        <td>  </td>
+                        @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) || User.HasTopLevelJob(JobRole.LeagueManager))
+                        {
+                            <td class="remove_print">  </td>
+                        }
+                    </tr>
+                        foreach (var reg in group)
+                        {
+                            athInHeatIndex++;
+                            var result = reg.CompetitionResult.FirstOrDefault();
+                    <tr value="@group.Key" class="ui-sortable-handle" id="reg_row_@reg.Id">
+                        <td class="reorder">@result?.Id</td>
+                        <td>@previousHeat</td>
+                        <td>@athInHeatIndex</td>
+                        @{
+                            var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                        }
+                        @if (ViewBag.SectionAlias == SectionAliases.Climbing)
+                        {
+                            <td></td>
+                        }
+                        else
+                        {
+                            <td class="reorder">@athleteNumber</td>
+                        }
+                        <td>
+                            <input type="text" @disabledAttribute class="form-control" style="max-width:120px;" id="s_heat_id_@reg.Id" value="@(result?.Heat?.ToString() ?? "")" onchange="onHeatChange(@reg.Id)" />
+                        </td>
+                        @if (ViewBag.SectionAlias == SectionAliases.Climbing)
+                        {
+                            <td></td>
+                        }
+                        else
+                        {
+                            <td>
+                                <input type="text" @disabledAttribute class="form-control" style="max-width:120px;" id="s_lane_id_@reg.Id" value="@(result?.Lane.ToString() ?? "")" onchange="onLaneChange(@reg.Id)" />
+                            </td>
+                        }
+                        <td class="reorder">@reg.User.FullName</td>
+                        <td class="reorder">@reg.Club.Name</td>
+                        <td>
+                            <input type="checkbox" @disabledAttribute class="form-control" style="max-width:120px;" id="s_presence_id_@reg.Id" @(reg.Presence == true ? "checked" : "") onchange="onPresenceChange(@reg.Id)" />
+                        </td>
+                        @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) || User.HasTopLevelJob(JobRole.LeagueManager))
+                        {
+                            <td class="remove_print">
+                                <button class="@AppCss.Delete" onclick="deleteHeat('@reg.Id')"></button>
+                            </td>
+                        }
+                    </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<link href="~/Content/css/colReorder.dataTables.min.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.5/css/rowReorder.dataTables.min.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/rowreorder/1.2.3/js/dataTables.rowReorder.min.js"></script>
+<script>
+    $(document).ready(function () {
+        var table = $('#heats_table').DataTable({
+                "paging": false,
+                "ordering": false,
+                "info": false,
+                "searching": true,
+                "language": {
+                    "search": "@Messages.Search "
+                },
+                buttons: [],
+                rowReorder: {
+                    selector: 'td.reorder',
+                    snapX: true
+                },
+                responsive: true,
+                columnDefs: [
+                    { targets: [0, 1], visible: false }
+                ]
+        });
+
+        table.on('row-reorder', function (e, diff, edit) {
+            if (diff.length > 0) {
+                var tableData = table.data();
+                var fromData = edit.triggerRow.data()[0];
+                var newPos = -1;
+                var oldPos = -1;
+                for (var i = 0; i < diff.length; i++) {
+                    if (diff[i].oldData == fromData) {
+                        newPos = diff[i].newPosition;
+                        oldPos = diff[i].oldPosition;
+                    }
+                }
+                var heatValue = tableData[newPos][1];
+                if (newPos < oldPos) {
+                    if (newPos == 0) {
+                        heatValue = "";
+                    } else {
+                        heatValue = tableData[newPos-1][1];
+                    }
+                }
+
+                edit.triggerRow.data()[0]
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("StartList", "Leagues", new { id = ViewBag.CompetitionDisciplineId })",
+                    data: {
+                        resultId: fromData,
+                        resultHeatValue: heatValue
+                    },
+                    success: function (data) {
+                        $("#start_list_pl").html(data);
+                    }
+                });
+            }
+        });
+
+        $(".time-pick").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+
+            step: 15,
+            closeOnDateSelect: false,
+            closeOnTimeSelect: true,
+            onChangeDateTime: function (current_time, $input) {
+                $input.trigger("changedatetime.xdsoft");
+                var heatName = $input.data("heat");
+                var competitionDisciplineId = @ViewBag.CompetitionDisciplineId; 
+                $.ajax({
+                    type: "POST",
+                    url: "/Leagues/ModifyCompetitionDisciplineHeatStartTime",
+                    data: {
+                        "competitionDisciplineId": competitionDisciplineId,
+                        "heat": heatName,
+                        "startTime": $input.val()
+                    }
+                });
+            }
+        });
+    });
+
+    function onHeatChange(regId) {
+        var newHeatValue = $("#s_heat_id_" + regId).val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/ModifyAthleteCompetitionHeat",
+            data: {
+                "regId": regId,
+                "heat": newHeatValue
+            },
+            success: function (data) {
+                $("#loading_data").hide();
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("StartList", "Leagues", new { id = ViewBag.CompetitionDisciplineId })",
+                    data: {},
+                    success: function (data) {
+                        $("#start_list_pl").html(data);
+                    }
+                });
+            }
+        });
+    }
+
+    function onLaneChange(regId) {
+        var newLaneValue = $("#s_lane_id_" + regId).val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/ModifyAthleteCompetitionLane",
+            data: {
+                "regId": regId,
+                "lane": newLaneValue
+            },
+            success: function (data) {
+                $("#loading_data").hide();
+            }
+        });
+    }
+
+
+
+    function onPresenceChange(regId) {
+        var isPresent = $("#s_presence_id_" + regId).is(":checked");
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/ModifyAthleteCompetitionPresence",
+            data: {
+                "regId": regId,
+                "presence": isPresent
+            },
+            success: function (data) {
+                $("#loading_data").hide();
+            }
+        });
+    }
+    
+
+
+    function deleteHeat(regId) {
+        var isConfiremd = confirm("Are you sure you want to reset heat for this row?");
+        if (isConfiremd) {
+            $.ajax({
+                type: "POST",
+                url: "/Leagues/ModifyAthleteCompetitionHeat",
+                data: {
+                    "regId": regId,
+                    "heat": ""
+                },
+                success: function (data) {
+                    $("#reg_row_" + regId).remove();
+                }
+            });
+        }
+    }
+</script>

@@ -1,0 +1,29 @@
+﻿@model ActivityFormControlTemplateModel
+
+@{
+    var controlEnabled = (!Model.IsPublish || !Model.IsDisabled) && !Model.IsDisabledBySettings;
+}
+
+<div class="control custom-control @(controlEnabled ? "" : "hidden")" data-type="@ActivityFormControlType.CustomFileReadonly" data-canberemoved="@Model.CanBeRemoved" data-hasoptions="@Model.HasOptions" data-fieldnote="@Model.FieldNote" data-isdisabled="@Model.IsDisabled" data-isrequired="@Model.IsRequired" data-canberequired="@Model.CanBeRequired" data-canbedisabled="@Model.CanBeDisabled" @Model.GetDataAttributesForLabels() data-propertyname="@Model.PropertyName" data-isreadonly="@Model.IsReadOnly">
+    @if (controlEnabled)
+    {
+        <label for="buildForm-body-@Model.PropertyName" class="control-label">@Model.GetLabelText():</label>
+
+        if (!Model.IsPublish)
+        {
+            <input id="buildForm-body-@Model.PropertyName" name="@Model.PropertyName" type="file" class="form-control read-only-file" data-val-required="@Messages.PropertyValueRequired" data-val="@(Model.IsRequired ? "true" : "false")" @(Model.IsReadOnly ? "readonly" : "")/>
+        }
+        else
+        {
+            <a id="readonly-file-@Model.PropertyName" href="" target="_blank">
+                <span class="glyphicon glyphicon-new-window"></span>
+            </a>
+        }
+
+        @*@Html.Partial("ActivityForm/ControlTemplates/Common/_ValidationMessage", Model)*@
+        @*@Html.Partial("ActivityForm/ControlTemplates/Common/_RequiredSwitch", Model)*@
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_DisabledSwitch", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_FieldNote", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Custom/_CustomControlOptions", Model)
+    }
+</div>

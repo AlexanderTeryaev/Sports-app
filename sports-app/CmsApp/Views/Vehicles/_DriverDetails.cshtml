@@ -1,0 +1,89 @@
+﻿@model VehicleModel
+
+<div class="row">
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.SelectDriver:</label>
+        @Html.DropDownListFor(m => m.SportsmanId, (IEnumerable<SelectListItem>)ViewBag.ListOfSportsmen, Messages.Select, new { @class = "form-control", form = "createvehicleform", id = "sportsmenList" })
+    </div>
+</div>
+<div id="sportsmenInformation">
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.IdentNum:</label>
+            @Html.TextBoxFor(m => m.IdentNum, new { @class = "form-control", disabled = "disabled", form = "createvehicleform" })
+        </div>
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.FullName:</label>
+            @Html.TextBoxFor(m => m.FullName, new { @class = "form-control", disabled = "disabled", form = "createvehicleform" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.Address:</label>
+            @Html.TextBoxFor(m => m.Address, new { @class = "form-control", disabled = "disabled", form = "createvehicleform" })
+        </div>
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.OwnershipDate:</label>
+            @{ var ownershipDate = Model.OwnershipDate?.ToShortDateString() ?? string.Empty; }
+            @Html.TextBoxFor(m => ownershipDate, new { @class = "form-control veh-date-short", form = "createvehicleform" })
+            @Html.ValidationMessageFor(m => m.OwnershipDate)
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.IssueDate:</label>
+            @{ var issueDate = Model.IssueDate?.ToShortDateString() ?? string.Empty; }
+
+            @Html.TextBoxFor(m => issueDate, new { @class = "form-control veh-date-short", form = "createvehicleform" })
+            @Html.ValidationMessageFor(m => m.IssueDate)
+
+        </div>
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.NumberOfOwners:</label>
+            @Html.TextBoxFor(m => m.NumberOfPreviousOwners, new { @class = "form-control", form = "createvehicleform" })
+            @Html.ValidationMessageFor(m => m.NumberOfPreviousOwners)
+
+        </div>
+    </div>
+</div>
+<script>
+    $("#sportsmenList").change(function () {
+        $.ajax({
+            url: "@Url.Action("FillSportsmanInfo", "Vehicles")",
+            type: "POST",
+            data: {
+                teamPlayerId: $(this).val(),
+                seasonId: "@ViewBag.SeasonId",
+                unionId: "@ViewBag.UnionId"
+            },
+            success: function (data) {
+                $("#driverDetailsMainDiv").html(data);
+            }
+        })
+    })
+
+    $(document).ready(function () {
+        $(".veh-date-short").datetimepicker({
+            format: 'd/m/Y',
+            timepicker: false,
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+
+        $(".veh-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+            step: 15,
+            closeOnDateSelect: false,
+            onChangeDateTime: function () {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            },
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+    })
+</script>

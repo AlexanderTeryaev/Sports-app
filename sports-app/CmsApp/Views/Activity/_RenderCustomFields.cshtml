@@ -1,0 +1,125 @@
+﻿@using Newtonsoft.Json
+@model Tuple<ActivityRegistrationItem, bool, List<AppModel.ActivityFormsDetail>>
+    
+@foreach (var field in Model.Item3.Where(x => x.PropertyName.ToLower().Contains("custom") &&
+                                              !x.IsDisabled &&
+                                              x.Type != ActivityFormControlType.CustomText.ToString() &&
+                                              x.Type != ActivityFormControlType.CustomTextMultiline.ToString() &&
+                                              x.Type != ActivityFormControlType.CustomFileReadonly.ToString() &&
+                                              x.Type != ActivityFormControlType.CustomPrice.ToString() &&
+                                              x.Type != ActivityFormControlType.CustomLink.ToString()))
+{
+    var customField = Model.Item1.CustomFields.FirstOrDefault(x => x.PropertyName == field.PropertyName);
+
+    <td data-sort="@(customField?.Value)" style="min-width: 150px;">
+        @{
+            if (customField != null)
+            {
+                if (customField.Type == ActivityFormControlType.CustomFileUpload)
+                {
+                    <a target="_blank" id="customFile-@Model.Item1.Id-@customField.PropertyName"
+                       href="@($"{GlobVars.ContentPath}/publishedactivityforms/{customField.Value}")"
+                       style="@(string.IsNullOrWhiteSpace(customField.Value) ? "display: none;" : string.Empty)">
+                        <span class="glyphicon glyphicon-new-window"></span>
+                    </a>
+
+                    if (Model.Item2)
+                    {
+                        <label for="replaceCustomFile-@Model.Item1.Id-@customField.PropertyName" title="@Messages.Activity_Status_ReplaceFile" style="cursor: pointer;">
+                            <span class="glyphicon glyphicon-cloud-upload"></span>
+                            <input type="file" 
+                                   class="replaceCustomFile" 
+                                   id="replaceCustomFile-@Model.Item1.Id-@customField.PropertyName" 
+                                   data-propertyname="@customField.PropertyName" 
+                                   data-regid="@Model.Item1.Id"
+                                   style="display: none;"/>
+                        </label>
+                    }
+                }
+                else
+                {
+                    if (Model.Item2)
+                    {
+                        var dropDownOptions = string.IsNullOrWhiteSpace(field.CustomDropdownValues)
+                            ? new List<string>()
+                            : JsonConvert.DeserializeObject<List<string>>(field.CustomDropdownValues);
+
+                        var formattedOptions = JsonConvert.SerializeObject(dropDownOptions.Select(x => new {value = x, text = x}));
+
+                        switch (customField.Type)
+                        {
+                            case ActivityFormControlType.CustomTextBox:
+                                <a href="#" class="x-editable"
+                                   data-x-ed-type="text"
+                                   data-x-ed-url="@Url.Action("EditCustomField", "Activity")"
+                                   data-x-ed-pk="@Model.Item1.Id"
+                                   data-x-ed-name="@customField.PropertyName"
+                                   data-x-ed-title="@Messages.Activity_Status_Edit_EnterNewValue">@customField.Value</a>
+                                break;
+
+                            case ActivityFormControlType.CustomTextArea:
+                                <a href="#" class="x-editable"
+                                   data-x-ed-type="textarea"
+                                   data-x-ed-url="@Url.Action("EditCustomField", "Activity")"
+                                   data-x-ed-pk="@Model.Item1.Id"
+                                   data-x-ed-name="@customField.PropertyName"
+                                   data-x-ed-title="@Messages.Activity_Status_Edit_EnterNewValue">@customField.Value</a>
+                                break;
+
+                            case ActivityFormControlType.CustomDropdown:
+                                <a href="#" class="x-editable"
+                                   data-x-ed-type="select"
+                                   data-x-ed-url="@Url.Action("EditCustomField", "Activity")"
+                                   data-x-ed-pk="@Model.Item1.Id"
+                                   data-x-ed-name="@customField.PropertyName"
+                                   data-x-ed-source="@formattedOptions"
+                                   data-x-ed-value="@customField.Value"
+                                   data-x-ed-title="@Messages.Activity_Status_Edit_EnterNewValue">@customField.Value</a>
+                                break;
+
+                            case ActivityFormControlType.CustomDropdownMultiselect:
+                                var multiselectCurrentValue = string.IsNullOrWhiteSpace(customField.Value)
+                                    ? new List<string>()
+                                    : customField.Value.Split(new[] {","}, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                                <a href="#" class="x-editable"
+                                   data-x-ed-type="checklist"
+                                   data-x-ed-url="@Url.Action("EditCustomField", "Activity")"
+                                   data-x-ed-pk="@Model.Item1.Id"
+                                   data-x-ed-name="@customField.PropertyName"
+                                   data-x-ed-source="@formattedOptions"
+                                   data-x-ed-value="@JsonConvert.SerializeObject(multiselectCurrentValue)"
+                                   data-x-ed-title="@Messages.Activity_Status_Edit_EnterNewValue">@customField.Value</a>
+                                break;
+
+                            case ActivityFormControlType.CustomCheckBox:
+                                var checkboxOptions = new List<object>
+                                {
+                                    new {value = Messages.Yes, text = Messages.Yes},
+                                    new {value = Messages.No, text = Messages.No}
+                                };
+
+                                <a href="#" class="x-editable"
+                                   data-x-ed-type="select"
+                                   data-x-ed-url="@Url.Action("EditCustomField", "Activity")"
+                                   data-x-ed-pk="@Model.Item1.Id"
+                                   data-x-ed-name="@customField.PropertyName"
+                                   data-x-ed-source="@JsonConvert.SerializeObject(checkboxOptions)"
+                                   data-x-ed-value="@customField.Value"
+                                   data-x-ed-title="@Messages.Activity_Status_Edit_EnterNewValue">@customField.Value</a>
+                                break;
+
+                            default:
+                                <i>@customField.Value</i>
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        @customField.Value
+                    }
+                }
+            }
+        }
+    </td>
+}

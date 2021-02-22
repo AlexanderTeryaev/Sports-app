@@ -1,0 +1,321 @@
+﻿@model DataService.LeagueRank.RankCategory
+@{
+    var categoryRankTable = ViewBag.PlayoffTable != null
+        ? (IEnumerable<DataService.DTO.TennisPlayoffRank>)ViewBag.PlayoffTable
+        : Enumerable.Empty<DataService.DTO.TennisPlayoffRank>();
+}
+    <div class="row" style="padding:20px;">
+        <a href="@GlobVars.SiteUrl/LeagueTable/CategoryRankDetails?categoryId=@ViewBag.CategoryId&seasonId=@ViewBag.SeasonId" target="_blank" class="btn btn-info view" style="margin-right: 4px;">@Messages.ExternalLink</a>
+
+        @if (ViewBag.PlayerRankGroupList != null)
+        {
+            @Ajax.ActionLink(Messages.UpdateByAutomaticCalculation, "UpdateTennisPlayoffRanksGroup", "LeagueRank",
+                new { categoryId = ViewBag.CategoryId, seasonId = ViewBag.SeasonId, unionId = Model.UnionId, isCategoryStanding = true },
+                new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "categoryrank", InsertionMode = InsertionMode.Replace, OnBegin = "update_ranks_loading()" },
+                new { @class = "btn btn-primary", id = "update_ranks_button" })
+        }
+        @Ajax.ActionLink(Messages.SetTheScoresManualy, "SetManualTennisRankCalculation", "LeagueRank",
+        new { categoryId = ViewBag.CategoryId, seasonId = ViewBag.SeasonId, unionId = Model.UnionId },
+        new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "categoryrank", InsertionMode = InsertionMode.Replace },
+        new { @class = "btn btn-primary"})
+
+    </div>
+
+
+@if (Model.Players.Count > 0)
+{
+    <div class="row col-sm-6">
+        <div class="rank">
+            <div class="playOff">
+                <table class="table table-bordered tableRank">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-1">@Messages.Rank</th>
+                            <th class="col-sm-3">@Messages.FullName</th>
+                            <th class="col-sm-1">@Messages.Competition @Messages.Rank.ToLower()</th>
+                            <th class="col-sm-1">@Messages.Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var player in Model.Players)
+                        {
+                            <tr>
+                                <td>-</td>
+                                <td>@player.User.FullName</td>
+                                <td>0</td>
+                                <td>0</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+else if (ViewBag.PlayerRankGroupList != null)
+{
+    foreach (var ranksGroup in ViewBag.PlayerRankGroupList)
+    {
+        <div class="row col-sm-6">
+            <div class="rank">
+                <div class="playOff">
+                    <h4>@ranksGroup.GroupName</h4>
+                    <table class="table table-bordered tableRank">
+                        <thead>
+                            <tr>
+                                <th class="col-sm-1">@Messages.Rank</th>
+                                <th class="col-sm-3">@Messages.Player</th>
+                                <th class="col-sm-1">@Messages.Competition @Messages.Rank</th>
+                                <th class="col-sm-1">@Messages.Points</th>
+                                <th class="col-sm-1">@Messages.League_RankedStanding_Correction</th>
+                                <th class="col-sm-1">@Messages.FinalResult</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int index = 0;
+                                bool isTesting = false;
+                            }
+                            @foreach (var player in ranksGroup.PlayersRanks)
+                            {
+
+                                if (isTesting || !string.IsNullOrWhiteSpace(player.PlayerName))
+                                {
+                                    index += 1;
+                                    <tr>
+                                        <td>@index</td>
+                                        <td>@player.PlayerName</td>
+                                        <td>@(player.RealMinPos == player.RealMaxPos ? $"{player.RealMaxPos}" : $"{player.RealMinPos} - {player.RealMaxPos}")</td>
+                                        <td id="points_@player.PlayerId">@player.Points</td>
+                                        <td><input id="correction_@player.PlayerId" style="direction:ltr;" type="number" value="@player.Correction" class="form-control" onchange='updateTennisCategoryRankCorrection(this, @player.PlayerId,"@HttpUtility.HtmlEncode(player.GroupName)");' /></td>
+                                        <td id="total_@player.PlayerId">@(player.Points + player.Correction)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                    <div style="text-align:center;">
+                        <h4 style="text-align:center;">@Messages.SwapSportsmenByRank</h4>
+                        @using (Ajax.BeginForm("SetManualTennisRankSwap", "LeagueRank", new { categoryId = ViewBag.CategoryId, seasonId = ViewBag.SeasonId, groupName = ranksGroup.GroupName }, new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "categoryrank", InsertionMode = InsertionMode.Replace }, new { @class="row col-sm-12"}))
+                        {   
+                            <input type="number" min="1" max="@ranksGroup.PlayersRanks.Count" name="swap1" value="" class="form-control col-sm-5"/>
+                            <div class= "col-sm-2" style="text-align:center;">
+                                <button type="submit" class="btn btn-primary fa fa-exchange"  style="width:50%;padding:9px 0px;"/>
+                            </div>
+                            <input type="number" min="1" max="@ranksGroup.PlayersRanks.Count" name="swap2" value=""  class="form-control col-sm-5"/>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+else if (Model.IsEmptyRankTable)
+{
+    <div class="row col-sm-6">
+        <div class="rank">
+            @foreach (var stage in @Model.Stages.Where(x => x.Groups.Count > 0))
+            {
+                var groups = stage.Groups;
+                <div class="playOff">
+                    @if (groups.Count() > 0 && groups.All(g => g.IsAdvanced))
+                    {
+                        if (groups.All(g => !g.Players.Any()))
+                        {
+                            continue;
+                        }
+                        var firstGroup = groups.FirstOrDefault();
+                        if (firstGroup != null && firstGroup.PlayoffBrackets != null)
+                        {
+                            int numOfBrackets = (int)firstGroup.PlayoffBrackets;
+                            switch (numOfBrackets)
+                            {
+                                case 1:
+                                    <h3>@Messages.Final</h3>
+                                    break;
+                                case 2:
+                                    <h3>@Messages.Semifinals</h3>
+                                    break;
+                                case 4:
+                                    <h3>@Messages.Quarter_finals</h3>
+                                    break;
+                                case 8:
+                                    <h3>@Messages.Final_Eighth</h3>
+                                    break;
+                                default:
+                                    <h3>@(numOfBrackets * 2) @Messages.FinalNumber</h3>
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        @*<h3>@(stage.CustomStageName ?? $"{Messages.Stage} {stage.Number}")</h3>*@
+                        <h3>@($"{Messages.Stage} {stage.Number}")</h3>
+                    }
+                    <div class="playOff">
+                        @foreach (var group in stage.Groups)
+                        {
+                            if (!group.IsAdvanced)
+                            {
+                                <h4>@group.Title</h4>
+                            }
+                            <table class="table table-bordered tableRank">
+                                <thead>
+                                    <tr>
+                                        <th class="col-sm-1">@Messages.Rank</th>
+                                        <th class="col-sm-3">@Messages.FullName</th>
+                                        @if (!group.IsAdvanced)
+                                        {
+                                            <th class="col-sm-1">@Messages.Competition @Messages.Rank.ToLower()</th>
+                                            <th class="col-sm-1">@Messages.Points</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (var i = 0; i < group.Players.Count(); i++)
+                                    {
+                                        <tr>
+                                            <td>0</td>
+                                            <td>@group.Players[i].Title</td>
+                                            @if (!group.IsAdvanced)
+                                            {
+                                                <td>0</td>
+                                                <td>0</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="row col-sm-6">
+        <div class="rank">
+            @foreach (var stage in @Model.Stages)
+            {
+                var groups = stage.Groups;
+                <div class="playOff">
+                    @if (groups.Count() > 0 && groups.All(g => g.IsAdvanced))
+                    {
+                        if (groups.All(g => !g.Players.Any()))
+                        {
+                            continue;
+                        }
+                        var firstGroup = groups.FirstOrDefault();
+                        if (firstGroup != null && firstGroup.PlayoffBrackets != null)
+                        {
+                            int numOfBrackets = (int)firstGroup.PlayoffBrackets;
+                            switch (numOfBrackets)
+                            {
+                                case 1:
+                                    <h3>@Messages.Final</h3>
+                                    break;
+                                case 2:
+                                    <h3>@Messages.Semifinals</h3>
+                                    break;
+                                case 4:
+                                    <h3>@Messages.Quarter_finals</h3>
+                                    break;
+                                case 8:
+                                    <h3>@Messages.Final_Eighth</h3>
+                                    break;
+                                default:
+                                    <h3>@(numOfBrackets * 2) @Messages.FinalNumber</h3>
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        @*<h3>@(stage.CustomStageName ?? $"{Messages.Stage} {stage.Number}")</h3>*@
+                        <h3>@($"{Messages.Stage} {stage.Number}")</h3>
+                    }
+
+                    <div class="playOff">
+                        @foreach (var group in stage.Groups)
+                        {
+                            if (!group.IsAdvanced)
+                            {
+                                <h4>@group.Title</h4>
+                            }
+                            <table class="table table-bordered tableRank">
+                                <thead>
+                                    <tr>
+                                        <th class="col-sm-1">@Messages.Rank</th>
+                                        <th class="col-sm-3">@Messages.FullName</th>
+                                        @if (!group.IsAdvanced)
+                                        {
+                                            <th class="col-sm-1">@Messages.Competition @Messages.Rank.ToLower()</th>
+                                            <th class="col-sm-1">@Messages.Points</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (var i = 0; i < group.Players.Count(); i++)
+                                    {
+                                        <tr>
+                                            <td>-</td>
+                                            <td>@group.Players[i].Title</td>
+                                            @if (!group.IsAdvanced)
+                                            {
+
+                                                if (i != 0 && group.Players[i].PositionNumber == group.Players[i - 1].PositionNumber)
+                                                {
+                                                    <td>-</td>
+                                                }
+                                                else
+                                                {
+                                                    <td>@(i + 1)</td>
+                                                }
+                                                <td>@group.Players[i].CategoryPoints</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+
+<script>
+    function updateTennisCategoryRankCorrection(element, playerId, groupName) {
+        var value = $(element).val();
+        groupName = decodeURI(groupName).replace(/&quot;/g, '"');
+        $.ajax({
+            url: '@Url.Action("SetTennisCategoryRankCorrection", "LeagueRank")',
+            data: {
+                PlayerId: playerId,
+                SeasonId: @ViewBag.SeasonId,
+                LeagueId: @ViewBag.LeagueId,
+                CategoryId: @ViewBag.CategoryId,
+                GroupName: groupName,
+                Correction: value
+            },
+            type: 'POST',
+            dataType: 'json',
+            success: function (data) {
+                var points = parseInt($("#points_" + playerId).html());
+                var correctionInt = parseInt(value);
+                var total = points + correctionInt;
+                $("#total_" + playerId).html(total);
+            }
+        });
+    }
+    function update_ranks_loading() {
+        $("#update_ranks_button").html("<span class='@AppCss.Loading'></span>");
+    }
+</script>
+

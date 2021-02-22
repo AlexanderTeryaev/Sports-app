@@ -1,0 +1,887 @@
+﻿@using AppModel
+@using CmsApp.Controllers
+@model CompetitionDiscipline
+
+@{
+    var AlternativeResultList = new List<SelectListItem>
+    {
+            new SelectListItem {Text = "", Value = "0"},
+            new SelectListItem {Text = "DNF", Value = "1" },
+            new SelectListItem {Text = "DQ", Value = "2" },
+            new SelectListItem {Text = "DNS", Value = "3" },
+            new SelectListItem {Text = "NM", Value = "4" }
+    };
+    var windExtra = 0;
+    if (ViewBag.IsResultsManualyRanked)
+    {
+        windExtra += 1;
+    }
+    if (!ViewBag.IsDisciplineHasRecognizedPointSystem)
+    {
+        windExtra += 1;
+    }
+
+    bool refereePermission = User.GetSessionWorkerValueOrTopLevelLeagueJob((int)ViewBag.LeagueId) == JobRole.Referee;
+    var disabledAttribute = refereePermission ? "" : "disabled";
+
+
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9"><h4 class="modal-title">@Model.League.Name -  @ViewBag.DisciplineName - @Messages.CompetitionResults</h4></div><div class="pull-right" style="line-height:25px;margin-left: 20px;">
+            <strong>@Messages.Count.ToLower(): <text id="athletics_count">@(Model?.CompetitionDisciplineRegistrations.Count() ?? 0)</text></strong>
+        </div>
+        <a id="excelBtnExp" class="btn btn-info" style="display:none;" href="#" onclick="$('#exportregistrations').submit()">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+            @using (Html.BeginForm("ExportDisciplineRegistrationsToExcel", "Clubs", new { clubId = ViewBag.ClubId, disciplineId = ViewBag.DisciplineId, seasonId = ViewBag.SeasonId, leagueId = ViewBag.LeagueId },
+FormMethod.Post, new { id = "exportregistrations" })) { }
+        </a>
+        <a href="@GlobVars.SiteUrl/LeagueTable/AthleticsDisciplineResults/@Model.Id" target="_blank" class="btn btn-primary pull-left">@Messages.ExternalLink</a>
+    </div>
+    <div>
+        @if (@Model.League.LeagueStartDate != null)
+        {
+            @Model.League.LeagueStartDate.Value.ToString("dd/MM/yyyy")
+        }
+    </div>
+
+
+
+</div>
+<style>
+    .resultField {
+        display: unset !important;
+        width: 80px !important;
+    }
+
+    .fill-results-table > thead > tr > th, .fill-results-table > tbody > tr > td {
+        text-align: center;
+    }
+    .hidden{
+        display:none;
+    }
+</style>
+<div class="modal-body">
+    <div class="row">
+    <div class="col-sm-9">
+    @using (Ajax.BeginForm(nameof(LeaguesController.CopyAutomaticRankingToManual), nameof(LeaguesController).TrimControllerName(), new { Id = ViewBag.CompetitionDisciplineId }, new AjaxOptions { HttpMethod = "POST", Confirm = Messages.ConfirmCopyToManualRank }))
+    {
+        <button class="btn btn-primary">@Messages.CopyToManualRank</button>
+    }
+    @if(ViewBag.DisciplineType != null && (ViewBag.DisciplineType == "decathlon" || ViewBag.DisciplineType == "heptathlon")){
+        <label for="convert_to_points_checkbox"><input type="checkbox" name="convertToPoints" id="convert_to_points_checkbox" value="" @(Model.IsManualPointCalculation == true ? "checked" : "") onclick="onConvertToPoints(this)" /> @Messages.PointsToConvert</label>
+    }
+    
+
+    </div>
+    <div class="col-sm-3">
+        <div id="print_table_filter" class="dataTables_filter float_left"><label style="display: flex;">@Messages.Search: <input type="search" id="filterbox" class="form-control input-sm" placeholder="" aria-controls="print_table" autocomplete="off"></label></div>
+    </div>
+        </div>
+        <ul class="nav nav-tabs" style="float:left;">
+        <li><a data-toggle="tab" href="#wind_tab">@Messages.Wind</a></li>
+        <li class="active"><a data-toggle="tab" href="#results_tab">@Messages.Results</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div id="results_tab" class="tab-pane fade in active">
+            <div class="row" style="margin-top:20px;">
+                <div class="col-sm-12">
+                    <div class="table-responsive">
+                        <table id="print_table" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>@Messages.AthleteNumber</th>
+                                    <th>@Messages.FullName</th>
+                                    <th>@Messages.ClubName</th>
+                                    <th>@Messages.Heat</th>
+                                    <th>@(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.OrderRaw : Messages.Lane)</th>
+                                    <th style="text-align: center;">@Messages.Results</th>
+                                    @if (ViewBag.IsResultsManualyRanked)
+                                    {
+                                        <th>@Messages.Rank</th>
+                                    }
+                                    @if (!ViewBag.IsDisciplineHasRecognizedPointSystem)
+                                    {
+                                        <th>@Messages.Points</th>
+                                    }
+                                    <th>@Messages.Wind</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <style>
+                                    .resultField {
+                                        width: 40px;
+                                        text-align: center;
+                                    }
+                                </style>
+
+                                @foreach (var reg in Model.CompetitionDisciplineRegistrations.Where(cr => cr.CompetitionResult != null && cr.CompetitionResult.Count() == 1))
+                                {
+                                    CompetitionResult results = null;
+                                    if (reg.CompetitionResult.Count() > 0)
+                                    {
+                                        results = reg.CompetitionResult.FirstOrDefault();
+                                    }
+
+
+                                    var frmid = "resultsform" + reg.Id;
+                                    using (Ajax.BeginForm("UpdateRegisteredAthleteCompetitionResult", "Leagues",
+                                                    new AjaxOptions { HttpMethod = "POST", OnSuccess = "updateDone" }, new { id = frmid }))
+                                    { 
+                                        
+                                             var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                         
+                                        <tr id="result_row_@athleteNumber" data-athleticid="@athleteNumber">
+                                            <td>@athleteNumber</td>
+                                            <td>@reg.User.FullName</td>
+                                            <td>@reg.Club.Name</td>
+                                            <td>
+                                                <input type="hidden" name="ResultId" class="form-control" id="results_@reg.Id" style="width:60px;" value="@results.Id" form="@frmid" onchange="updateExistingResult(@reg.Id)" />
+                                                <input type="hidden" name="CompetitionDisciplineId" class="form-control" id="discipline_@reg.Id" style="width:60px;" value="@reg.CompetitionDisciplineId" form="@frmid" onchange="updateExistingResult(@reg.Id)" />
+                                                @if (results != null)
+                                                {
+                                                    <input type="text" @disabledAttribute name="Heat" class="resultField form-control" id="heat_@reg.Id" style="width:60px;" value="@results.Heat" form="@frmid" onchange="updateExistingResult(@reg.Id)" />
+                                                }
+                                                else
+                                                {
+                                                    <input type="text" @disabledAttribute class="resultField form-control" name="Heat" id="heat_@reg.Id" value="" form="@frmid" onchange="updateExistingResult(@reg.Id)" />
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (results != null)
+                                                {
+                                                    <input type="text" @disabledAttribute class="resultField form-control" name="Lane" id="lane_@reg.Id" value="@results.Lane" form="@frmid" onchange="updateExistingResult(@reg.Id)" />
+                                                }
+                                                else
+                                                {
+                                                    <input type="text" @disabledAttribute class="resultField form-control" name="Lane" id="lane_@reg.Id" value="" form="@frmid" onchange="updateExistingResult(@reg.Id)" />
+                                                }
+                                            </td>
+                                            @{
+                                                var multiSelect = new List<SelectListItem>();
+                                                foreach (var altResList in AlternativeResultList)
+                                                {
+                                                    var s = new SelectListItem
+                                                    {
+                                                        Text = altResList.Text,
+                                                        Value = altResList.Value,
+                                                        Selected = int.Parse(altResList.Value) == results.AlternativeResult
+                                                    };
+                                                    multiSelect.Add(s);
+                                                }
+
+                                            }
+                                            @if (results.AlternativeResult != 0)
+                                            {
+                                                
+                                                <td class="result_related">@Html.DropDownList(string.Format("alternative_result_{0}", reg.Id), multiSelect, new { @class = "form-control", disabled = "true", style = "text-align-last: center;" })</td>
+                                            }
+                                            else
+                                            {
+                                                <td id="result_box_@reg.Id" class="results-td result_related" style="direction: ltr;text-align: center;display: flex;font-size: 24px;">
+                                                    @{
+                                                        string result = null;
+                                                        if (results != null)
+                                                        {
+                                                            result = results.Result;
+                                                        }
+                                                        var regid = reg.Id;
+                                                    }
+                                                    @Html.Raw(UIHelpers.GetFormatRawHtml(frmid, ViewBag.Format, result, !refereePermission, regid))
+                                                </td>
+                                            }
+                                            @if (ViewBag.IsResultsManualyRanked)
+                                            {
+                                                <td class="result_related">
+                                                    @if (results != null)
+                                                    {
+                                                        <input type="text" @disabledAttribute name="Rank" disabled class="resultField form-control" id="rank_@reg.Id" style="direction: ltr;" value="@(results.Rank.HasValue ? results.Rank.Value.ToString() : "")" form="@frmid" onchange="updateExistingResult(@reg.Id)"/>
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="text" @disabledAttribute name="Rank" disabled class="resultField form-control" id="rank_@reg.Id" style="direction: ltr;" value="" form="@frmid" onchange="updateExistingResult(@reg.Id)"/>
+                                                    }
+                                                </td>
+                                            }
+
+                                            @if (!ViewBag.IsDisciplineHasRecognizedPointSystem)
+                                            {
+                                                <td class="result_related">
+                                                    @if (results != null)
+                                                    {
+                                                        <input type="text" @disabledAttribute name="Points" disabled class="resultField form-control" id="points_@reg.Id" style="direction: ltr;" value="@(Model.IsMultiBattle ?  (results.CombinedPoint.HasValue ? results.CombinedPoint.Value.ToString() : "") : (results.ClubPoints.HasValue ? results.ClubPoints.Value.ToString() : ""))" form="@frmid" onchange="updateExistingResult(@reg.Id)"/>
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="text" @disabledAttribute name="Points" disabled class="resultField form-control" id="points_@reg.Id" style="direction: ltr;" value="" form="@frmid" onchange="updateExistingResult(@reg.Id)"/>
+                                                    }
+                                                </td>
+                                            }
+
+
+                                            <td>
+                                                @if (results != null)
+                                                {
+                                                    <input type="text" @disabledAttribute name="Wind" class="resultField form-control" id="wind_@reg.Id" style="direction: ltr;" value="@(results.Wind.HasValue ? String.Format("{0:0.0}", results.Wind.Value):"")" form="@frmid" onchange="updateExistingResult(@reg.Id)" />
+                                                }
+                                                else
+                                                {
+                                                    <input type="text" @disabledAttribute name="Wind" class="resultField form-control" id="wind_@reg.Id" style="direction: ltr;" value="" form="@frmid" onchange="updateExistingResult(@reg.Id)" />
+                                                }
+                                            </td>
+                                            <td>
+                                                <a class="btn btn-danger glyphicon glyphicon-trash" data-ajax="true" data-ajax-confirm="@Messages.ResetConfirm" data-ajax-success="onResetReg" data-ajax-method="GET" data-ajax-mode="replace" data-ajax-url="@Url.Action("ResetDisciplineRegistrationResult","Clubs",new { Id = reg.Id})"></a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="row" style="margin-top:30px;">
+                <div class="col-sm-12">
+                    <h4>@Messages.Results</h4>
+                    <div class="table-responsive">
+                        <table class="table fill-results-table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>@Messages.AthleteNumber</th>
+                                    <th>@Messages.FullName</th>
+                                    <th>@Messages.ClubName</th>
+                                    <th>@Messages.Heat</th>
+                                    <th>@Messages.Lane</th>
+                                    <th></th>
+                                    <th class="result_dependant" style="text-align: center;">@Messages.Results</th>
+                                    @if (ViewBag.IsResultsManualyRanked)
+                                    {
+                                        <th>@Messages.Rank</th>
+                                    }
+                                    @if (!ViewBag.IsDisciplineHasRecognizedPointSystem)
+                                    {
+                                        <th>@Messages.Points</th>
+                                    }
+                                    <th>@Messages.Wind</th>
+                                    @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) || User.HasTopLevelJob(JobRole.LeagueManager))
+                                    {
+                                        <th class="remove_print">@Messages.Status</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input id="athletenum_box" type="text" class="form-control" style="max-width:120px;" onkeyup="athletichNumPressed(event)" /></td>
+                                    <td id="full_name"></td>
+                                    <td id="club_name"></td>
+                                    <td><input id="heat_input_box" type="text" class="form-control" onkeyup="heatPressed(event)" /></td>
+                                    <td><input id="lane_input_box" type="text" class="form-control" style="max-width:70px;" onkeyup="lanePressed(event)" /></td>
+                                    <td><select id="alternative_result_input" style="min-width:80px;text-align-last: center;" class="form-control"><option value="0"></option><option value="1">DNF</option><option value="2">DQ</option><option value="3">DNS</option><option value="4">NM</option></select></td>
+                                    <td id="result_box" class="result_dependant" style="direction:ltr;display: flex;font-size: 24px;">@Html.Raw(UIHelpers.GetFormatRawHtml("", ViewBag.Format, ""))</td>
+                                    @if (ViewBag.IsResultsManualyRanked)
+                                    {
+                                        <td id="rank_box" style="direction:ltr;"><input style="direction:ltr;" id="rank_input_box" type="text" class="form-control" onkeyup="rankPressed(event)" /></td>
+                                    }
+                                    @if (!ViewBag.IsDisciplineHasRecognizedPointSystem)
+                                    {
+                                        <td id="points_box" style="direction:ltr;"><input style="direction:ltr;" id="points_input_box" type="text" class="form-control" onkeyup="pointsPressed(event)" /></td>
+                                    }
+                                    <td id="wind_box" style="direction:ltr;"><input style="direction:ltr;" id="wind_input_box" type="text" class="form-control" onkeyup="resultsPressed(event)" /></td>
+                                    <td><div id="loading_data" style="display:none;"><i class="fa fa-spinner fa-spin" style="font-size:24px"></i></div><div style="text-align: center;border-radius: 5px;" id="status"></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="wind_tab" class="tab-pane fade">
+            <div class="row" style="margin-top:10px;">
+                <div class="col-sm-6">
+                    <h4>@Messages.HeatWindAssociationTable</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>@Messages.Heat</th>
+                                    <th>@Messages.Wind</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="heat_wind_table">
+                                @foreach (var heatWindRelation in ViewBag.CompetitionHeatWindTable)
+                                {
+                                    <tr class="heat_wind_row">
+                                        <td class="heat_column">
+                                            @heatWindRelation.Heat
+                                        </td>
+                                        <td class="wind_column" style="direction:ltr;">
+                                            @heatWindRelation.Wind
+                                        </td>
+                                        <td>
+                                            <a class="btn btn-danger glyphicon glyphicon-trash" data-ajax="true" data-ajax-method="GET" data-ajax-mode="replace" data-ajax-update="#heat_wind_table" data-ajax-url="@Url.Action("DeleteHeatWindAssociation","Leagues",new { Id = @heatWindRelation.Id})"></a>
+                                        </td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td><input id="heat_wind_heat_box" type="text" class="form-control" /></td>
+                                    <td><input style="direction:ltr;" id="heat_wind_wind_box" type="text" class="form-control" /></td>
+                                    <td><button class="btn btn-primary" onclick="addNewHeatWindAssociation()">@Messages.AddNew</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function onHeatChange(regId) {
+        var newHeatValue = $("#heat_" + regId).val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/ModifyAthleteCompetitionHeat",
+            data: {
+                "regId": regId,
+                "heat": newHeatValue
+            },
+            success: function (data) {
+                $("#loading_data").hide();
+            }
+        });
+    }
+
+    function onLaneChange(regId) {
+        var newLaneValue = $("#lane_" + regId).val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/ModifyAthleteCompetitionLane",
+            data: {
+                "regId": regId,
+                "lane": newLaneValue
+            },
+            success: function (data) {
+                $("#loading_data").hide();
+            }
+        });
+    }
+    
+    function onConvertToPoints(element) {
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/SetManualPointCalculation",
+            data: {
+                isChecked : element.checked,
+                CompetitionDiscipline : '@Model.Id'
+            },
+            success: function (data) {
+            }
+        });
+    }
+
+
+
+    function updateDone(data) {
+        if (data.isError)
+        {
+            alert("@Messages.FieldMustBeNumeric");
+        }
+        else
+        {
+            $("#submit_result_" + data.compIdUpdated).removeClass("btn btn-primary btn-save glyphicon glyphicon-saved")
+                .addClass("btn btn-success btn-save glyphicon glyphicon-saved");
+        }
+    }
+    var heatWindAssociationJson = {};
+
+    function addNewHeatWindAssociation() {
+        var heatValue = $("#heat_wind_heat_box").val();
+        var windValue = $("#heat_wind_wind_box").val();
+        heatWindAssociationJson[heatValue] = windValue;
+        if (heatValue != undefined && heatValue.length > 0) {
+            $.ajax({
+                type: "POST",
+                url: "/Leagues/AddHeatWindAssociation",
+                data: {
+                    "Wind": windValue,
+                    "Heat": heatValue,
+                    "DisciplineCompetitionId": @ViewBag.CompetitionDisciplineId
+                },
+                success: function (data) {
+                    $("#heat_wind_table").html(data);
+                    setEnterPressForHeatWindTable();
+                    $("#heat_wind_heat_box").focus();
+                }
+            });
+        }
+    }
+
+    $(document).ready(function () {
+        $('input').on("input", function () {
+            if ($(this).val().length == $(this).attr("maxlength")) {
+                if ($(this).next().length == 0) {
+                    @if (ViewBag.IsResultsManualyRanked)
+                    {
+                        @:$("#rank_input_box").focus();
+                    }
+                    else if (!ViewBag.IsDisciplineHasRecognizedPointSystem)
+                    {
+                        @:$("#points_input_box").focus();
+                    }
+                    else
+                    {
+                        @:$("#wind_input_box").focus();
+                    }
+                } else {
+                    $(this).next().focus();
+                }
+            }
+        });
+
+
+        $("#result_box > .resultField").on("keyup", function (event) {
+            if (event.keyCode == 13) {
+                updateResults();
+            }
+        });
+
+        $("#alternative_result_input").on("change", function (event) {
+            showCorrectResultStatus();
+        });
+
+        setEnterPressForHeatWindTable();
+        $("#athletenum_box").focus();
+
+
+        var extensions = {
+            "sFilter": "dataTables_filter float_left hidden"
+        }
+        $.extend($.fn.dataTableExt.oStdClasses, extensions);
+        $.extend($.fn.dataTableExt.oJUIClasses, extensions);
+        var table = $('#print_table').DataTable( {
+            colReorder: true,
+            "bPaginate": false,
+            "paging": false,
+            info: false,
+            "oLanguage": {
+                "sSearch": "@Messages.Search: "
+            },
+            "columnDefs": [
+                { "type": "input_inner_num", targets: [3,4,6+@(windExtra)@(windExtra==1? ",6": (windExtra==2 ? ",6,7": ""))] },
+                {
+                    "targets": [5,7+@(windExtra)], "orderable": false
+                },
+            ]
+
+        });
+        
+        $("#filterbox").keyup(function() {
+            table.search(this.value).draw();
+        }); 
+        var json_str = getCookie('discipline_registration_col_order');
+        if (json_str.length > 10) {
+            var arr = JSON.parse(json_str);
+            if (arr.length > 0) {
+                table.colReorder.order(arr, true);
+            }
+        }
+        table.on('column-reorder', function (e, settings, details) {
+            var orderForSave = [];
+            for(col in settings.aoColumns)
+            {
+                orderForSave.push(settings.aoColumns[col]._ColReorder_iOrigCol);
+            }
+            var json_str = JSON.stringify(orderForSave);
+            setCookie('discipline_registration_col_order', json_str, 365);
+        });
+
+    });
+
+    function setEnterPressForHeatWindTable() {
+        $("#heat_wind_heat_box").on("keyup", function (event) {
+            if (event.keyCode == 13) {
+                $("#heat_wind_wind_box").focus();
+            }
+        });
+    }
+
+    function pointsPressed(event) {
+        if (event.keyCode == 13) {
+            $("#wind_input_box").focus();
+        }
+    }
+
+
+    function isBlank(str) {
+        return (!str || /^\s*$/.test(str));
+    }
+
+    function heatPressed(event) {
+        if (event.keyCode == 13) {
+            var key = $("#heat_input_box").val();
+            heatWindAssociationJson = {};
+            $(".heat_wind_row").each(function (index, value) {
+                var $row = $(value);
+                var key = $.trim($row.find(".heat_column").html());
+                var wind = $.trim($row.find(".wind_column").html());
+                heatWindAssociationJson[key] = wind;
+            });
+            if (heatWindAssociationJson[key] != undefined) {
+
+                $("#wind_input_box").val(Number(heatWindAssociationJson[key]).toFixed(2));
+                validateWind();
+            }
+            $("#lane_input_box").focus();
+        }
+    }
+
+    function validateWind() {
+        var val = $("#wind_input_box").val();
+        var isNotFloat = isNaN(parseFloat(val));
+        if (isNotFloat && !isBlank(val)) {
+            addError("@Messages.WindMustBeFloat");
+        }
+    }
+
+    function validateLane() {
+        var val = $("#lane_input_box").val();
+        var isNotInt = isNaN(parseInt(val));
+        if (isNotInt && !isBlank(val)) {
+            addError("@Messages.LaneMustBeInt");
+        }
+    }
+
+    function validateRank() {
+        var val = $("#rank_input_box").val();
+        var isNotInt = isNaN(parseInt(val));
+        if (isNotInt && !isBlank(val) && val != undefined) {
+            addError("@Messages.RankMustBeInt");
+        }
+    }
+
+    function updateExistingResult(regId) {
+        var result1 = $("#result_box_" + regId + " > .resultField[name = 'Result1']").val();
+        var result2 = $("#result_box_" + regId + " > .resultField[name='Result2']").val();
+        var result3 = $("#result_box_" + regId + " > .resultField[name='Result3']").val();
+        var result4 = $("#result_box_" + regId + " > .resultField[name='Result4']").val();
+        var newHeatValue = $("#heat_" + regId).val();
+        var newLaneValue = $("#lane_" + regId).val();
+        var newWindValue = $("#wind_" + regId).val();
+        var resultId = $("#results_" + regId).val();
+        var disciplineId = $("#discipline_" + regId).val();
+        var rank = $("#rank_" + regId).val();
+        var points = $("#points_" + regId).val();
+
+        var alternativeRes = $("#alternative_result_" + regId).val();
+
+        var dataToSend = {
+            "Format": @ViewBag.Format,
+            "Result1": result1,
+            "Result2": result2,
+            "Result3": result3,
+            "Result4": result4
+        }
+
+        console.log(dataToSend);
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/IsCompetitionResultValid",
+            data: dataToSend,
+            success: function (data) {
+
+                if (!data.Success) {
+                    $("#loading_data").hide();
+                    $("#status").show();
+                    addError("@Messages.ResultFormatIsIncorrect");
+                }
+                else {
+                    removeError();
+                    $("#status").hide();
+                    $("#loading_data").show();
+                    dataToSend.Id = disciplineId;
+                    dataToSend.CompetitionResultId = resultId;
+                    dataToSend.Heat = newHeatValue;
+                    dataToSend.Lane = newLaneValue;
+                    dataToSend.Wind = newWindValue;
+                    dataToSend.Rank = rank;
+                    dataToSend.Points = points;
+                    dataToSend.AlternativeResult = alternativeRes;
+                    $.ajax({
+                        type: "POST",
+                        url: "/Leagues/UpdateRegisteredAthleteCompetitionResult",
+                        data: dataToSend,
+                        success: function (data) {
+                            console.log(data);
+                            $("#loading_data").hide();
+                        }
+                    });
+                }
+            }
+        });
+    
+    }
+
+
+    function validateResult() {
+
+        if (currentRegistrationId == -1) {
+            addError("@Messages.YouMustSelectRegisteredAthlete");
+            return;
+        }
+        var result1 = $("#result_box > .resultField[name='Result1']").val();
+        var result2 = $("#result_box > .resultField[name='Result2']").val();
+        var result3 = $("#result_box > .resultField[name='Result3']").val();
+        var result4 = $("#result_box > .resultField[name='Result4']").val();
+
+        var dataToSend = {
+            "Format": @ViewBag.Format,
+            "Result1": result1,
+            "Result2": result2,
+            "Result3": result3,
+            "Result4": result4
+        }
+
+        $("#loading_data").show();
+        $("#status").hide();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/IsCompetitionResultValid",
+            data: dataToSend,
+            success: function (data) {
+
+                if (!data.Success) {
+                    $("#loading_data").hide();
+                    $("#status").show();
+                    addError("@Messages.ResultFormatIsIncorrect");
+                }
+                if (!isThereError()) {
+                    $("#status").hide();
+                    $("#loading_data").show();
+                    var wind = $("#wind_input_box").val();
+                    var lane = $("#lane_input_box").val();
+                    var heat = $("#heat_input_box").val();
+                    var rank = $("#rank_input_box").val();
+                    var points = $("#points_input_box").val();
+
+                    var alternativeRes = $("#alternative_result_input").val();
+                    dataToSend.Wind = wind;
+                    dataToSend.Lane = lane;
+                    dataToSend.Heat = heat;
+                    if(!isNaN(points)){
+                        dataToSend.Points = points;
+                    }
+                    dataToSend.AlternativeResult = alternativeRes;
+                    if (rank != undefined)
+                        dataToSend.Rank = rank;
+
+                    dataToSend.UserId = currentUserId;
+                    dataToSend.CompetitionDisciplineId = competitionId;
+                    dataToSend.Id = currentRegistrationId;
+                    $.ajax({
+                        type: "POST",
+                        url: "/Leagues/AddCompetitionResultToAthlete",
+                        data: dataToSend,
+                        success: function (data) {
+                            $("#loading_data").hide();
+                            $("#status").show();
+                            if (typeof data == "string") {
+                                $("#athleticsregistrationlist_pl").html(data);
+                                $("#athletenum_box").focus();
+                            } else if (!data.Success) {
+                                addError("Unknown Error.");
+                            }
+                        }
+                    });
+                } else {
+                    $("#loading_data").hide();
+                    $("#status").show();
+                }
+            }
+        });
+    }
+
+
+    function updateResultsTableValues(data) {
+        var athleteNum = $("#athletenum_box").val();
+        var row = $("#result_row_" + athleteNum);
+        if (row.length == 0) {
+            alert("new result");
+        } else {
+            alert("updating result");
+        }
+    }
+
+
+    function addError(errorStr) {
+        var statusElement = $("#status");
+        if (!(statusElement.hasClass('alert-danger'))) {
+            statusElement.html("").addClass("alert-danger").removeClass("alert-info").removeClass("alert-success");
+            statusElement.append(errorStr);
+        } else {
+            statusElement.append("</br> " + errorStr);
+        }
+    }
+
+    function removeError() {
+        var statusElement = $("#status");
+        statusElement.html("");
+    }
+
+    function resetAllInputs() {
+        $("#athletenum_box").val("");
+        resetInputs();
+    }
+
+    function resetInputs() {
+        $("#full_name").html("");
+        $("#club_name").html("");
+        $("#heat_input_box").val("");
+        $("#lane_input_box").val("");
+        $("#wind_input_box").val("");
+        $("#points_input_box").val("");
+        $("#result_box > .resultField[name='Result1']").val("");
+        $("#result_box > .resultField[name='Result2']").val("");
+        $("#result_box > .resultField[name='Result3']").val("");
+        $("#result_box > .resultField[name='Result4']").val("");
+        $("#alternative_result_input").val("0");
+    }
+
+    function isThereError() {
+        return $("#status").hasClass("alert-danger");
+    }
+
+
+    function lanePressed(event) {
+        if (event.keyCode == 13) {
+            validateLane();
+            $("#result_box > .resultField[name='Result1']").focus();
+        }
+    }
+
+    var currentRegistrationId = -1;
+    var competitionId = 0;
+    var currentUserId = 0;
+
+    function athletichNumPressed(event) {
+        if (event.keyCode == 13) {
+            resetInputs();
+            var value = $("#athletenum_box").val();
+            if (registeredData[value] != undefined) {
+                $("#full_name").html(registeredData[value].fullName);
+                $("#club_name").html(registeredData[value].clubName);
+                currentRegistrationId = registeredData[value].Id;
+                competitionId = registeredData[value].CompetitionDisciplineId;
+                currentUserId = registeredData[value].UserId;
+                if (registeredData[value].result0 != "") {
+                    $("#result_box > .resultField[name='Result1']").val(registeredData[value].result0);
+                }
+                if (registeredData[value].result1 != "") {
+                    $("#result_box > .resultField[name='Result2']").val(registeredData[value].result1);
+                }
+                if (registeredData[value].result2 != "") {
+                    $("#result_box > .resultField[name='Result3']").val(registeredData[value].result2);
+                }
+                if (registeredData[value].result3 != "") {
+                    $("#result_box > .resultField[name='Result4']").val(registeredData[value].result3);
+                }
+                if (registeredData[value].heat != undefined) {
+                    $("#heat_input_box").val(registeredData[value].heat);
+                }
+                if (registeredData[value].lane != undefined) {
+                    $("#lane_input_box").val(registeredData[value].lane);
+                }
+
+                if (registeredData[value].points != undefined) {
+                    $("#points_input_box").val(registeredData[value].points);
+                }
+
+                if (registeredData[value].alternativeResult != undefined) {
+                    $("#alternative_result_input").val(registeredData[value].alternativeResult);
+                }
+
+                if (registeredData[value].wind != undefined && registeredData[value].wind != "") {
+                    $("#wind_input_box").val(Number(registeredData[value].wind).toFixed(2));
+                }
+                if (registeredData[value].rank != undefined && registeredData[value].rank != "") {
+                    $("#rank_input_box").val(registeredData[value].rank);
+                }
+                if (registeredData[value].result != undefined) {
+                    $("#result_input_box").val(registeredData[value].result);
+                }
+                $("#status").html("@Messages.PlayerIsRegistered").addClass("alert-info").removeClass("alert-danger").removeClass("alert-success");
+                $("#heat_input_box").focus();
+                showCorrectResultStatus();
+            } else {
+                currentRegistrationId = -1;
+                $("#status").html("");
+                addError("@Messages.PlayerIsNotRegistered");
+            }
+        }
+    }
+    function showCorrectResultStatus() {
+        if ($("#alternative_result_input").val() == null || $("#alternative_result_input").val() == "0") {
+            $(".result_dependant").show();
+        } else {
+            $(".result_dependant").hide();
+        }
+    }
+
+    function resultsPressed(event) {
+        if (event.keyCode == 13) {
+            updateResults();
+        }
+    }
+
+    function rankPressed(event) {
+        if (event.keyCode == 13) {
+            updateResults();
+        }
+    }
+
+    function onResetReg() {
+        var elements = $(this).parent().parent().find('.resultField[name=\'Result1\'], .resultField[name=\'Result2\'], .resultField[name=\'Result3\'], .resultField[name=\'Result4\']');
+        elements.each(function (index, element) { $(element).val('') });
+        var athleticId = $(this).parent().parent().data('athleticid');
+        registeredData[athleticId].result0 = '';
+        registeredData[athleticId].result1 = '';
+        registeredData[athleticId].result2 = '';
+        registeredData[athleticId].result3 = '';
+    }
+
+    function updateResults() {
+        var value = $("#result_input_box").val();
+        $("#status").html("").removeClass("alert-danger");
+        validateWind();
+        validateLane();
+        validateRank();
+        validateResult();
+    }
+
+    var registeredData = {};
+    @foreach (var reg in Model.CompetitionDisciplineRegistrations)
+    {
+
+        var results = reg.CompetitionResult.FirstOrDefault();
+        string[] resultArray = new string[0];
+        if (results != null)
+        {
+            resultArray = UIHelpers.SplitResultByFormat(ViewBag.Format, results.Result);
+        }
+        <text>
+    @{
+                            var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                        }
+    registeredData[
+        "@HttpUtility.JavaScriptStringEncode(athleteNumber.HasValue? athleteNumber.Value.ToString() : string.Empty)"] = { 'Id': "@HttpUtility.JavaScriptStringEncode(reg.Id.ToString())", 'CompetitionDisciplineId': "@HttpUtility.JavaScriptStringEncode(reg.CompetitionDisciplineId.ToString())", "UserId": "@reg.UserId", 'fullName': "@HttpUtility.JavaScriptStringEncode(reg.User.FullName)", 'clubName': "@HttpUtility.JavaScriptStringEncode(reg.Club.Name)", "heat": "@HttpUtility.JavaScriptStringEncode(results != null? results.Heat : "")","points" : "@HttpUtility.JavaScriptStringEncode(results != null ? ( Model.IsMultiBattle ? results.CombinedPoint.ToString() : results.ClubPoints.ToString()) : "")", "lane": "@HttpUtility.JavaScriptStringEncode(results != null? results.Lane.ToString() : "")", "wind": "@HttpUtility.JavaScriptStringEncode(results != null? results.Wind.ToString() : "")", "alternativeResult": "@HttpUtility.JavaScriptStringEncode(results != null ? results.AlternativeResult.ToString() : "")", "rank" : "@HttpUtility.JavaScriptStringEncode(results != null? results.Rank.ToString() : "")", "result0" : "@HttpUtility.JavaScriptStringEncode(resultArray.Length > 0 ? resultArray[0] : "")", "result1" : "@HttpUtility.JavaScriptStringEncode(resultArray.Length > 1 ? resultArray[1] : "")", "result2" : "@HttpUtility.JavaScriptStringEncode(resultArray.Length > 2 ? resultArray[2] : "")", "result3" : "@HttpUtility.JavaScriptStringEncode(resultArray.Length > 3 ? resultArray[3] : "")"};
+        </text>
+    }
+</script>
+

@@ -1,0 +1,89 @@
+@model IEnumerable<AppModel.Stage>
+
+<table class="table table-bordered">
+    <tbody>
+    @{
+        var i = 1;
+        foreach (var s in Model)
+        {
+            <tr>
+                <td>
+                    @using (Ajax.BeginForm("UpdateStage", "Stages", new AjaxOptions()))
+                    {
+                        @Html.Hidden(nameof(UpdateStageModel.StageId), s.StageId)
+
+                        <div class="input-group">
+                            @Html.TextBox(nameof(UpdateStageModel.StageName), s.Name ?? $"{Messages.Stage} {s.Number}", new {@class = "form-control"})
+                            <span class="input-group-btn">
+                                <button type="submit" class="btn btn-primary btn-save glyphicon glyphicon-saved"></button>
+                            </span>
+                        </div>
+                    }
+                </td>
+                <td width="165">
+                    @if (ViewBag.IsDepartmentLeague == true)
+                    {
+                        <a href="@Url.Action("Create", "Groups", new {id = s.StageId, seasonId = ViewBag.SeasonId, departmentId = ViewBag.DepartmentId})"
+                           data-target="#groupsedit"
+                           data-toggle="modal"
+                           class="btn btn-primary">
+                            @Messages.AddGroup</a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Create", "Groups", new {id = s.StageId, seasonId = ViewBag.SeasonId})"
+                           data-target="#groupsedit"
+                           data-toggle="modal"
+                           class="btn btn-primary">
+                            @Messages.AddGroup</a>
+                    }
+
+
+                    @if (i++ == Model.Count())
+                    {
+                        if (ViewBag.IsDepartmentLeague == true)
+                        {
+                            <a href="@Url.Action("Delete", new {id = s.StageId, seasonId = ViewBag.SeasonId, departmentId = ViewBag.DepartmentId})" class="@AppCss.Delete"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#stages"
+                               data-ajax="true">
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Delete", new {id = s.StageId, seasonId = ViewBag.SeasonId})" class="@AppCss.Delete"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#stages"
+                               data-ajax="true">
+                            </a>
+                        }
+                    }
+                </td>
+                <td>
+                    @if (!s.IsCrossesStage && ViewBag.IsRugby == true)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   class="stage-ranked-standing-enabled"
+                                   data-id="@s.StageId"
+                                   @(s.RankedStandingsEnabled ? "checked" : "")/>
+                            @Messages.Stage_EnableRankedStanding
+                        </label>
+                    }
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>
+
+<script>
+    $(".stage-ranked-standing-enabled").change(function() {
+        var stageId = $(this).data("id");
+
+        $.post("/Stages/EnableRankedStanding/" + stageId,
+            {
+                value: $(this).is(":checked")
+            });
+    });
+</script>

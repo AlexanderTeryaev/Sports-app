@@ -1,0 +1,26 @@
+﻿@model ActivityRegistrationStatusPageModel
+
+@{
+    ViewBag.Title = "RegistrationStatusPage";
+    Layout = "RegistrationStatusPageLayout.cshtml";
+}
+
+@{ Html.RenderAction("GetRegistrations", new { id = Model.ActivityId }); }
+
+@Scripts.Render("~/Content/js/activityRegistrationStatus.js")
+
+<script>
+    $(function () {
+        setTimeout(function () {
+            var regStatusTable = $("#registrationStatus-table");
+
+            var statusTitle = $("#activity-status-title");
+
+            statusTitle.text(regStatusTable.data("registrationstitle"));
+
+            InitializeStatusDataTable(@Model.ActivityId);
+
+            $("html").show();
+        }, 100);
+    });
+</script>

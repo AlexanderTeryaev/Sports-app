@@ -1,0 +1,39 @@
+﻿@model IQueryable<AppModel.Worker>
+
+<h3 class="sub-header">בעלי תפקידים</h3>
+
+<form class="form-inline filters" role="form">
+    <div class="form-group">
+        <label>ענף:</label>
+        @Html.DropDownList("SectionId", null, Messages.Select, new { @class = "form-control combo" })
+    </div>
+    <div class="form-group pull-left last">
+        <a href="@Url.Action("Edit")" class="btn btn-primary"
+           data-target="#useredit"
+           data-toggle="modal"><i class="glyphicon glyphicon-plus"></i> הוסף חדש</a>
+    </div>
+</form>
+
+@Html.Grid(Model).Columns(c =>
+{
+    c.Add(m => m.WorkerId).Titled("#").SetWidth(80);
+
+    c.Add(m => m.Name).Titled("שם");
+
+    c.Add(m => m.Email).Titled("אימייל");
+
+    c.Add().Encoded(false)
+        .Sanitized(false)
+        .SetWidth(30)
+        .RenderValueAs(m => @<a href="@Url.Action("Edit", new { id = m.WorkerId })"
+                                class="btn btn-primary btn-edit glyphicon glyphicon-pencil"
+                                data-target="#useredit"
+                                data-toggle="modal"></a>);
+
+}).EmptyText(Messages.NoDataFound).WithPaging(ViewBag.PageSize)
+
+<div class="modal fade" id="useredit" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content" id="userform_pl"></div>
+    </div>
+</div>

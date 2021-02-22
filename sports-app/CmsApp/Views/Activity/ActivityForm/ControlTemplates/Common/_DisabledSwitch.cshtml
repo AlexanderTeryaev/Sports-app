@@ -1,0 +1,8 @@
+﻿@model ActivityFormControlTemplateModel 
+
+@if (!Model.IsPublish && Model.CanBeDisabled)
+{
+    <label class="isEnabledLabel">
+        <input type="checkbox" class="isEnabledChk" data-fb-for="buildForm-body-@Model.PropertyName" data-size="mini" checked>
+    </label>
+}

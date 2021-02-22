@@ -1,0 +1,50 @@
+﻿@model JobForm
+
+@using (Ajax.BeginForm("Edit", null,
+    new AjaxOptions { UpdateTargetId = "jobs" },
+    new { id = "jobsform" }))
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>@Messages.Role</th>
+                <th>@Messages.Permission</th>
+                <th width="70"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model.JobsList)
+            {
+                <tr>
+                    <td>@m.JobName</td>
+                    <td>@(m.RoleId.HasValue ? LangHelper.GetJobName(m.JobsRole.RoleName) : "-")</td>
+                    <td>
+                        <a href="@Url.Action("Delete", new { id = m.JobId })" class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#jobs"
+                           data-ajax="true"></a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td>
+                    <span class="form-group">
+                        @Html.TextBoxFor(m => m.JobName, new { @class = "form-control", placeholder = Messages.AddNew })
+                    </span>
+                </td>
+                <td>
+                    @Html.DropDownListFor(m => m.RoleId, Model.Roles, Messages.Select, new { @class = "form-control" })
+                </td>
+                <td>
+                    <button class="btn btn-primary">@Messages.Save</button>
+                    @Html.HiddenFor(m => m.SectionId)
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+}
+<script>
+    $('#jobsform').validateBootstrap(true);
+</script>

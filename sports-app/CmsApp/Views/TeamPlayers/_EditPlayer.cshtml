@@ -1,0 +1,160 @@
+@model TeamPlayerForm
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.AddNew</h4>
+</div>
+@using (Ajax.BeginForm("CreatePlayer", null,
+                            new AjaxOptions
+                            {
+                                UpdateTargetId = "playereditform_pl"
+                            },
+                            new { id = "userplayerform", autocomplete = "off", enctype = "multipart/form-data", data_success = TempData["Success"], data_error = TempData["Error"] }))
+{
+    <div id="editplayerformbody">
+        @Html.Partial("_EditPlayerFormBody", Model)
+    </div>
+    @Html.HiddenFor(m => m.IsGymnastic)
+    @Html.HiddenFor(m => m.IsWaterpolo)
+    @Html.HiddenFor(m => m.IsAthletics)
+    @Html.HiddenFor(m => m.IsNetBall)
+    @Html.HiddenFor(m => m.IsBicycle)
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        <button type="submit" id="add_player_button" class="btn btn-primary" onclick="beforeSubmit()">@Messages.Save</button>
+    </div>
+}
+
+<script>
+    function disableGenderAndBirthdaySelection() {
+        if ($("#GenderId").valid()) {
+            $("#GenderId option:selected")
+                .removeAttr('disabled')
+                .siblings().attr('disabled', 'disabled');
+        }
+
+        if ($("#BirthDay").valid()) {
+            $("#BirthDay").attr('disabled', 'disabled');
+        }
+    }
+    function enableGenderAndBirthdaySelection() {
+        $("#GenderId option").removeAttr('disabled');
+        $("#BirthDay").removeAttr('disabled');
+    }
+
+    function beforeSubmit() {
+        enableGenderAndBirthdaySelection();
+        $("#add_player_button").hide();
+    }
+
+    window.addEventListener("submit", function (e) { //Dirty hack to send files with Ajax.BeginForm, this form should be reworked to work without ajax
+        var form = e.target;
+        if (form.getAttribute("enctype") === "multipart/form-data") {
+            if (form.dataset.ajax) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var xhr = new XMLHttpRequest();
+                xhr.open(form.method, form.action);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        if (form.dataset.ajaxUpdate) {
+                            var updateTarget = document.querySelector(form.dataset.ajaxUpdate);
+                            if (updateTarget) {
+                                updateTarget.innerHTML = xhr.responseText;
+                                var successAttr = $("#userplayerform").data("success");
+                                var errorAttr = $("#userplayerform").data("error");
+
+                                if (errorAttr.length) {
+                                    if (errorAttr == "NeedCheckbox31") {
+                                        $("#accept_adding").modal("show");
+                                        $("#exceptionalAccept").click(function () {
+                                            $("#accept_adding").modal("hide");
+                                        });
+                                        $("#exceptional").change(function () {
+                                            var isChecked = $("#exceptional").is(':checked');
+                                            if (isChecked) {
+                                                $("#IsExceptional").val('True');
+                                            }
+                                            else {
+                                                $("#IsExceptional").val('False');
+                                            }
+                                        });
+                                    }
+                                    else if (errorAttr == "NeedCheckbox38") {
+                                        $("#tennis_accept_adding").modal("show");
+                                        $("#tennisExceptionalAccept").click(function () {
+                                            $("#tennis_accept_adding").modal("hide");
+                                            $("#IsTennisExceptional").val('True');
+                                            //submitForm(e, form);
+                                            $("#userplayerform").submit();
+                                        });
+                                        $("#tennisExceptionalCancel").click(function () {
+                                            $("#tennis_accept_adding").modal("hide");
+                                            $("#IsTennisExceptional").val('False');
+                                        });
+
+                                    } else if (errorAttr == "NeedCheckbox39") {
+                                        $("#accept_adding_same_category_team").modal("show");
+                                        $("#exceptionalSameCategoryAccept").click(function () {
+                                            $("#accept_adding_same_category_team").modal("hide");
+                                        });
+                                        $("#exceptionalSameCategory").change(function () {
+                                            var isChecked = $("#exceptionalSameCategory").is(':checked');
+                                            if (isChecked) {
+                                                $("#IsExceptional").val('True');
+                                            }
+                                            else {
+                                                $("#IsExceptional").val('False');
+                                            }
+                                        });
+                                    }
+                                    else {
+                                        alert(errorAttr);
+                                    }
+                                }
+
+                                if (successAttr === "True") {
+                                    location.reload();
+                                }
+
+                                // ReSharper disable once UseOfImplicitGlobalInFunctionScope
+                                InitForm();
+                            }
+                        }
+                    }
+                };
+                xhr.send(new FormData(form));
+            }
+        }
+    }, true);
+
+    function submitForm(e, form) {
+        if (form.getAttribute("enctype") === "multipart/form-data") {
+            if (form.dataset.ajax) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var xhr = new XMLHttpRequest();
+                xhr.open(form.method, form.action);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        if (form.dataset.ajaxUpdate) {
+                            var updateTarget = document.querySelector(form.dataset.ajaxUpdate);
+                            if (updateTarget) {
+                                updateTarget.innerHTML = xhr.responseText;
+                                var successAttr = $("#userplayerform").data("success");
+                                var errorAttr = $("#userplayerform").data("error");
+
+                                if (successAttr === "True") {
+                                    location.reload();
+                                }
+                                InitForm();
+                            }
+                        }
+                    }
+                };
+                xhr.send(new FormData(form));
+            }
+        }
+    }
+</script>

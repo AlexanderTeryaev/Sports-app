@@ -1,0 +1,918 @@
+﻿@using DataService.DTO
+@using CmsApp.Controllers
+@using System.Configuration
+@using System.Text.RegularExpressions
+@model PlayerAchievementsViewModel
+@{
+    string[] alternativeResultArray = new string[] { "DNF", "DQ", "DNS", "NM" };
+}
+<a href="" onclick="printClickAlternativeLandscape(); return false;" class="print_print_id btn btn-primary remove_print desktop-only float-last">
+    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+</a>
+
+<div class="print_button_class" id="print_id" data-print-title="">
+    @if (string.Equals(Model.SectionAlias, SectionAliases.Tennis, StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="row" style="margin-bottom: 20px;">
+            <div>
+                <div class="image-container print-only">
+                    @ShowImage(ViewBag.UnionImage)
+                </div>
+                <h3 style="display: inline;">@Messages.PlayerStatistic</h3>
+            </div>
+            @if (Model.PointsAndRanks != null && Model.PointsAndRanks.Count() > 0)
+            {
+                <div class="col-sm-6">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>@Messages.Rank</th>
+                                <th>@Messages.AveragePoints</th>
+                                <th>@Messages.PointsToAverage</th>
+                                <th>@Messages.Points</th>
+                                <th>@Messages.Ages</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rankPoint in Model.PointsAndRanks)
+                            {
+                                <tr>
+                                    <td>
+                                        @rankPoint.Rank
+                                    </td>
+                                    <td>
+                                        @rankPoint.AveragePoints
+                                    </td>
+                                    <td>
+                                        @rankPoint.PointsToAverage
+                                    </td>
+                                    <td>
+                                        @rankPoint.Points
+                                    </td>
+                                    <td>
+                                        @(rankPoint.CompetitionAge?.age_name)
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+
+
+        //if (User.IsInAnyRole(AppRole.Admins) || ViewBag.JobRole == JobRole.UnionManager)
+
+
+        if (Model.TennisCompetitionsGames.Any())
+        {
+            <table class="table table-bordered row">
+                <thead>
+                    <tr>
+                        <th class="col-sm-2">@Messages.Competition/@Messages.League @Messages.Name.ToLower()</th>
+                        <th class="col-sm-1">@Messages.Type</th>
+                        <th class="col-sm-2">@Messages.ReportTable_DateOfGame</th>
+                        <th class="col-sm-1">@Messages.Win/@Messages.Loss</th>
+                        <th class="col-sm-2">@Messages.OpponentName</th>
+                        <th class="col-sm-2">@Messages.PartnerName</th>
+                        <th class="col-sm-2">@Messages.Results</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var game in Model.TennisCompetitionsGames)
+                    {
+                        <tr>
+                            <td>
+                                @if (game.CompetionType == CompetitionType.Competition)
+                                {
+                                    <a tabindex="0"
+                                       role="button"
+                                       class="competition_rank_name"
+                                       data-categoryid="@game.CategoryId"
+                                       data-competitionid="@game.CompetitionId"
+                                       style="cursor: pointer; color: #0089ff; text-decoration: underline">
+                                        @game.CompetitionName
+                                    </a>
+                                }
+                                else
+                                {
+                                    @game.CompetitionName
+                                }
+                            </td>
+                            <td>@(game.CompetionType == CompetitionType.Competition ? Messages.Competition : (game.CompetionType == CompetitionType.DailyCompetition ? Messages.DailyCompetition : Messages.League))</td>
+                            <td>@game.DateOfGame</td>
+                            <td>@UIHelpers.GetResutTitle(game.ResultType)</td>
+                            <td>@game.OpponentName</td>
+                            <td>@game.PartnerName</td>
+                            <td>@game.ResultScore</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-danger">@Messages.NoActiveCompetitions</div>
+        }
+    }
+    @if (Model.AchievementsBySeasonList != null && Model.AchievementsBySeasonList.Any() && Model.AchievementsBySeasonList.FirstOrDefault().Achievements != null && Model.AchievementsBySeasonList.FirstOrDefault().Achievements.Any())
+    {
+        foreach (var achievementsBySeason in Model.AchievementsBySeasonList)
+        {
+            <div class="row">
+                <div class="col-lg-9">
+                    <h3 class="sub-header">
+                        @Messages.GoalsTable
+                    </h3>
+                </div>
+            </div>
+            <div class="print-only">
+                <div class="col-sm-12">
+                    <div class="col-sm-3">
+                    </div>
+                    <div class="col-sm-4">
+                        @if ((Request.IsHebrew() && Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")) || (@Request.IsHebrew() && !Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")))
+                        {
+                            <div>
+                                <span style="font-weight: bold;">@Messages.Name</span> <span>@Model.PlayerName</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <span>@Model.PlayerName</span> <span style="font-weight: bold;">@Messages.Name</span>
+                            </div>
+                        }
+
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="col-sm-3">
+                    </div>
+                    <div class="col-sm-4">
+                        @if ((Request.IsHebrew() && Regex.IsMatch(Model.PlayerClub, @"[\u0600-\u06FF,\u0590-\u05FF]+")) || (@Request.IsHebrew() && !Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")))
+                        {
+                            <div>
+                                <span style="font-weight: bold;">@Messages.ClubName</span> <span>@Model.PlayerClub</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <span>@Model.PlayerClub</span> <span style="font-weight: bold;">@Messages.ClubName</span>
+                            </div>
+                        }
+
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="col-sm-3">
+                    </div>
+                    <div class="col-sm-4">
+                        <div>
+                            <span style="font-weight: bold;">@Messages.BirthDay</span> <span>@Model.BirthDay</span>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="col-sm-3">
+                    </div>
+                    <div class="col-sm-4">
+                        <div>
+                            <span style="font-weight: bold;">@Messages.IdentNum</span> <span>@Model.IdentNum</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a data-id="@achievementsBySeason.SeasonId" class="fa fa-minus showSeason"></a>
+                <h4 colspan="9" style="display: inline-block;">@achievementsBySeason.SeasonName</h4>
+            </div>
+            using (Html.BeginForm("Achievements", "Players"))
+            {
+                @Html.HiddenFor(x => x.SeasonId)
+                @Html.HiddenFor(x => x.LeagueId)
+                @Html.HiddenFor(x => x.ClubId)
+                @Html.HiddenFor(x => x.TeamId)
+
+                <table class="table table-bordered achivement_table_@achievementsBySeason.SeasonId">
+                    <thead>
+                        <tr>
+                            <th>@Messages.PlayerAchievementsRank</th>
+                            <th>@Messages.PlayerAchievementsDueDate</th>
+                            <th>@Messages.PlayerAchievementsCompletionDate</th>
+                            <th>@Messages.PlayerAchievementsScore</th>
+                            <th>@Messages.PlayerAchievementsGap</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < achievementsBySeason.Achievements.Count; i++)
+                        {
+                            <tr>
+                                @Html.HiddenFor(x => achievementsBySeason.Achievements[i].Id)
+                                <td>
+                                    @Html.HiddenFor(x => achievementsBySeason.Achievements[i].SportRank.RankName)
+                                    @Html.HiddenFor(x => achievementsBySeason.Achievements[i].SportRank.RankNameHeb)
+                                    @(Model.Culture != CultEnum.He_IL ? achievementsBySeason.Achievements[i].SportRank.RankName : achievementsBySeason.Achievements[i].SportRank.RankNameHeb)
+                                </td>
+                                <td>
+                                    @(Model.IsEditAllowed
+                                                          ? Html.TextBoxFor(x => achievementsBySeason.Achievements[i].DueDate, "{0:d}", new { @class = "form-control duedate" })
+                                                          : Html.Raw(achievementsBySeason.Achievements[i].DueDate?.ToString("d") ?? string.Empty))
+                                </td>
+                                <td>
+                                    @(Model.IsEditAllowed
+                                                          ? Html.TextBoxFor(x => achievementsBySeason.Achievements[i].DateCompleted, "{0:d}", new { @class = "form-control datecompleted" })
+                                                          : Html.Raw(achievementsBySeason.Achievements[i].DateCompleted?.ToString("d") ?? string.Empty))
+                                </td>
+                                <td>
+                                    @(Model.IsEditAllowed
+                                                          ? Html.TextBoxFor(x => achievementsBySeason.Achievements[i].Score, new { @class = "form-control" })
+                                                          : Html.Raw(achievementsBySeason.Achievements[i].Score.ToString()))
+                                </td>
+                                <td>
+                                    @if (achievementsBySeason.Achievements[i].DueDate != null && achievementsBySeason.Achievements[i].DateCompleted != null)
+                                    {
+                                        var gap = (achievementsBySeason.Achievements[i].DateCompleted - achievementsBySeason.Achievements[i].DueDate).Value.TotalDays;
+
+                                        <div style="direction: ltr">@(gap > 0 ? $"+{gap}" : $"{gap}")</div>
+                                    }
+                                    else
+                                    {
+                                        @(0)
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                if (Model.IsEditAllowed)
+                {
+                    <button class="btn btn-primary" style="float: left; margin-top: 10px;">@Messages.Save</button>
+                    if (TempData["Saved"] != null)
+                    {
+                        <span class="text-success">@Messages.DataSavedSuccess</span>
+                    }
+                }
+            }
+        }
+        <script>
+            $(document).ready(function () {
+                $('.duedate, .datecompleted').datetimepicker({
+                    format: 'd/m/Y',
+                    closeOnDateSelect: true,
+                    timepicker: false,
+                    scrollInput: false
+                });
+            });
+        </script>
+    }
+    @if (Model.IsBasketball)
+    {
+        if (Model.PlayersStatistic != null && Model.PlayersStatistic.Any())
+        {
+            <div class="row">
+                <div>
+                    <div class="image-container print-only">
+                        @ShowImage(ViewBag.UnionImage)
+                    </div>
+                    <h3 style="display: inline;">@Messages.PlayerStatistic</h3>
+                </div>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <td>OVERALL</td>
+                            <td>GP</td>
+                            <td>MIN</td>
+                            <td>FG</td>
+                            <td>FGA</td>
+                            <td>3PT</td>
+                            <td>3PA</td>
+                            <td>FT</td>
+                            <td>FTA</td>
+                            <td>OR</td>
+                            <td>DR</td>
+                            <td>REB</td>
+                            <td>AST</td>
+                            <td>ST</td>
+                            <td>TO</td>
+                            <td>BS</td>
+                            <td>PF</td>
+                            <td>PTS</td>
+                            <td>EFF</td>
+                            <td>+/-</td>
+                        </tr>
+                    </thead>
+                    @foreach (var seasonGames in Model.PlayersStatistic)
+                    {
+                        var isDisplayed = seasonGames.Key.Id == Model.SeasonId;
+                        var display = isDisplayed ? "block" : "none";
+
+                        if (seasonGames.Value != null && seasonGames.Value.Any())
+                        {
+                            <tr id="season_@seasonGames.Key.Id">
+                                <td>
+                                    <a onclick="changeIconStatus(@seasonGames.Key.Id)" id="show_season_@seasonGames.Key.Id" class="fa fa-plus">&nbsp; @Messages.Show @Messages.All.ToLowerInvariant()</a>
+                                    <a onclick="changeIconStatus(@seasonGames.Key.Id)" id="hide_season_@seasonGames.Key.Id" class="fa fa-minus" style="display: none">&nbsp;@Messages.Hide @Messages.All.ToLowerInvariant()</a>
+                                </td>
+                                <td class="non-hideble" colspan="18" align="center"><b>@seasonGames.Key.Name</b></td>
+                            </tr>
+                            foreach (var gameStat in seasonGames.Value)
+                            {
+                                if (gameStat != null)
+                                {
+                                    <tr class="hideble display_@seasonGames.Key.Id">
+                                        <td>@gameStat.Overall</td>
+                                        <td>@gameStat.GP</td>
+                                        <td>@string.Format("{0:0.00}", gameStat.Min ?? 0D)</td>
+                                        <td>@gameStat.FG</td>
+                                        <td>@gameStat.FGA</td>
+                                        <td>@gameStat.ThreePT</td>
+                                        <td>@gameStat.ThreePA</td>
+                                        <td>@gameStat.FT</td>
+                                        <td>@gameStat.FTA</td>
+                                        <td>@gameStat.OREB</td>
+                                        <td>@gameStat.DREB</td>
+                                        <td>@gameStat.REB</td>
+                                        <td>@gameStat.AST</td>
+                                        <td>@gameStat.STL</td>
+                                        <td>@gameStat.TO</td>
+                                        <td>@gameStat.BLK</td>
+                                        <td>@gameStat.PF</td>
+                                        <td>@gameStat.PTS</td>
+                                        <td>@gameStat.EFF</td>
+                                        <td>@gameStat.PlusMinus</td>
+                                    </tr>
+                                }
+                            }
+                            var countOfGames = Math.Round((double)seasonGames.Value.Count, 1);
+                            var averageMin = Math.Round((double)seasonGames.Value.Sum(s => s.Min) / countOfGames, 1);
+                            var averageFG = Math.Round((double)seasonGames.Value.Sum(s => s.FG) / countOfGames, 1);
+                            var averageFGA = Math.Round((double)seasonGames.Value.Sum(s => s.FGA) / countOfGames, 1);
+                            var averageThreePT = Math.Round((double)seasonGames.Value.Sum(s => s.ThreePT) / countOfGames, 1);
+                            var averageThreePA = Math.Round((double)seasonGames.Value.Sum(s => s.ThreePA) / countOfGames, 1);
+                            var averageFT = Math.Round((double)seasonGames.Value.Sum(s => s.FT) / countOfGames, 1);
+                            var averageFTA = Math.Round((double)seasonGames.Value.Sum(s => s.FTA) / countOfGames, 1);
+                            var averageOREB = Math.Round((double)seasonGames.Value.Sum(s => s.OREB) / countOfGames, 1);
+                            var averageREB = Math.Round((double)seasonGames.Value.Sum(s => s.REB) / countOfGames, 1);
+                            var averageAST = Math.Round((double)seasonGames.Value.Sum(s => s.AST) / countOfGames, 1);
+                            var averageSTL = Math.Round((double)seasonGames.Value.Sum(s => s.STL) / countOfGames, 1);
+                            var averageTO = Math.Round((double)seasonGames.Value.Sum(s => s.TO) / countOfGames, 1);
+                            var averageBLK = Math.Round((double)seasonGames.Value.Sum(s => s.BLK) / countOfGames, 1);
+                            var averagePF = Math.Round((double)seasonGames.Value.Sum(s => s.PF) / countOfGames, 1);
+                            var averagePTS = Math.Round((double)seasonGames.Value.Sum(s => s.PTS) / countOfGames, 1);
+                            var averageEFF = Math.Round((double)seasonGames.Value.Sum(s => s.EFF) / countOfGames, 1);
+                            var averagePlusMinus = Math.Round((double)seasonGames.Value.Sum(s => s.PlusMinus) / countOfGames, 1);
+
+
+                            <tr class="hideble display_@seasonGames.Key.Id">
+                                <td></td>
+                                <td><b>@countOfGames</b></td>
+                                <td><b>@averageMin</b></td>
+                                <td><b>@averageFG</b></td>
+                                <td><b>@averageFGA</b></td>
+                                <td><b>@averageThreePT</b></td>
+                                <td><b>@averageThreePA</b></td>
+                                <td><b>@averageFT</b></td>
+                                <td><b>@averageFTA</b></td>
+                                <td><b>@averageOREB</b></td>
+                                <td><b>@averageREB</b></td>
+                                <td><b>@averageAST</b></td>
+                                <td><b>@averageSTL</b></td>
+                                <td><b>@averageTO</b></td>
+                                <td><b>@averageBLK</b></td>
+                                <td><b>@countOfGames</b></td>
+                                <td><b>@averagePF</b></td>
+                                <td><b>@averagePTS</b></td>
+                                <td><b>@averageEFF</b></td>
+                                <td><b>@averagePlusMinus</b></td>
+                            </tr>
+                        }
+                    }
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="text-center">
+                    @Messages.NoGamesForThisPlayer
+                </div>
+            </div>
+        }
+    }
+    @if (Model.IsMartialArts)
+    {
+        if (Model.MartialArtsStatsBySeason != null && Model.MartialArtsStatsBySeason.Any()
+            && Model.MartialArtsStatsBySeason.FirstOrDefault().MartialArtsStats.Any())
+        {
+            var caption = LangHelper.GetPlayerCaption(Model.SectionAlias);
+
+            <div>
+                <div class="image-container print-only">
+                    @ShowImage(ViewBag.UnionImage)
+                </div>
+                <h3 style="display: inline;">@caption @Messages.Competitions.ToLower()</h3>
+            </div>
+            <div class="print-only">
+                <div class="col-sm-12">
+                    <div class="col-sm-3">
+                    </div>
+                    <div class="col-sm-4">
+                        @if ((Request.IsHebrew() && Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")) || (@Request.IsHebrew() && !Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")))
+                        {
+                            <div>
+                                <span style="font-weight: bold;">@Messages.Name</span> <span>@Model.PlayerName</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <span>@Model.PlayerName</span> <span style="font-weight: bold;">@Messages.Name</span>
+                            </div>
+                        }
+
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="col-sm-3">
+                    </div>
+                    <div class="col-sm-4">
+                        @if ((Request.IsHebrew() && Regex.IsMatch(Model.PlayerClub, @"[\u0600-\u06FF,\u0590-\u05FF]+")) || (@Request.IsHebrew() && !Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")))
+                        {
+                            <div>
+                                <span style="font-weight: bold;">@Messages.ClubName</span> <span>@Model.PlayerClub</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <span>@Model.PlayerClub</span> <span style="font-weight: bold;">@Messages.ClubName</span>
+                            </div>
+                        }
+
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="col-sm-3">
+                    </div>
+                    <div class="col-sm-4">
+                        <div>
+                            <span style="font-weight: bold;">@Messages.BirthDay</span> <span>@Model.BirthDay</span>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="col-sm-3">
+                    </div>
+                    <div class="col-sm-4">
+                        <div>
+                            <span style="font-weight: bold;">@Messages.IdentNum</span> <span>@Model.IdentNum</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                    </div>
+                </div>
+            </div>
+            foreach (var martialArtsStatsBySeason in Model.MartialArtsStatsBySeason)
+            {
+                <div>
+                    <a data-id="@martialArtsStatsBySeason.SeasonId" class="fa fa-minus showSeason"></a>
+                    <h4 colspan="9" style="display: inline-block;">
+                        @martialArtsStatsBySeason.SeasonName
+                    </h4>
+                </div>
+                <div class="row">
+                    <div class="col-sm-10">
+                        <table class="table table-bordered achivement_table_@martialArtsStatsBySeason.SeasonId">
+                            <thead>
+                                <tr>
+                                    <th class="col-sm-3">@Messages.CompetitionName</th>
+                                    <th class="col-sm-3">@Messages.ClubName</th>
+                                    <th class="col-sm-2">@Messages.StartDate</th>
+                                    <th class="col-sm-2">@Messages.EndDate</th>
+                                    <th class="col-sm-1">@Messages.Points</th>
+                                    <th class="col-sm-1">@Messages.Rank</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var registration in martialArtsStatsBySeason.MartialArtsStats)
+                                {
+                                    <tr>
+                                        <td>@registration.CompetitionName</td>
+                                        <td>@registration.ClubName</td>
+                                        <td>@(registration.StartDate)</td>
+                                        <td>@(registration.EndDate)</td>
+                                        <td>@registration.Points</td>
+                                        <td>@registration.Rank</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+
+        }
+        else
+        {
+            <div class="alert alert-danger">@Messages.NoActiveCompetitions</div>
+        }
+    }
+
+    @if (ViewBag.IsIndividual == true && !Model.IsTennis && !Model.IsMartialArts && Model.SectionAlias != GamesAlias.Athletics)
+    {
+        if (Model.HasActiveCompetitions)
+        {
+            var caption = LangHelper.GetPlayerCaption(Model.SectionAlias);
+            <div class="row">
+                <div>
+                    <div class="image-container print-only">
+                        @ShowImage(ViewBag.UnionImage)
+                    </div>
+                    <h3 style="display: inline;">@caption @Messages.Competitions.ToLower()</h3>
+                </div>
+                <div class="print-only">
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                            @if ((Request.IsHebrew() && Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")) || (@Request.IsHebrew() && !Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")))
+                            {
+                                <div>
+                                    <span style="font-weight: bold;">@Messages.Name</span> <span>@Model.PlayerName</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div>
+                                    <span>@Model.PlayerName</span> <span style="font-weight: bold;">@Messages.Name</span>
+                                </div>
+                            }
+
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                            @if ((Request.IsHebrew() && Regex.IsMatch(Model.PlayerClub, @"[\u0600-\u06FF,\u0590-\u05FF]+")) || (@Request.IsHebrew() && !Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")))
+                            {
+                                <div>
+                                    <span style="font-weight: bold;">@Messages.ClubName</span> <span>@Model.PlayerClub</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div>
+                                    <span>@Model.PlayerClub</span> <span style="font-weight: bold;">@Messages.ClubName</span>
+                                </div>
+                            }
+
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                            <div>
+                                <span style="font-weight: bold;">@Messages.BirthDay</span> <span>@Model.BirthDay</span>
+                            </div>
+
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                            <div>
+                                <span style="font-weight: bold;">@Messages.IdentNum</span> <span>@Model.IdentNum</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                </div>
+                @foreach (var competitionBySeason in Model.CompetitionsList)
+                {
+                    <div>
+                        <a data-id="@competitionBySeason.SeasonId" class="fa fa-minus showSeason"></a>
+                        <h4 colspan="9" style="display: inline-block;">
+                            @competitionBySeason.SeasonName
+                        </h4>
+                    </div>
+                    <table class="table table-bordered achivement_table_@competitionBySeason.SeasonId">
+                        <thead>
+                            <tr>
+                                <th>@Messages.Name</th>
+                                <th>@Messages.Discipline</th>
+                                <th>@Messages.ClubName</th>
+                                <th>@Messages.StartDate</th>
+                                <th>@Messages.EndDate</th>
+                                <th>@Messages.Route</th>
+                                <th>@Messages.RankGym</th>
+                                <th>@Messages.Instruments</th>
+                                <th>@Messages.Composition</th>
+                                <th>@Messages.Reserved</th>
+                                <th>@Messages.FinalScore</th>
+                                <th>@Messages.Rank</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.CompetitionsList != null && Model.CompetitionsList.Any())
+                            {
+                                foreach (var registration in competitionBySeason.CompetitionAchievements)
+                                {
+                                    <tr>
+                                        <td>@registration.LeagueName</td>
+                                        <td>@registration.Discipline</td>
+                                        <td>@registration.ClubName</td>
+                                        <td>@registration.StartDate</td>
+                                        <td>@registration.EndDate</td>
+                                        <td>@registration.Route</td>
+                                        <td>@registration.Rank</td>
+                                        <td>@registration.Instruments</td>
+                                        <td>@registration.Composition</td>
+                                        <td>@registration.Reserved</td>
+                                        <td>@registration.FinalScore</td>
+                                        <td>@registration.Position</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger">@Messages.NoActiveCompetitions</div>
+        }
+    }
+
+    @if (ViewBag.IsIndividual == true && Model.SectionAlias == GamesAlias.Athletics)
+    {
+        if (ViewBag.AthleteAchievementsBySeason != null && ViewBag.AthleteAchievementsBySeason.Count > 0)
+        {
+            var caption = LangHelper.GetPlayerCaption(Model.SectionAlias);
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="image-container print-only">
+                        @ShowImage(ViewBag.UnionImage)
+                    </div>
+                    <h3 class="text-print-center">@caption @Messages.Competitions.ToLower()</h3>
+                </div>
+                <div class="print-only">
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                            @if ((Request.IsHebrew() && Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")) || (@Request.IsHebrew() && !Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")))
+                            {
+                                <div>
+                                    <span style="font-weight: bold;">@Messages.Name</span> <span>@Model.PlayerName</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div>
+                                    <span>@Model.PlayerName</span> <span style="font-weight: bold;">@Messages.Name</span>
+                                </div>
+                            }
+
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                            @if ((Request.IsHebrew() && Regex.IsMatch(Model.PlayerClub, @"[\u0600-\u06FF,\u0590-\u05FF]+")) || (@Request.IsHebrew() && !Regex.IsMatch(Model.PlayerName, @"[\u0600-\u06FF,\u0590-\u05FF]+")))
+                            {
+                                <div>
+                                    <span style="font-weight: bold;">@Messages.ClubName</span> <span>@Model.PlayerClub</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div>
+                                    <span>@Model.PlayerClub</span> <span style="font-weight: bold;">@Messages.ClubName</span>
+                                </div>
+                            }
+
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                                <div>
+                                    <span style="font-weight: bold;">@Messages.BirthDay</span> <span>@Model.BirthDay</span>
+                                </div>
+
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                                <div>
+                                    <span style="font-weight: bold;">@Messages.IdentNum</span> <span>@Model.IdentNum</span>
+                                </div>
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="col-sm-3">
+                        </div>
+                        <div class="col-sm-4">
+                                <div>
+                                    <span style="font-weight: bold;">@Messages.AthleteNumber</span> <span>@Model.AthleteNumber</span>
+                                </div>
+                        </div>
+                        <div class="col-sm-3">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    @foreach (var achievementsInSeason in ViewBag.AthleteAchievementsBySeason)
+                    {
+                        <div class="text-print-center">
+                            <a data-id="@achievementsInSeason.SeasonId" class="fa fa-minus showSeason"></a>
+                            <h4 style="display: inline-block;" colspan="9">@achievementsInSeason.SeasonName</h4>
+                        </div>
+                        <table class="table text-print-center table-bordered achivement_table_@achievementsInSeason.SeasonId">
+                            <thead>
+                                <tr>
+                                    <th>@Messages.CompetitionName</th>
+                                    <th>@Messages.Discipline</th>
+                                    <th>@Messages.StartDate</th>
+                                    <th>@Messages.Heat</th>
+                                    <th>@Messages.Lane</th>
+                                    <th>@Messages.Result</th>
+                                    <th>@Messages.Wind</th>
+                                    <th>@Messages.Rank</th>
+                                    <th>@Messages.Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var registration in achievementsInSeason.Achievements)
+                                {
+                                    <tr>
+                                        <td>@registration.CompetitionName</td>
+                                        <td>@registration.DisciplineName</td>
+                                        <td>@(registration.CompetitionStartDate?.ToShortDateString() ?? "")</td>
+                                        <td>@registration.Heat</td>
+                                        <td>@registration.Lane</td>
+                                        <td>@(registration.AlternativeResult == 0 ? UIHelpers.GetCompetitionDisciplineResultString(registration.Result, registration.Format) : alternativeResultArray[registration.AlternativeResult - 1])</td>
+                                        <td style="direction: ltr;">@(registration.Wind != null ? Decimal.Round((decimal)registration.Wind, 2).ToString() : "")</td>
+                                        <td>@registration.Rank</td>
+                                        <td>@registration.Points</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <br>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger">@Messages.NoActiveCompetitions</div>
+        }
+    }
+
+</div>
+<div class="modal fade" id="tennis_competition_rank" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="tennis_competition_rank_content">
+        </div>
+    </div>
+</div>
+
+<script>
+        $(".competition_rank_name").popover({
+            container: 'body',
+            html: true,
+            dataType: 'html',
+            content: function () {
+                var caller = $(this);
+                return $.ajax({
+                    url: "@Url.Action(nameof(LeagueRankController.GetTennisCompetitionRank), nameof(LeagueRankController).TrimControllerName(), new { id = Model.PlayerId, seasonId = Model.SeasonId })" + "&categoryId=" + caller.data("categoryid") + "&competitionId=" + caller.data("competitionid"),
+                    async: false,
+                }).responseText;
+            },
+            trigger: "focus",
+            title: "@Messages.Place/@Messages.ResultScore"
+        });
+
+    @if (Model.IsEditAllowed) {
+        <text>
+        function updateTennisRank(element, id) {
+            var tr = $(element).closest("tr");
+            $.ajax({
+                    url: "@Url.Action("UpdateTennisRank","Players")",
+                type: "POST",
+                data: {
+                        id: id,
+                    rank: tr.find("#rankPoint_Rank").val(),
+                    points: tr.find("#rankPoint_Points").val(),
+                    }
+            });
+        }
+        </text>
+    }
+    $(document).ready(function () {
+        changeIconStatus(@Model.SeasonId);
+        $(".hideble").hide();
+        $(".hideble.display_@Model.SeasonId").show();
+    });
+
+    function saveRank() {
+        $.ajax({
+            url: "/Players/SaveRank?playerId=" + @Model.PlayerId + "&rank=" + $("#rank").val(),
+            type: "GET"
+        });
+    }
+
+    function savePoint() {
+        $.ajax({
+            url: "/Players/SavePoints?playerId=" + @Model.PlayerId + "&point=" + $("#points").val(),
+            type: "GET"
+        });
+    }
+
+    function changeIconStatus(seasonId) {
+        var showIcon = $('#show_season_' + seasonId);
+        var hideIcon = $('#hide_season_' + seasonId);
+        if (showIcon.css('display') == 'none') {
+            showIcon.show();
+            $(".hideble.display_" + seasonId).hide(200);
+            hideIcon.hide();
+        } else {
+            showIcon.hide();
+            $(".hideble.display_" + seasonId).show(200);
+            hideIcon.show();
+        }
+    }
+
+        $(".showSeason").on("click", function () {
+            if ($(this).attr('class').indexOf('plus') > 0) {
+                $(this).attr('class', 'fa fa-minus showSeason');
+            } else {
+                $(this).attr('class', 'fa fa-plus showSeason');
+
+            }
+            var achivementId = $(this).attr("data-id");
+            var achivementTableId = ".achivement_table_" + achivementId;
+            $(achivementTableId).toggle();
+        });
+</script>
+<script src="~/Scripts/Print.js"></script>
+
+@helper ShowImage(string imgName)
+{
+    string imgSrc = "";
+    if (!string.IsNullOrEmpty(imgName))
+    {
+        imgSrc = String.Concat("https://loglig.com/assets/union/" + imgName);
+    }
+    else
+    {
+        imgSrc = Url.Content("~/content/img/league-default.jpg");
+    }
+    <img src="@imgSrc" id="imgProfile" style="width: 100px; height: 100px;margin:1px 18px;" class="img-thumbnail keep-for-print" />
+}

@@ -1,0 +1,137 @@
+﻿@model IEnumerable<AppModel.Section>
+@{
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+}
+
+<div class="row offset-2">
+    <div class="col-lg-8" id="sections_pl">
+        <table class="table table-bordered" id="sections_tbl">
+            <thead>
+                <tr>
+                    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+                    {
+                        <th width="70"></th>
+                    }
+                    <th>@Messages.SectionName</th>
+                    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+                    {
+                        <td width="60"></td>
+                    }
+                    @if (User.IsInAnyRole(AppRole.Admins))
+                    {
+                        <th width="10">@Messages.Individual</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model)
+                {
+                    string frmid = "sectform" + m.SectionId;
+                    if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+                    {
+                        <tr>
+                            <td>
+                                <a class="@AppCss.Edit" href='@Url.Action("Edit", new {id = m.SectionId})'></a>
+                            </td>
+                            <td>
+                                <form method="post" id="@frmid" action="@Url.Action("Update")">
+                                    <span class="form-group">
+                                        <input type="text" name="Name" value="@m.Name" form="@frmid" class="form-control required" maxlength="40" />
+                                        @Html.ValidationMessage("Name")
+                                        <input type="hidden" name="SectionId" form="@frmid" value="@m.SectionId" />
+                                    </span>
+                                </form>
+                            </td>
+                            <td>
+                                <button class='@AppCss.Save @(savedId == m.SectionId ? "btn btn-success" : null)' form='@frmid'></button>
+                            </td>
+
+                            @if (User.IsInAnyRole(AppRole.Admins))
+                            {
+                                <td align="center">
+                                    @Html.CheckBoxFor(item => m.IsIndividual, new
+                                    {
+                                        id = $"individualCheckbox_{m.SectionId}",
+                                        onclick = $"setIndividual({m.SectionId})"
+                                    })
+                                </td>
+                                @*<td align="center">
+                                    @Html.CheckBoxFor(item => m.IsRegionallevelEnabled, new
+                               {
+                                   id = $"regionallevel_{m.SectionId}",
+                                   onclick = $"setRegionallevel({m.SectionId})"
+                               })
+                                </td>*@
+                            }
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>
+                                @Html.ActionLink(m.Name, "Edit", new { id = m.SectionId })
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td></td>
+                    <td colspan="3">
+                        @if (User.IsInAnyRole(AppRole.Admins))
+                        {
+                            using (Html.BeginForm("CreateSection", "Sections", FormMethod.Post, new { @class = "form-inline" }))
+                            {
+                                <div class="form-group">
+                                    @Html.TextBox("Name", null, new { @class = "form-control", placeholder = Messages.AddNew, required = "required" })
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        @Html.CheckBox("IsIndividual", false)
+                                        @Messages.Individual
+                                    </label>
+                                    @*<label>
+                                        @Html.CheckBox("IsRegionallevelEnabled", false)
+                                        Regionallevel
+                                    </label>*@
+                                    @Html.Hidden("LangId", 1)
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="margin-left:15px;">@Messages.Save</button>
+                            }
+                        }
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+    </div>
+</div>
+<script>
+    $(function () {
+        localStorage.setItem('lastTab', null);
+    });
+    function setIndividual(id) {
+        var isIndividual = $("#individualCheckbox_" + id).is(":checked");
+        $.ajax({
+            url: '@Url.Action("ChangeIndividualStatus", "Sections")',
+            type: "POST",
+            data: {
+                id: id,
+                isIndividual: isIndividual
+            }
+        });
+    }
+
+    function setRegionallevel(id) {
+        var isRegionalEnable = $("#regionallevel_" + id).is(":checked");
+        $.ajax({
+            url: '@Url.Action("ToggleRegionalSetting", "Sections")',
+            type: "POST",
+            data: {
+                id: id,
+                isRegionalEnable: isRegionalEnable
+            }
+        });
+    }
+</script>

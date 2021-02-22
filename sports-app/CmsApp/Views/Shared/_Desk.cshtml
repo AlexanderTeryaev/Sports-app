@@ -1,0 +1,96 @@
+﻿
+@model Desks
+@{
+    bool userIsEditor = User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers);   
+    string name = string.Empty;
+    if (string.IsNullOrWhiteSpace(Model.DeskMainName))
+    {
+        var service = new DeskService(Model.CycleId, Model.LeagueId);
+        name = service.GetMainDeskName(Model.DesksIds, Model.CycleId);
+    }
+    else
+    {
+        name = Model.DeskMainName;
+    }
+    bool isHebrew = Request.IsHebrew();
+}
+
+@if (userIsEditor)
+{
+    <div class="modal-dialog" id="modal_window_desk_@Model.CycleId">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">@Messages.ChooseDesks:</h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning alert-dismissable" id="alert_desc_@Model.CycleId" style="display:none">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">×</a>
+                </div>
+                @if (Model.DesksIds != null && Model.DesksIds.Count >= 0)
+                {
+                    for (int i = 0; i < Model.DesksIds.Count; i++)
+                    {
+                        if (i == 0)
+                        {
+                            var deskId = (Model.DesksIds != null && Model.DesksIds.Count >= i + 1) ? Model.DesksIds[i] : null;
+                            var desk = new SelectList(Model.DesksItems, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), deskId).AsEnumerable();
+                            <p id="desk_@(i+1)">
+                                <h3>
+                                    @Messages.Desk #1: &nbsp;&nbsp;
+                                    @if (i == ((Model.DesksIds.Count) - 1))
+                                    {
+                                        <a data-controls-modal="deskModal_@Model.CycleId" data-backdrop="static" data-keyboard="false" href="#"
+                                           class="btn btn-danger btn-sm" onclick="removeDesk(@(i+1),@Model.CycleId)">
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                        </a>
+                                    }
+                                </h3>
+                                @Html.DropDownList("DeskDropdown", desk, Messages.Select, new { @class = $"form-control desk_{Model.CycleId}", id = $"deskDropdown_{Model.CycleId}_{i + 1}" })
+                            </p>
+                        }
+                        else
+                        {
+                            var deskId = (Model.DesksIds != null && Model.DesksIds.Count >= i + 1) ? Model.DesksIds[i] : null;
+                            var desk = new SelectList(Model.DesksItems, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), deskId).AsEnumerable();
+                            <p id="desk_@(i+1)">
+                                <h3>
+                                    @Messages.Desk #@(i + 1):&nbsp;&nbsp;
+                                    @if (i == ((Model.DesksIds.Count) - 1))
+                                    {
+                                        <a class="btn btn-danger btn-sm" onclick="removeDesk(@(i + 1),@Model.CycleId)">
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                        </a>
+                                    }
+                                </h3>
+                                @Html.DropDownList("DeskDropdown", desk, Messages.Select, new { @class = $"form-control desk_{Model.CycleId}", id = $"deskDropdown_{Model.CycleId}_{i + 1}" })
+                            </p>
+                        }
+                        <hr />
+                    }
+                }
+                <p>
+                    <input type="button" class="btn btn-primary btn" onclick="sendDesk(@Model.CycleId,false)"
+                           value=@Messages.AddDesk />
+                </p>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-primary" onclick="sendDesk(@Model.CycleId,true)">@Messages.Save</a>
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                @if (isHebrew)
+                {
+                    <i id="spinner_desk" class="fa fa-spin fa-2x fa-spinner" style="display:none;float:right"></i>
+                }
+                else
+                {
+                    <i id="spinner_desk" class="fa fa-spin fa-2x fa-spinner" style="display:none;float:left"></i>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@Html.HiddenFor(m => m.CycleId)
+@Html.HiddenFor(m => m.LeagueId)
+@Html.Hidden($"MainDeskHidden_{Model.CycleId}", name);
+

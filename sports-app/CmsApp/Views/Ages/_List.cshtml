@@ -1,0 +1,118 @@
+﻿@model IEnumerable<CmsApp.Models.AgeViewModel>
+
+<div class="row offset-2">
+    <div class="col-lg-8" id="sections_pl">
+        <table class="table table-bordered" id="sections_tbl">
+            <thead>
+                <tr>
+                    <th>@Messages.Title</th>
+                    <th>@Messages.FromAge</th>
+                    <th>@Messages.ToAge</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var age in Model)
+                    {
+                        <tr id="age_@age.AgeId">
+                            <td>@Html.TextBoxFor(m => age.Title, new { @class = "form-control", data_id = $"{age.AgeId}", id = $"title_{age.AgeId}" })</td>
+                            <td>@Html.TextBoxFor(m => age.FromAge, new { @class = "form-control", data_id = $"{age.AgeId}", type = "number", min = "1", id = $"fromAge_{age.AgeId}" })</td>
+                            <td>@Html.TextBoxFor(m => age.ToAge, new { @class = "form-control", data_id = $"{age.AgeId}", type = "number", min = "1", id = $"toAge_{age.AgeId}" })</td>
+                            <td>
+                                <a data-id="@age.AgeId" class="btn btn-primary btn-save glyphicon glyphicon-saved update"></a>
+                            </td>
+                            <td>
+                                <a data-id="@age.AgeId" class="btn btn-danger delete"><span class="glyphicon glyphicon-trash"></span></a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+            <tfoot>
+                @using (Ajax.BeginForm("CreateAge", "Sections", new AjaxOptions { HttpMethod = "Post", UpdateTargetId = "settings" }, new { id = "settings_form" }))
+                {
+                    <tr>
+                        <td>
+                            @Html.TextBox(nameof(CmsApp.Models.AgeViewModel.Title), string.Empty, new { @class = "form-control", form = "settings_form" })
+                        </td>
+                        <td>
+                            @Html.TextBox(nameof(CmsApp.Models.AgeViewModel.FromAge), string.Empty, new { @class = "form-control", form = "settings_form", type = "number", min = "1" })
+                        </td>
+                        <td>
+                            @Html.TextBox(nameof(CmsApp.Models.AgeViewModel.ToAge), string.Empty, new { @class = "form-control", form = "settings_form", type = "number", min = "1" })
+                        </td>
+                        <td colspan="2">
+                            <button type="submit" class="btn btn-primary">@Messages.CreateNewTeam.Replace(Messages.Team, string.Empty)</button>
+                        </td>
+                    </tr>
+                }
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<div id="error-modal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <p id="modal-error-text"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(".delete").on("click", function () {
+        var id = $(this).attr("data-id");
+        var isConfirmed = confirm("@Messages.DeleteConfirm");
+        if (isConfirmed) {
+            $.ajax({
+                type: "POST",
+                url: "/Ages/Delete",
+                data: {
+                    id: id
+                },
+                success: function (data) {
+                    if (data.Success === true) {
+                        $("#age_" + id).remove();
+                    } else {
+                        $("#modal-error-text").text(data.Message);
+                        $("#error-modal").modal("show");
+                    }
+                }
+            });
+        }
+    });
+
+    $(".update").on("click", function () {
+
+        var id = $(this).attr("data-id");
+        var title = $("#title_" + id).val();
+        var fromAge = $("#fromAge_" + id).val();
+        var toAge = $("#toAge_" + id).val();
+
+        $.ajax({
+            type: "POST",
+            url: "/Ages/Update",
+            data: {
+                ageId: id,
+                title: title,
+                fromAge: fromAge,
+                toAge: toAge
+            }
+        });
+    });
+</script>

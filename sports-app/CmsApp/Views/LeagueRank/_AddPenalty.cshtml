@@ -1,0 +1,18 @@
+﻿@model AddTeamPenaltyModel
+
+@using (Html.BeginForm("AddPenalty", "LeagueRank", FormMethod.Post))
+{
+    @Html.HiddenFor(x => x.LeagueId)
+    @Html.HiddenFor(x => x.SeasonId)
+    @Html.HiddenFor(x => x.StageId)
+                                    
+    <div class="form-inline">
+        @Html.LabelFor(x => x.TeamId, Messages.Team):
+        @Html.DropDownListFor(x => x.TeamId, Model.TeamsList, Messages.Select, new { @class = "form-control" })
+
+        @Html.LabelFor(x => x.Points, Messages.Points):
+        @Html.TextBoxFor(x => x.Points, new {@class = "form-control"})
+
+        <button type="submit" class="btn btn-primary">@Messages.Save</button>
+    </div>
+}

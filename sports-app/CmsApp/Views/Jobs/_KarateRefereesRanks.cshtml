@@ -1,0 +1,308 @@
+﻿@model CreateWorkerForm
+@{ 
+    IEnumerable<SelectListItem> licenseTypeList = new List<SelectListItem>
+    {
+        new SelectListItem {Text = Messages.Select, Value = null},
+        new SelectListItem {Text = Messages.Kumite, Value = "Kumite"},
+        new SelectListItem {Text = Messages.Kata, Value = "Kata"},
+    };
+}
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>@Messages.IsraelLicense</h4></div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.LicenseType:</label>
+                @Html.DropDownListFor(m => m.IsraelLicenseType, licenseTypeList, new { @class = "form-control" })
+            </div>
+            <div id="israel_kumite" style="display:none">
+                <div class="row">
+                    <div class="col-sm-12"><h5>1. @Messages.Judge B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeBCompleteIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeBValidityIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>2. @Messages.Judge A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeACompleteIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeAValidityIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>3. Referee B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.RefereeBCompleteIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.RefereeBValidityIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>4. Referee A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.RefereeACompleteIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.RefereeAValidityIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+            </div>
+            <div id="israel_kata" style="display:none">
+                <div class="row">
+                    <div class="col-sm-12"><h5>1. @Messages.Judge B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeBCompleteIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeBValidityIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>2. @Messages.Judge A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeACompleteIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeAValidityIsrael, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>@Messages.EKFLicense</h4></div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.LicenseType:</label>
+                @Html.DropDownListFor(m => m.EKFLicenseType, licenseTypeList, new { @class = "form-control" })
+            </div>
+            <div id="ekf_kumite" style="display:none">
+                <div class="row">
+                    <div class="col-sm-12"><h5>1. @Messages.Judge B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeBCompleteEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeBValidityEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>2. @Messages.Judge A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeACompleteEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeAValidityEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>3. .Referee B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.RefereeBCompleteEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.RefereeBValidityEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>4. Referee A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.RefereeACompleteEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.RefereeAValidityEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+            </div>
+            <div id="ekf_kata" style="display:none">
+                <div class="row">
+                    <div class="col-sm-12"><h5>1. @Messages.Judge B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeBCompleteEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeBValidityEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>2. @Messages.Judge A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeACompleteEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeAValidityEKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>@Messages.WKFLiscense</h4></div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.LicenseType:</label>
+                @Html.DropDownListFor(m => m.WKFLicenseType, licenseTypeList, new { @class = "form-control" })
+            </div>
+            <div id="wkf_kumite" style="display:none">
+                <div class="row">
+                    <div class="col-sm-12"><h5>1. @Messages.Judge B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeBCompleteWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeBValidityWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>2. @Messages.Judge A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeACompleteWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KumiteJudgeAValidityWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>3. Referee B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.RefereeBCompleteWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.RefereeBValidityWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>4. Referee A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.RefereeACompleteWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.RefereeAValidityWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+            </div>
+            <div id="wkf_kata" style="display:none">
+                <div class="row">
+                    <div class="col-sm-12"><h5>1. @Messages.Judge B</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeBCompleteWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeBValidityWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12"><h5>2. @Messages.Judge A</h5></div>
+                    <div class="form-group col-sm-5 col-sm-offset-1">
+                        <label class="control-label">@Messages.DateOfComplete:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeACompleteWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                    <div class="form-group col-sm-5">
+                        <label class="control-label">@Messages.DateOfLicenseValidity:</label>
+                        @Html.TextBoxFor(m => m.KataJudgeAValidityWKF, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#IsraelLicenseType').on("change", function () {
+        var value = $(this).val();
+        switch (value) {
+            case "Kumite":
+                $("#israel_kumite").show();
+                $("#israel_kata").hide();
+                break;
+            case "Kata":
+                $("#israel_kumite").hide();
+                $("#israel_kata").show();
+                break;
+            default:
+                $("#israel_kumite").hide();
+                $("#israel_kata").hide();
+                break;
+        }
+    });
+    $('#EKFLicenseType').on("change", function () {
+        var value = $(this).val();
+        switch (value) {
+            case "Kumite":
+                $("#ekf_kumite").show();
+                $("#ekf_kata").hide();
+                break;
+            case "Kata":
+                $("#ekf_kumite").hide();
+                $("#ekf_kata").show();
+                break;
+            default:
+                $("#ekf_kumite").hide();
+                $("#ekf_kata").hide();
+                break;
+        }
+    });
+    $('#WKFLicenseType').on("change", function () {
+        var value = $(this).val();
+        switch (value) {
+            case "Kumite":
+                $("#wkf_kumite").show();
+                $("#wkf_kata").hide();
+                break;
+            case "Kata":
+                $("#wkf_kumite").hide();
+                $("#wkf_kata").show();
+                break;
+            default:
+                $("#wkf_kumite").hide();
+                $("#wkf_kata").hide();
+                break;
+        }
+    });
+
+</script>

@@ -1,0 +1,68 @@
+﻿@model Tuple<AppModel.ActivityCustomPrice, int, bool>
+
+<div class="price-block">
+    <input name="ActivityCustomPrices[@Model.Item2].Id" type="hidden" value="@Model.Item1.Id">
+    <input name="ActivityCustomPrices[@Model.Item2].ActivityId" type="hidden" value="@Model.Item1.ActivityId">
+
+    <div class="custom-price well">
+        <div class="well well-sm price-title">
+            <label>@Messages.Activity_CustomPrices_PriceTitle</label>
+            <div class="row">
+                <div class="col-sm-5 price-title-eng">
+                    <label>@Messages.Activity_CustomPrices_TitleEng:</label>
+                    <input class="form-control" type="text" name="ActivityCustomPrices[@Model.Item2].TitleEng" value="@Model.Item1.TitleEng"/>
+                </div>
+                <div class="col-sm-5 price-title-heb">
+                    <label>@Messages.Activity_CustomPrices_TitleHebrew:</label>
+                    <input class="form-control" type="text" name="ActivityCustomPrices[@Model.Item2].TitleHeb" value="@Model.Item1.TitleHeb"/>
+                </div>
+                @if (Model.Item3)
+                {
+                    <div class="col-sm-5 price-title-uk">
+                        <label>@Messages.Activity_CustomPrices_TitleUkrainian:</label>
+                        <input class="form-control" type="text" name="ActivityCustomPrices[@Model.Item2].TitleUk" value="@Model.Item1.TitleUk"/>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div>
+            <div class="row">
+                <div class="col-sm-3 price-amount">
+                    <label>@Messages.Activity_CustomPrices_Price:</label>
+                    <input class="form-control" type="text" name="ActivityCustomPrices[@Model.Item2].Price" value="@Model.Item1.Price"/>
+                </div>
+
+                <div class="col-sm-3 price-maxquantity">
+                    <label>@Messages.Activity_CustomPrices_MaxQuantity:</label>
+                    <select class="form-control" name="ActivityCustomPrices[@Model.Item2].MaxQuantity">
+                        @foreach (var number in Enumerable.Range(0, 161))
+                        {
+                            <option value="@number" @(number == Model.Item1.MaxQuantity ? "selected=\"selected\"" : "")>@number</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-sm-4 price-defaultquantity">
+                    <label>@Messages.Activity_CustomPrices_DefaultQuantity:</label>
+                    <select class="form-control" name="ActivityCustomPrices[@Model.Item2].DefaultQuantity">
+                        @foreach (var number in Enumerable.Range(0, 161))
+                        {
+                            <option value="@number" @(number == Model.Item1.DefaultQuantity ? "selected=\"selected\"" : "")>@number</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <label>@Messages.Activity_CustomPrices_CardComProductId:</label>
+                    <input class="form-control" type="text" name="ActivityCustomPrices[@Model.Item2].CardComProductId" value="@Model.Item1.CardComProductId"/>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" data-id="@Model.Item1.Id" class="btn btn-xs btn-danger customPrice-remove">
+            <i class="glyphicon glyphicon-remove"></i>
+            @Messages.Remove
+        </button>
+    </div>
+</div>

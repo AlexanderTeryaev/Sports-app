@@ -1,0 +1,267 @@
+﻿@model TeamSchedules
+
+@if (Model.LeaguesWithCycles.Count > 0)
+{
+    var firstLeagueId = Model.LeaguesWithCycles[0].Key.LeagueId;
+    <div>
+        <a class="btn btn-info export" href="@Url.Action("ExportToExcel", "Schedules", new { teamId = Model.TeamId, currentLeagueId = firstLeagueId, logicalName = LogicaName.Team })">
+            <i href="#" class="glyphicon glyphicon-open export"></i> @Messages.ExportToExcel
+        </a>
+
+        <a href="@GlobVars.SiteUrl/LeagueTable/TeamSchedulesLink/@Model.TeamId?leagueId=@firstLeagueId&seasonId=@Model.SeasonId" target="_blank" class="btn btn-info export">@Messages.ExternalLink</a>
+
+        <a href="#" id="team_print" class="btn btn-info export">
+            <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+        </a>
+        @using (Html.BeginForm("Import", "Teams", FormMethod.Post, new { teamId = Model.TeamId, currentLeagueId = firstLeagueId, enctype = "multipart/form-data" }))
+        {
+            <input type="hidden" value="@Model.TeamId" name="TeamId" />
+            <input type="hidden" value="@Model.SeasonId" name="SeasonId" />
+            <input type="hidden" value="@firstLeagueId" name="CurrentLeagueId" />
+            <input type="file" id="file-import-from-excel" name="ImportFile" style="display: none" />
+        }
+    </div>
+}
+
+@foreach (var club in Model.Clubs)
+{
+    <div>
+        @Html.Label(club.Name)
+        @Html.Action("GamesUrl", "Games", new { clubId = club.ClubId, teamId = Model.TeamId, seasonId = Model.SeasonId })
+    </div>
+}
+
+
+<div class="team_tables">
+
+    @foreach (var league in Model.LeaguesWithCycles)
+    {
+        <h2>@league.Key.Name</h2>
+        foreach (var stage in league)
+        {
+            <h3>@(stage.Key.Name ?? $"{Messages.Stage} {stage.Key.Number}")</h3>
+            <table id="res_tbl2" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th width="2%">@Messages.Status</th>
+                        <th width="14%">@Messages.Group</th>
+                        <th width="5%">@Messages.Cycle</th>
+                        <th width="10%">@Messages.StartDate</th>
+                        <th width="11%">@UIHelpers.GetAuditoriumCaption(ViewBag.Section)</th>
+                        @if (!Model.IsCatchball)
+                        {
+                            <th width="10%">@Messages.Referee</th>
+                        }
+                        <th width="17%" class="text-center">@Messages.HomeTeam</th>
+                        <th width="2%"></th>
+                        <th width="2%"></th>
+                        <th width="17%" class="text-center">@Messages.GuestTeam</th>
+                        <th width="8%">@Messages.Remark</th>
+                        @if (ViewBag.Section == GamesAlias.Tennis)
+                        {
+                            <th class="remove_print"></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var game in stage.OrderBy(g => g.StartDate))
+                    {
+                        var isEditable = ViewBag.Section == GamesAlias.Tennis && Model.TeamId == game.HomeTeamId && (game.GameStatus != GameStatus.Ended || User.IsInRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager));
+
+                        <tr>
+                            <td class="res-stat remove_print">
+                                @if (isEditable)
+                                {
+                                    <form id="gamefrm@(game.CycleId)" method="post" action="/Schedules/Update" data-ajax="true">
+                                        <input name="CycleId" type="hidden" value="@game.CycleId" form="gamefrm@(game.CycleId)" />
+                                    </form>
+                                }
+                                @if (game.GameStatus == GameStatus.Started)
+                                {
+                                    <span class="label label-success">@Messages.Started</span>
+                                }
+                                else if (game.GameStatus == GameStatus.Ended)
+                                {
+                                    <span class="label label-danger">@Messages.Ended</span>
+                                }
+                                else
+                                {
+                                    <span class="label label-default">@Messages.Waiting</span>
+                                }
+                            </td>
+                            <td>@(game.Group != null ? game.Group.Name : "")</td>
+                            <td>@Messages.Cycle @(game.CycleNum + 1)</td>
+                            <td>
+                                <span>@game.StartDate.ToString(Messages.DateFormat)</span>
+                            </td>
+                            <td>@(game.AuditoriumId.HasValue ? game.Auditorium.Name : "")</td>
+                            @if (!Model.IsCatchball)
+                            {
+                                <td class="remove_print">
+                                    @(string.Join(",", Model.RefereesNames
+                                                                                                  .Where(r => !string.IsNullOrEmpty(game.RefereeIds) && game.RefereeIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Contains(r.Key.ToString()))
+                                                                                                  .Select(r => r.Value)))
+                                </td>
+                            }
+                            <td class="text-center">
+                                @if (game.HomeTeam != null)
+                                {
+                                    var homeTeam = game.HomeTeam.TeamsDetails.FirstOrDefault(x => x.SeasonId == Model.SeasonId);
+                                    if (homeTeam != null)
+                                    {
+                                        <label>@homeTeam.TeamName</label>
+                                    }
+                                    else
+                                    {
+                                        <label>@game.HomeTeam.Title</label>
+                                    }
+                                }
+                                else
+                                {
+                                    @("--")
+                                }
+                            </td>
+                            <td class="text-center">@game.HomeTeamScore</td>
+                            <td class="text-center">@game.GuestTeamScore</td>
+                            <td class="text-center">
+                                @if (game.GuestTeam != null)
+                                {
+                                    var guestTeam = game.GuestTeam.TeamsDetails.FirstOrDefault(x => x.SeasonId == Model.SeasonId);
+                                    if (guestTeam != null)
+                                    {
+                                        <label>@guestTeam.TeamName</label>
+                                    }
+                                    else
+                                    {
+                                        <label>@game.GuestTeam.Title</label>
+                                    }
+                                }
+                                else
+                                {
+                                    @("--")
+                                }
+                            </td>
+                            <td class="text-center">@game.Remark</td>
+                            @if (ViewBag.Section == GamesAlias.Tennis)
+                            {
+                                <td class="remove_print">
+                                    @if (isEditable)
+                                    {
+                                        <a class="btn btn-sm btn-primary edit-tennis" href="@Url.Action("EditTennisLeague", "GameCycle", new { id = game.CycleId, seasonId = Model.SeasonId, isFromTeamPage = true })"
+                                           data-toggle="modal"
+                                           data-referees="@game.RefereeIds"
+                                           data-target="#editTennisLeague"
+                                           data-ajax-update="#editTennisLeague_window_pl"
+                                           data-ajax="true"
+                                           title="@Messages.ToGame">
+                                            <i class="glyphicon glyphicon-pencil"></i>
+                                        </a>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+    }
+</div>
+<div class="modal fade" id="editTennisLeague" role="dialog">
+    <div class="modal-dialog modal-lg" id="editTennisLeague_window_pl">
+    </div>
+</div>
+
+<script src="~/Scripts/pages/tennisleaguegame.js?ver=3"></script>
+<script src="~/Scripts/pages/gameCycleList.js?ver=2"></script>
+
+<script>
+    $('#team_print').click(function () {
+        var el = $('.team_tables');
+        if (el.length > 0) {
+            teamPrint(el);
+        }
+    });
+
+
+    $('#res_tbl2 tbody tr').each(function () {
+        var me = $(this);
+        var btn = $('[name=savebtn]', me);
+
+        $('select', me).change(function () {
+            btn.attr('disabled', null);
+        });
+
+        $('setscore', me).change(function () {
+            btn.attr('disabled', null);
+        });
+
+        $('#FirstScoreOne', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#FirstScoreTwo', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#SecondScoreOne', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#SecondScoreTwo', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#ThirdScoreOne', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#ThirdScoreTwo', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#ForthScoreOne', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#ForthScoreTwo', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#FifthScoreOne', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+        $('#FifthScoreTwo', me).on('input', function () {
+            btn.attr('disabled', null);
+        });
+
+        $('.frm-date', me).on('changedatetime.xdsoft', function (e) {
+            btn.attr('disabled', null);
+        });
+    });
+
+    function teamPrint(element) {
+        var wnd = window.open('', 'Game schedules', 'height=800, width=800');
+        wnd.document.write('<html><head><title>Game schedules</title>');
+        //if need to add styles
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<link rel="stylesheet" href="/Content/site.css" type="text/css" />');
+
+        wnd.document.write('<body>');
+        $.each($(element), function (k, e) {
+            if (k === 0) {
+                wnd.document.write($(e).html());
+                wnd.document.write('<hr/>');
+            } else {
+                $(e).find('thead').remove();
+                wnd.document.write($(e).html());
+                wnd.document.write('<hr/>');
+            }
+        });
+
+        $(wnd.document).find('.remove_print').remove();
+        $(wnd.document).find('th').remove();
+        $(wnd.document).find('hr').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+        }, 1000);
+
+
+    }
+</script>

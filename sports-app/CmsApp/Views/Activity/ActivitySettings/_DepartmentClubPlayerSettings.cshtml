@@ -1,0 +1,17 @@
+﻿@model ActivityModel
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.RegistrationPrice) @Messages.Activity_EnableRegistrationAndEquipmentPrice
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.InsurancePrice) @Messages.Activity_EnableInsurancePrice
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.ParticipationPrice) @Messages.Activity_EnableParticipationPrice
+    </label>
+</div>

@@ -1,0 +1,43 @@
+﻿@model AppModel.TennisGameCycle
+
+<div class="modal-dialog modal-sm">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close pull-left" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+            <h4 class="modal-title">תוצאות המערכות</h4>
+        </div>
+        <div class="modal-body">
+            @if (Model.TennisGameSets.Count == 0)
+            {
+                <div class="alert alert-warning">אין תוצאות</div>
+            }
+            else
+            {
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th width="48%" style="text-align:center">@ViewBag.FirstPlayerName</th>
+                            <th width="4"></th>
+                            <th width="48%" style="text-align:center">@ViewBag.SecondPlayerName</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var game in Model.TennisGameSets.Where(t => !(t.FirstPlayerScore == 0 && t.SecondPlayerScore == 0)))
+                        {
+                            <tr>
+                                <td align="center" valign="middle"><b style="font-size:16px;">@game.FirstPlayerScore</b></td>
+                                <td align="center" valign="middle"><b style="font-size:12px;">:</b></td>
+                                <td align="center" valign="middle"><b style="font-size:16px;">@game.SecondPlayerScore</b></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">סגור</button>
+        </div>
+    </div>
+</div>
+
+

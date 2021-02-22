@@ -1,0 +1,329 @@
+﻿@using AppModel
+@model RouteForm
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <h4 class="modal-title">@(ViewBag.RouteToEdit != null ? Messages.Edit : Messages.AddNew) @Messages.Route.ToLowerInvariant()</h4>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="form-group col-sm-3">
+            <label class="control-label">@Messages.SelectRoute:</label>
+        </div>
+        <div class="form-group col-sm-6" id="routes-div">
+            @Html.DropDownList("Routes", Model.Routes, Messages.Select, new { @class = "form-control", @required = "required" })
+            @Html.ValidationMessageFor(m => m.RouteId)
+        </div>
+    </div>
+    <div style="display:none" class="row" id="rank-div">
+        <div class="form-group col-sm-3">
+            <label class="control-label">@Messages.ChooseRank:</label>
+        </div>
+        <div class="form-group col-sm-6" id="rank-div-insider">
+
+        </div>
+    </div>
+    <div style="display:none" class="row" id="instruments-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Instruments:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.DropDownList("InstrumentsIds", Model.Instruments, new { @class = "form-control", multiple = "multiple" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.Composition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition2-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 2:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.SecondComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition3-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 3:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.ThirdComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition4-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 4:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.FourthComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition5-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 5:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.FifthComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition6-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 6:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.SixthComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition7-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 7:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.SeventhComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition8-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 8:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.EighthComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition9-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 9:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.NinthComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div style="display:none" class="row" id="composition10-div">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Composition 10:</label>
+        </div>
+        <div class="form-group col-sm-6">
+            @Html.TextBoxFor(m => m.TenthComposition, new { @class = "form-control", @type = "number" })
+        </div>
+    </div>
+    <div class="row" style="margin-top:10px;">
+        <div class="col-sm-4">
+            <label class="control-label">@Messages.CompetitiveEnabled: </label>
+            &nbsp;&nbsp;@Html.CheckBoxFor(m => m.IsCompetitiveEnabled)
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+    <a id="saveRoutes" class="btn btn-primary">@Messages.Save</a>
+</div>
+
+@if (Model.Ranks != null && Model.Ranks.Any())
+{
+    <script>
+        var routesRanks = [];
+    </script>
+    foreach (var rankValue in Model.Ranks)
+    {
+        <script>
+            var ranksIds = '@String.Join(",", rankValue.Value?.Select(r => r.Key))'.split(',');
+            var ranksNames = '@String.Join(",", rankValue.Value?.Select(r => r.Value))'.split(',');
+            var ranks = {
+                "routeId": '@rankValue.Key',
+                "ranksIds": ranksIds,
+                "ranksNames": ranksNames
+            };
+            routesRanks.push(ranks);
+        </script>
+    }
+    <script>
+        function onRoutesChange() {
+            var routeId = $("#Routes").val();
+            var rankDropdown = $(".rank");
+            if (rankDropdown.length) {
+                rankDropdown.remove();
+            }
+            for (var i = 0; i < routesRanks.length; i++) {
+                if (routeId == routesRanks[i].routeId) {
+                    var values = routesRanks[i].ranksIds;
+                    var textVal = routesRanks[i].ranksNames;
+                    var newDropdown = $('<select id="rank" class="rank form-control">').appendTo("#rank-div-insider");
+                    for (var j = 0; j < values.length; j++) {
+                        newDropdown.append($("<option>").attr('value', values[j]).text(textVal[j]));
+                    }
+                }
+            }
+            if (routeId) {
+                $("#rank-div").show();
+                $("#composition-div").show();
+                $("#composition2-div").show();
+                $("#composition3-div").show();
+                $("#composition4-div").show();
+                $("#composition5-div").show();
+                $("#composition6-div").show();
+                $("#composition7-div").show();
+                $("#composition8-div").show();
+                $("#composition9-div").show();
+                $("#composition10-div").show();
+                $("#instruments-div").show();
+            }
+            else {
+                $("#rank-div").hide();
+                $("#composition-div").hide();
+                $("#composition2-div").hide();
+                $("#composition3-div").hide();
+                $("#composition4-div").hide();
+                $("#composition5-div").hide();
+                $("#composition6-div").hide();
+                $("#composition7-div").hide();
+                $("#composition8-div").hide();
+                $("#composition9-div").hide();
+                $("#composition10-div").hide();
+                $("#instruments-div").hide();
+            }
+        }
+        $("#InstrumentsIds").multiselect();
+        $("#Routes").change(function() {
+            var routeId = $("#Routes").val();
+            var rankDropdown = $(".rank");
+            if (rankDropdown.length) {
+                rankDropdown.remove();
+            }
+
+            for (var i = 0; i < routesRanks.length; i++) {
+                if (routeId == routesRanks[i].routeId) {
+                    var values = routesRanks[i].ranksIds;
+                    var textVal = routesRanks[i].ranksNames;
+                    var newDropdown = $('<select id="rank" class="rank form-control">').appendTo("#rank-div-insider");
+                    for (var j = 0; j < values.length; j++) {
+                        newDropdown.append($("<option>").attr('value', values[j]).text(textVal[j]));
+
+                    }
+                }
+            }
+            if (routeId) {
+                $("#rank-div").show();
+                $("#composition-div").show();
+                $("#composition2-div").show();
+                $("#composition3-div").show();
+                $("#composition4-div").show();
+                $("#composition5-div").show();
+                $("#composition6-div").show();
+                $("#composition7-div").show();
+                $("#composition8-div").show();
+                $("#composition9-div").show();
+                $("#composition10-div").show();
+                $("#instruments-div").show();
+            }
+            else {
+
+
+                $("#rank-div").hide();
+                $("#composition-div").hide();
+                $("#composition2-div").hide();
+                $("#composition3-div").hide();
+                $("#composition4-div").hide();
+                $("#composition5-div").hide();
+                $("#composition6-div").hide();
+                $("#composition7-div").hide();
+                $("#composition8-div").hide();
+                $("#composition9-div").hide();
+                $("#composition10-div").hide();
+                $("#instruments-div").hide();
+            }
+        });
+
+
+
+        $("#saveRoutes").click(function () {
+                $("#saveRoutes").hide();
+                var routeId = $("#Routes").val();
+                var rankId = $("#rank").val();
+                var composition = $("#Composition").val();
+                var composition2 = $("#SecondComposition").val();
+                var composition3 = $("#ThirdComposition").val();
+                var composition4 = $("#FourthComposition").val();
+                var composition5 = $("#FifthComposition").val();
+                var composition6 = $("#SixthComposition").val();
+                var composition7 = $("#SeventhComposition").val();
+                var composition8 = $("#EighthComposition").val();
+                var composition9 = $("#NinthComposition").val();
+                var composition10 = $("#TenthComposition").val();
+                var instrumentsIds = $("#InstrumentsIds").val();
+                var isCompetitiveEnabled = $("#IsCompetitiveEnabled").is(":checked");
+
+                if (routeId) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/Teams/CreateRoute",
+
+                        data: {
+                            diciplineId: "@Model.DiciplineId",
+                            seasonId: "@Model.SeasonId",
+                            leagueId: "@Model.LeagueId",
+                            routeId: routeId,
+                            rankId: rankId,
+                            composition: composition,
+                            instrumentsIds: instrumentsIds,
+                            secondComposition: composition2,
+                            thirdComposition: composition3,
+                            fourthComposition: composition4,
+                            fifthComposition: composition5,
+                            sixthComposition: composition6,
+                            seventhComposition: composition7,
+                            eighthComposition: composition8,
+                            ninthComposition: composition9,
+                            tenthComposition: composition10,
+                            isCompetitiveEnabled: isCompetitiveEnabled,
+                            'CompetitionRouteToEdit': competitionRouteToEdit
+                        },
+                        success: function (data) {
+                            if (data.Error == true) {
+                                alert(data.ErrorMessage);
+                            }
+                            else {
+                                $("#routesDiv").html(data);
+                                $("#rotesmodal").modal("hide");
+                            }
+                        }
+                    });
+                }
+                else {
+                    alert("@Messages.RouteIsRequired");
+                }
+        })
+
+        var competitionRouteToEdit = null;
+        @if (ViewBag.RouteToEdit != null)
+        {
+            CompetitionRoute competitionRoute = ViewBag.RouteToEdit;
+            <text>
+                competitionRouteToEdit = @competitionRoute.Id;
+                $("#Routes").val(@competitionRoute.RouteId);
+                onRoutesChange();
+                $("#Routes").val(@competitionRoute.RouteId);
+                $("#rank").val(@competitionRoute.RankId);
+                $("#Composition").val(@competitionRoute.Composition);
+                $("#SecondComposition").val(@competitionRoute.SecondComposition);
+                $("#ThirdComposition").val(@competitionRoute.ThirdComposition);
+                $("#FourthComposition").val(@competitionRoute.FourthComposition);
+                $("#FifthComposition").val(@competitionRoute.FifthComposition);
+                $("#SixthComposition").val(@competitionRoute.SixthComposition);
+                $("#SeventhComposition").val(@competitionRoute.SeventhComposition);
+                $("#EighthComposition").val(@competitionRoute.EighthComposition);
+                $("#NinthComposition").val(@competitionRoute.NinthComposition);
+                $("#TenthComposition").val(@competitionRoute.TenthComposition);
+                $("#InstrumentsIds").val(@competitionRoute.InstrumentIds);
+                $("#IsCompetitiveEnabled").prop('checked',@(competitionRoute.IsCompetitiveEnabled ? 1 : 0));
+            </text>
+        }
+
+    </script>
+}

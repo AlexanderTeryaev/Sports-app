@@ -1,0 +1,200 @@
+﻿@model CmsApp.Controllers.PlanController.PlanSendViewModel
+@{
+    ViewBag.Title = "plan";
+    Layout = null;
+}
+
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>לוגליג-מערכת ניהול לאגודות ספורט</title>
+    <link href="~/Content/css/style.css" rel="stylesheet" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
+    <link href="~/Content/loglig_design/css/animate.min.css" rel="stylesheet" />
+    <link href="~/Content/loglig_design/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/loglig_design/css/creative.css" rel="stylesheet" />
+    <link href="~/Content/loglig_design/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="icon" href="~/Content/images/favicon.ico" />
+    <script src="~/Content/js/jquery-1.11.1.min.js"></script>
+    <script src="~/Content/js/jquery.validate.min.js"></script>
+    <script src="~/Content/js/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/Content/js/bootstrap.min.js"></script>
+    <script src="~/Content/js/jquery.validate.unobtrusive.bootstrap.min.js"></script>
+</head>
+
+<body id="page-top" class="landing-page">
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="change-lenguege" href="">heb</a>
+                <a class="change-lenguege" href="" style="margin-left: 30px;">eng &nbsp; &nbsp; &nbsp;</a>
+                <a class="navbar-brand page-scroll" href="/login" style="padding: 8px"><img src="~/Content/loglig_design/img/img_logo.png"></a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a class="page-scroll" href="/login#contact">יצירת קשר</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll">הרשמה</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="/login#pricing">תוכניות</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="/login#portfolio">לקוחות</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="/login#services">כלים</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="/login#about">חזון</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+    <header>
+        <div id="wrapper">
+            <div class="wrapper wrapper-content animated fadeInRight">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="ibox float-e-margins">
+                            <div class="ibox-title">
+                                <h5 style="float: right;">הרשמה לתוכנית <br /></h5>
+                            </div>
+                            <div class="ibox-content" id="heb">
+                                @using (Html.BeginForm("Index", "Plan", FormMethod.Post, new { @class = "form-horizontal" }))
+                                {
+                                    if (TempData["EmailError"] != null)
+                                    {
+                                        <div class="form-group">
+                                            <span style="color: red">@TempData["EmailError"]</span>
+                                        </div>
+                                    }
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">שם מלא</label>
+                                        <div class="col-sm-5">
+                                            @Html.TextBoxFor(x => x.Field1, new { @class = "form-control" })
+                                            @Html.ValidationMessageFor(m => m.Field1, "*")
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">ספורט</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownListFor(x => x.Field2, new List<SelectListItem>
+                                        {
+                                            new SelectListItem {Text = "כדורסל", Value = "כדורסל"},
+                                            new SelectListItem {Text = "כדורעף", Value = "כדורעף"},
+                                            new SelectListItem {Text = "כדורשת", Value = "כדורשת"},
+                                            new SelectListItem {Text = "כדורמים", Value = "כדורמים"}
+                                        }, new { @class = "form-control m-b" })
+                                            @Html.ValidationMessageFor(m => m.Field2, "*")
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">ארגון</label>
+                                        <div class="col-sm-5">
+                                            @Html.TextBoxFor(x => x.Field3, new { @class = "form-control" })
+                                            @Html.ValidationMessageFor(m => m.Field3, "*")
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">דוא"ל</label>
+                                        <div class="col-sm-5">
+                                            @Html.TextBoxFor(x => x.Field4, new { @class = "form-control", placeholder = "הכנס כתובת דואל" })
+                                            @Html.ValidationMessageFor(m => m.Field4, "*")
+                                        </div>
+                                    </div>
+
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">טלפון</label>
+                                        <div class="col-sm-5">
+                                            @Html.TextBoxFor(x => x.Field5, new { @class = "form-control" })
+                                            @Html.ValidationMessageFor(m => m.Field5, "*")
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group">
+                                        <label class="col-lg-2 control-label"></label>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"></label>
+                                            <div class="col-lg-5">
+                                                <input type="text" disabled="" placeholder="אנא בחר תוכנית" class="form-control" style="font-weight: bold">
+                                                @*@Html.TextBoxFor(x => x.Field6, new { @class = "form-control", placeholder = "אנא בחר תוכנית" })*@
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">תוכנית</label>
+                                            <div class="col-sm-5">
+                                                @Html.DropDownListFor(x => x.Field7, new List<SelectListItem>
+                                            {
+                                                new SelectListItem {Text = "Basic", Value = "Basic"},
+                                                new SelectListItem {Text = "Standard", Value = "Standard"},
+                                                new SelectListItem {Text = "Premium", Value = "Premium"}
+                                            }, new { @class = "form-control m-b" })
+                                                @Html.ValidationMessageFor(m => m.Field7, "*")
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"></label>
+                                            <div class="col-lg-5">
+                                                <input type="text" disabled="" placeholder="מדיניות השירות" class="form-control" style="font-weight: bold">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"></label>
+                                            <div class="col-sm-5">
+                                                <div class="i-checks">
+                                                    <label> <input type="radio" value="" name="termsradio" required> <i></i> קראתי ואני מסכים ל- <a href="/terms" target="_blank" style="color: #f45c0e"> תנאי השימוש </a> </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">הערות</label>
+                                            <div class="col-sm-5">
+                                                @Html.TextBoxFor(x => x.Field8, new { @class = "form-control", @rows = 5 })
+                                                @Html.ValidationMessageFor(m => m.Field8, "*")
+                                                <span class="help-block m-b-none">אנא כתוב הערות הקשורות לרישום התוכנית המבוקשת</span>
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+
+                                        <div class="form-group">
+                                            <div class="col-sm-4 col-sm-offset-2">
+                                                <button class="btn btn-primary" type="submit" id="post" value="Send message">שלח</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+</body>
+</html>

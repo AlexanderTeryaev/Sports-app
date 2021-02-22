@@ -1,0 +1,100 @@
+﻿@model AppModel.Settings
+
+<h3 class="sub-header">הגדרות</h3>
+
+<div class="panel panel-default panel-edit">
+    <div class="panel-heading">
+        <h3 class="panel-title">הגדרות כלליות</h3>
+    </div>
+    <div class="panel-body">
+        @Html.ValidationSummary(true)
+        @if (TempData["Saved"] != null)
+        {
+            <div class="alert alert-success" role="alert">
+                <span class="glyphicon glyphicon-ok"></span>
+                @Messages.DataSavedSuccess
+            </div>
+        }
+        <form class="form-horizontal" id="contform" role="form" method="post" enctype="multipart/form-data">
+            <h4><i class="glyphicon glyphicon-cog"></i> כללי</h4>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">אימייל יצירת קשר</label>
+                <div class="col-sm-6">
+                    @Html.TextBoxFor(m => m.ContactEmail, new { @class = "form-control email required" })
+                    @Html.ValidationMessageFor(m => m.ContactEmail)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">טלפון</label>
+                <div class="col-sm-6">
+                    @Html.TextBoxFor(m => m.Phone, new { @class = "form-control required" })
+                    @Html.ValidationMessageFor(m => m.Phone)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">כתובת</label>
+                <div class="col-sm-6">
+                    @Html.TextBoxFor(m => m.Address, new { @class = "form-control required" })
+                    @Html.ValidationMessageFor(m => m.Address)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Meta Title</label>
+                <div class="col-sm-6">
+                    @Html.TextBoxFor(m => m.MetaTitle, new { @class = "form-control required" })
+                    @Html.ValidationMessageFor(m => m.MetaTitle)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Meta Description</label>
+                <div class="col-sm-6">
+                    @Html.TextAreaFor(m => m.MetaDescription, new { @class = "form-control required" })
+                    @Html.ValidationMessageFor(m => m.MetaDescription)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Google Analytics</label>
+                <div class="col-sm-6">
+                    @Html.TextAreaFor(m => m.Sctipts, 6, 30, new { @class = "form-control ltr" })
+                    @Html.ValidationMessageFor(m => m.Sctipts)
+                </div>
+            </div>
+
+            <h4><i class="glyphicon glyphicon-film"></i> הגדרות וידאו</h4>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">וידאו רקע <em>(.mp4)</em></label>
+                <div class="col-sm-6">
+                    <input type="file" name="VideoFile" class="validfile" data-rule-files="mp4" data-msg-files="נא לבחור וידאו חוקי" accept="video/*" />
+                    @Html.ValidationMessage("VideoFile")
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">מהירות ניגון</label>
+                <div class="col-sm-2">
+                    @Html.TextBoxFor(m => m.PlaybackRate, new { @class = "form-control required" })
+                    @Html.ValidationMessageFor(m => m.PlaybackRate)
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">שקיפות הוידאו</label>
+                <div class="col-sm-2">
+                    @Html.TextBoxFor(m => m.PlayOpacity, new { @class = "form-control required" })
+                    @Html.ValidationMessageFor(m => m.PlayOpacity)
+                </div>
+            </div>
+            @*<div class="form-group">
+            <label class="col-sm-2 control-label">תדירות פוש</label>
+            <div class="col-sm-2">
+                @Html.DropDownListFor(m => m.PushInterval, (SelectList)ViewBag.PushIntervals, new { @class = "form-control" })
+            </div>
+            <div class="col-sm-2">בימים</div>
+            </div>*@
+
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-primary">שמור</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,222 @@
+﻿@model ActivityModel
+
+<div id="custom-personal-settings" style="display: @(Model.ActivityFormType == ActivityFormType.CustomPersonal && Model.UnionId != null && Model.ClubId == null ? "block" : "none");">
+
+@if (Model.UnionId == 15)
+{
+    <div class="form-group col-sm-12 well well-sm">
+        <label class="control-label col-sm-6">
+            @Messages.Activity_PaymentMethod:
+        </label>
+        <div class="col-sm-6">
+            <div>
+                <label>@Html.RadioButtonFor(x => x.PaymentMethod, ActivityPaymentMethod.CardCom) @Messages.Activity_PaymentMethod_CardCom</label>
+            </div>
+            <div>
+                <label>@Html.RadioButtonFor(x => x.PaymentMethod, ActivityPaymentMethod.PayPal) @Messages.Activity_PaymentMethod_PayPal</label>
+            </div>
+        </div>
+    </div>
+}
+
+<div id="select-leagues" class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.RestrictLeagues, new { @class = "restrict-leagues" }) @Messages.Activity_SelectLeagues:
+    </label>
+    <select multiple="multiple" @(!Model.RestrictLeagues ? "disabled" : "") class="form-control restrict-leagues-dropdown">
+        @*<option value="" disabled="disabled">@Messages.Select</option>*@
+        @foreach (var league in Model.Leagues)
+        {
+            <option value="@league.LeagueId" @(Model.RestrictedLeagues.Any(x => x.LeagueId == league.LeagueId) ? "selected" : "")>@league.Name</option>
+        }
+    </select>
+    @Html.HiddenFor(x => x.RestrictedLeaguesJson)
+</div>
+    
+@if (Model.IsIndividualSection)
+{
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(x => x.RegistrationsByCompetitionsCategory) @Messages.Activity_RegistrationsByCompetitionsCategory
+        </label>
+    </div>
+}
+
+<div class="form-group col-sm-12 well well-sm">
+    <label class="control-label col-sm-6">
+        @Messages.Activity_RegistrationForMembers:
+    </label>
+    <div class="col-sm-6">
+        <div>
+            <label>@Html.RadioButtonFor(x => x.RegistrationForMembers, RegistrationForMembers.Both) @Messages.Activity_RegistrationForMembers_Both</label>
+        </div>
+        <div>
+            <label>@Html.RadioButtonFor(x => x.RegistrationForMembers, RegistrationForMembers.OnlyCompetitive) @Messages.Activity_RegistrationForMembers_OnlyCompetitive</label>
+        </div>
+        <div>
+            <label>@Html.RadioButtonFor(x => x.RegistrationForMembers, RegistrationForMembers.OnlyRegular) @Messages.Activity_RegistrationForMembers_OnlyRegular</label>
+        </div>
+    </div>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(x => x.ForbidToChangeNameForExistingPlayers) @Messages.Activity_ForbidToChangeNameForExistingPlayers
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.DoNotAllowDuplicateRegistrations) @Messages.Activity_DoNotAllowDuplicateRegistrations
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowOnlyApprovedMembers) @Messages.Activity_AllowOnlyApprovedMembers
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.NoTeamRegistration) @Messages.Activity_NoTeamRegistration
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.RegistrationPrice) @Messages.Activity_EnableRegistrationPrice
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.InsurancePrice) @Messages.Activity_EnableInsurancePrice
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.MembersFee) @Messages.Activity_EnableMembersFee
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.HandlingFee) @Messages.Activity_EnableHandlingFee
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowNoRegistrationPayment) @Messages.Activity_AllowNoRegistrationPayment
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowNoInsurancePayment) @Messages.Activity_AllowNoInsurancePayment
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowNoFeePayment) @Messages.Activity_AllowNoFeePayment
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowNoHandlingFeePayment) @Messages.Activity_AllowNoHandlingFeePayment
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.NoPriceOnBuiltInRegistration) @Messages.Activity_NoPriceOnBuiltInRegistration
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowEscortRegistration) @Messages.Activity_AllowEscortRegistration
+    </label>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.ShowOnlyApprovedTeams) @Messages.Activity_ShowOnlyApprovedTeams
+    </label>
+</div>
+
+@if (Model.UnionId == 38)
+{
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.CheckCompetitionAge) @Messages.Activity_CheckCompetitionAge
+        </label>
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.RestricGendersByTeams) @Messages.Activity_RestrictGendersByTeam
+        </label>
+    </div>
+}
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.RestricGenders) @Messages.Activity_RestrictGenders
+    </label>
+</div>
+
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.RestrictLeaguesByAge) @Messages.Activity_RestrictLeaguesByAge
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">@Messages.Activity_Discounts</h3>
+        </div>
+        <div class="panel-body">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">@Messages.Activity_UnionApprovedPlayer</h3>
+                </div>
+                <div class="panel-body">
+                    @Html.LabelFor(x => x.UnionApprovedPlayerDiscountAmount, Messages.Activity_UnionApprovedPlayer_DiscountAmount)
+                    @if (ViewBag.IsReadOnly == true)
+                    {
+                        @Html.TextBoxFor(x => x.UnionApprovedPlayerDiscountAmount, new { @class = "form-control", @readonly = "readonly", disabled = "disabled" })
+
+                        @Html.CheckBoxFor(x => x.UnionApprovedPlayerNoInsurancePayment, new { @readonly = "readonly", disabled = "disabled" })
+                    }
+                    else
+                    {
+                        @Html.TextBoxFor(x => x.UnionApprovedPlayerDiscountAmount, new { @class = "form-control" })
+
+                        @Html.CheckBoxFor(x => x.UnionApprovedPlayerNoInsurancePayment)
+                    }
+
+                    @Html.LabelFor(x => x.UnionApprovedPlayerNoInsurancePayment, Messages.Activity_UnionApprovedPlayer_NoInsurance)
+                </div>
+            </div>
+
+            <div id="escort-discount-settings" class="panel panel-default" style="display: @(Model.AllowEscortRegistration ? "block" : "none");">
+                <div class="panel-heading">
+                    <h3 class="panel-title">@Messages.Activity_EscortDiscount</h3>
+                </div>
+                <div class="panel-body">
+                    @Html.LabelFor(x => x.EscortDiscountAmount, Messages.Activity_EscortDiscount_DiscountAmount)
+                    @if (ViewBag.IsReadOnly == true)
+                    {
+                        @Html.TextBoxFor(x => x.EscortDiscountAmount, new { @class = "form-control", @readonly = "readonly", disabled = "disabled" })
+
+                        @Html.CheckBoxFor(x => x.EscortNoInsurancePayment, new { @readonly = "readonly", disabled = "disabled" })
+                    }
+                    else
+                    {
+                        @Html.TextBoxFor(x => x.EscortDiscountAmount, new { @class = "form-control" })
+
+                        @Html.CheckBoxFor(x => x.EscortNoInsurancePayment)
+                    }
+
+                    @Html.LabelFor(x => x.EscortNoInsurancePayment, Messages.Activity_EscortDiscount_NoInsurance)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

@@ -1,0 +1,335 @@
+@model IEnumerable<AppModel.Stage>
+@{
+    var isTennisLeague = (bool)ViewBag.IsTennisLeague;
+}
+@foreach (var s in Model)
+{
+    @*<h4>@Messages.Stage @s.Number</h4>*@
+
+    var seasonId = ViewBag.SeasonId;
+
+    var idStageKey = "#stage" + s.StageId;
+    var idSettingsKey = "#setting" + s.StageId;
+    var idStage = "stage" + s.StageId;
+    var idSettings = "setting" + s.StageId;
+    <ul class="nav nav-tabs" id="stage_tabs" role="tablist">
+        <li class="active"><a href=@idStageKey data-toggle="tab">@(s.Name ?? $"{Messages.Stage} {s.Number}")</a></li>
+        <li><a href=@idSettingsKey data-toggle="tab">@Messages.GameSettings</a></li>
+    </ul>
+
+    <div class="tab-content row offset-3">
+        <div class="tab-pane fade col-xs-12" id=@idSettings>
+            @if (ViewBag.IsDepartmentLeague == true)
+            {
+                @Html.Action("Edit", "Games", new { idLeague = s.LeagueId, idStage = s.StageId, departmentId = ViewBag.DepartmentId })
+            }
+            else
+            {
+                @Html.Action("Edit", "Games", new { idLeague = s.LeagueId, idStage = s.StageId })
+            }
+        </div>
+        <div class="tab-pane fade in active col-sm-12" id=@idStage>
+            @{
+                var groups = s.Groups.Where(t => t.IsArchive == false).ToList();
+            }
+            @foreach (var g in groups)
+            {
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.GroupName</th>
+                            <th>@Messages.GameType</th>
+                            @if (g.IsIndividual)
+                            {
+                                <th>@Messages.CompetitorNum</th>
+                            }
+                            else
+                            {
+                                <th>@Messages.TeamsNum</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@g.Name</td>
+                            <td>@LangHelper.GetGameType(g.GamesType.Name)</td>
+
+                            @if (g.IsAdvanced && g.GroupsTeams.Count == 0)
+                            {
+                                <td>@(g.PlayoffBrackets.Count * 2)</td>
+                            }
+                            else
+                            {
+                                <td>@g.GroupsTeams.Count</td>
+                            }
+                            @if (!g.IsAdvanced || g.PointEditType != null)
+                            {
+                                <td width="75">
+                                    @if (ViewBag.IsDepartmentLeague)
+                                    {
+                                        <a href="@Url.Action("Edit", "Groups", new { id = g.GroupId, departmentId = ViewBag.DepartmentId, seasonId})"
+                                           data-target="#groupsedit"
+                                           data-toggle="modal"
+                                           class="btn btn-primary">@Messages.Edit</a>
+                                    }
+                                    else
+                                    {
+                                        <a href="@Url.Action("Edit", "Groups", new { id = g.GroupId, seasonId})"
+                                           data-target="#groupsedit"
+                                           data-toggle="modal"
+                                           class="btn btn-primary">@Messages.Edit</a>
+                                    }
+
+                                </td>
+                            }
+                            <td width="75">
+                                @if (ViewBag.IsDepartmentLeague)
+                                {
+                                    <a href="@Url.Action("Delete", "Groups", new { id = g.GroupId, seasonId = @seasonId, departmentId = ViewBag.DepartmentId })" class="@AppCss.Delete"
+                                       data-ajax-confirm="@Messages.DeleteConfirm"
+                                       data-ajax-update="#groupslist"
+                                       data-ajax="true"></a>
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("Delete", "Groups", new { id = g.GroupId, seasonId = @seasonId })" class="@AppCss.Delete"
+                                       data-ajax-confirm="@Messages.DeleteConfirm"
+                                       data-ajax-update="#groupslist"
+                                       data-ajax="true"></a>
+                                }
+                            </td>
+                        </tr>
+
+                        @if (g.PlayoffBrackets.Count > 0)
+                        {
+                            foreach (var brackets in g.PlayoffBrackets.GroupBy(t => new { t.MinPos, t.MaxPos }).OrderBy(b => b.Key.MaxPos))
+                            {
+                                <tr>
+                                    <td colspan="5"><h4>@Messages.Places @brackets.Key.MinPos - @brackets.Key.MaxPos</h4></td>
+                                </tr>
+                                var list = new List<string>();
+                                foreach (var bracket in brackets.Reverse())
+                                {
+                                    if (bracket.Group.IsIndividual)
+                                    {
+                                        if (bracket.TeamsPlayer1 != null)
+                                        {
+                                            var firstAthlete = bracket.TeamsPlayer1.User;
+                                            var firstAthleteTeam = bracket.TeamsPlayer1.Team;
+                                            if (firstAthlete != null && firstAthleteTeam != null)
+                                            {
+                                                list.Insert(0, $"{firstAthlete.FullName} ({firstAthleteTeam.Title})");
+                                            }
+                                            else
+                                            {
+                                                list.Insert(0, $"{firstAthlete.FullName}");
+                                            }
+                                        }
+                                        else if (s.Number == 1)
+                                        {
+                                            var position = bracket.Team1GroupPosition == 0
+                                                ? "--"
+                                                : $"{Messages.Competitor} {Messages.Position} #{bracket.Team1GroupPosition}";
+                                            list.Insert(0, position);
+                                        }
+                                        else if (bracket.Type == (int)AppModel.PlayoffBracketType.Winner)
+                                        {
+                                            list.Insert(0, Messages.Winner);
+                                        }
+                                        else
+                                        {
+                                            list.Insert(0, Messages.Loser);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (bracket.FirstTeam != null)
+                                        {
+                                            var firstTeam = bracket.FirstTeam.TeamsDetails.FirstOrDefault(x => x.SeasonId == seasonId);
+                                            if (firstTeam != null)
+                                            {
+                                                var teamName = UIHelpers.GetTeamNameWithoutLeague(firstTeam.TeamName, bracket.Group.Stage.League.Name);
+                                                list.Insert(0, teamName);
+                                            }
+                                            else
+                                            {
+                                                list.Insert(0, bracket.FirstTeam.Title);
+                                            }
+                                        }
+                                        else if (s.Number == 1)
+                                        {
+                                            var position = bracket.Team1GroupPosition == 0
+                                                ? "--"
+                                                : Messages.TeamPosition + bracket.Team1GroupPosition;
+                                            list.Insert(0, position);
+                                        }
+                                        else if (bracket.Type == (int)AppModel.PlayoffBracketType.Winner)
+                                        {
+                                            list.Insert(0, Messages.Winner);
+                                        }
+                                        else
+                                        {
+                                            list.Insert(0, Messages.Loser);
+                                        }
+                                    }
+
+                                    if (bracket.Group.IsIndividual)
+                                    {
+                                        if (bracket.TeamsPlayer != null)
+                                        {
+                                            var secondAthlete = bracket.TeamsPlayer.User;
+                                            var secondAthleteTeam = bracket.TeamsPlayer.Team;
+                                            if (secondAthlete != null && secondAthleteTeam != null)
+                                            {
+                                                list.Insert(0, $"{secondAthlete.FullName} ({secondAthleteTeam.Title})");
+                                            }
+                                            else
+                                            {
+                                                list.Insert(0, $"{secondAthlete.FullName}");
+                                            }
+                                        }
+                                        else if (s.Number == 1)
+                                        {
+                                            var position = bracket.Team2GroupPosition == 0
+                                                ? "--"
+                                                : $"{Messages.Competitor} {Messages.Position} #{bracket.Team2GroupPosition}";
+                                            list.Insert(0, position);
+                                        }
+                                        else if (bracket.Type == (int)AppModel.PlayoffBracketType.Winner)
+                                        {
+                                            list.Add(Messages.Winner);
+                                        }
+                                        else
+                                        {
+                                            list.Add(Messages.Loser);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (bracket.SecondTeam != null)
+                                        {
+                                            var secondTeam = bracket.SecondTeam.TeamsDetails.FirstOrDefault(x => x.SeasonId == seasonId);
+                                            if (secondTeam != null)
+                                            {
+                                                var teamName = UIHelpers.GetTeamNameWithoutLeague(secondTeam.TeamName, bracket.Group.Stage.League.Name);
+                                                list.Add(teamName);
+                                            }
+                                            else
+                                            {
+                                                list.Insert(0, bracket.SecondTeam.Title);
+                                            }
+                                        }
+                                        else if (s.Number == 1)
+                                        {
+                                            var position = bracket.Team2GroupPosition == 0
+                                                ? "--"
+                                                : Messages.TeamPosition + bracket.Team2GroupPosition;
+                                            list.Insert(0, position);
+                                        }
+                                        else if (bracket.Type == (int)AppModel.PlayoffBracketType.Winner)
+                                        {
+                                            list.Add(Messages.Winner);
+                                        }
+                                        else
+                                        {
+                                            list.Add(Messages.Loser);
+                                        }
+                                    }
+                                }
+
+                                foreach (var str in list)
+                                {
+                                    <tr>
+                                        <td colspan="5">@str</td>
+                                    </tr>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (var gt in g.GroupsTeams.OrderBy(gt => gt.Pos))
+                            {
+                                <tr>
+                                    @if (gt.TeamId.HasValue)
+                                    {
+                                        var team = gt.Team?.TeamsDetails?.FirstOrDefault(x => x.SeasonId == seasonId);
+                                        if (team != null)
+                                        {
+                                            var teamName = UIHelpers.GetTeamNameWithoutLeague(team.TeamName, gt.Group.Stage.League.Name);
+                                            <td colspan="5">@teamName</td>
+                                        }
+                                        else
+                                        {
+                                            <td colspan="5">@gt.Team.Title</td>
+                                        }
+                                    }
+                                    else if (gt.AthleteId.HasValue)
+                                    {
+                                        var athlete = gt.TeamsPlayer;
+                                        if (athlete != null)
+                                        {
+                                            <td colspan="5">@athlete.User.FullName (@athlete.Team.Title) </td>
+                                        }
+                                        else
+                                        {
+                                            <td colspan="5">@gt.Team.Title</td>
+                                        }
+                                    }
+                                    else if (!gt.AthleteId.HasValue && g.IsIndividual)
+                                    {
+                                        <td colspan="5">@UIHelpers.GetAthletePosition(gt.Pos)</td>
+                                    }
+                                    else if (s.IsCrossesStage)
+                                    {
+                                        <td colspan="5">@UIHelpers.GetCrossesTeamPlaceholder(gt.Pos, s.ParentStage.Groups.ToList())</td>
+                                    }
+                                    else
+                                    {
+                                        <td colspan="5">@UIHelpers.GetTeamPosition(gt.Pos)</td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+                <div>&nbsp;</div>
+                if (g == groups.LastOrDefault() && s == Model.LastOrDefault() && s != null && s.Groups != null && s.Groups.Count > 0 && g != null)
+                {
+                    var confirmMsg = string.Format(@Messages.ConfirmNewGamesTable, s.Number.ToString());
+                    <div class="row offset-2">
+                        <div class="col-sm-6">
+                            @if (ViewBag.IsDepartmentLeague)
+                            {
+                                <a href="@Url.Action("Create", "Schedules", new { id = s.LeagueId, seasonId = s.League.SeasonId, departmentId = ViewBag.DepartmentId })" id="createschdulelink"
+                                   class="btn btn-info"
+                                   data-ajax-confirm="@confirmMsg"
+                                   data-ajax-begin="this.style.visibility='hidden'"
+                                   data-ajax-success="activateTab('schedules');this.style.visibility='visible'"
+                                   data-ajax-failure="alert('@Messages.CheckDays');this.style.visibility='visible'"
+                                   data-ajax-update="#schedules"
+                                   data-ajax="true">@Messages.CreateGamesTable</a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Create", "Schedules", new { id = s.LeagueId, seasonId = s.League.SeasonId })" id="createschdulelink"
+                                   class="btn btn-info"
+                                   data-ajax-confirm="@confirmMsg"
+                                   data-ajax-begin="this.style.visibility='hidden'"
+                                   data-ajax-success="activateTab('schedules');this.style.visibility='visible'"
+                                   data-ajax-failure="alert('@Messages.CheckDays');this.style.visibility='visible'"
+                                   data-ajax-update="#schedules"
+                                   data-ajax="true">@Messages.CreateGamesTable</a>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        cmn.initDateTimePickers();
+    });
+</script>

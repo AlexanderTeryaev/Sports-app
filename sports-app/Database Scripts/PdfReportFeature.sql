@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[GamesCycles] ADD PdfGameReport VARCHAR(255) NULL

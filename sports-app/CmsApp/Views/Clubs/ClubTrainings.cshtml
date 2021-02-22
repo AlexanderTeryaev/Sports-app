@@ -1,0 +1,690 @@
+﻿@model TrainingsPageModel
+
+@{
+    var startDate = ViewBag.FilterStartDate ?? DateTime.Now;
+    var endDate = ViewBag.FilterEndDate ?? DateTime.Now;
+
+    bool isHebrew = Request.IsHebrew();
+
+    List<SelectListItem> itemsPerPage = new List<SelectListItem>();
+    itemsPerPage.Add(new SelectListItem { Text = "10", Value = "10", Selected = true });
+    itemsPerPage.Add(new SelectListItem { Text = "25", Value = "25" });
+    itemsPerPage.Add(new SelectListItem { Text = "50", Value = "50" });
+    itemsPerPage.Add(new SelectListItem { Text = Messages.All, Value = "1000" });
+
+    var filterValue = ViewBag.FilterValue;
+    List<SelectListItem> filterType = new List<SelectListItem>();
+    filterType.Add(new SelectListItem { Text = Messages.BeginningOfMonth, Value = "fltr_bom", Selected = true });
+    filterType.Add(new SelectListItem { Text = Messages.Ranged, Value = "fltr_ranged" });
+    filterType.Add(new SelectListItem { Text = Messages.All, Value = "fltr_all" });
+}
+
+
+<div id="trainingsListPage">
+    <style>
+        .dropdown-menu {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+    </style>
+
+    <div class="container-fluid" id="sections_pl">
+        @*----------------------   Form with buttons and filter   ----------------------*@
+        <div class="row" style="margin-bottom:10px;">
+            <div class="col-md-6">
+                <div class="col-md-6" style="float: right;">
+                    @*---------filter---------*@
+                    <label for="dateFilterType">@Messages.Period</label>
+                    @Html.DropDownListFor(m => filterValue, filterType,
+                        new {@class = "form-control", id= "dateFilterType", name = "dateFilterType", @onchange = "selectedValueCheck(this)" })
+                </div>
+                <div class="col-md-2">
+                    <fieldset>
+                        <br />
+                        <input type="submit" id="choice-submit"
+                               style="width: 70px;margin-top:3px;"
+                               value="@Messages.Show" class="btn btn-primary form-control" onclick="filterValues()" />
+                    </fieldset>
+                </div>
+            </div>
+            <br />
+            <div class="btn-group" id="buttons_forms">
+                <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportExcelTeamTrainingForm').submit()" data-toggle="tooltip" title="@Messages.TooltipForExcelExportTraining">
+                    <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                    @using (Html.BeginForm("ExportClubTrainingsToXML", "Clubs",
+                new
+                {
+                    clubId = (int)ViewBag.ClubId,
+                    seasonId = (int)ViewBag.SeasonId,
+                    startFilterDate = startDate,
+                    endFilterDate = endDate,
+                    filterValue = ViewBag.FilterValue,
+                    sortValue = ViewBag.SortValue
+                }, FormMethod.Post, new { id = "exportExcelTeamTrainingForm" }))
+                    {
+                    }
+                </a>
+                <a href="#" class="btn btn-info" style="margin-right: 4px;" onclick="$('#uploadTeamTrainingBtn').click()" data-toggle="tooltip" title="@Messages.TooltipForExcelImportTraining">
+                    <i href="#" class="glyphicon glyphicon-open" style="transform: rotate(180deg)"></i> @Messages.ImportFromExcel
+                </a>
+                <a href="#" class="btn btn-primary" style="margin-right: 4px;" id="publish_to_app" onclick="publishToApp()" data-toggle="tooltip" title="@Messages.PublishTeamTrainingToApp">
+                    @Messages.PublishOnApp
+                </a>
+            </div>
+        </div>
+        <div class="form-inline" style="margin-top:15px;margin-bottom:15px; margin-left:10px;" id="formForSort">
+            <input type="radio" name="optradio" value="sortByDate" checked>@Messages.SortByDate
+            <input type="radio" name="optradio" value="sortByArena">@UIHelpers.GetSortCaption(ViewBag.Section)
+            <input type="radio" name="optradio" value="sortByTeam">@Messages.SortByTeam
+        </div>
+        <div class="row" id="dateRangedFilter" style="display: none;">
+            <div class="col-sm-12" style="display: flex; flex-direction: row; justify-content: flex-start; margin-bottom:10px;">
+                <div class='col-sm-2'>
+                    <div class="form-group">
+                        <div class="form-group">
+                            <label for="startDate">@Messages.RangeStart</label>
+                            <input id="startDate" type='text' class="form-control date-time-training" />
+                        </div>
+                    </div>
+                </div>
+                <div class='col-sm-2'>
+                    <div class="form-group">
+                        <label for="endDate">@Messages.RangeEnd</label>
+                        <input id="endDate" type='text' class="form-control date-time-training" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            @using (Html.BeginForm("ImportTeamTrainingsDateFromXML", "Clubs", new { clubId = (int)ViewBag.ClubId, seasonId = (int)ViewBag.SeasonId }, FormMethod.Post, new { id = "importExcelForm", enctype = "multipart/form-data" }))
+            {
+                <input type="file" id="uploadTeamTrainingBtn" onclick="updateExcel()" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" name="importFile" style="display: none" />
+            }
+        </div>
+        <div class="row">
+            @if (isHebrew)
+            {
+                <div class="pull-right" style="margin-right: 22px;">
+                    @Html.CheckBox("isSelected", new { @class = "checkboxes", @id = $"selectAllTrainingsCheckbox" })
+                    @Messages.SelectAll
+                </div>
+            }
+            else
+            {
+                <div class="pull-left" style="margin-left: 22px;">
+                    @Html.CheckBox("isSelected", new { @class = "checkboxes", @id = $"selectAllTrainingsCheckbox" })
+                    @Messages.SelectAll
+                </div>
+            }
+
+            <a href="@Url.Action("AddTraining", "Clubs", new
+             {
+                 clubId = (int) ViewBag.ClubId,
+                 seasonId = (int) ViewBag.SeasonId
+             })"
+               data-target="#addtraining"
+               data-toggle="modal"
+               class="btn btn-primary btn-edit">
+                @Messages.AddTraining
+            </a>
+            @if (isHebrew)
+            {
+                <div class="pull-left" style="margin-left: 62px; margin-bottom: 12px;">
+                    <a title="@Messages.DeleteAllSelected" class="btn btn-danger glyphicon glyphicon-trash"
+                       onclick="deleteSelectedTrainings()">
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="pull-right" style="margin-right: 62px; margin-bottom: 12px;">
+                    <a title="@Messages.DeleteAllSelected" class="btn btn-danger glyphicon glyphicon-trash"
+                       onclick="deleteSelectedTrainings()">
+                    </a>
+                </div>
+            }
+
+        </div>
+        @*----------------------   Table with results   ----------------------*@
+        <div>
+            <table id="res_tbl" class="table" align="center" style="width:100%">
+                <thead>
+                    <tr class="active">
+                        <th width="6%">@Messages.Select<br />&nbsp;</th>
+                        <th width="1%">@Messages.Publish<br />&nbsp;</th>
+                        <th width="10%">@Messages.TeamName<br />&nbsp;</th>
+                        <th width="13%">@Messages.Title<br />&nbsp;</th>
+                        <th width="11%">@Messages.Date<br />&nbsp;</th>
+                        <th width="10%">@UIHelpers.GetAuditoriumCaption(ViewBag.Section)<br />&nbsp;</th>
+                        <th>@Messages.Content<br />&nbsp;</th>
+                        <th>@Messages.Attendance<br />&nbsp;</th>
+                        <th>@Messages.TrainingReport (<span>@Messages.Max2MB</span>)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var training in Model.TeamTrainings)
+                    {
+                        var selectedPlayers = training.PlayerAttendance[training.Id];
+                        var players = new MultiSelectList(training.Players, "Id", "User.FullName", selectedPlayers);
+                        var arenas = new SelectList(training.TeamArenas, "AuditoriumId", "Auditorium.Name", training.AuditoriumId);
+
+                        <tr id="tableRow_@training.Id">
+                            <td>@Html.CheckBox("isSelected", new { @class = "selectCheckboxes", @id = $"isSelected_{training.Id}" })</td>
+                            <td>@Html.CheckBox("isPublished", training.isPublished, new { @class = "checkboxes", @id = $"isPublished_{training.Id}", @onclick = $"publishByCheckbox({training.Id})" })</td>
+                            <td>@Html.DisplayFor(m => training.TeamName)</td>
+                            <td>@Html.TextBox($"title{training.Id}", training.Title, new { @class = "form-control", @onchange = "changeEnabled(" + training.Id + ")" })</td>
+                            <td>@Html.TextBox($"TrainingDate{training.Id}", training.TrainingDate.ToString("dd/MM/yyyy HH:mm"), new { @id = $"trainingDate{training.Id}", @class = "form-control date-time-training", @onchange = "changeEnabled(" + training.Id + ")" })</td>
+                            <td>@Html.DropDownListFor(m => training.AuditoriumId, arenas, Messages.Select, new { @class = "form-control", @id = $"auditorium{training.Id}", @onchange = "changeEnabled(" + training.Id + ")" })</td>
+                            <td>
+                                <div class="input-group">
+                                    @Html.TextBox($"content{training.Id}", training.Content, new { @class = "form-control", @onchange = "changeEnabled(" + training.Id + ")" })
+                                    <div class="input-group-btn">
+                                        <button class="btn btn-default" data-toggle="modal" data-target="#textPopUp" onclick="redactText(@training.Id)">
+                                            <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @Html.DropDownList($"PlayerIds{training.Id}", players, new { @class = "multiselect form-control playerids", @onchange = "changeEnabled(" + training.Id + ")", @multiple = "multiple" })
+                            </td>
+                            <td>
+                                <div class="row">
+                                    <div class="col-sm-10">
+                                        @Html.Editor("ImageFile", "PdfUpload", new { css = "validfile", htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    @{
+                                        var styleVis = "";
+                                        if (string.IsNullOrEmpty(training.TrainingReport))
+                                        {
+                                            styleVis = "visibility:hidden";
+                                        }
+
+                                        <div class="col-sm-2 btn" name="remove-report" style="@styleVis">
+                                            <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                            <input type="hidden" value="false" name="RemoveReport" />
+                                        </div>
+                                    }
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        @Html.ValidationMessage("ImageFile")
+                                        @{
+                                            if (!string.IsNullOrEmpty(training.TrainingReport))
+                                            {
+                                                string src = "'" + GlobVars.ContentPath + "/teams/" + training.TrainingReport + "'";
+                                                <span class="glyphicon glyphicon-eye-open glyph-btn" name="imageEye" id="imageEye" onclick="showImage(@src)"></span>
+                                            }
+                                            else
+                                            {
+                                                <span class="glyphicon glyphicon-eye-open glyph-btn" name="imageEye" id="imageEye" style="visibility: hidden"></span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="text-align: right">
+                                <a title="@Messages.Delete" class="btn btn-danger glyphicon glyphicon-trash"
+                                   onclick="deleteTraining(@training.Id)">
+                                </a>
+                                <a title="@Messages.Save" name="savebtn_@training.Id" class="btn btn-sm btn-success glyphicon glyphicon-saved"
+                                   onclick="updateTraining(@training.Id)" disabled="disabled">
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <!-- pager -->
+            @if (Model.Pager.EndPage > 1 && Model.Pager.PageSize < 100)
+            {
+                <div class="col-sm-10">
+                    <ul class="pagination">
+                        @if (Model.Pager.CurrentPage > 1)
+                        {
+                            <li>
+                                <a href="javascript:void(0)" onclick="loadPage(1, @Model.Pager.PageSize)">@Messages.First</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0)" onclick="loadPage(@Model.Pager.CurrentPage - 1, @Model.Pager.PageSize)">@Messages.Previous</a>
+                            </li>
+                        }
+
+                        @for (var page = Model.Pager.StartPage; page <= Model.Pager.EndPage; page++)
+                        {
+                            <li class="@(page == Model.Pager.CurrentPage ? "active" : "")">
+                                <a href="javascript:void(0)" onclick="loadPage(@page, @Model.Pager.PageSize)">@page</a>
+                            </li>
+                        }
+
+                        @if (Model.Pager.CurrentPage < Model.Pager.TotalPages)
+                        {
+                            <li>
+                                <a href="javascript:void(0)" onclick="loadPage(@Model.Pager.CurrentPage + 1, @Model.Pager.PageSize)">@Messages.Next</a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0)" onclick="loadPage(@Model.Pager.TotalPages, @Model.Pager.PageSize)">@Messages.Last</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            else
+            {
+                <div class="col-sm-10">
+                </div>
+            }
+                <div class="col-sm-2">
+                    @Messages.ItemsPerPage
+                    @Html.DropDownListFor(m => m.Pager.PageSize, itemsPerPage,
+                        new {@class = "form-control", id= "pageSize", @onchange="pageSizeChanged()"})
+                </div>
+                @Html.Hidden(Model.Pager.CurrentPage.ToString(), Model.Pager.CurrentPage, new { @id = "pageNumber" })
+            <div class="modal fade" id="textPopUp" role="dialog">
+                <div class="modal-dialog">
+                    <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">@Messages.Content</h4>
+                        </div>
+                        <div class="modal-body">
+                            <textarea id="contentText" rows="10" cols="50" style="width:100%;resize:vertical;"></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                            <button type="button" class="btn btn-primary" id="saveTextBtn" data-dismiss="modal">@Messages.Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @Html.Hidden("clubIdHidden", (int)ViewBag.ClubId)
+        @Html.Hidden("seasonIdHidden", (int)ViewBag.SeasonId)
+    </div>
+
+    <div class="modal fade" id="addtraining" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="addtrainingform_pl"></div>
+        </div>
+    </div>
+    <script>
+    $(document).ready(function () {
+       $('.playerids').multiselect({
+                includeSelectAllOption: true,
+                selectAllText: '@Messages.SelectAllPlayers',
+                buttonText: function (options, select) {
+                    if (options.length === 0) {
+                        return '@Messages.NoneSelected';
+                    }
+                    else if (options.length > 1) {
+                        return '' + options.length + ' ' + '@Messages.Selected.ToLower()';
+                    }
+                    else {
+                        var labels = [];
+                        options.each(function () {
+                            if ($(this).attr('label') !== undefined) {
+                                labels.push($(this).attr('label'));
+                            }
+                            else {
+                                labels.push($(this).html());
+                            }
+                        });
+                        return labels.join(', ') + '';
+                    }
+           },
+                onDropdownHide: function(element) {
+                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                },
+                onDropdownShown: function (element) {
+                    $(element.currentTarget).find('.multiselect-search').focus();
+                }
+            });
+    });
+    $(".date-time-training").datetimepicker({
+        format: 'd/m/Y H:i',
+        formatTime: 'H:i',
+        formatDate: 'd/m/Y',
+        step: 15,
+        closeOnDateSelect: false,
+        closeOnTimeSelect: true,
+        onChangeDateTime: function () {
+            $(this).data("input").trigger("changedatetime.xdsoft");
+        }
+    });
+
+    function publishToApp() {
+        $.ajax({
+            url: "/Clubs/PublishToApp",
+            type: "POST",
+            data: {
+                clubId: $("#clubIdHidden").val(),
+                seasonId: $("#seasonIdHidden").val()
+            }
+        }).success(function (data) {
+            if (data.Message == "Checked") {
+                $('.checkboxes').prop('checked', 'checked');
+            }
+            else if (data.Message == "Unchecked") {
+                $(".checkboxes").removeAttr('checked');
+            }
+        })
+    }
+
+    $('#selectAllTrainingsCheckbox').click(function() {
+        var isChecked = $('#selectAllTrainingsCheckbox').is(':checked');
+        $('.selectCheckboxes').prop("checked", isChecked);
+    });
+
+    function deleteSelectedTrainings() {
+        var ids = [];
+        $(".selectCheckboxes").each(function (index, value) {
+            var checkBox = $(value);
+            if (checkBox.is(':checked')) {
+                var id = checkBox.attr('id').substring(11);
+                ids.push(id);
+            }
+        });
+        if (ids.length < 1) {
+            alert("@Messages.MustSelectOneTraining");
+        } else {
+            if (confirm("@Messages.TrainingsDeleteAreYouSure")) {
+                $.ajax({
+                    url: "/Clubs/DeleteTrainings",
+                    type: "POST",
+                    data: {
+                        trainingIds: ids
+                    },
+                    success: function (response) {
+                        for (var i = 0; i < ids.length; i++) {
+                            var id = ids[i];
+                            $('#tableRow_' + id).remove();
+                        }
+                        $('#selectAllTrainingsCheckbox').prop("checked", false);
+                        $('#selectCheckboxes').prop("checked", false);
+                    }
+                });
+            }
+            return false;
+        }
+    };
+
+    function publishByCheckbox(trainingId) {
+        var publishValue = $("#isPublished_" + trainingId).is(':checked');
+        $.ajax({
+            url: "/Teams/PublishTraining",
+            type: "POST",
+            data: {
+                trainingId: trainingId,
+                publishValue: publishValue
+            }
+        })
+    }
+
+    function updateExcel() {
+        $('#uploadTeamTrainingBtn').change(function () {
+            $(this).closest('form').submit();
+        })
+    }
+
+    function exportToExcel() {
+        var startDate = $("#startDate").val();
+        var endDate = $("#endDate").val();
+        var seasonId = $("#seasonIdHidden").val();
+        var clubId = $("#clubIdHidden").val();
+        var sortValue = $('input[name=optradio]:checked').val();
+        var filterValue = $('#dateFilterType option:selected').val();
+        $.post({
+            url: "/Clubs/ExportClubTrainingsToXML",
+            type: "POST",
+            data: {
+                clubId: clubId,
+                seasonId: seasonId,
+                startFilterDate: startDate,
+                endFilterDate: endDate,
+                filterValue: filterValue,
+                sortValue: sortValue
+            }
+        }).success(function (value) {
+        });
+    }
+
+    function redactText(id) {
+        var text = $("#content" + id).val();
+        $("#contentText").val(text);
+        $("#saveTextBtn").click(function () {
+            $("#content" + id).val($("#contentText").val());
+            changeEnabled(id);
+            id = 0;
+        })
+    }
+
+    $('#selectAllCheckboxes').click(function () {
+        var c = this.checked;
+        $('.checkboxes').prop('checked', c);
+    })
+
+    function selectedValueCheck(elem) {
+        if (elem.value == "fltr_ranged")
+            document.getElementById('dateRangedFilter').style.display = "block";
+        else {
+            document.getElementById('dateRangedFilter').style.display = "none";
+        }
+    }
+
+    //Function that allows to delete trainings
+    function deleteTraining(id) {
+        if (confirm("Are you sure you want to delete this training with id " + id + "?")) {
+            $.ajax({
+                url: "/Teams/DeleteTeamTraining",
+                type: "POST",
+                data: { id: id },
+                success: $(function () {
+                    $('#tableRow_' + id).remove();
+                })
+            })
+        }
+        return false;
+    }
+
+    //Save button change enable function
+    function changeEnabled(id) {
+        $("a[name='savebtn_" + id + "']").removeAttr('disabled');
+    }
+
+    function showMultiselectValues(id) {
+        $("#" + id).attr('class', 'btn-group open');
+    }
+
+    function updateTraining(id) {
+        var dateToUpdate = $('#trainingDate' + id).val();
+        var trainingLine = $('#tableRow_' + id);
+        var data = {
+            teamId: $('#TeamId').val(),
+            id: id,
+            title: $('#title' + id).val(),
+            date: dateToUpdate,
+            auditoriumId: $('#auditorium' + id).val(),
+            content: $('#content' + id).val(),
+            playersId: getSelectedAttendanceIds(id)
+        };
+        var form_data = new FormData();
+        for (var key in data) {
+            form_data.append(key, data[key]);
+        }
+
+        form_data.append("isImageDeleted", $(trainingLine).find("input[name=RemoveReport]").val());
+
+        form_data.append("ImageFile", $(trainingLine).find("input:file")[0].files[0]);
+
+        $.ajax({
+            url: "/Teams/UpdateTeamTraining",
+            type: "POST",
+            data: form_data,
+            processData: false,
+            contentType: false,
+            success: function(data) {
+                if (data.Message !== "") {
+                    var result = confirm(data.Message);
+                    if (result) {
+                        $.ajax({
+                            url: "/Teams/UpdateTeamTraining",
+                            type: "POST",
+                            data: {
+                                teamId: $('#TeamId').val(),
+                                id: id,
+                                title: $('#title' + id).val(),
+                                date: dateToUpdate,
+                                auditoriumId: $('#auditorium' + id).val(),
+                                content: $('#content' + id).val(),
+                                playersId: getSelectedAttendanceIds(id),
+                                dateApproved: true
+                            }
+                        });
+                    } else {
+                        var date = data.Date;
+                        $("#trainingDate" + id).val(date);
+                    }
+                }
+                $("a[name='savebtn_" + id + "']").attr('disabled', 'disabled');
+                if (data.stat === 'ok') {
+                    if (data.isImageDeleted) {
+
+                    }
+                    if (data.reportChanged) {
+                        var imageEye = $($(trainingLine).find("span[name=imageEye]")[0]);
+                        imageEye.css("visibility", "");
+                        imageEye.on("click", function () { showImage(data.reportPath); });
+                        $(trainingLine).find("input:file")[0].value = "";
+                        $($($(trainingLine).find("input:file").parent()[0]).find("span")[0]).text("Browse");
+                        $(trainingLine).find("div[name=remove-report]")[0].style.visibility = 'visible';
+                    }
+                }
+            }
+        });
+    }
+
+        function filterValues() {
+            var startDate = $("#startDate").val();
+            var endDate = $("#endDate").val();
+            var seasonId = $("#seasonIdHidden").val();
+            var clubId = $("#clubIdHidden").val();
+            var sortValue = $('input[name=optradio]:checked').val();
+            var filterValue = $('#dateFilterType option:selected').val();
+            $("#trainingsListPage").load('/Clubs/Filter',
+            {
+                clubId: clubId,
+                seasonId: seasonId,
+                startFilterDate: startDate,
+                endFilterDate: endDate,
+                filterValue: filterValue,
+                sortValue: sortValue,
+                pageNumber: 1,
+                pageSize: 10
+            });
+    }
+
+    $(document).ready(function () {
+        $('#res_tbl tbody tr').each(function () {
+            var me = $(this);
+            var id = me.attr('id').substring(9);
+            var btn = $('[name=savebtn_' + id+']', me);
+            $("input:file", me).change(function () {
+                btn.attr('disabled', null);
+            });
+            var rmFile = $('div[name=remove-report]', me);
+            if (rmFile != null) {
+                var rmImg = $('input[name=RemoveReport]', me)[0];
+                var eye = $('#imageEye', me)[0];
+                rmFile.on('click', function () {
+                    if (eye) {
+                        eye.style.visibility = 'hidden';
+                        rmFile[0].style.visibility = 'hidden';
+                    }
+                    rmImg.value = 'true';
+                    btn.attr('disabled', null);
+                });
+            }
+        });
+       $('.playerids').multiselect({
+                includeSelectAllOption: true,
+                selectAllText: '@Messages.SelectAllPlayers',
+                buttonText: function (options, select) {
+                    if (options.length === 0) {
+                        return '@Messages.NoneSelected';
+                    }
+                    else if (options.length > 1) {
+                        return '' + options.length + ' ' + '@Messages.Selected.ToLower()';
+                    }
+                    else {
+                        var labels = [];
+                        options.each(function () {
+                            if ($(this).attr('label') !== undefined) {
+                                labels.push($(this).attr('label'));
+                            }
+                            else {
+                                labels.push($(this).html());
+                            }
+                        });
+                        return labels.join(', ') + '';
+                    }
+           },
+                onDropdownHide: function(element) {
+                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                },
+                onDropdownShown: function (element) {
+                    $(element.currentTarget).find('.multiselect-search').focus();
+                }
+       });
+    });
+
+    $(".date-time-training").datetimepicker({
+        format: 'd/m/Y H:i',
+        formatTime: 'H:i',
+        formatDate: 'd/m/Y',
+        step: 15,
+        closeOnDateSelect: false,
+        closeOnTimeSelect: true,
+        onChangeDateTime: function() {
+            $(this).data("input").trigger("changedatetime.xdsoft");
+        }
+    });
+
+    function getSelectedAttendanceIds(id) {
+        var selectedValues = $('#PlayerIds' + id).val();
+        return selectedValues;
+    }
+
+    function showImage(path) {
+        window.open(path);
+    }
+
+        function loadPage(pageNumber, pageSize) {
+            var startDate = $("#startDate").val();
+            var endDate = $("#endDate").val();
+            var seasonId = $("#seasonIdHidden").val();
+            var clubId = $("#clubIdHidden").val();
+            var sortValue = $('input[name=optradio]:checked').val();
+            var filterValue = $('#dateFilterType option:selected').val();
+            $("#trainingsListPage").load('/Clubs/Filter',
+                {
+                    clubId: clubId,
+                    seasonId: seasonId,
+                    startFilterDate: startDate,
+                    endFilterDate: endDate,
+                    filterValue: filterValue,
+                    sortValue: sortValue,
+                    pageNumber: pageNumber,
+                    pageSize: pageSize
+                });
+
+        }
+
+    function pageSizeChanged() {
+        var pageSize = $("#pageSize").val();
+        loadPage(@Model.Pager.CurrentPage, pageSize);
+    }
+    </script>
+</div>

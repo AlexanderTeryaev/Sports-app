@@ -1,0 +1,341 @@
+﻿@using Resources
+@{
+    int? unionId = ViewBag.UnionId ?? null;
+    int? seasonId = ViewBag.SeasonId ?? null;
+    bool? isMultiSport = ViewBag.IsMultiSport ?? null;
+    bool? isDepartment = ViewBag.IsDepartment ?? null;
+    int? clubId = ViewBag.ClubId ?? null;
+    bool? isUnionClub = ViewBag.IsUnionClub;
+    bool? isIndividual = ViewBag.IsIndividual;
+    HttpCookie cookie = Request.Cookies["_culture"];
+    bool isHebrew = cookie?.Value != "en-US";
+}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" media="print" rel="stylesheet" />
+@if (isHebrew)
+{
+    <link href="~/Content/css/rtl-fix.css" rel="stylesheet" />
+}
+
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.10.2.js"></script>
+<script src="~/Scripts/bootstrap.js"></script>
+<div class="print_button_class">
+    <div class="container" id="calendar"></div>
+
+    <script src="~/Scripts/moment.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.js"></script>
+    @if (isMultiSport.HasValue && isMultiSport == true || isDepartment.HasValue && isDepartment == true)
+    {
+
+        <script>
+            $(document).ready(function(e) {
+                setTimeout(function() {
+                        $("#calendar").fullCalendar({
+                            eventLimit: 3,
+                            eventSources: {
+                                url: '/Clubs/CalendarObject',
+                                type: 'POST',
+                                data: {
+                                    clubId: @clubId,
+                                    seasonId: @seasonId
+                                }
+                            },
+                            eventRender: function(event, element) {
+                                element.find('.fc-title').append("<br/>" + event.description);
+                                if (event.typeOfEvent === "NEWGAME") {
+                                    element.find('.fc-bg').append("<br/>" + event.description);
+                                    element.find('.fc-bg').css("background", "transparent");
+                                    element.find('.fc-bg').css("opacity", "1");
+                                }
+                                element.find('.fc-content').css("padding-top", "0");
+                                element.find('.fc-content').css("padding-top", "1px");
+                                element.find('.fc-content').css("white-space", "normal");
+                            },
+                            buttonText: {
+                                prev: '@Messages.Previous',
+                                next: '@Messages.Next',
+                                today: '@Messages.Today',
+                                month: '@Messages.Month',
+                                agendaWeek: '@Messages.Week',
+                                agendaDay: '@Messages.Day'
+                            },
+                            header: {
+                                left: 'prev,next today',
+                                center: 'title',
+                                right: 'month, agendaWeek, agendaDay'
+                            }
+                        });
+
+
+                        $('#calendar').fullCalendar('render');
+                    },
+                    1000);
+            })
+        </script>
+    }
+    else if (isIndividual == false && isUnionClub == true)
+    {
+
+        <script>
+            $(document).ready(function(e) {
+                setTimeout(function() {
+                        $("#calendar").fullCalendar({
+                            eventLimit: 3,
+                            eventSources: {
+                                url: '@Url.Action("CalendarObject", "UnionCalendar")',
+                                type: 'POST',
+                                data: {
+                                    unionId: 0,
+                                    seasonId: @seasonId,
+                                    clubId: @clubId
+                                }
+                            },
+                            eventRender: function(event, element) {
+                                if (event.typeOfEvent === "NEWGAME") {
+                                    element.find('.fc-bg').append("<br/>" + event.description);
+                                    element.find('.fc-bg').css("background", "transparent");
+                                    element.find('.fc-bg').css("opacity", "1");
+                                }
+                                element.find('.fc-title').append("<br/>" + event.description);
+
+                                if (event.typeOfEvent === "COMPETITION") {
+                                    var cnt = event.auditorium + " ";
+                                    if (event.start != null) {
+                                        cnt += event.start.format('DD.MM.YYYY');
+                                        if (event.end != null) {
+                                            var e = event.end.clone();
+                                            cnt += " - " + e.add(-1, 'days').format('DD.MM.YYYY');
+                                        }
+                                    }
+                                    element.popover({
+                                        title: event.title,
+                                        content: cnt,
+                                        trigger: 'hover',
+                                        placement: 'top',
+                                        container: 'body'
+                                    });
+                                }
+                                element.find('.fc-content').css("padding-top", "0");
+                                element.find('.fc-content').css("padding-top", "1px");
+                                element.find('.fc-content').css("white-space", "normal");
+                            },
+                            eventAfterRender: function(event, element, view) {
+                                $(element).attr("id", "event_id_" + event._id);
+                            },
+                            eventClick: function (event) {
+                                if (event.typeOfEvent === "EVENT") {
+                                    $("#eventTitle").html("@Messages.Event" + ": " + event.title);
+                                    $("#eventDesc").html("@Messages.Description" + ": " + event.description);
+                                    $("#eventDate").html("@Messages.Date" + ": " + event.start.format('DD.MM.YYYY HH:mm'));
+                                    if (event.auditorium != null) {
+                                        $("#eventPlace").html("@Messages.Place" + ": " + event.auditorium);
+                                        $("#eventPlace").css("visibility", "visible");
+                                    } else {
+                                        $("#eventPlace").css("visibility", "hidden");
+                                    }
+
+                                    if (event.eventImage != null) {
+                                        $("#eventImage").attr("src", event.eventImage);
+                                        $("#eventImage").css("visibility", "visible");
+                                    } else {
+                                        $("#eventImage").attr("src", "");
+                                        $("#eventImage").css("visibility", "hidden");
+                                    }
+                                    $("#eventdetails").modal('show');
+                                }
+                                if (event.typeOfEvent === "NEWGAME") {
+
+                                    $("#leagueName").html(event.leagueName);
+                                    $("#teamsNames").html(event.teamsNames);
+                                    $("#gameDate").html(event.start.format('DD.MM.YYYY HH:mm'));
+                                    if (event.auditorium != null) {
+                                        $("#auditorium").html(event.auditorium);
+                                        $("#auditorium").css("visibility", "visible");
+                                    } else {
+                                        $("#auditorium").css("visibility", "hidden");
+                                    }
+                                    $("#result").html(event.result);
+
+                                    $("#gameNewDetails").modal('show');
+                                }
+                            },
+                            buttonText: {
+                                prev: '@Messages.Previous',
+                                next: '@Messages.Next',
+                                today: '@Messages.Today',
+                                month: '@Messages.Month',
+                                agendaWeek: '@Messages.Week',
+                                agendaDay: '@Messages.Day'
+                            },
+                            header: {
+                                left: 'prev,next today',
+                                center: 'title',
+                                right: 'month, agendaWeek, agendaDay'
+                            }
+                        });
+
+                        $('#calendar').fullCalendar('render');
+                    },
+                    1000);
+            })
+        </script>
+    }
+    else
+    {
+        <script>
+            $(document).ready(function(e) {
+                setTimeout(function() {
+                    $("#calendar").fullCalendar({
+                        eventLimit: 3,
+                        eventSources: {
+                            url: '@Url.Action("CalendarObject", "UnionCalendar")',
+                            type: 'POST',
+                            data: {
+                                unionId: @unionId,
+                                seasonId: @seasonId
+                                }
+                        },
+                        eventRender: function (event, element) {
+                            if (event.typeOfEvent === "NEWGAME") {
+                                element.find('.fc-bg').append("<br/>" + event.description);
+                                element.find('.fc-bg').css("background", "transparent");
+                                element.find('.fc-bg').css("opacity", "1");
+                            }
+                            element.find('.fc-title').append("<br/>" + event.description);
+
+                            if (event.typeOfEvent === "COMPETITION") {
+                                var cnt = event.auditorium + " ";
+                                if (event.start != null) {
+                                    cnt += event.start.format('DD.MM.YYYY');
+                                    if (event.end != null) {
+                                        var e = event.end.clone();
+                                        cnt += " - " + e.add(-1, 'days').format('DD.MM.YYYY');
+                                    }
+                                }
+                                element.popover({
+                                    title: event.title,
+                                    content: cnt,
+                                    trigger: 'hover',
+                                    placement: 'top',
+                                    container: 'body'
+                                });
+                                element.find('.fc-content').css("cursor", "pointer");
+                                }
+                                element.find('.fc-content').css("padding-top", "0");
+                                element.find('.fc-content').css("padding-top", "1px");
+                                element.find('.fc-content').css("white-space", "normal");
+                            },
+                            eventAfterRender: function(event, element, view) {
+                                $(element).attr("id", "event_id_" + event._id);
+                            },
+                            eventClick: function (event) {
+                                if (event.typeOfEvent === "EVENT") {
+                                    $("#eventTitle").html("@Messages.Event" + ": " + event.title);
+                                    $("#eventDesc").html("@Messages.Description" + ": " + event.description);
+                                    $("#eventDate").html("@Messages.Date" + ": " + event.start.format('DD.MM.YYYY HH:mm'));
+                                    if (event.auditorium != null) {
+                                        $("#eventPlace").html("@Messages.Place" + ": " + event.auditorium);
+                                        $("#eventPlace").css("visibility", "visible");
+                                    } else {
+                                        $("#eventPlace").css("visibility", "hidden");
+                                    }
+
+                                    if (event.eventImage != null) {
+                                        $("#eventImage").attr("src", event.eventImage);
+                                        $("#eventImage").css("visibility", "visible");
+                                    } else {
+                                        $("#eventImage").attr("src", "");
+                                        $("#eventImage").css("visibility", "hidden");
+                                    }
+                                    $("#eventdetails").modal('show');
+                                }
+                                if (event.typeOfEvent === "NEWGAME") {
+
+                                    $("#leagueName").html(event.leagueName);
+                                    $("#teamsNames").html(event.teamsNames);
+                                    $("#gameDate").html(event.start.format('DD.MM.YYYY HH:mm'));
+                                    if (event.auditorium != null) {
+                                        $("#auditorium").html(event.auditorium);
+                                        $("#auditorium").css("visibility", "visible");
+                                    } else {
+                                        $("#auditorium").css("visibility", "hidden");
+                                    }
+                                    $("#result").html(event.result);
+
+                                    $("#gameNewDetails").modal('show');
+                                }
+                                if (event.typeOfEvent === "COMPETITION") {
+                                    if (event.leagueId && event.leagueId>0) {
+                                        var win = window.open("/LeagueTable/AthleticsDisciplines/" + event.leagueId, '_blank');
+                                        win.focus();
+                                    }
+                                }
+                            },
+                            buttonText: {
+                                prev: '@Messages.Previous',
+                                next: '@Messages.Next',
+                                today: '@Messages.Today',
+                                month: '@Messages.Month',
+                                agendaWeek: '@Messages.Week',
+                                agendaDay: '@Messages.Day'
+                            },
+                            header: {
+                                left: 'prev,next today',
+                                center: 'title',
+                                right: 'month, agendaWeek, agendaDay'
+                            }
+                        });
+
+                        $('#calendar').fullCalendar('render');
+                    },
+                    1000);
+            })
+        </script>
+    }
+</div>
+<div class="modal fade" id="eventdetails" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h3 id="eventTitle"></h3>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <p id="eventDesc"></p>
+                        <p id="eventDate"></p>
+                        <p id="eventPlace"></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <img src="" id="eventImage" style="width: 100%;" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="gameNewDetails" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <p style="text-align: center;" id="leagueName"></p>
+                        <p style="text-align: center;font-size: 25px;" id="teamsNames"></p>
+                        <p style="text-align: center;font-size: 25px;" id="result"></p>
+                        <p style="text-align: center;" id="auditorium"></p>
+                        <p style="text-align: center;" id="gameDate"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>

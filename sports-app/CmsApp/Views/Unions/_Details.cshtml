@@ -1,0 +1,1181 @@
+﻿@model UnionDetailsForm
+
+
+@{
+    //string divSize = Model.UnionId == 37 || Model.IsReportsEnabled ? "col-sm-7" : "col-sm-12";
+    var isReadOnly = ViewBag.JobRole == JobRole.RefereeAssignment;
+    var regionalAction = Convert.ToString(TempData["RegionalAction"] ?? string.Empty);
+    Dictionary<string, object> htmlParam = null;
+}
+
+@functions {
+
+    Dictionary<string, object> GetHtmlParam()
+    {
+        var _isReadOnly = ViewBag.JobRole == JobRole.RefereeAssignment;
+
+        var htmlParam = new Dictionary<string, object>();
+
+        if (_isReadOnly)
+        {
+            htmlParam.Add("readonly", "readonly");
+        }
+
+        return htmlParam;
+    }
+}
+
+
+<form id="detailsform" method="post" data-targetid="details" action="@Url.Action("Details")" autocomplete="off" enctype="multipart/form-data">
+    <div class="col-sm-6">
+        @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+        {
+            if (User.IsInAnyRole(AppRole.Admins))
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.Handicapped:</label>
+
+                        @{
+                            htmlParam = GetHtmlParam();
+                            if (isReadOnly)
+                            {
+                                htmlParam.Add("disabled", "disabled");
+                            }
+                        }
+
+                        @Html.CheckBoxFor(m => m.IsHadicapEnabled, htmlParam)
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.ReportsEnabled:</label>
+                        @Html.CheckBoxFor(m => m.IsReportsEnabled)
+                    </div>
+                </div>
+            }
+            if (User.IsInAnyRole(AppRole.Admins) || ViewBag.JobRole == JobRole.UnionManager)
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.BlockClubs:</label>
+                        @Html.CheckBoxFor(m => m.IsClubsBlocked)
+                    </div>
+                </div>
+            }
+            if (User.IsInAnyRole(AppRole.Admins))
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.EnableRegionallevel:</label>
+                        @Html.CheckBoxFor(m => m.IsRegionallevelEnabled)
+                    </div>
+                </div>
+            }
+            if (User.IsInAnyRole(AppRole.Admins))
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.ApprovePlayerByClubManagerFirst:</label>
+                        @Html.CheckBoxFor(m => m.ApprovePlayerByClubManagerFirst)
+                    </div>
+                </div>
+            }
+            if (User.IsInAnyRole(AppRole.Admins))
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.EnableIDCorrectionCheck:</label>
+                        @Html.CheckBoxFor(m => m.EnableIDCorrectionCheck)
+                    </div>
+                </div>
+            }
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.Name:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextBoxFor(m => m.Name, htmlParam)
+                    @Html.ValidationMessageFor(m => m.Name)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.ForeignName:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextBoxFor(m => m.UnionForeignName, htmlParam)
+                    @Html.ValidationMessageFor(m => m.UnionForeignName)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.UnionDescription:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextAreaFor(m => m.Description, htmlParam)
+                    @Html.ValidationMessageFor(m => m.Description)
+                </div>
+            </div>
+            if (!string.Equals(Model.Section?.Alias, SectionAliases.Rowing, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.StatementOfClub:</label>
+                        @{
+                            htmlParam = GetHtmlParam();
+                            htmlParam.Add("class", "form-control");
+                        }
+                        @Html.TextAreaFor(m => m.StatementOfClub, htmlParam)
+                        @Html.ValidationMessageFor(m => m.StatementOfClub)
+                    </div>
+                </div>
+            }
+
+
+            if (string.Equals(Model.Section?.Alias, SectionAliases.MartialArts, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.SportTypeCombobox:</label>
+                        @{
+                            htmlParam = GetHtmlParam();
+                            htmlParam.Add("class", "form-control");
+                        }
+                        @Html.DropDownListFor(m => m.SportType, Model.AvailableSports, Messages.Select, htmlParam)
+                    </div>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-sm-4 form-group">
+                    <label class="control-label">@Messages.Logo:</label> (<span>@Messages.Max2MB</span>)
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        <table>
+                            <tr>
+                                <td width="100px">
+                                    @Html.Editor("LogoFile", "ImageUpload", new { css = "validfile" })
+                                </td>
+                                <td width="10px"></td>
+                                <td>
+                                    <a class="btn btn-sm btn-danger"
+                                       href="@Url.Action("DeleteImage", new { unionId = Model.UnionId, image = "Logo" })"
+                                       title="@Messages.Delete">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        @Html.ValidationMessage("LogoFile")
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Logo))
+                    {
+                        <div class="offset-2"></div>
+                        @ShowImage(Model.Logo)
+                    }
+                </div>
+
+                <div class="col-sm-4 form-group">
+                    <label class="control-label">@Messages.Image:</label> (<span>@Messages.Max2MB</span>)
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        <table>
+                            <tr>
+                                <td width="100px">
+                                    @Html.Editor("ImageFile", "ImageUpload", new { css = "validfile" })
+                                </td>
+                                <td width="10px"></td>
+                                <td>
+                                    <a class="btn btn-sm btn-danger"
+                                       href="@Url.Action("DeleteImage", new { unionId = Model.UnionId, image = "PrimaryImage" })"
+                                       title="@Messages.Delete">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        @Html.ValidationMessage("ImageFile")
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.PrimaryImage))
+                    {
+                        <div class="offset-2"></div>
+                        @ShowImage(Model.PrimaryImage)
+                    }
+                </div>
+
+                <div class="col-sm-4 form-group">
+                    <label class="control-label">@Messages.Index:</label> (<span>@Messages.Max2MB</span>)
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        <table>
+                            <tr>
+                                <td width="100px">
+                                    @Html.Editor("IndexFile", "ImageUpload", new { css = "validfile" })
+                                </td>
+                                <td width="10px"></td>
+                                <td>
+                                    <a class="btn btn-sm btn-danger"
+                                       href="@Url.Action("DeleteImage", new { unionId = Model.UnionId, image = "IndexImage" })"
+                                       title="@Messages.Delete">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.IndexImage))
+                    {
+                        <div class="offset-2"></div>
+                        @ShowImage(Model.IndexImage)
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-9">
+                    <div class="progress progress-striped">
+                        <div class="progress-bar progress-bar-success">0%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.UnionIndex:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextAreaFor(m => m.IndexAbout, htmlParam)
+                    @Html.ValidationMessageFor(m => m.IndexAbout)
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-3 form-group">
+                    <label class="control-label">@Messages.TermsFile:</label> (<span>@Messages.Max2MB</span>)
+                    @if (Model.DocId > 0)
+                    {
+                        <a class="glyphicon glyphicon-eye-open glyph-btn" href="@Url.Action("ShowDoc", new {id = Model.DocId})" target="_blank"></a>
+                        <a class="glyphicon glyphicon-remove glyph-btn" href="@Url.Action("RemoveDoc", new {id = Model.DocId, unionId = Model.UnionId})"></a>
+                    }
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        <span class="btn btn-default btn-file">
+                            <span>@Messages.AddFile</span>
+                            <input type="file" name="DocFile" data-val="true" data-val-regex-pattern="^.*\.(pdf|PDF)$" data-val-regex="@string.Format(Messages.SelectValidFile, "PDF")" accept="application/pdf" />
+                        </span>
+                        @Html.ValidationMessage("DocFile")
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3 form-group">
+                    <label class="control-label">@Messages.UnionForms:</label> (<span>@Messages.Max2MB</span>)
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        <button type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#unionModal">@Messages.AddNew</button>
+                    }
+                    @if (Model.UnionForms.Count() > 0)
+                    {
+                        ViewBag.IsClub = false;
+                        Html.RenderPartial("_ShowUnionForms", Model.UnionForms);
+                    }
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.Address:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextAreaFor(m => m.Address, htmlParam)
+                    @Html.ValidationMessageFor(m => m.Address)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.Phone:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextBoxFor(m => m.ContactPhone, htmlParam)
+                    @Html.ValidationMessageFor(m => m.ContactPhone)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.Email:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextBoxFor(m => m.Email, htmlParam)
+                    @Html.ValidationMessageFor(m => m.Email)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.ForeignAddress:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextBoxFor(m => m.ForeignAddress, htmlParam)
+                    @Html.ValidationMessageFor(m => m.ForeignAddress)
+                </div>
+                <div class="col-sm-6 form-group">
+                    <label class="control-label">@Messages.UnionWebSite:</label>
+                    @{
+                        htmlParam = GetHtmlParam();
+                        htmlParam.Add("class", "form-control");
+                    }
+                    @Html.TextBoxFor(m => m.UnionWebSite, htmlParam)
+                    @Html.ValidationMessageFor(m => m.UnionWebSite)
+                </div>
+            </div>
+            if (Model.UnionId != 52)
+            {
+                <div class="row">
+                    <div class="col-sm-3 form-group">
+                        <label class="control-label">@Messages.AssociationNumber:</label>
+                        <div style="position: relative">
+                            @if (isReadOnly)
+                            {
+                                @Html.EditorFor(m => m.UnionNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+                            }
+                            else
+                            {
+                                @Html.EditorFor(m => m.UnionNumber, new { htmlAttributes = new { @class = "form-control" } })
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            if (string.Equals(Model.Section?.Alias, SectionAliases.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.ContentForFriendshipCard:</label>
+                        @{
+                            htmlParam = GetHtmlParam();
+                            htmlParam.Add("class", "form-control");
+                        }
+                        @Html.TextAreaFor(m => m.ContentForFriendshipCard, htmlParam)
+                        @Html.ValidationMessageFor(m => m.ContentForFriendshipCard)
+                    </div>
+                </div>
+            }
+            if (string.Equals(Model.Section?.Alias, SectionAliases.Tennis, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <div class="row">
+                    <div class="col-sm-3 form-group">
+                        <label class="control-label">@Messages.TotoReportMaxYearOfBirth:</label>
+                        <div style="position: relative">
+                            @if (isReadOnly)
+                            {
+                                @Html.EditorFor(m => m.TotoReportMaxBirthYear, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+                            }
+                            else
+                            {
+                                @Html.EditorFor(m => m.TotoReportMaxBirthYear, new { htmlAttributes = new { @class = "form-control" } })
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            if (string.Equals(Model.Section?.Alias, SectionAliases.Basketball, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.AppLogin:</label>
+                        @{
+                            htmlParam = GetHtmlParam();
+                            htmlParam.Add("class", "form-control");
+                        }
+                        @Html.TextBoxFor(m => m.AppLogin, htmlParam)
+                        @Html.ValidationMessageFor(m => m.AppLogin)
+                        <br />
+                        <label class="control-label">@Messages.AppPassword:</label>
+                        @{
+                            htmlParam = GetHtmlParam();
+                            htmlParam.Add("class", "form-control");
+                            htmlParam.Add("value", Model.AppPassword);
+                        }
+                        @Html.PasswordFor(m => m.AppPassword, htmlParam)
+                        @Html.ValidationMessageFor(m => m.AppPassword)
+                    </div>
+                </div>
+            }
+
+            <div class="row">
+                <div class="col-sm-4">
+                    @if (TempData["Saved"] != null)
+                    {
+                        <span class="text-success">@Messages.DataSavedSuccess</span>
+                    }
+                </div>
+                <div class="col-sm-2 text-align">
+                    <button class="btn btn-primary">@Messages.Save</button>
+                </div>
+            </div>
+
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    <h3>@Html.DisplayFor(m => m.Name)</h3>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    @Html.DisplayFor(m => m.Description)
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-3 form-group">
+                    @if (!string.IsNullOrEmpty(Model.Logo))
+                    {
+                        <div class="offset-2"></div>
+                        @ShowImage(Model.Logo)
+                    }
+                </div>
+                <div class="col-sm-3 form-group">
+                    @if (!string.IsNullOrEmpty(Model.PrimaryImage))
+                    {
+                        <div class="offset-2"></div>
+                        @ShowImage(Model.PrimaryImage)
+                    }
+                </div>
+                <div class="col-sm-3 form-group">
+                    @if (!string.IsNullOrEmpty(Model.IndexImage))
+                    {
+                        <div class="offset-2"></div>
+                        @ShowImage(Model.IndexImage)
+                    }
+                    @Html.DisplayFor(m => m.IndexAbout)
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    @Html.DisplayFor(m => m.ContactPhone)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    @Html.DisplayFor(m => m.Email)
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 form-group">
+                    @Html.DisplayFor(m => m.Address)
+                </div>
+            </div>
+        }
+        @Html.HiddenFor(m => m.UnionId)
+        @Html.HiddenFor(m => m.SeasonId)
+    </div>
+
+    <div class="col-sm-6">
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="row">
+                    <div class="col-md-12 player-to-club-registrations-prices">
+                        @{
+                            htmlParam = GetHtmlParam();
+                            htmlParam.Add("style", "disp");
+                            if (!User.IsInAnyRole(AppRole.Admins) && !User.HasTopLevelJob(JobRole.UnionManager))
+                            {
+                                htmlParam.Add("disabled", "disabled");
+                            }
+                        }
+                        @Html.CheckBoxFor(x => x.EnablePaymentsForPlayerClubRegistrations, htmlParam)
+                        <h4>@Messages.Union_PaymentSettingsForRegToClubs</h4>
+                    </div>
+                </div>
+                <div id="player-to-club-prices" style="display: @(Model.EnablePaymentsForPlayerClubRegistrations ? "block" : "none")">
+                    @if (Model.UnionId != 52 && !string.Equals(Model.Section?.Alias, SectionAliases.Rowing, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                    <div class="row">
+                        <div class="col-sm-12 form-group">
+                            <label class="control-label">
+                                @Messages.UnionDetail_PlayerToClubCompetingRegistrationPrice:
+                            </label>
+                            <table id="tbUnionPlayerToClubCompetingRegistrationPrice" class="table table-striped" style="margin-bottom: 0px;">
+                                <thead>
+                                    <tr>
+                                        <td>@Messages.Activity_StartDate</td>
+                                        <td>@Messages.Activity_EndDate</td>
+                                        <td>@Messages.Activity_Price</td>
+                                        <td>@Messages.Activity_FromBirthdate</td>
+                                        <td>@Messages.Activity_ToBirthdate</td>
+                                        <td>@Messages.Price_CardComProductId</td>
+                                        <td></td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.UnionToClubCompetingRegistrationPrices.Count; i++)
+                                    {
+                                        var item = Model.UnionToClubCompetingRegistrationPrices[i];
+                                        <tr style="margin: 0 5px;">
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubCompetingRegistrationPrices[@(i)].StartDate" data-nameTpl="UnionToClubCompetingRegistrationPrices[0].StartDate" value="@(item.StartDate.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubCompetingRegistrationPrices[@(i)].EndDate" data-nameTpl="UnionToClubCompetingRegistrationPrices[0].EndDate" value="@(item.EndDate.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubCompetingRegistrationPrices[@(i)].Price" data-nameTpl="UnionToClubCompetingRegistrationPrices[0].Price" value="@(item.Price)" class="form-control" />
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubCompetingRegistrationPrices[@(i)].FromBirthday" data-nameTpl="UnionToClubCompetingRegistrationPrices[0].FromBirthday" value="@(item.FromBirthday?.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubCompetingRegistrationPrices[@(i)].ToBirthday" data-nameTpl="UnionToClubCompetingRegistrationPrices[0].ToBirthday" value="@(item.ToBirthday?.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="UnionToClubCompetingRegistrationPrices[@(i)].CardComProductId" data-nameTpl="UnionToClubCompetingRegistrationPrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" />
+                                            </td>
+                                            <td>
+                                                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                                {
+                                                    <text>
+                                                        <a onclick="javascript:removePeriodRow(this);" class="btn btn-default">
+                                                            <i class="glyphicon glyphicon-remove"></i>
+                                                        </a>
+                                                    </text>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                {
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4">
+                                                <button type="button" class="btn btn-primary btnAddFormPayment" onclick="btnAddFormPaymentHandler(this);" data-tableName="tbUnionPlayerToClubCompetingRegistrationPrice" data-propName="UnionToClubCompetingRegistrationPrices" id="btnAddUnionPlayerToClubCompetingRegistrationPrice">
+                                                    <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                }
+                            </table>
+                        </div>
+                    </div>
+                    }
+                    <div class="row">
+                        <div class="col-sm-12 form-group">
+                            <label class="control-label">
+                                @Messages.UnionDetail_PlayerToClubRegularRegistrationPrice:
+                            </label>
+                            <table id="tbUnionPlayerToClubRegularRegistrationPrice" class="table table-striped" style="margin-bottom: 0px;">
+                                <thead>
+                                    <tr>
+                                        <td>@Messages.Activity_StartDate</td>
+                                        <td>@Messages.Activity_EndDate</td>
+                                        <td>@Messages.Activity_Price</td>
+                                        <td>@Messages.Activity_FromBirthdate</td>
+                                        <td>@Messages.Activity_ToBirthdate</td>
+                                        <td>@Messages.Price_CardComProductId</td>
+                                        <td></td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.UnionToClubRegularRegistrationPrices.Count; i++)
+                                    {
+                                        var item = Model.UnionToClubRegularRegistrationPrices[i];
+                                        <tr style="margin: 0 5px;">
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubRegularRegistrationPrices[@(i)].StartDate" data-nameTpl="UnionToClubRegularRegistrationPrices[0].StartDate" value="@(item.StartDate.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubRegularRegistrationPrices[@(i)].EndDate" data-nameTpl="UnionToClubRegularRegistrationPrices[0].EndDate" value="@(item.EndDate.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubRegularRegistrationPrices[@(i)].Price" data-nameTpl="UnionToClubRegularRegistrationPrices[0].Price" value="@(item.Price)" class="form-control" />
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubRegularRegistrationPrices[@(i)].FromBirthday" data-nameTpl="UnionToClubRegularRegistrationPrices[0].FromBirthday" value="@(item.FromBirthday?.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubRegularRegistrationPrices[@(i)].ToBirthday" data-nameTpl="UnionToClubRegularRegistrationPrices[0].ToBirthday" value="@(item.ToBirthday?.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubRegularRegistrationPrices[@(i)].CardComProductId" data-nameTpl="UnionToClubRegularRegistrationPrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" />
+                                            </td>
+                                            <td>
+                                                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                                {
+                                                    <a onclick="javascript:removePeriodRow(this);" class="btn btn-default">
+                                                        <i class="glyphicon glyphicon-remove"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                {
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4">
+                                                <button type="button" class="btn btn-primary btnAddFormPayment" onclick="btnAddFormPaymentHandler(this);" data-tableName="tbUnionPlayerToClubRegularRegistrationPrice" data-propName="UnionToClubRegularRegistrationPrices" id="btnAddUnionPlayerToClubRegularRegistrationPrice">
+                                                    <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                }
+                            </table>
+                        </div>
+                    </div>
+                @if (!string.Equals(Model.Section?.Alias, SectionAliases.Rowing, StringComparison.CurrentCultureIgnoreCase))
+                { 
+                    <div class="row">
+                        <div class="col-sm-12 form-group">
+                            <label class="control-label">
+                                @Messages.UnionDetail_PlayerToClubInsurancePrice:
+                            </label>
+                            <table id="tbUnionPlayerToClubInsurancePrice" class="table table-striped" style="margin-bottom: 0px;">
+                                <thead>
+                                    <tr>
+                                        <td>@Messages.Activity_StartDate</td>
+                                        <td>@Messages.Activity_EndDate</td>
+                                        <td>@Messages.Activity_Price</td>
+                                        <td>@Messages.Activity_FromBirthdate</td>
+                                        <td>@Messages.Activity_ToBirthdate</td>
+                                        <td>@Messages.Price_CardComProductId</td>
+                                        <td></td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.UnionToClubInsurancePrices.Count; i++)
+                                    {
+                                        var item = Model.UnionToClubInsurancePrices[i];
+                                        <tr style="margin: 0 5px;">
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubInsurancePrices[@(i)].StartDate" data-nameTpl="UnionToClubInsurancePrices[0].StartDate" value="@(item.StartDate.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubInsurancePrices[@(i)].EndDate" data-nameTpl="UnionToClubInsurancePrices[0].EndDate" value="@(item.EndDate.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubInsurancePrices[@(i)].Price" data-nameTpl="UnionToClubInsurancePrices[0].Price" value="@(item.Price)" class="form-control" />
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubInsurancePrices[@(i)].FromBirthday" data-nameTpl="UnionToClubInsurancePrices[0].FromBirthday" value="@(item.FromBirthday?.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="position: relative">
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubInsurancePrices[@(i)].ToBirthday" data-nameTpl="UnionToClubInsurancePrices[0].ToBirthday" value="@(item.ToBirthday?.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubInsurancePrices[@(i)].CardComProductId" data-nameTpl="UnionToClubInsurancePrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" />
+                                            </td>
+                                            <td>
+                                                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                                {
+                                                    <a onclick="javascript:removePeriodRow(this);" class="btn btn-default">
+                                                        <i class="glyphicon glyphicon-remove"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                {
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4">
+                                                <button type="button" class="btn btn-primary btnAddFormPayment" onclick="btnAddFormPaymentHandler(this);" data-tableName="tbUnionPlayerToClubInsurancePrice" data-propName="UnionToClubInsurancePrices" id="btnAddUnionPlayerToClubInsurancePrice">
+                                                    <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                }
+                            </table>
+                        </div>
+                    </div>
+                }   
+                    @if (string.Equals(Model.Section?.Alias, SectionAliases.Tennis, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        <div class="row">
+                            <div class="col-sm-12 form-group">
+                                <label class="control-label">
+                                    @Messages.UnionDetail_PlayerToClubTenicardPrice:
+                                </label>
+                                <table id="tbUnionPlayerToClubTenicardPrice" class="table table-striped" style="margin-bottom: 0px;">
+                                    <thead>
+                                        <tr>
+                                            <td>@Messages.Activity_StartDate</td>
+                                            <td>@Messages.Activity_EndDate</td>
+                                            <td>@Messages.Activity_Price</td>
+                                            <td>@Messages.Activity_FromBirthdate</td>
+                                            <td>@Messages.Activity_ToBirthdate</td>
+                                            <td>@Messages.Price_CardComProductId</td>
+                                            <td></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < Model.UnionToClubTenicardPrices.Count; i++)
+                                        {
+                                            var item = Model.UnionToClubTenicardPrices[i];
+                                            <tr style="margin: 0 5px;">
+                                                <td>
+                                                    <div style="position: relative">
+                                                        <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubTenicardPrices[@(i)].StartDate" data-nameTpl="UnionToClubTenicardPrices[0].StartDate" value="@(item.StartDate.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style="position: relative">
+                                                        <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubTenicardPrices[@(i)].EndDate" data-nameTpl="UnionToClubTenicardPrices[0].EndDate" value="@(item.EndDate.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubTenicardPrices[@(i)].Price" data-nameTpl="UnionToClubTenicardPrices[0].Price" value="@(item.Price)" class="form-control" />
+                                                </td>
+                                                <td>
+                                                    <div style="position: relative">
+                                                        <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubTenicardPrices[@(i)].FromBirthday" data-nameTpl="UnionToClubTenicardPrices[0].FromBirthday" value="@(item.FromBirthday?.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style="position: relative">
+                                                        <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubTenicardPrices[@(i)].ToBirthday" data-nameTpl="UnionToClubTenicardPrices[0].ToBirthday" value="@(item.ToBirthday?.ToString("dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <input @(isReadOnly ? "readonly" : "") type="text" name="UnionToClubTenicardPrices[@(i)].CardComProductId" data-nameTpl="UnionToClubTenicardPrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" />
+                                                </td>
+                                                <td>
+                                                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                                    {
+                                                        <a onclick="javascript:removePeriodRow(this);" class="btn btn-default">
+                                                            <i class="glyphicon glyphicon-remove"></i>
+                                                        </a>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                    {
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4">
+                                                    <button type="button" class="btn btn-primary btnAddFormPayment" onclick="btnAddFormPaymentHandler(this);" data-tableName="tbUnionPlayerToClubTenicardPrice" data-propName="UnionToClubTenicardPrices" id="btnAddUnionPlayerToClubTenicardPrice">
+                                                        <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    }
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.UnionId == 37 || Model.IsReportsEnabled)
+    {
+        <div class="col-sm-5" id="karatepaymentform">
+            @if (Model.UnionId == 37)
+            {
+                <h4>@Messages.ClubPaymentSettings</h4>
+                <table class="table table-striped" id="karateuniontable">
+                    <thead>
+                        <tr>
+                            <td>@Messages.FromNumberOfSportmans</td>
+                            <td>@Messages.UpToNumberOfSportmans</td>
+                            <td>@Messages.PricePerSportsman</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.UnionPaymentForm != null && Model.UnionPaymentForm.Any())
+                        {
+                            foreach (var value in Model.UnionPaymentForm.Select((value, index) => new { value, index }))
+                            {
+                                <tr>
+                                    <td>
+                                        <input name="UnionPaymentForm[@value.index].FromSportNumber" type='number' form='detailsform' class='form-control' value="@value.value.FromSportNumber" />
+                                    </td>
+                                    <td>
+                                        <input name="UnionPaymentForm[@value.index].ToSportNumber" type='number' form='detailsform' class='form-control' value="@value.value.ToSportNumber" />
+                                    </td>
+                                    <td>
+                                        <input name="UnionPaymentForm[@value.index].PricePerSportsman" type='number' form='detailsform' class='form-control' value="@value.value.PricePerSportsman" />
+                                    </td>
+                                    <td>
+                                        @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                        {
+                                            <a class='btn btn-default deletekarate'>
+                                                <i class='glyphicon glyphicon-remove'></i>
+                                            </a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        <tfoot>
+                            <tr>
+                                <td colspan="3">
+                                    <a id="addnewkarateset" class="btn btn-primary">@Messages.AddNew</a>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+            }
+            @if (Model.IsReportsEnabled)
+            {
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>@Messages.OfficialsSettings&nbsp;&nbsp;&nbsp;@Html.CheckBoxFor(m => m.IsOfficialSettingsChecked)</h4>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-3 col-xs-12">
+                        <label class="control-la tbel">@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.RefereeFee : Messages.RefereeFeePerGame):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.BasicD : "") </label>
+                        @Html.TextBoxFor(m => m.RefereeFeePerGame, new { @class = "form-control" })
+                        @Html.EnumDropDownListFor(m => m.RefereePaymentCurrencyUnits, new { @class = "form-control form-control-inline" })
+                        @Html.ValidationMessageFor(m => m.RefereeFeePerGame)
+                    </div>
+                    <div class="col-sm-3 col-xs-12">
+                        <label class="control-label">@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.AdvancedC : Messages.RateA):</label>
+                        @Html.TextBoxFor(m => m.RateAPerGame, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.RateAPerGame)
+                    </div>
+                    <div class="col-sm-3 col-xs-12">
+                        <label class="control-label">@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.ProfissionalB : Messages.RateB):</label>
+                        @Html.TextBoxFor(m => m.RateBPerGame, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.RateBPerGame)
+                    </div>
+                    <div class="col-sm-3 col-xs-12">
+                        <label class="control-label">@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.RefereeA : Messages.RateC):</label>
+                        @Html.TextBoxFor(m => m.RateCPerGame, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.RateCPerGame)
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-3 col-xs-12">
+                        <label class="control-label">@Messages.PaymentForTravel:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.BasicD : "")</label>
+                        @Html.TextBoxFor(m => m.RefereePaymentForTravel, new { @class = "form-control" })
+                        @Html.EnumDropDownListFor(m => m.RefereeTravelCurrencyUnits, new { @class = "form-control form-control-inline" })
+                        @Html.EnumDropDownListFor(m => m.RefereeTravelMetricUnits, new { @class = "form-control form-control-inline" })
+                        <br />
+                        @Html.ValidationMessageFor(m => m.RefereePaymentForTravel)
+                    </div>
+                    <div class="col-sm-3 col-xs-12">
+                        <label class="control-label">@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.AdvancedC : Messages.RateA):</label>
+                        @Html.TextBoxFor(m => m.RateAForTravel, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.RateAForTravel)
+                    </div>
+                    <div class="col-sm-3 col-xs-12">
+                        <label class="control-label">@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.ProfissionalB : Messages.RateB):</label>
+                        @Html.TextBoxFor(m => m.RateBForTravel, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.RateBForTravel)
+                    </div>
+                    <div class="col-sm-3 col-xs-12">
+                        <label class="control-label">@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.RefereeA : Messages.RateC):</label>
+                        @Html.TextBoxFor(m => m.RateCForTravel, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.RateCForTravel)
+                    </div>
+                </div>
+
+                <br />
+                <div class="row">
+                    <div class="col-sm-6 col-xs-12">
+                        <label class="control-label">@(Model.Section?.Alias == GamesAlias.Athletics ? Messages.SpectatorFee : Messages.SpectatorFeePerGame):</label>
+                        @Html.TextBoxFor(m => m.SpectatorFeePerGame, new { @class = "form-control" })
+                        @Html.EnumDropDownListFor(m => m.SpectatorPaymentCurrencyUnits, new { @class = "form-control form-control-inline" })
+                        @Html.ValidationMessageFor(m => m.SpectatorFeePerGame)
+                    </div>
+                    <div class="col-sm-6 col-xs-12">
+                        <label class="control-label">@Messages.PaymentForTravel:</label>
+                        @Html.TextBoxFor(m => m.SpectatorPaymentForTravel, new { @class = "form-control" })
+                        @Html.EnumDropDownListFor(m => m.SpectatorTravelCurrencyUnits, new { @class = "form-control form-control-inline" })
+                        @Html.EnumDropDownListFor(m => m.SpectatorTravelMetricUnits, new { @class = "form-control form-control-inline" })
+                        <br />
+                        @Html.ValidationMessageFor(m => m.SpectatorPaymentForTravel)
+                    </div>
+                </div>
+
+                <br />
+                <div class="row">
+                    <div class="col-sm-6 col-xs-12">
+                        <label class="control-label">@(Model.Section?.Alias == GamesAlias.Athletics? Messages.DeskFee : Messages.DeskFeePerGame):</label>
+                        @Html.TextBoxFor(m => m.DeskFeePerGame, new { @class = "form-control" })
+                        @Html.EnumDropDownListFor(m => m.DeskPaymentCurrencyUnits, new { @class = "form-control form-control-inline" })
+                        @Html.ValidationMessageFor(m => m.DeskFeePerGame)
+                    </div>
+                    <div class="col-sm-6 col-xs-12">
+                        <label class="control-label">@Messages.PaymentForTravel:</label>
+                        @Html.TextBoxFor(m => m.DeskPaymentForTravel, new { @class = "form-control" })
+                        @Html.EnumDropDownListFor(m => m.DeskTravelCurrencyUnits, new { @class = "form-control form-control-inline" })
+                        @Html.EnumDropDownListFor(m => m.DeskTravelMetricUnits, new { @class = "form-control form-control-inline" })
+                        <br />
+                        @Html.ValidationMessageFor(m => m.DeskPaymentForTravel)
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</form>
+@using (Html.BeginForm("AddUnionForm", "Unions", FormMethod.Post, new { id = "unionFormAdding", enctype = "multipart/form-data", autocomplete = "off" }))
+{
+    <div class="modal fade" id="unionModal" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">@Messages.AddNew</h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        <label class="control-label">@Messages.Title:</label>
+                    </p>
+                    <p><input name="Title" id="titleForUnionForm" type="text" required class="form-control" />
+                    <p>
+                        <span class="btn btn-default btn-file">
+                            <span>@Messages.AddFile</span>
+                            <input type="file" name="UnionFormUploadFile" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|jpeg|JPEG|png|PNG|pdf|PDF)$"
+                                   data-val-regex="@string.Format(Messages.SelectValidFile, "JPG/JPEG/PNG/PDF")" accept="image/*, application/pdf" />
+                        </span>
+                    </p>
+                    <p>@Html.ValidationMessage("UnionFormUploadFile")</p>
+                    @Html.HiddenFor(m => m.UnionId)
+                    @Html.HiddenFor(m => m.SeasonId)
+                </div>
+                <div class="modal-footer">
+                    <a id="addNewForm" class="btn btn-primary" data-dismiss="modal">@Messages.AddNew</a>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@Html.Hidden("reportsHidden", Model.IsReportsEnabled)
+
+@helper ShowImage(string imgName)
+{
+    <img class="img-responsive img-thumbnail" src="@( GlobVars.ContentPath + "/union/" + imgName)" />
+}
+
+<script>
+    $('#detailsform').validateBootstrap(true);
+    setFileUpload('#detailsform', '#details');
+</script>
+<script>
+    function changeReportStatus() {
+        var isChecked = $("#IsReportsEnabled").is(':checked');
+        if (isChecked || $("#reportsHidden").val() == "True") {
+            $(".reportcolumn").show();
+            $("#downloadAllReports").show();
+            $("#paymentReportDiv").show();
+        } else {
+            $(".reportcolumn").hide();
+            $("#downloadAllReports").hide();
+            $("#paymentReportDiv").hide();
+        }
+    }
+
+    var regionalAction = '';
+    $(document).ready(function() {
+        changeReportStatus();
+        regionalAction = '@regionalAction';
+       // console.log(regionalAction);
+        if (regionalAction == 'hide') {
+            $("#achRegional").remove();
+            $("#union_regionalfed").remove();
+        }
+    });
+
+    $(".player-to-club-registrations-prices input").change(function() {
+        if (this.checked) {
+            $("#player-to-club-prices").show();
+        } else {
+            $("#player-to-club-prices").hide();
+        }
+    });
+
+    $("#IsReportsEnabled").change(function() {
+        changeReportStatus();
+    });
+
+    $("#addNewForm").click(function() {
+        var imgVal = $('#UnionFormUploadFile').val();
+        var textTitle = $('#titleForUnionForm').val();
+        var textVal = $("")
+        if (imgVal == '') {
+            alert("@Messages.FileError");
+            return false;
+        } else if (textTitle == '') {
+            alert("Enter title for union form");
+        } else {
+            $("#unionFormAdding").submit();
+        }
+    });
+
+
+    $("#addnewkarateset").click(function() {
+        var table = $("#karateuniontable");
+        var indexer = $('#karateuniontable >tbody >tr').length;
+        var body = $(table).find("tbody");
+        $(body).append("<tr><td><input name='UnionPaymentForm[" +
+            indexer +
+            "].FromSportNumber' type='number' form='detailsform' class='form-control' /></td>" +
+            "<td><input name='UnionPaymentForm[" +
+            indexer +
+            "].ToSportNumber' type='number' form='detailsform' class='form-control' /></td>" +
+            "<td><input name='UnionPaymentForm[" +
+            indexer +
+            "].PricePerSportsman' type='number' form='detailsform' class='form-control' /></td>" +
+            "<td><a class='btn btn-default deletekarate'><i class='glyphicon glyphicon-remove' ></i></a></td>" +
+            "</tr>")
+    });
+    $("#karateuniontable").on("click",
+        "a.deletekarate",
+        function() {
+            $(this).closest("tr").remove();
+        });
+
+    function removePeriodRow(that, tableName) {
+        $(that).closest("tr").remove();
+        updatePriceIndex(tableName);
+    }
+
+    function AddFormPayment(propName, tableName) {
+        var row = '';
+        row += '<tr>';
+        row += '   <td>';
+        row += '       <div style="position: relative">';
+        row += '           <input type="text" name="' +
+            propName +
+            '[0].StartDate" data-nameTpl="' +
+            propName +
+            '[0].StartDate" value="" class="form-control frm-date-wo-time" />';
+        row += '       </div>';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <div style="position: relative">';
+        row += '           <input type="text" name="' +
+            propName +
+            '[0].EndDate" data-nameTpl="' +
+            propName +
+            '[0].EndDate" value="" class="form-control frm-date-wo-time" />';
+        row += '       </div>';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <input type="text" name="' +
+            propName +
+            '[0].Price" data-nameTpl="' +
+            propName +
+            '[0].Price" class="form-control" />';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <div style="position: relative">';
+        row += '           <input type="text" name="' +
+            propName +
+            '[0].FromBirthday" data-nameTpl="' +
+            propName +
+            '[0].FromBirthday" value="" class="form-control frm-date-wo-time" />';
+        row += '       </div>';
+        row += '   <td>';
+        row += '       <div style="position: relative">';
+        row += '           <input type="text" name="' +
+            propName +
+            '[0].ToBirthday" data-nameTpl="' +
+            propName +
+            '[0].ToBirthday" value="" class="form-control frm-date-wo-time" />';
+        row += '       </div>';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <input type="text" name="' +
+            propName +
+            '[0].CardComProductId" data-nameTpl="' +
+            propName +
+            '[0].CardComProductId" class="form-control" />';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <a onclick="javascript:removePeriodRow(this,\'' +
+            tableName +
+            '\');" class="btn btn-default"><i class="glyphicon glyphicon-remove"></i></a>';
+        row += '   </td>';
+        row += '</tr>';
+
+        return row;
+    };
+
+    function btnAddFormPaymentHandler(that) {
+        var tableName = $(that).attr("data-tableName");
+        var propName = $(that).attr("data-propName");
+
+        var row = AddFormPayment(propName, tableName);
+
+        $('#' + tableName + ' > tbody').append(row);
+        cmn.initDateTimePickers();
+
+        updatePriceIndex(tableName);
+    };
+
+    function updatePriceIndex(tableName) {
+        $('#' + tableName + ' > tbody > tr').each(function(ind, el) {
+
+            $('input', el).each(function(iInd, iEl) {
+                $(iEl).attr('name', $(iEl).attr("data-nameTpl").replace("[0]", "[" + ind + "]"));
+            });
+
+        });
+    };
+
+</script>

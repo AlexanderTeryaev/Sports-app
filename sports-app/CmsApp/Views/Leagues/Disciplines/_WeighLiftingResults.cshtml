@@ -1,0 +1,387 @@
+﻿@using AppModel
+@using CmsApp.Controllers
+@model CompetitionDiscipline
+@{
+    bool isHebrew = Request.IsHebrew();
+    string pullRight = isHebrew ? "pull-left" : "pull-right";
+    var SuccessList = new List<SelectListItem>
+    {
+        new SelectListItem {Text = "", Value = ""},
+        new SelectListItem {Text = "-", Value = "0" },
+        new SelectListItem {Text = "+", Value = "1" },
+        new SelectListItem {Text = "/", Value = "3" }
+    };
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex"><div class="col-sm-9"><h4 class="modal-title">- @Messages.CompetitionResults - @ViewBag.CompetitionName - @ViewBag.CategoryName</h4></div>
+    <a href="@GlobVars.SiteUrl/LeagueTable/WeightDeclarationResults/@ViewBag.CompetitionDisciplineId" target="_blank" class="btn btn-primary pull-left" style="margin-left:10px;margin-right:10px;">@Messages.ExternalLink</a>
+    <div class="pull-right">@(Messages.Sportsmans + " " + Messages.Count.ToLower()) <strong> @(Model?.CompetitionDisciplineRegistrations.Count() ?? 0)</strong></div></div>
+</div>
+<style>
+    .result-weight {
+        max-width:100px;
+    }
+    .result-success-weight {
+        min-width: 85px;
+    }
+</style>
+<div class="modal-body">
+
+    <div style="margin-top:15px;" class="row">
+        <div class="col-sm-12">
+            @if (Model != null && Model.CompetitionDisciplineRegistrations.Any())
+            {
+                <table id="print_table_registrationList" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.BirthDay</th>
+                            <th>@Messages.ClubName</th>
+                            <th>@Messages.Gender</th>
+                            <th>@Messages.Weight</th>
+                            <th>@Messages.Entry</th>
+                            <th colspan="6">@Messages.Lifting</th>
+                            <th>@Messages.Result</th>
+                            <th colspan="6">@Messages.Push</th>
+                            <th>@Messages.Result</th>
+                            <th>@Messages.FightingTwo</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="session-registrations-list">
+                        @foreach (var reg in Model.CompetitionDisciplineRegistrations)
+                        {
+                            var result = reg.CompetitionResult.FirstOrDefault();
+                            if (result == null) {
+                                result = new CompetitionResult();
+                            }
+                        <tr>
+                            <td>@reg.User.FullName</td>
+                            <td>
+                                @{
+                                    var birthDate = reg.User.BirthDay.HasValue
+                                    ? reg.User.BirthDay.Value.ToShortDateString()
+                                    : string.Empty;
+                                }
+                                @birthDate
+                            </td>
+                            <td>@reg.Club.Name</td>
+                            <td>@(LangHelper.GetGenderCharById(reg.User.GenderId ?? 0)) </td>
+
+                            @{
+                                string danger = "";
+                                bool IsWeighOk = (!reg.Weight.HasValue || !reg.CompetitionDiscipline.CompetitionAge.from_weight.HasValue || !reg.CompetitionDiscipline.CompetitionAge.to_weight.HasValue || (reg.CompetitionDiscipline.CompetitionAge.from_weight <= reg.Weight && reg.CompetitionDiscipline.CompetitionAge.to_weight > reg.Weight)) ? true : false;
+
+                                if (!IsWeighOk)
+                                {
+                                    danger = "alert-danger";
+                                }
+                            }
+                            <td class="@danger">@reg.Weight</td>
+                            <td extra_data="@($"registrant_{reg.Id}")" value="@reg.WeightDeclaration" >@reg.WeightDeclaration</td>
+
+                            <td>
+                                @Html.TextBox("Lifting1", result.Lifting1, "", new { @class = "form-control numeric result-weight", form = $"registrant_{reg.Id}"})
+                            </td>
+                            <td>
+                                @{
+                                    var multiSelect = new List<SelectListItem>();
+                                    foreach (var altResList in SuccessList)
+                                    {
+                                        int value;
+                                        bool isBool = int.TryParse(altResList.Value, out value);
+
+                                        var s = new SelectListItem
+                                        {
+                                            Text = altResList.Text,
+                                            Value = altResList.Value,
+                                            Selected = altResList.Value == result.Lift1Success.ToString()
+                                        };
+                                        multiSelect.Add(s);
+                                    };
+                                }
+                                @Html.DropDownList("Lift1Success", multiSelect, new { @class = "form-control result-success-weight", form = $"registrant_{reg.Id}", style = "text-align-last: center;" })
+                            </td>
+
+                            <td>
+                                @Html.TextBox("Lifting2", result.Lifting2, "", new { @class = "form-control numeric result-weight", form = $"registrant_{reg.Id}" })
+                            </td>
+                            <td>
+                                @{
+                                    var multiSelect2 = new List<SelectListItem>();
+                                    foreach (var altResList in SuccessList)
+                                    {
+                                        int value;
+                                        bool isBool = int.TryParse(altResList.Value, out value);
+
+                                        var s = new SelectListItem
+                                        {
+                                            Text = altResList.Text,
+                                            Value = altResList.Value,
+                                            Selected = altResList.Value == result.Lift2Success.ToString()
+                                        };
+                                        multiSelect2.Add(s);
+                                    };
+                                }
+                                @Html.DropDownList("Lift2Success", multiSelect2, new { @class = "form-control result-success-weight", form = $"registrant_{reg.Id}", style = "text-align-last: center;" })
+                            </td>
+
+                            <td>
+                                @Html.TextBox("Lifting3", result.Lifting3, "", new { @class = "form-control numeric result-weight", form = $"registrant_{reg.Id}" })
+                            </td>
+                            <td>
+                                @{
+                                    var multiSelect3 = new List<SelectListItem>();
+                                    foreach (var altResList in SuccessList)
+                                    {
+                                        int value;
+                                        bool isBool = int.TryParse(altResList.Value, out value);
+                                        var s = new SelectListItem
+                                        {
+                                            Text = altResList.Text,
+                                            Value = altResList.Value,
+                                            Selected = altResList.Value == result.Lift3Success.ToString()
+                                        };
+                                        multiSelect3.Add(s);
+                                    };
+                                }
+                                @Html.DropDownList("Lift3Success", multiSelect3, new { @class = "form-control result-success-weight", form = $"registrant_{reg.Id}", style = "text-align-last: center;" })
+                            </td>
+                            <td id="lifting_result_@reg.Id">
+                            @{ 
+                                int? bestLift = 0;
+                                if (result.Lifting1.HasValue && result.Lift1Success.HasValue && result.Lift1Success.Value == 1 && (!bestLift.HasValue || result.Lifting1.Value > bestLift.Value))
+                                {
+                                    bestLift = result.Lifting1;
+                                }
+                                if (result.Lifting2.HasValue && result.Lift2Success.HasValue && result.Lift2Success.Value == 1 && (!bestLift.HasValue || result.Lifting2.Value > bestLift.Value))
+                                {
+                                    bestLift = result.Lifting2;
+                                }
+                                if (result.Lifting3.HasValue && result.Lift3Success.HasValue && result.Lift3Success.Value == 1 && (!bestLift.HasValue || result.Lifting3.Value > bestLift.Value))
+                                {
+                                    bestLift = result.Lifting3;
+                                }
+                            }
+                            @bestLift
+                            </td>
+                            <td>
+                                @Html.TextBox("Push1", result.Push1, "", new { @class = "form-control numeric result-weight", form = $"registrant_{reg.Id}" })
+                            </td>
+                            <td>
+                                @{
+                                    var multiSelect4 = new List<SelectListItem>();
+                                    foreach (var altResList in SuccessList)
+                                    {
+                                        int value;
+                                        bool isBool = int.TryParse(altResList.Value, out value);
+                                        var s = new SelectListItem
+                                        {
+                                            Text = altResList.Text,
+                                            Value = altResList.Value,
+                                            Selected = altResList.Value == result.Push1Success.ToString()
+                                        };
+                                        multiSelect4.Add(s);
+                                    };
+                                }
+                                @Html.DropDownList("Push1Success", multiSelect4, new { @class = "form-control result-success-weight", form = $"registrant_{reg.Id}", style = "text-align-last: center;" })
+                            </td>
+                            <td>
+                                @Html.TextBox("Push2", result.Push2, "", new { @class = "form-control numeric result-weight", form = $"registrant_{reg.Id}" })
+                            </td>
+                            <td>
+                                @{
+                                    var multiSelect5 = new List<SelectListItem>();
+                                    foreach (var altResList in SuccessList)
+                                    {
+                                        int value;
+                                        bool isBool = int.TryParse(altResList.Value, out value);
+                                        var s = new SelectListItem
+                                        {
+                                            Text = altResList.Text,
+                                            Value = altResList.Value,
+                                            Selected = altResList.Value == result.Push2Success.ToString()
+                                        };
+                                        multiSelect5.Add(s);
+                                    };
+                                }
+                                @Html.DropDownList("Push2Success", multiSelect5, new { @class = "form-control result-success-weight", form = $"registrant_{reg.Id}", style = "text-align-last: center;" })
+                            </td>
+                            <td>
+                                @Html.TextBox("Push3", result.Push3, "", new { @class = "form-control numeric result-weight", form = $"registrant_{reg.Id}" })
+                            </td>
+                            <td>
+                                @{
+                                    var multiSelect6 = new List<SelectListItem>();
+                                    foreach (var altResList in SuccessList)
+                                    {
+                                        int value;
+                                        bool isBool = int.TryParse(altResList.Value, out value);
+                                        var s = new SelectListItem
+                                        {
+                                            Text = altResList.Text,
+                                            Value = altResList.Value,
+                                            Selected = altResList.Value == result.Push3Success.ToString()
+                                        };
+                                        multiSelect6.Add(s);
+                                    };
+                                }
+                                @Html.DropDownList("Push3Success", multiSelect6, new { @class = "form-control result-success-weight", form = $"registrant_{reg.Id}", style = "text-align-last: center;" })
+                            </td>
+
+                            <td id="push_result_@reg.Id">
+                                @{
+                                    int? bestPush = 0;
+                                    if (result.Push1.HasValue && result.Push1Success.HasValue && result.Push1Success.Value == 1 && (!bestPush.HasValue || result.Lifting1.Value > bestPush.Value))
+                                    {
+                                        bestPush = result.Push1;
+                                    }
+                                    if (result.Push2.HasValue && result.Push2Success.HasValue && result.Push2Success.Value == 1 && (!bestPush.HasValue || result.Push2.Value > bestPush.Value))
+                                    {
+                                        bestPush = result.Push2;
+                                    }
+                                    if (result.Push3.HasValue && result.Push3Success.HasValue && result.Push3Success.Value == 1 && (!bestPush.HasValue || result.Push3.Value > bestPush.Value))
+                                    {
+                                        bestPush = result.Push3;
+                                    }
+                                }
+                                @bestPush
+                            </td>
+                            <td>@(bestLift+bestPush)</td>
+                            <td>
+                                @using (Ajax.BeginForm(nameof(LeaguesController.UpdateWeightInWeightliftRegistrationResult), nameof(LeaguesController).TrimControllerName(), new { RegistrationId = reg.Id, CompetitionDisciplineId = ViewBag.CompetitionDisciplineId, LeagueId = ViewBag.CompetitionId }, new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "weightliftingregistrationresultslist_pl" }, new { id = $"registrant_{reg.Id}" }))
+                                {
+                                    <input type="hidden" name="WeightDeclaration" value="@reg.WeightDeclaration" />
+                                    if (ViewBag.LastModifiedReg == reg.Id)
+                                    {
+                                        <button class="btn btn-success fa fa-save"></button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-primary fa fa-save"></button>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-danger">
+                    <strong><i class="fa fa-ban"></i></strong>&nbsp; &nbsp; @Messages.NoSportmenRegistered
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        $("input[name='Lifting1']").focusout(function () {
+            var $this = $(this);
+            var formid = $this.attr("form");
+            var thisValue = $this.val();
+            var pushValue = $("input[name='Push1'][form='" + formid + "']").val();
+            var delcaration = $("td[extra_data='" + formid + "']").html();
+            if (isNaN(parseFloat(thisValue))) {
+                if (thisValue != "") {
+                    alert("This Field must be Number");
+                }
+            } else {
+                if (!isNaN(parseFloat(delcaration)) && isNaN(parseFloat(pushValue))) {
+                    var can = parseFloat(delcaration) - parseFloat(thisValue)-20;
+                    if (can < 0)
+                    {
+                        can = 0;
+                    }
+                    $("input[name='Push1'][form='" + formid + "']").val(can);
+                } else if (!isNaN(parseFloat(delcaration))) {
+                    var can = parseFloat(delcaration) - parseFloat(thisValue) - 20;
+
+                    if (can < 0) {
+                        can = 0;
+                    }
+                    if (can > pushValue) {
+                        $("input[name='Push1'][form='" + formid + "']").val(can);
+                    } 
+                }
+            }
+        });
+        
+        $("input[name='Push1']").focusout(function () {
+            var $this = $(this);
+            var formid = $this.attr("form");
+            var thisValue = $this.val();
+            var pushValue = $("input[name='Lifting1'][form='" + formid + "']").val();
+            var delcaration = $("td[extra_data='" + formid + "']").html();
+            if (isNaN(parseFloat(thisValue))) {
+                if (thisValue != "") {
+                    alert("This Field must be Number");
+                }
+            } else {
+                if (!isNaN(parseFloat(delcaration)) && isNaN(parseFloat(pushValue))) {
+                    var can = parseFloat(delcaration) - parseFloat(thisValue) - 20;
+                    if (can < 0) {
+                        can = 0;
+                    }
+                    $("input[name='Lifting1'][form='" + formid + "']").val(can);
+                } else if (!isNaN(parseFloat(delcaration))) {
+                    var can = parseFloat(delcaration) - parseFloat(thisValue) - 20;
+
+                    if (can < 0) {
+                        can = 0;
+                    }
+                    if (can > pushValue) {
+                        $("input[name='Lifting1'][form='" + formid + "']").val(can);
+                    }
+                }
+            }
+        });
+    })     
+            
+        
+            
+            
+            $('#printregistrations').click(function () {
+                var tbl = $("#print_table_registrationList");
+                if (tbl.length > 0) {
+                    tablePrint(tbl);
+                }
+            });
+
+            function tablePrint(el) {
+                var wnd = window.open('', '@Messages.RegistrationStatus', 'height=600, width=600');
+                wnd.document.write('<html><head><title>@Messages.RegistrationStatus</title>');
+                wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+                wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+                wnd.document.write('<body>');
+
+                wnd.document.write($(el).prop('outerHTML'));
+                $(wnd.document).find('.remove_print').remove();
+                wnd.document.write('</body></html>');
+                wnd.document.close();
+                wnd.focus();
+                setTimeout(function () {
+                    wnd.print();
+                    wnd.close();
+                }, 1000);
+    }
+
+    @if(ViewBag.ErrorMessage != null)
+    {
+        <text>
+            alert("@ViewBag.ErrorMessage");
+        </text>
+    }
+
+
+</script>

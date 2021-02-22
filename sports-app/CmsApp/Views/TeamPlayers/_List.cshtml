@@ -1,0 +1,1881 @@
+﻿@using Newtonsoft.Json
+@model IList<DataService.TeamPlayerItem>
+@{
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+    int errorId = TempData["ErrorId"] != null ? (int)TempData["ErrorId"] : 0;
+    bool IsHighAuthority = User.IsInRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager);
+
+    var shirtSizes = new List<SelectListItem>
+{
+new SelectListItem {Text = "XS", Value = "XS"},
+new SelectListItem {Text = "S", Value = "S"},
+new SelectListItem {Text = "M", Value = "M"},
+new SelectListItem {Text = "L", Value = "L"},
+new SelectListItem {Text = "XL", Value = "XL"},
+new SelectListItem {Text = "2XL", Value = "2XL"},
+new SelectListItem {Text = "3XL", Value = "3XL"},
+new SelectListItem {Text = "S child", Value = "Sc"},
+new SelectListItem {Text = "M child", Value = "Mc"},
+new SelectListItem {Text = "L child", Value = "Lc"},
+new SelectListItem {Text = "XL child", Value = "XLc"}
+};
+
+    List<LeagueDetailsForm> leaguesDetail = (List<LeagueDetailsForm>)ViewBag.LeaguesDetail;
+    var departmentSettings = ViewBag.DepartmentSettings != null ? (DepartmentSettings)ViewBag.DepartmentSettings : null;
+    bool isHebrew = Request.IsHebrew();
+    bool needShowRanks = ViewBag.NeedShowRanks == true;
+    bool isDraggableRows = needShowRanks && ViewBag.IsLeagueTeam && !ViewBag.IsRegistrationBlockedForNonTopLevel;
+    var IsTennisLeagueTeam = isDraggableRows ? "sortable" : "";
+    int columns = 0;
+    var columnWithoutOrderingList = new List<int>();
+    var columnWithDateOrderingList = new List<int>();
+    var columnWithInnerOrderingList = new List<int>();
+    var columnWithInnerSelectOrderingList = new List<int>();
+    Func<bool, string, string> getHeight = (isTennis, height) =>
+    {
+        return isTennis ? $"height={height}" : string.Empty;
+    };
+}
+
+@if (isHebrew)
+{
+    <style>
+        #blockaded:after {
+            content: "\f05e";
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            text-decoration: inherit;
+            position: relative;
+            font-size: 30px;
+            color: red;
+            margin: -10px -20px 0 -20px;
+            z-index: 1;
+        }
+
+        th {
+            vertical-align: middle;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+    </style>
+}
+else
+{
+    <style>
+        #blockaded:after {
+            content: "\f05e";
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            text-decoration: inherit;
+            position: relative;
+            font-size: 30px;
+            color: red;
+            margin: -10px 0 0 -20px;
+            z-index: 1;
+        }
+
+        th {
+            vertical-align: middle;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+    </style>
+}
+
+<input type="hidden" id="seasonid" value="@ViewBag.SeasonId" />
+
+@if (leaguesDetail.Count > 0)
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>
+                    @if (ViewBag.IsTennis)
+                    {
+                        @Messages.CompetitionName
+                    }
+                    else
+                    {
+                        @Messages.LeagueName
+                    }
+
+                </th>
+                <th>
+                    @if (ViewBag.IsTennis)
+                    {
+                        @Messages.MinimumPlayersCategory
+                    }
+                    else
+                    {
+                        @Messages.LeagueDetail_MinimumPlayersTeam
+                    }
+                </th>
+                <th>
+                    @if (ViewBag.IsTennis)
+                    {
+                        @Messages.CategoryRegistrationPrice
+                    }
+                    else
+                    {
+                        @Messages.LeagueDetail_TeamRegistrationPrice
+                    }
+                </th>
+                <th>@Messages.Activity_BuildForm_AmountPaid</th>
+                <th>@Messages.LeagueDetail_PlayerRegistrationPrice</th>
+                <th>@Messages.LeagueDetail_PlayerInsurancePrice</th>
+                @if (leaguesDetail.Any(x => x.MemberFees.Any()))
+                {
+                    <th>@Messages.LeagueDetail_MemberFees</th>
+                }
+                @if (leaguesDetail.Any(x => x.HandlingFees.Any()))
+                {
+                    <th>@Messages.LeagueDetail_HandlingFee</th>
+                }
+                <th>@Messages.MaximumAge</th>
+                <th>@Messages.MinimumAge</th>
+                <th>@Messages.Activity_ActivityRegistrationActive</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var lDetail in leaguesDetail)
+            {
+                <tr class="@(leaguesDetail.Count > 1 || ViewBag.ClubId != null ? "clickable-row" : "") @(ViewBag.LeagueId == lDetail.LeagueId ? "active-league" : "")" data-href="@(Url.Action("Edit", "Teams", new { id = ViewBag.TeamId, currentLeagueId = lDetail.LeagueId, seasonId = ViewBag.SeasonId, unionId = ViewBag.UnionId }))">
+                    <td>@lDetail.Name</td>
+                    <td>@lDetail.MinimumPlayersTeam</td>
+                    <td>@lDetail.GetPrice(LeaguePriceType.TeamRegistrationPrice)</td>
+                    <td>@(lDetail.Registration?.Paid)</td>
+                    <td>@lDetail.GetPrice(LeaguePriceType.PlayerRegistrationPrice)</td>
+                    <td>@lDetail.GetPrice(LeaguePriceType.PlayerInsurancePrice)</td>
+                    @if (leaguesDetail.Any(x => x.MemberFees.Any()))
+                    {
+                        <td>@(lDetail.MemberFees.FirstOrDefault(x => x.StartDate <= DateTime.Now && x.EndDate > DateTime.Now)?.Price)</td>
+                    }
+                    @if (leaguesDetail.Any(x => x.HandlingFees.Any()))
+                    {
+                        <td>@(lDetail.HandlingFees.FirstOrDefault(x => x.StartDate <= DateTime.Now && x.EndDate > DateTime.Now)?.Price)</td>
+                    }
+                    <td>@(lDetail.MaximumAge.HasValue ? lDetail.MaximumAge.Value.ToString("dd/MM/yyyy") : "")</td>
+                    <td>@(lDetail.MinimumAge.HasValue ? lDetail.MinimumAge.Value.ToString("dd/MM/yyyy") : "")</td>
+                    <td>
+                        @if (lDetail.Registration == null)
+                        {
+                            <input type="checkbox" disabled="disabled" />
+                        }
+                        else
+                        {
+                            <input type="checkbox" class="team-reg-active" data-activity="@lDetail.Registration.ActivityId" data-regid="@lDetail.Registration.Id" @(lDetail.Registration.IsActive ? "checked" : "") @(ViewBag.CanApproveTeamRegistration == true ? "" : "disabled=disabled") />
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <br />
+}
+
+<div class="row">
+    <div style="height:56px;">
+        <label>@Messages.Activity_Status_ToggleColumns: </label>
+        <div id="column_to_showhide">
+
+        </div>
+    </div>
+    @if (needShowRanks)
+    {
+        if (ViewBag.IsLeagueTeam)
+        {
+            <div class="col-sm-1" style="padding-right:0px; padding-left:3em;">
+                <table class="table table-bordered" id="order_table" style="max-width:100%">
+                    <thead>
+                        <tr><th style="text-align:center; vertical-align: middle;" valign="middle">@Messages.Rank</th></tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 1; i <= Model.Count; i++)
+                        {
+                            <tr><td @getHeight((bool)ViewBag.IsTennis, "100") style="text-align:center;">@i</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        }
+        else
+        {
+            <div class="col-sm-1" style="padding-right:0px; padding-left:3em">
+                <table id="order_table" class="table table-bordered">
+                    <thead>
+                        <tr><th style="vertical-align: middle;" @getHeight((bool)ViewBag.IsTennis, "100") valign="middle">@Messages.Rank</th></tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 1; i <= Model.Count; i++)
+                        {
+                            <tr><td @getHeight((bool)ViewBag.IsTennis, "100") style="text-align:center;">@i</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        }
+        <script>
+            $("#playersedit").css('padding-left', '0px');
+        </script>
+
+    }
+
+
+    <div class="@(needShowRanks ? "col-sm-11 " : "col-sm-12")" style="@(needShowRanks ? "padding-left:0px; margin-right:-30px" : "")">
+        <table class="table table-bordered mobile-only-overflowchecks" id="main_team_players_table">
+            <thead>
+                <tr>
+                    @if (ViewBag.IsAthletics == false)
+                    {
+                        <th># @{columns++; }</th>
+                    }
+                    <th>
+                        @Messages.Active
+                        <a tabindex="0"
+                           role="button"
+                           class="glyphicon glyphicon-question-sign"
+                           style="cursor: pointer"
+                           data-toggle="popover"
+                           data-trigger="focus"
+                           title="@Messages.TeamPlayers_ActiveCheckBoxInfo_Title"
+                           data-html="true"
+                           data-content="@Messages.TeamPlayers_ActiveCheckBoxInfo_Body">
+                        </a>
+                        @{columns++; columnWithoutOrderingList.Add(columns - 1);}
+                    </th>
+                    @if (ViewBag.IsCatchball == false && !ViewBag.IsTennisCompetition)
+                    {
+                        columns++; columnWithoutOrderingList.Add(columns - 1);
+                        <th>@Messages.BackToWaiting</th>
+                    }
+                    @if (ViewBag.IsRugby == true)
+                    {
+                        columns++;
+                        <th>@Messages.TeamPlayers_Rugby_NextTournamentRoster</th>
+                    }
+                    <th>@Messages.Name @{columns++; }</th>
+                    @if (ViewBag.IsTennisCompetition)
+                    {
+                        columns++;
+                        <th>@Messages.Rank</th>
+                    }
+                    <th>@Messages.TeamPlayers_ProfilePicture  @{columns++; columnWithoutOrderingList.Add(columns - 1);}</th>
+                    @if (ViewBag.IsAthletics == true)
+                    {
+                        columns++;
+                        <th>@Messages.AthleteNumber</th>
+                    }
+                    <th>@Messages.BirthDay  @{columns++; columnWithDateOrderingList.Add(columns - 1); }</th>
+                    @if (!ViewBag.IsGymnastics && !ViewBag.IsMotorsport && !ViewBag.IsTennis && !ViewBag.IsAthletics)
+                    {
+                        columns++; columnWithInnerOrderingList.Add(columns - 1);
+                        if (ViewBag.IsWaterpolo)
+                        {
+                            <th>@Messages.Hat</th>
+                        }
+                        else
+                        {
+                            <th>@Messages.Shirt</th>
+                        }
+                    }
+                    @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsWaterpolo && !ViewBag.IsTennisCompetition)
+                    {
+                        columns++; columnWithoutOrderingList.Add(columns - 1);
+                        <th>@Messages.ShirtSize</th>
+                    }
+
+                    @if (!ViewBag.IsGymnastics && !ViewBag.IsMotorsport && !ViewBag.IsTennis && !ViewBag.IsAthletics)
+                    {
+                        columns++; columnWithInnerSelectOrderingList.Add(columns - 1);
+                        <th>@Messages.Position</th>
+                    }
+                    <th>@Messages.IdentNum  @{columns++; }</th>
+                    @if (ViewBag.IsTennisCompetition == true)
+                    {
+                        <th>@Messages.ClubName</th>
+                    }
+                    <th>@Messages.Email  @{columns++; }</th>
+                    <th>@Messages.Phone  @{columns++; }</th>
+                    <th>@Messages.City  @{columns++; }</th>
+                    @if (ViewBag.IsCatchball == false)
+                    {
+                        columns++;
+                        <th>@Messages.Gender</th>
+                    }
+                    @if (ViewBag.IsTennisCompetition)
+                    {
+                        <th>@Messages.TenicardValidity</th>
+                    }
+                    <th>@Messages.IDFile  @{columns++; columnWithoutOrderingList.Add(columns - 1);}</th>
+                    <th>@Messages.MedicalCertificate  @{columns++; columnWithoutOrderingList.Add(columns - 1);}</th>
+                    @if (ViewBag.IsAthletics == true)
+                    {
+                        <th>@Messages.Competitions</th>
+                    }
+                    @if (needShowRanks)
+                    {
+                        columns++;
+                        <th>@Messages.ValidityOfMedicalExamination</th>
+                    }
+                    @if (ViewBag.IsAthletics == true || (ViewBag.IsGymnastics == true && ViewBag.IsUnionConnected))
+                    {
+                        columns++;
+                        <th>@Messages.Activity_BuildForm_UnionComment</th>
+                    }
+
+                    @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics)
+                    {
+                        columns++;
+                        <th>@Messages.Insurance</th>
+                        if (needShowRanks)
+                        {
+                            columns++;
+                            <th>@Messages.TenicardValidity</th>
+                        }
+                        if (ViewBag.Is31Union != null && ViewBag.Is31Union)
+                        {
+
+                            columns++;
+                            <th>@Messages.HandicapLevel</th>
+                       //     columns++;
+                       //     <th>@Messages.TotalResult</th>
+                        }
+                        if (!needShowRanks)
+                        {
+                            if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                            {
+                                columns++;
+                                <th>@Messages.TeamDetails_PlayerRegistrationAndEquipmentPrice</th>
+                            }
+                            else
+                            {
+                                columns++;
+                                <th>@Messages.LeagueDetail_PlayerRegistrationPrice</th>
+                            }
+                            columns++;
+                            <th>@Messages.LeagueDetail_PlayerInsurancePrice</th>
+                            if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                            {
+                                columns++;
+                                <th>@Messages.TeamDetails_ParticipationPrice</th>
+                            }
+                        }
+                    }
+
+                    @if (leaguesDetail.Any(x => x.LeagueId == ViewBag.LeagueId && x.MemberFees.Any()))
+                    {
+                        columns++;
+                        <th>@Messages.LeagueDetail_MemberFees</th>
+                    }
+                    @if (leaguesDetail.Any(x => x.LeagueId == ViewBag.LeagueId && x.HandlingFees.Any()))
+                    {
+                        columns++;
+                        <th>@Messages.LeagueDetail_HandlingFee</th>
+                    }
+
+                    @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics && !needShowRanks)
+                    {
+                        if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                        {
+                            columns++; columnWithoutOrderingList.Add(columns - 1);
+                            <th style="min-width: 80px;">@Messages.TeamPlayers_ManagerParticipationDiscount</th>
+                            columns++;
+                            <th>@Messages.FinalParticipationPrice</th>
+                        }
+                        else
+                        {
+                            columns++; columnWithoutOrderingList.Add(columns - 1);
+                            <th style="min-width: 80px;">@Messages.TeamPlayers_ManagerRegistrationDiscount</th>
+                        }
+                        columns++;
+                        <th>@Messages.Activity_BuildForm_AmountPaid</th>
+                        if (Model.Any(x => !string.IsNullOrWhiteSpace(x.Registration?.CustomPrices)))
+                        {
+                            columns++;
+                            <th>@Messages.Activity_CustomPrices_Paid</th>
+                        }
+                        if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                        {
+                            columns++; columnWithoutOrderingList.Add(columns - 1);
+                            <th style="width:100px;">@Messages.Activity_BuildForm_Comments</th>
+                        }
+                    }
+
+                    @if (ViewBag.ClubId > 0 && ViewBag.UnionId == null)
+                    {
+                        columns++; columnWithDateOrderingList.Add(columns - 1);
+                        <th>@Messages.Activity_BuildForm_DateSubmitted</th>
+
+                        columns++; columnWithDateOrderingList.Add(columns - 1); 
+                        <th>@Messages.Activity_BuildForm_StartDateToAdjustPrices</th>
+                    }
+
+                    @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics && !needShowRanks)
+                    {
+                        columns++; columnWithoutOrderingList.Add(columns - 1);
+                        <th>@Messages.TeamPlayers_NoInsurance</th>
+                    }
+
+                    @if (User.IsInAnyRole(AppRole.Workers, AppRole.Admins) && ViewBag.JobRole != JobRole.TeamManager)
+                    {
+                        columns++; columnWithoutOrderingList.Add(columns - 1);
+                        <th>
+                            @(ViewBag.IsGymnastics ? Messages.MoveGymnastic : ViewBag.IsAthletics ? Messages.MoveAthletesToTeam : Messages.MoveCopyPlayer)
+                        </th>
+                    }
+                    <th> @{columns++; }</th>
+                    <th> @{columns++; }</th>
+                    @if (ViewBag.CanRemovePlayer)
+                    {
+                        columns++;
+                        <!--remove player button-->
+                        <th></th>
+                    }
+                </tr>
+            </thead>
+            <tbody id="@IsTennisLeagueTeam">
+                @foreach (var u in Model)
+                {
+                    string formId = $"teamplform{u.Id}";
+                    string shirtNumId = $"shirtNum_{u.Id}";
+                    var posList = new SelectList(ViewBag.Positions, "PosId", "Title", u.PosId);
+
+                    var shirtSizeList = new SelectList(shirtSizes, "Value", "Text", u.ShirtSize);
+                    if (ViewBag.IsLeagueTeam)
+                    {
+                <tr data-id="@u.Id" class="@(u.IsNotMeetingRequirements && !IsHighAuthority ? "unsortable" : "")">
+                    @if (ViewBag.IsAthletics == false)
+                    {
+                        <td @getHeight((bool)ViewBag.IsTennis, "100")>@u.UserId</td>
+                    }
+                    <td>
+                        @{
+                            var checkboxClass = string.Empty;
+
+                            if (u.IsApprovedByManager == false)
+                            {
+                                checkboxClass = "registration-approved";
+                            }
+                            else if (u.IsActive && (u.IsPlayerRegistrationApproved || u.IsApprovedByManager == true))
+                            {
+                                checkboxClass = "registration-registered";
+                            }
+                            else if (u.IsActive && !u.IsPlayerRegistered)
+                            {
+                                checkboxClass = "registration-ready";
+                            }
+                            var isBlockaded = u.IsBlockaded || u.IsUnderPenalty ? "blockaded" : "";
+                            var blockadeMessage = u.IsBlockaded || u.IsUnderPenalty ? UIHelpers.GetBlockadeIconMessage(u.IsBlockaded, u.IsUnderPenalty) : string.Empty;
+                        }
+                        <div id="@isBlockaded" title="@blockadeMessage">
+                            <input @(u.IsActive ? "checked='checked'" : "") class="@checkboxClass" form="@formId" id="IsActive" name="IsActive" onchange="checkActiveStatus('@u.Id','@u.IsActive','@u.IsApprovedByManager','@u.IsPlayerRegistrationApproved')" type="checkbox" value="on">
+                        </div>
+                    </td>
+                    @if (ViewBag.IsCatchball == false && !ViewBag.IsTennisCompetition)
+                    {
+                        <td>
+                            @if (u.IsActive && u.IsApprovedByManager == false)
+                            {
+                                <div>@Html.CheckBox("toWaitingStatus", u.ToWaitingStatus, new { @form = formId })</div>
+                            }
+                            else
+                            {
+                                <div>@Html.CheckBox("toWaitingStatus", u.ToWaitingStatus, new { @form = formId, disabled = "disabled" })</div>
+                            }
+                        </td>
+                    }
+                    @if (ViewBag.IsRugby == true)
+                    {
+                        <td>
+                            @if (u.IsActive && (u.IsPlayerRegistrationApproved || u.IsApprovedByManager == true))
+                            {
+                                @Html.CheckBox("NextTournamentRoster", u.NextTournamentRoster, new { form = formId })
+                            }
+                            else
+                            {
+                                @Html.CheckBox("NextTournamentRoster", u.NextTournamentRoster, new { form = formId, disabled = "disabled" })
+                            }
+                        </td>
+                    }
+                    <td>
+                        @{
+                            var playerUrl = string.Empty;
+                            if (departmentSettings != null)
+                            {
+                                if (ViewBag.LeagueId != null)
+                                {
+                                    playerUrl = Url.Action("Edit", "Players", new
+                                    {
+                                        id = u.UserId,
+                                        seasonId = u.SeasonId,
+                                        leagueId = ViewBag.LeagueId,
+                                        teamId = u.TeamId,
+                                        departmentId = departmentSettings.DepartmentId,
+                                        departmentSeasonId = departmentSettings.DepartmentSeasonId,
+                                        sportId = departmentSettings.SportId
+                                    });
+                                }
+                                else
+                                {
+                                    playerUrl = Url.Action("Edit", "Players", new
+                                    {
+                                        id = u.UserId,
+                                        seasonId = u.SeasonId,
+                                        clubId = ViewBag.ClubId ?? 0,
+                                        teamId = u.TeamId,
+                                        departmentId = departmentSettings.DepartmentId,
+                                        departmentSeasonId = departmentSettings.DepartmentSeasonId,
+                                        sportId = departmentSettings.SportId
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                if (ViewBag.LeagueId != null)
+                                {
+                                    playerUrl = Url.Action("Edit", "Players", new { id = u.UserId, seasonId = u.SeasonId, leagueId = ViewBag.LeagueId, teamId = u.TeamId });
+                                }
+                                else
+                                {
+                                    playerUrl = Url.Action("Edit", "Players", new { id = u.UserId, seasonId = u.SeasonId, clubId = ViewBag.ClubId ?? 0, teamId = u.TeamId });
+                                }
+                            }
+                        }
+                        <span>
+                            <a href="@(playerUrl)" target="_blank">
+                                <span class="unlock-link-color @(u.IsLocked == true ? " text-danger " : "")">
+                                    @if (u.IsTrainerPlayer)
+                                    {
+                                        <b>@Messages.Player_TrainerIndicator</b>
+                                    }
+                                    @if (u.IsYoungPlayer)
+                                    {
+                                        <b>@Messages.Player_YoungIndicator</b>
+                                    }
+                                    @if (u.IsExceptionalMoved)
+                                    {
+                                        <b>@Messages.ExceptionSign</b>
+                                    }
+                                    @if (u.IsEscortPlayer)
+                                    {
+                                        <b>@Messages.Player_EscortIndicator</b>
+                                    }
+
+                                    @u.FullName
+                                </span>
+                            </a>
+
+                            @if (u.IsLocked.HasValue && (User.IsInAnyRole(AppRole.Admins) || ViewBag.JobRole == JobRole.UnionManager))
+                            {
+                                <a href="javascript:;" class="unlock-link" data-id="@(u.Id)">
+                                    @if (u.IsLocked == true)
+                                    {
+                                        <i class="fa fa-lock"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa fa-unlock"></i>
+                                    }
+                                </a>
+                            }
+                        </span>
+                        @if ((ViewBag.IsAthletics == true || ViewBag.IsWaterpolo == true) && u.SeasonIdOfCreation == ViewBag.SeasonId)
+                        {
+                            <text><i class='new-player-season-indicator'></i></text>
+                        }
+                    </td>
+                    @if (ViewBag.IsTennisCompetition)
+                    {
+                        <td>@u.TennisRank</td>
+                    }
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(u.PlayerImage))
+                        {
+                            <img class="img-responsive img-thumbnail" style="max-height: 50px; max-width: 50px" src="@($"{GlobVars.ContentPath}/players/{u.PlayerImage}")" alt="" />
+                        }
+                    </td>
+                    @if (ViewBag.IsAthletics == true)
+                    {
+                        <td style="background-color: rgba(0,254,0,0.1); font-weight: bolder; font-size: larger;">
+                            @u.AthleteNumber
+                        </td>
+                    }
+                    <td>@(u.Birthday != null ? u.Birthday.Value.ToString("dd/MM/yyyy") : "")</td>
+                    @if (!ViewBag.IsGymnastics && !ViewBag.IsMotorsport && !ViewBag.IsTennis && !ViewBag.IsAthletics)
+                    {
+                        <td>
+                            <input id="@shirtNumId" name="ShirtNum" value="@u.ShirtNum" class="form-control" style="max-width: 70px;" form="@formId" />
+                        </td>
+                    }
+                    @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsWaterpolo && !ViewBag.IsTennisCompetition)
+                    {
+                        <td>
+                            @Html.DropDownList("ShirtSize", shirtSizeList, Messages.Select, new { @class = "form-control", form = formId, id = "sSize" + u.Id })
+                        </td>
+                    }
+                    @if (!ViewBag.IsGymnastics && !ViewBag.IsMotorsport && !ViewBag.IsTennis && !ViewBag.IsAthletics)
+                    {
+                        <td>
+                            @Html.DropDownList("PosId", posList, Messages.Select, new { @class = "form-control", form = formId, id = "pos" + u.Id })
+                        </td>
+                    }
+                    <td>
+                        @if (string.IsNullOrEmpty(u.IdentNum))
+                        {
+                            @u.PassportNum
+                        }
+                        else if (string.IsNullOrEmpty(u.PassportNum))
+                        {
+                            @u.IdentNum
+                        }
+                        else
+                        {
+                            @Html.Raw("&nbsp;")
+                        }
+                    </td>
+                    @if (ViewBag.IsTennisCompetition == true)
+                    {
+                        <td>@u.TrainingClubName</td>
+                    }
+                    <td>
+                        @u.Email
+                    </td>
+                    <td>@u.Telephone</td>
+                    <td>@u.City</td>
+                    @if (ViewBag.IsCatchball == false)
+                    {
+                        <td>@(u.Gender != null ? u.Gender.Title : "")</td>
+                    }
+
+                    @if (ViewBag.IsTennisCompetition)
+                    {
+                        <td>
+                            @if (ViewBag.IsAdmin == true || ViewBag.IsUnionManager == true)
+                            {
+                                @Html.TextBox("TenicardValidity", u.TenicardValidity?.ToString("d"), new { @form = formId, @class = "form-control frm-date-wo-time", style = "max-width: 100px;" })
+                            }
+                            else
+                            {
+                                @(u.TenicardValidity?.ToString("d"))
+                            }
+                        </td>
+                    }
+                    <td>
+                        @if (!string.IsNullOrEmpty(u.IDFile))
+                        {
+                            <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                  onclick="window.open('@(GlobVars.ContentPath + "/players/" + u.IDFile)')">
+                            </span>
+                        }
+                    </td>
+
+                    <td>
+                        @if (!string.IsNullOrEmpty(u.MedicalCertificateFile))
+                        {
+                            <span class="glyphicon glyphicon-eye-open glyph-btn @(u.MedicalCertificate.HasValue && u.MedicalCertificate.Value ? "cert-approved" : "")"
+                                  onclick="window.open('@(GlobVars.ContentPath + "/players/" + u.MedicalCertificateFile)')">
+                            </span>
+                        }
+                    </td>
+                    @if (ViewBag.IsAthletics == true)
+                    {
+                        <td>@u.CompetitionCount</td>
+                    }
+                    @if (needShowRanks)
+                    {
+                        <td>@(u.MedExamDate != null ? u.MedExamDate.Value.ToString("dd/MM/yyyy") : "")</td>
+                    }
+                    @if (ViewBag.IsAthletics == true || (ViewBag.IsGymnastics == true && ViewBag.IsUnionConnected))
+                    {
+                        <td>@u.UnionComment</td>
+                    }
+                    @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics)
+                    {
+                        <td>
+                            @if (!string.IsNullOrEmpty(u.InsuranceFile))
+                            {
+                                <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                      onclick="window.open('@(GlobVars.ContentPath + "/players/" + u.InsuranceFile)')">
+                                </span>
+                            }
+                        </td>
+                        if (needShowRanks)
+                        {
+                            <td>@(u.TenicardValidity != null ? u.TenicardValidity.Value.ToString("dd/MM/yyyy") : "")</td>
+                        }
+                        if (ViewBag.Is31Union != null && ViewBag.Is31Union)
+                        {
+                            <td>@u.BaseHandicap</td>
+                           // <td>@u.FinalHandicapLevel</td>
+                        }
+                        if (!needShowRanks)
+                        {
+                            <td>
+                                @if (u.Registration != null)
+                                {
+                                    @u.Registration.RegistrationPrice
+                                }
+                                else if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                                {
+                                    @u.PlayerRegistrationAndEquipmentPrice
+                                }
+                                else
+                                {
+                                    @u.PlayerRegistrationPrice
+                                }
+                            </td>
+
+                            <td>
+                                @(u.Registration?.InsurancePrice ?? u.PlayerInsurancePrice)
+                            </td>
+                            if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                            {
+                                <td>
+                                    @(u.Registration?.ParticipationPrice ?? u.ParticipationPrice)
+                                </td>
+                            }
+                        }
+                    }
+
+                    @if (leaguesDetail.Any(x => x.LeagueId == ViewBag.LeagueId && x.MemberFees.Any()))
+                    {
+                        <td>@(u.Registration?.MembersFee ?? u.MembersFee)</td>
+                    }
+                    @if (leaguesDetail.Any(x => x.LeagueId == ViewBag.LeagueId && x.HandlingFees.Any()))
+                    {
+                        <td>@(u.Registration?.HandlingFee ?? u.HandlingFee)</td>
+                    }
+
+                    @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics && !needShowRanks)
+                    {
+                        <td>
+                            @if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                            {
+                                if (ViewBag.CanSetParticipationDiscount == true)
+                                {
+                                    @Html.TextBox("ManagerParticipationDiscount", u.ManagerParticipationDiscount, new { @form = formId, @class = "form-control", style = "max-width: 70px;" })
+                                }
+                                else
+                                {
+                                    @u.ManagerParticipationDiscount
+                                }
+                            }
+                            else
+                            {
+                                if (ViewBag.CanSetRegistrationDiscount == true)
+                                {
+                                    @Html.TextBox("ManagerRegistrationDiscount", u.ManagerRegistrationDiscount, new { @form = formId, @class = "form-control", style = "max-width: 70px;" })
+                                }
+                                else
+                                {
+                                    @u.ManagerRegistrationDiscount
+                                }
+                            }
+                        </td>
+
+                        if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                        {
+                            <td>@u.FinalParticipationPrice</td>
+                        }
+
+                        <td>
+                            @{
+                                decimal paid;
+                                if (u.Registration != null)
+                                {
+                                    paid = u.Registration.RegistrationPaid +
+                                           u.Registration.InsurancePaid +
+                                           u.Registration.ParticipationPaid +
+                                           u.Registration.HandlingFeePaid +
+                                           u.Registration.MembersFeePaid +
+                                           u.Registration.TenicardPaid;
+                                }
+                                else
+                                {
+                                    paid = u.TeamPlayerPaid;
+                                }
+                            }
+
+                            @if (ViewBag.JobRole != JobRole.ClubManager)
+                            {
+                                @paid
+                            }
+                            else
+                            {
+                                <div style="">
+                                    @Html.TextBox("TeamPlayerPaid", paid, new { @class = "form-control", @form = formId })
+                                </div>
+                            }
+                        </td>
+                        if (Model.Any(x => !string.IsNullOrWhiteSpace(x.Registration?.CustomPrices)))
+                        {
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(u.Registration?.CustomPrices))
+                                {
+                                    var customPrices = JsonConvert.DeserializeObject<List<ActivityCustomPriceModel>>(u.Registration.CustomPrices);
+
+                                    <text>
+                                        <a tabindex="0"
+                                           role="button"
+                                           class="customPrices-paid"
+                                           style="cursor: pointer; color: #0089ff; text-decoration: underline">
+                                            @customPrices.Sum(x => x.Paid)
+                                        </a>
+                                        <div class="customPrices-paid-content hide">
+                                            @if (customPrices.Any())
+                                            {
+                                                foreach (var customPrice in customPrices)
+                                                {
+                                                    <div>
+                                                        @(ViewBag.Culture != CultEnum.He_IL ? customPrice.TitleEng : customPrice.TitleHeb): @customPrice.Paid
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <i>@Messages.Activity_CustomPrices_Paid_NoData</i>
+                                            }
+                                        </div>
+                                    </text>
+                                }
+                            </td>
+                        }
+                        if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                        {
+                            if (ViewBag.CanUpdateComment == true)
+                            {
+                                <td> <div style=""> @Html.TextBox("Comment", u.Comment, new { @form = formId, @class = "form-control" })  </div> </td>
+                            }
+                            else
+                            {
+                                <td>@u.Comment</td>
+                            }
+                        }
+                    }
+
+                    @if (ViewBag.ClubId > 0 && ViewBag.UnionId == null)
+                    {
+                        <td>@(u.Registration?.DateSubmitted.ToString("d"))</td>
+                        <td>@(u.Registration?.PlayerStartDate?.ToString("d"))</td>
+                    }
+
+                    @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics && !needShowRanks)
+                    {
+                        <td>
+                            @(ViewBag.CanSetNoInsurance == true
+                                            ? Html.CheckBox("NoInsurancePayment", u.NoInsurancePayment, new { @form = formId })
+                                            : Html.CheckBox("NoInsurancePayment", u.NoInsurancePayment, new { @readonly = "readonly", disabled = "disabled" }))
+                        </td>
+                    }
+
+                    @if (User.IsInAnyRole(AppRole.Workers, AppRole.Admins) && ViewBag.JobRole != JobRole.TeamManager)
+                    {
+                        <td>
+                            <input type="checkbox" name="moveplayer" value="@u.UserId" />
+                        </td>
+                    }
+
+                    <td class="text-left">
+                        <input type="hidden" name="UpdateId" value="@u.Id" form="@formId" />
+                        <input type="hidden" name="TeamId" value="@u.TeamId" form="@formId" />
+                        <input type="hidden" name="LeagueId" value="@ViewBag.LeagueId" form="@formId" />
+                        <input type="hidden" name="ClubId" value="@ViewBag.ClubId" form="@formId" />
+                        <input type="hidden" name="PreviousIsActive" value="@(u.IsActive? "True" : "False")" form="@formId" />
+                        <form id="@formId" method="post" action="@Url.Action("Update", new {seasonId = u.SeasonId})"
+                              data-ajax="true"
+                              data-ajax-mode="replace"
+                              data-ajax-failure="tpList.playerUpdateFailure"
+                              data-ajax-update="#tplist"></form>
+                        @if (savedId == u.Id)
+                        {
+                            <i class="glyphicon glyphicon-ok text-success"></i>
+                        }
+
+                        @if (errorId == u.Id)
+                        {
+                            <i class="glyphicon glyphicon-exclamation-sign text-danger"></i>
+                        }
+                        <button class="btn btn-primary" form="@formId">@Messages.Save</button>
+                    </td>
+                    <td>
+
+                        <a href="@Url.Action("SendNotification", "TeamPlayers", new {id = u.UserId, seasonId = u.SeasonId, teamId = u.TeamId})"
+                           data-target="#userNotificationDialog"
+                           data-toggle="modal"
+                           class="btn btn-primary">
+                            <i class="fa fa-envelope"></i>
+                        </a>
+                    </td>
+                    @if (ViewBag.CanRemovePlayer)
+                    {
+                        <td>
+                            @{
+                                var buttonEnabled = true;
+                                if (ViewBag.IsCatchball == true || ViewBag.IsAthletics)
+                                {
+                                    if (u.IsActive && ViewBag.IsAdmin != true && ViewBag.IsUnionManager != true)
+                                    {
+                                        buttonEnabled = false;
+                                    }
+                                }
+                            }
+                            <a href="@Url.Action("Delete", new {id = u.Id, seasonId = u.SeasonId, ViewBag.ClubId, ViewBag.UnionId, ViewBag.LeagueId})" class="@AppCss.Delete"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#playersedit"
+                               data-ajax="true"
+                               @(buttonEnabled ? "" : "disabled")>
+                            </a>
+                        </td>
+                    }
+                </tr>
+
+                    }
+                    else
+                    {
+                        <tr data-id="@u.Id" height="50" style="max-height:50px; min-height:50px;">
+                            <td>@u.UserId</td>
+                            <td>
+                                @{
+                                    var checkboxClass = string.Empty;
+
+                                    if (u.IsApprovedByManager == false)
+                                    {
+                                        checkboxClass = "registration-approved";
+                                    }
+                                    else if (u.IsActive && (u.IsPlayerRegistrationApproved || u.IsApprovedByManager == true))
+                                    {
+                                        checkboxClass = "registration-registered";
+                                    }
+                                    else if (u.IsActive && !u.IsPlayerRegistered)
+                                    {
+                                        checkboxClass = "registration-ready";
+                                    }
+                                    var isBlockaded = u.IsBlockaded || u.IsUnderPenalty ? "blockaded" : "";
+                                    var blockadeMessage = u.IsBlockaded || u.IsUnderPenalty ? UIHelpers.GetBlockadeIconMessage(u.IsBlockaded, u.IsUnderPenalty) : string.Empty;
+                                }
+                                <div id="@isBlockaded" title="@blockadeMessage">
+                                    <input @(u.IsActive ? "checked='checked'" : "") class="@checkboxClass" form="@formId" id="IsActive" name="IsActive" onchange="checkActiveStatus('@u.Id','@u.IsActive','@u.IsApprovedByManager','@u.IsPlayerRegistrationApproved')" type="checkbox" value="on">
+                                </div>
+                            </td>
+                            @if (ViewBag.IsCatchball == false && !ViewBag.IsTennisCompetition)
+                            {
+                                <td>
+                                    @if (u.IsActive && u.IsApprovedByManager == false)
+                                    {
+                                        <div>@Html.CheckBox("toWaitingStatus", u.ToWaitingStatus, new { @form = formId })</div>
+                                    }
+                                    else
+                                    {
+                                        <div>@Html.CheckBox("toWaitingStatus", u.ToWaitingStatus, new { @form = formId, disabled = "disabled" })</div>
+                                    }
+                                </td>
+                            }
+
+                            <td>
+                                @{
+                                    var playerUrl = string.Empty;
+                                    if (departmentSettings != null)
+                                    {
+                                        if (ViewBag.LeagueId != null)
+                                        {
+                                            playerUrl = Url.Action("Edit", "Players", new
+                                            {
+                                                id = u.UserId,
+                                                seasonId = u.SeasonId,
+                                                leagueId = ViewBag.LeagueId,
+                                                teamId = u.TeamId,
+                                                departmentId = departmentSettings.DepartmentId,
+                                                departmentSeasonId = departmentSettings.DepartmentSeasonId,
+                                                sportId = departmentSettings.SportId
+                                            });
+                                        }
+                                        else
+                                        {
+                                            playerUrl = Url.Action("Edit", "Players", new
+                                            {
+                                                id = u.UserId,
+                                                seasonId = u.SeasonId,
+                                                clubId = ViewBag.ClubId ?? 0,
+                                                teamId = u.TeamId,
+                                                departmentId = departmentSettings.DepartmentId,
+                                                departmentSeasonId = departmentSettings.DepartmentSeasonId,
+                                                sportId = departmentSettings.SportId
+                                            });
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (ViewBag.LeagueId != null)
+                                        {
+                                            playerUrl = Url.Action("Edit", "Players", new { id = u.UserId, seasonId = u.SeasonId, leagueId = ViewBag.LeagueId, teamId = u.TeamId });
+                                        }
+                                        else
+                                        {
+                                            playerUrl = Url.Action("Edit", "Players", new { id = u.UserId, seasonId = u.SeasonId, clubId = ViewBag.ClubId ?? 0, teamId = u.TeamId });
+                                        }
+                                    }
+                                }
+                                <span>
+                                    <a href="@(playerUrl)" target="_blank">
+                                        <span class="unlock-link-color @(u.IsLocked == true ? " text-danger " : "")">
+                                            @if (u.IsTrainerPlayer)
+                                            {
+                                                <b>@Messages.Player_TrainerIndicator</b>
+                                            }
+                                            @if (u.IsYoungPlayer)
+                                            {
+                                                <b>@Messages.Player_YoungIndicator</b>
+                                            }
+                                            @if (u.IsExceptionalMoved)
+                                            {
+                                                <b>@Messages.ExceptionSign</b>
+                                            }
+                                            @if (u.IsEscortPlayer)
+                                            {
+                                                <b>@Messages.Player_EscortIndicator</b>
+                                            }
+
+                                            @u.FullName
+                                        </span>
+                                    </a>
+
+                                    @if (u.IsLocked.HasValue && (User.IsInAnyRole(AppRole.Admins) || ViewBag.JobRole == JobRole.UnionManager))
+                                    {
+                                        <a href="javascript:;" class="unlock-link" data-id="@(u.Id)">
+                                            @if (u.IsLocked == true)
+                                            {
+                                                <i class="fa fa-lock"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fa fa-unlock"></i>
+                                            }
+                                        </a>
+                                    }
+                                </span>
+                            </td>
+                            @if (ViewBag.IsTennisCompetition)
+                            {
+                                <td>@u.TennisRank</td>
+                            }
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(u.PlayerImage))
+                                {
+                                    <img class="img-responsive img-thumbnail" style="max-height: 50px; max-width: 50px" src="@($"{GlobVars.ContentPath}/players/{u.PlayerImage}")" alt="" />
+                                }
+                            </td>
+                            <td>@(u.Birthday != null ? u.Birthday.Value.ToString("dd/MM/yyyy") : "")</td>
+                            @if (!ViewBag.IsGymnastics && !ViewBag.IsMotorsport && !ViewBag.IsTennis)
+                            {
+                                <td>
+                                    <input id="@shirtNumId" name="ShirtNum" value="@u.ShirtNum" style="max-width: 70px;" class="form-control" form="@formId" />
+                                </td>
+                            }
+                            @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsWaterpolo && !ViewBag.IsTennisCompetition)
+                            {
+                                <td>
+                                    @Html.DropDownList("ShirtSize", shirtSizeList, Messages.Select, new { @class = "form-control", form = formId, id = "sSize" + u.Id })
+                                </td>
+                            }
+                            @if (!ViewBag.IsGymnastics && !ViewBag.IsMotorsport && !ViewBag.IsTennis)
+                            {
+                                <td>
+                                    @Html.DropDownList("PosId", posList, Messages.Select, new { @class = "form-control", form = formId, id = "pos" + u.Id })
+                                </td>
+                            }
+                            <td>
+                                @if (string.IsNullOrEmpty(u.IdentNum))
+                                {
+                                    @u.PassportNum
+                                }
+                                else if (string.IsNullOrEmpty(u.PassportNum))
+                                {
+                                    @u.IdentNum
+                                }
+                                else
+                                {
+                                    @Html.Raw("&nbsp;")
+                                }
+                            </td>
+                            @if (ViewBag.IsTennisCompetition == true)
+                            {
+                                <td>@u.TrainingClubName</td>
+                            }
+                            <td>
+                                @u.Email
+                            </td>
+                            <td>@u.Telephone</td>
+                            <td>@u.City</td>
+                            @if (ViewBag.IsCatchball == false)
+                            {
+                                <td>@(u.Gender != null ? u.Gender.Title : "")</td>
+                            }
+
+                            @if (ViewBag.IsTennisCompetition)
+                            {
+                                <td>
+                                    @if (ViewBag.IsAdmin == true || ViewBag.IsUnionManager == true)
+                                    {
+                                        @Html.TextBox("TenicardValidity", u.TenicardValidity?.ToString("d"), new { @form = formId, @class = "form-control frm-date-wo-time", style = "max-width: 100px;" })
+                                    }
+                                    else
+                                    {
+                                        @(u.TenicardValidity?.ToString("d"))
+                                    }
+                                </td>
+                            }
+
+                            <td>
+                                @if (!string.IsNullOrEmpty(u.IDFile))
+                                {
+                                    <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                          onclick="window.open('@(GlobVars.ContentPath + "/players/" + u.IDFile)')">
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (!string.IsNullOrEmpty(u.MedicalCertificateFile))
+                                {
+                                    <span class="glyphicon glyphicon-eye-open glyph-btn @(u.MedicalCertificate.HasValue && u.MedicalCertificate.Value ? "cert-approved" : "")"
+                                          onclick="window.open('@(GlobVars.ContentPath + "/players/" + u.MedicalCertificateFile)')">
+                                    </span>
+                                }
+                            </td>
+
+                            @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics)
+                            {
+                                <td>
+                                    @if (!string.IsNullOrEmpty(u.InsuranceFile))
+                                    {
+                                        <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                              onclick="window.open('@(GlobVars.ContentPath + "/players/" + u.InsuranceFile)')">
+                                        </span>
+                                    }
+                                </td>
+                                if (ViewBag.Is31Union != null && ViewBag.Is31Union)
+                                {
+                                    <td>@u.BaseHandicap</td>
+                                  //  <td>@u.FinalHandicapLevel</td>
+                                }
+                                <td>
+                                    @if (u.Registration != null)
+                                    {
+                                        @u.Registration.RegistrationPrice
+                                    }
+                                    else if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                                    {
+                                        @u.PlayerRegistrationAndEquipmentPrice
+                                    }
+                                    else
+                                    {
+                                        @u.PlayerRegistrationPrice
+                                    }
+                                </td>
+
+                                <td>
+                                    @(u.Registration?.InsurancePrice ?? u.PlayerInsurancePrice)
+                                </td>
+                                if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                                {
+                                    <td>
+                                        @(u.Registration?.ParticipationPrice ?? u.ParticipationPrice)
+                                    </td>
+                                }
+                            }
+
+                            @if (leaguesDetail.Any(x => x.LeagueId == ViewBag.LeagueId && x.MemberFees.Any()))
+                            {
+                                <td>@(u.Registration?.MembersFee ?? u.MembersFee)</td>
+                            }
+                            @if (leaguesDetail.Any(x => x.LeagueId == ViewBag.LeagueId && x.HandlingFees.Any()))
+                            {
+                                <td>@(u.Registration?.HandlingFee ?? u.HandlingFee)</td>
+                            }
+
+                            @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics)
+                            {
+                                <td>
+                                    @if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                                    {
+                                        if (ViewBag.CanSetParticipationDiscount == true)
+                                        {
+                                            @Html.TextBox("ManagerParticipationDiscount", u.ManagerParticipationDiscount, new { @form = formId, @class = "form-control", style = "max-width: 70px;" })
+                                        }
+                                        else
+                                        {
+                                            @u.ManagerParticipationDiscount
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (ViewBag.CanSetRegistrationDiscount == true)
+                                        {
+                                            @Html.TextBox("ManagerRegistrationDiscount", u.ManagerRegistrationDiscount, new { @form = formId, @class = "form-control", style = "max-width: 70px;" })
+                                        }
+                                        else
+                                        {
+                                            @u.ManagerRegistrationDiscount
+                                        }
+                                    }
+                                </td>
+
+                                if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                                {
+                                    <td>@u.FinalParticipationPrice</td>
+                                }
+                                @*<td>@(u.Registration?.Paid)</td>*@
+                                <td>
+                                    @{
+                                        decimal paid;
+                                        if (u.Registration != null)
+                                        {
+                                            paid = u.Registration.RegistrationPaid +
+                                                   u.Registration.InsurancePaid +
+                                                   u.Registration.ParticipationPaid +
+                                                   u.Registration.HandlingFeePaid +
+                                                   u.Registration.MembersFeePaid +
+                                                   u.Registration.TenicardPaid;
+                                        }
+                                        else
+                                        {
+                                            paid = u.TeamPlayerPaid;
+                                        }
+                                    }
+
+                                    @if (ViewBag.JobRole != JobRole.ClubManager)
+                                    {
+                                        @paid
+                                    }
+                                    else
+                                    {
+                                        <div style="width:100px;">
+                                            @Html.TextBox("TeamPlayerPaid", paid, new { @class = "form-control", @form = formId })
+                                        </div>
+                                    }
+                                </td>
+                                if (Model.Any(x => !string.IsNullOrWhiteSpace(x.Registration?.CustomPrices)))
+                                {
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(u.Registration?.CustomPrices))
+                                        {
+                                            var customPrices = JsonConvert.DeserializeObject<List<ActivityCustomPriceModel>>(u.Registration.CustomPrices);
+
+                                            <text>
+                                                <a tabindex="0"
+                                                   role="button"
+                                                   class="customPrices-paid"
+                                                   style="cursor: pointer; color: #0089ff; text-decoration: underline">
+                                                    @customPrices.Sum(x => x.Paid)
+                                                </a>
+                                                <div class="customPrices-paid-content hide">
+                                                    @if (customPrices.Any())
+                                                    {
+                                                        foreach (var customPrice in customPrices)
+                                                        {
+                                                            <div>
+                                                                @(ViewBag.Culture != CultEnum.He_IL ? customPrice.TitleEng : customPrice.TitleHeb): @customPrice.Paid
+                                                            </div>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <i>@Messages.Activity_CustomPrices_Paid_NoData</i>
+                                                    }
+                                                </div>
+                                            </text>
+                                        }
+                                    </td>
+                                }
+                                if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                                {
+                                    if (ViewBag.CanUpdateComment == true)
+                                    {
+                                        <td>@Html.TextBox("Comment", u.Comment, new { @form = formId, @class = "form-control" }) </td>
+                                    }
+                                    else
+                                    {
+                                        <td>@u.Comment</td>
+                                    }
+                                }
+                            }
+
+                            @if (ViewBag.ClubId > 0 && ViewBag.UnionId == null)
+                            {
+                                <td>@(u.Registration?.DateSubmitted.ToString("d"))</td>
+                                <td>@(u.Registration?.PlayerStartDate?.ToString("d"))</td>
+                            }
+
+                            @if ((!ViewBag.IsGymnastics || !ViewBag.IsUnionConnected) && !ViewBag.IsAthletics)
+                            {
+                                <td>
+                                    @(ViewBag.CanSetNoInsurance == true
+                                                                                                                                                                                                                                                                                      ? Html.CheckBox("NoInsurancePayment", u.NoInsurancePayment, new { @form = formId })
+                                                                                                                                                                                                                                                                                      : Html.CheckBox("NoInsurancePayment", u.NoInsurancePayment, new { @readonly = "readonly", disabled = "disabled" }))
+                                </td>
+                            }
+
+                            @if (User.IsInAnyRole(AppRole.Workers, AppRole.Admins) && ViewBag.JobRole != JobRole.TeamManager)
+                            {
+                                <td>
+                                    <input type="checkbox" name="moveplayer" value="@u.UserId" />
+                                </td>
+                            }
+
+                            <td class="text-left">
+                                <input type="hidden" name="UpdateId" value="@u.Id" form="@formId" />
+                                <input type="hidden" name="TeamId" value="@u.TeamId" form="@formId" />
+                                <input type="hidden" name="LeagueId" value="@ViewBag.LeagueId" form="@formId" />
+                                <input type="hidden" name="ClubId" value="@ViewBag.ClubId" form="@formId" />
+                                <input type="hidden" name="UnionId" value="@ViewBag.UnionId" form="@formId" />
+                                <input type="hidden" name="IsTennisCompetition" value="@((ViewBag.IsTennisCompetition == true).ToString())" form="@formId" />
+                                <input type="hidden" name="PreviousIsActive" value="@(u.IsActive? "True" : "False")" form="@formId" />
+
+                                <form id="@formId" method="post" action="@Url.Action("Update", new {seasonId = u.SeasonId})"
+                                      data-ajax="true"
+                                      data-ajax-mode="replace"
+                                      data-ajax-failure="tpList.playerUpdateFailure"
+                                      data-ajax-update="#tplist"></form>
+                                @if (savedId == u.Id)
+                                {
+                                    <i class="glyphicon glyphicon-ok text-success"></i>
+                                }
+
+                                @if (errorId == u.Id)
+                                {
+                                    <i class="glyphicon glyphicon-exclamation-sign text-danger"></i>
+                                }
+                                <button class="btn btn-primary" form="@formId">@Messages.Save</button>
+                            </td>
+                            <td>
+
+                                <a href="@Url.Action("SendNotification", "TeamPlayers", new {id = u.UserId, seasonId = u.SeasonId, teamId = u.TeamId})"
+                                   data-target="#userNotificationDialog"
+                                   data-toggle="modal"
+                                   class="btn btn-primary">
+                                    <i class="fa fa-envelope"></i>
+                                </a>
+                            </td>
+                            @if (ViewBag.CanRemovePlayer)
+                            {
+                                <td>
+                                    @{
+                                        var buttonEnabled = true;
+                                        if (ViewBag.IsCatchball == true)
+                                        {
+                                            if (u.IsActive && ViewBag.IsAdmin != true && ViewBag.IsUnionManager != true)
+                                            {
+                                                buttonEnabled = false;
+                                            }
+                                        }
+                                    }
+                                    <a href="@Url.Action("Delete", new {id = u.Id, seasonId = u.SeasonId, ViewBag.ClubId, ViewBag.UnionId, ViewBag.LeagueId, ViewBag.IsTennisCompetition})" class="@AppCss.Delete"
+                                       data-ajax-confirm="@Messages.DeleteConfirm"
+                                       data-ajax-update="#playersedit"
+                                       data-ajax="true"
+                                       @(buttonEnabled ? "" : "disabled")>
+                                    </a>
+                                </td>
+                            }
+                        </tr>
+
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row">
+    @Messages.NumberOfApprovedPlayers: @ViewBag.NumberOfApprovedPlayers
+</div>
+<div id="printPlayers" style="display: none;">
+
+    <h3>@ViewBag.TeamName</h3>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>@Messages.Name</th>
+                <th>@Messages.Shirt</th>
+                <th>@Messages.ShirtSize</th>
+                <th>@Messages.Position</th>
+                <th>@Messages.IdentNum</th>
+                <th>@Messages.Email</th>
+                <th>@Messages.Phone</th>
+                <th>@Messages.City</th>
+                @if (ViewBag.IsCatchball == false)
+                {
+                    <th>@Messages.Gender</th>
+                }
+                <th>@Messages.BirthDay</th>
+                <th>@Messages.IDFile</th>
+                <th>@Messages.MedicalCertificate</th>
+                <th>@Messages.Insurance</th>
+                <th>@Messages.LeagueDetail_PlayerRegistrationPrice</th>
+                <th>@Messages.LeagueDetail_PlayerInsurancePrice</th>
+                <th>@Messages.Active</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                string formId = $"teamplform{u.Id}";
+                string shirtNumId = $"shirtNum_{u.Id}";
+                var posList = new SelectList(ViewBag.Positions, "PosId", "Title", u.PosId);
+                var shirtSizeList = new SelectList(shirtSizes, "Value", "Text", u.ShirtSize);
+            <tr>
+                <td>@u.UserId</td>
+                <td>
+                    @if (u.IsTrainerPlayer)
+                    {
+                        <b>@Messages.Player_TrainerIndicator</b>
+                    }
+                    @if (u.IsYoungPlayer)
+                    {
+                        <b>@Messages.Player_YoungIndicator</b>
+                    }
+                    @u.FullName
+                </td>
+                <td>
+                    @u.ShirtNum
+                </td>
+                <td>
+                    @u.ShirtSize
+                </td>
+                <td>
+                    @(posList.FirstOrDefault(p => p.Value == u.PosId.ToString())?.Text)
+                </td>
+                <td>
+                    @u.IdentNum
+                </td>
+                <td>
+                    @u.Email
+                </td>
+                <td>@u.Telephone</td>
+                <td>@u.City</td>
+                @if (ViewBag.IsCatchball == false)
+                {
+                    <td>@(u.Gender != null ? u.Gender.Title : "")</td>
+                }
+                <td>@(u.Birthday != null ? u.Birthday.Value.ToString("dd/MM/yyyy") : "")</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(u.IDFile))
+                    {
+                        <span class="glyphicon glyphicon-eye-open glyph-btn"></span>
+                    }
+                </td>
+                <td>
+                    @if (!string.IsNullOrEmpty(u.MedicalCertificateFile))
+                    {
+                        <span class="glyphicon glyphicon-eye-open glyph-btn"></span>
+                    }
+                </td>
+                <td>
+                    @if (!string.IsNullOrEmpty(u.InsuranceFile))
+                    {
+                        <span class="glyphicon glyphicon-eye-open glyph-btn"></span>
+                    }
+                </td>
+                <td>
+                    @if (u.Registration != null)
+                    {
+                        @u.Registration.RegistrationPrice
+                    }
+                    else if (ViewBag.ClubId != null && !leaguesDetail.Any())
+                    {
+                        @u.PlayerRegistrationAndEquipmentPrice
+                    }
+                    else
+                    {
+                        @u.PlayerRegistrationPrice
+                    }
+                </td>
+                <td>
+                    @(u.Registration?.InsurancePrice ?? u.PlayerInsurancePrice)
+                </td>
+                <td>
+                    @*@Html.CheckBox("IsActive", u.IsActive, new { @form = formId })*@
+                    @*<input type="checkbox" @(u.IsActive ? "checked" : "") disabled="disabled"/>*@
+                    @if (u.IsActive)
+                    {
+                        <span class="glyphicon glyphicon-ok"></span>
+                    }
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script type="text/javascript" src="~/Scripts/pages/tpList.js">
+</script>
+
+<div class="modal fade" id="routeRanks" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="routeRanks_frm">
+            <div class="modal-header">
+                <button type="button" class="close close-routes-modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+                <h4 class="modal-title">@Messages.Routes @Messages.Settings.ToLowerInvariant()</h4>
+            </div>
+            <div class="modal-body">
+                <div>@Messages.Individual:</div>
+                <div id="routeRanks_frm_individual"></div>
+                <div>@Messages.Team:</div>
+                <div id="routeRanks_frm_team"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default close-routes-modal">@Messages.Close</button>
+
+                <a id="saveRouteMainBtn" style="display: none;" class="btn btn-primary">@Messages.Save</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="userNotificationDialog" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="userNotificationDialog_pl">
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="approval_warning" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="">
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <p>
+                        @Messages.Approval_warning
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var leagueId = "@(ViewBag.LeagueId == null? "": ViewBag.LeagueId.ToString())";
+    $(".team-reg-active").on("click",
+        function() {
+            var activityid = $(this).data("activity");
+            var regId = $(this).data("regid");
+
+            $.post("/Activity/SetRegistrationActive/" + activityid, { regid: regId, value: this.checked });
+        });
+
+    $("#playersedit .clickable-row").click(function(e) {
+        console.log(e);
+        if (!$(e.target).hasClass("team-reg-active")) {
+            window.location = $(this).data("href");
+        }
+    });
+
+    function printPlayers() {
+
+        var wnd = window.open('', '@(Messages.PrintPlayers)', '');
+
+        wnd.document.write('<html><head><title>@(Messages.PrintPlayers)</title>');
+        //if need to add styles
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<link rel="stylesheet" href="/Content/site.css" type="text/css" />');
+
+        wnd.document.write('<body>');
+
+        wnd.document.write($('#printPlayers').html());
+
+        wnd.document.write('</body>');
+
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+
+        setTimeout(function() {
+                wnd.print();
+            },
+            1000);
+
+        return false;
+    }
+
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        $('[data-toggle="popover"]').popover();
+
+        $(".customPrices-paid").popover({
+            container: 'body',
+            html: true,
+            content: function () {
+                return $(this).next('.customPrices-paid-content').html();
+            },
+            trigger: "focus",
+            title: "@Messages.Activity_CustomPrices_Paid"
+        });
+        if ("@ViewBag.BlockApprovements" == "True") {
+            $("input[name='IsActive'][type=checkbox]").attr('disabled', true)
+        }
+        $('body').on('click',
+            '.unlock-link',
+            function() {
+                var $that = $(this);
+                var id = $that.data('id');
+
+                $.ajax({
+                    type: "GET",
+                    url: '@Url.Action("UnlockPlayers", "TeamPlayers")',
+                    data: { id: id },
+                    success: function(data) {
+                        if (data.result) {
+
+                            if (data.value == true) {
+                                $that.parent().find('.unlock-link-color').addClass('text-danger');
+                                $that.html('<i class="fa fa-lock"></i>');
+                            } else {
+                                $that.parent().find('.unlock-link-color').removeClass('text-danger');
+                                $that.html('<i class="fa fa-unlock"></i>');
+                            }
+                        } else {
+                            alert(data.message);
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        alert(xhr.status);
+                        alert(thrownError);
+                    }
+                });
+            });
+            $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
+                $($.fn.dataTable.tables( true ) ).css('width', '100%');
+                $($.fn.dataTable.tables( true ) ).DataTable().columns.adjust().draw();
+            } );
+    });
+
+    function checkActiveStatus(id, isActive, isApproved, isRegistered) {
+        var $checkbox = $(event.target);
+        var needAccept = "@ViewBag.CantChangeIfAccepted" == "True";
+        if (needAccept && (isActive == "True" && (isApproved == "True" || isRegistered == "True"))) {
+            if (isActive == "True") {
+                $checkbox.prop('checked', true);
+            }
+            else {
+                $checkbox.prop('checked', false);
+            }
+            $("#approval_warning").modal('show');
+        }
+    }
+
+    $(document).on('show.bs.modal',
+        '.modal',
+        function() {
+            var zIndex = 1040 + (10 * $('.modal:visible').length);
+            $(this).css('z-index', zIndex);
+            setTimeout(function() {
+                    $('#routeRanks').css('z-index', zIndex - 1).addClass('modal-stack');
+                },
+                0);
+        });
+
+    $(function () {
+        var fixHelper = function (e, ui) {
+            ui.children().each(function () {
+                $(this).width($(this).width());
+            });
+            return ui;
+        };
+        $('#sortable').sortable({
+            items: "tr:not('.unsortable')",
+            cursor: 'move',
+            cancel: ".unsortable",
+            helper: fixHelper,
+            update: function (event, ui) {
+                var ids = [];
+                var childs = event.target.children;
+                $.each(childs, function (key, elem) {
+                    var id = $(elem).attr('data-id');
+                    ids.push(id);
+                });
+
+                var postData = {
+                    ids: ids,
+                }
+                $.ajax({
+                    url: '@Url.Action("ChangeTennisPlayersOrder", "Clubs")',
+                    data: postData,
+                    type: 'POST',
+                    dataType: 'json'
+                })
+            }
+        }).disableSelection();
+        var team_hidden_columns = [];
+        if (localStorage["teamplayers_" + @ViewBag.TeamId + "_" + leagueId ] != undefined) {
+            team_hidden_columns = JSON.parse(localStorage["teamplayers_" + @ViewBag.TeamId + "_" + leagueId]);
+        }
+        @if (!isDraggableRows)
+        {
+            <text>
+            var columnsWithDisabledOrdering = [@(columns-3),@(columns-2),@(columns-1)];
+            @foreach (var item in columnWithoutOrderingList)
+            {
+                <text>
+                    columnsWithDisabledOrdering.push(@item);
+                </text>
+            }
+
+            var columnsWithDateOrdering = [];
+            @foreach (var item in columnWithDateOrderingList)
+            {
+                <text>
+                    columnsWithDateOrdering.push(@item);
+                </text>
+            }
+
+            var columnsWithInnerOrdering = [];
+            @foreach (var item in columnWithInnerOrderingList)
+            {
+                <text>
+                    columnsWithInnerOrdering.push(@item);
+                </text>
+            }
+
+            var columnsWithInnerSelectOrdering = [];
+            @foreach (var item in columnWithInnerSelectOrderingList)
+            {
+                <text>
+                    columnsWithInnerSelectOrdering.push(@item);
+                </text>
+            }
+
+            var extensions = {
+                    "sFilter": "dataTables_filter float_left"
+                }
+            $.extend($.fn.dataTableExt.oStdClasses, extensions);
+            $.extend($.fn.dataTableExt.oJUIClasses, extensions);
+            var players_table = $("#main_team_players_table").DataTable({
+                "ordering": true,
+                "order": [],
+                "bPaginate": false,
+                "paging": false,
+                "scrollX": true,
+                "scrollY": "80vh",
+                "oLanguage": {
+                    "sSearch": "@Messages.Search: "
+                },
+                info: false,
+                "columnDefs": [
+                                    { "type": "date-eu", targets: columnsWithDateOrdering },
+                                    { "type": "input_inner_num", targets: columnsWithInnerOrdering },
+                                    { "type": "input-inner-select", targets: columnsWithInnerSelectOrdering },
+                                    {
+                                    "targets": columnsWithDisabledOrdering, "orderable": false
+                                    },
+                ]
+            });
+            players_table.columns.adjust();
+
+            var dom_to_addToggles = $("#column_to_showhide");
+
+            players_table.columns().every( function () {
+                var header = $(this.header()).text().trim();
+                dom_to_addToggles.append("<a href='' class='toggle-vis' style='margin:4px;color:#3174c7;' data-column='" + this.index() + "'>" + header + "</a>");
+            } );
+            for (var index in team_hidden_columns) {
+                var columnNum = team_hidden_columns[index];
+                players_table.column(columnNum).visible(false);
+                $("a.toggle-vis[data-column='" + columnNum + "']").css("color","red");
+            }
+
+            $('a.toggle-vis').on( 'click', function (e) {
+                e.preventDefault();
+                var columnNum = $(this).attr('data-column');
+                var column = players_table.column( columnNum );
+
+                if (column.visible()) {
+                    team_hidden_columns.push(columnNum);
+                    $("a.toggle-vis[data-column='" + columnNum + "']").css("color","red");
+                } else {
+                    team_hidden_columns = team_hidden_columns.filter(function(value, index, arr){
+                        return columnNum != value;
+                    });
+                    $("a.toggle-vis[data-column='" + columnNum + "']").css("color","#3174c7");
+                }
+                localStorage["teamplayers_" + @ViewBag.TeamId + "_" + leagueId] = JSON.stringify(team_hidden_columns);
+                column.visible( ! column.visible() );
+            } );
+
+
+            </text>
+        }
+        else
+        {
+            <text>
+        $("#order_table").DataTable({
+                "ordering": false,
+                "bPaginate": false,
+                "paging": false,
+                "bFilter": false,
+                info: false,
+            });
+
+
+        var players_table = $("#main_team_players_table").DataTable({
+                "ordering": false,
+                "bPaginate": false,
+                "paging": false,
+                "bFilter": false,
+                "scrollX": true,
+                info: false,
+            });
+            players_table.columns.adjust();
+
+            var dom_to_addToggles = $("#column_to_showhide");
+
+            players_table.columns().every( function () {
+                var header = $(this.header()).text().trim();
+                dom_to_addToggles.append("<a href='' class='toggle-vis' style='margin:4px;color:#3174c7;' data-column='" + this.index() + "'>" + header + "</a>");
+            } );
+            for (var index in team_hidden_columns) {
+                var columnNum = team_hidden_columns[index];
+                players_table.column(columnNum).visible(false);
+                $("a.toggle-vis[data-column='" + columnNum + "']").css("color","red");
+            }
+
+            $('a.toggle-vis').on( 'click', function (e) {
+                e.preventDefault();
+                var columnNum = $(this).attr('data-column');
+                var column = players_table.column( columnNum );
+
+                if (column.visible()) {
+                    team_hidden_columns.push(columnNum);
+                    $("a.toggle-vis[data-column='" + columnNum + "']").css("color","red");
+                } else {
+                    team_hidden_columns = team_hidden_columns.filter(function(value, index, arr){
+                        return columnNum != value;
+                    });
+                    $("a.toggle-vis[data-column='" + columnNum + "']").css("color","#3174c7");
+                }
+                localStorage["teamplayers_" + @ViewBag.TeamId + "_" + leagueId] = JSON.stringify(team_hidden_columns);
+                column.visible( ! column.visible() );
+            } );
+
+
+            </text>
+        }
+
+
+    });
+
+</script>

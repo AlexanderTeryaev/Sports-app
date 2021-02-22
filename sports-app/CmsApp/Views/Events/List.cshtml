@@ -1,0 +1,20 @@
+﻿@model EventModel
+@{ 
+    bool userIsEditor = User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers);
+    string publishVisible = userIsEditor ? "visible" : "hidden";
+}
+
+@if (userIsEditor)
+{
+    <a href="@Url.Action("AddEvent", "Events", new { leagueId = Model.LeagueId, clubId = Model.ClubId, unionId = Model.UnionId })"
+       data-target="#addevent"
+       data-toggle="modal"
+       class="btn btn-primary btn-edit">
+        @Messages.AddEvent
+    </a>
+}
+
+<div id="event_list">
+    @Html.Action("List", "Events", new { leagueId = Model.LeagueId, clubId = Model.ClubId, unionId = Model.UnionId })
+</div>
+

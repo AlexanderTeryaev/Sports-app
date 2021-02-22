@@ -1,0 +1,166 @@
+﻿@model BenefactorViewModel
+
+@{
+    IDictionary<string, object> htmlAttributes = new Dictionary<string, object>();
+    htmlAttributes.Add("class", "form-control");
+
+    if (ViewBag.IsReadonly == true)
+    {
+        htmlAttributes.Add("readonly", "readonly");
+    }
+}
+
+@functions {
+    public IDictionary<string, object> GetAttributes(IDictionary<string, object> htmlAttributes, params KeyValuePair<string, string>[] values)
+    {
+        Dictionary<string, object> root = new Dictionary<string, object>(htmlAttributes);
+
+        if (values != null && values.Length > 0)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                root.Add(values[i].Key, values[i].Value);
+            }
+        }
+
+        return root;
+    }
+}
+
+@using (Ajax.BeginForm("BenefactorSave", null,
+    new AjaxOptions
+    {
+        UpdateTargetId = "benefactorform_pl",
+        LoadingElementId = "divLoadingDialog"
+    },
+    new { id = "teambenefactorform", autocomplete = "off" }))
+{
+    @Html.HiddenFor(m => m.BenefactorId)
+    @Html.HiddenFor(m => m.TeamId)
+    @Html.HiddenFor(m => m.LeagueId)
+    @Html.HiddenFor(m => m.SeasonId)
+
+    <div class="modal-header">
+
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+        <h4 class="modal-title">@Messages.TeamBenefactor_FormTitle</h4>
+    </div>
+    <div class="modal-body">
+
+        @Html.ValidationSummary(true)
+
+        @if (ViewBag.JobRole == JobRole.UnionManager)
+        {
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="control-label">@Messages.TeamBenefactor_IsApproved</label>
+                        @Html.CheckBox(nameof(Model.IsApproved), Model.IsApproved == true,
+                            ViewBag.IsReadonly == true ?
+                                new Dictionary<string, object> { { "readonly", "readonly" } } :
+                                new Dictionary<string, object>())
+                        @Html.ValidationMessageFor(m => m.IsApproved)
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label class="control-label">@Messages.TeamBenefactor_BenefactorName</label>
+                    @Html.TextBoxFor(m => m.Name, GetAttributes(htmlAttributes))
+
+                    @Html.ValidationMessageFor(m => m.Name)
+                </div>
+            </div>
+        </div>
+        
+        @if (Model.UnionId != UnionConstants.IsraelCatchballAssociation || !Model.IsEilatTournament)
+        {
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="control-label">@Messages.TeamBenefactor_PlayerCreditAmount</label>
+                        @Html.TextBoxFor(m => m.PlayerCreditAmount,
+                            GetAttributes(htmlAttributes,
+                                new KeyValuePair<string, string>("id", "txtPlayerCreditAmount"),
+                                new KeyValuePair<string, string>("onchange", "updateTotalAmount()")))
+                        @Html.ValidationMessageFor(m => m.PlayerCreditAmount)
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="control-label">@Messages.TeamBenefactor_MaximumPlayersFunded</label>
+                        @Html.TextBoxFor(m => m.MaximumPlayersFunded,
+                            GetAttributes(htmlAttributes,
+                                new KeyValuePair<string, string>("id", "txtMaximumPlayersFunded"),
+                                new KeyValuePair<string, string>("onchange", "updateTotalAmount()")))
+                        @Html.ValidationMessageFor(m => m.MaximumPlayersFunded)
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="control-label">@Messages.TeamBenefactor_FinancingInsurance</label>
+                        @Html.CheckBox(nameof(Model.FinancingInsurance), Model.FinancingInsurance == true,
+                            ViewBag.IsReadonly == true ?
+                                new Dictionary<string, object> { { "readonly", "readonly" } } :
+                                new Dictionary<string, object>())                    
+                        @Html.ValidationMessageFor(m => m.FinancingInsurance)
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label class="control-label">@Messages.TeamBenefactor_TotalAmountFunding</label>
+                        <input type="text" id="txtTotalAmount" value="@(Model.MaximumPlayersFunded.GetValueOrDefault(0) * Model.PlayerCreditAmount.GetValueOrDefault(0))" readonly="readonly" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label class="control-label">@Messages.Comment</label>
+                    @Html.TextAreaFor(m => m.Comment, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Comment)
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        @if (ViewBag.IsReadonly != true)
+        {
+            <button type="submit" class="btn btn-primary">@Messages.Save</button>
+        }
+    </div>
+}
+
+<script type="text/javascript">
+    function updateTotalAmount() {
+        var txtPlayerCreditAmount = $('#txtPlayerCreditAmount').val();
+        var txtMaximumPlayersFunded = $('#txtMaximumPlayersFunded').val();
+
+        txtMaximumPlayersFunded = (!txtMaximumPlayersFunded ? 0 : txtMaximumPlayersFunded);
+        txtPlayerCreditAmount = (!txtPlayerCreditAmount ? 0 : txtPlayerCreditAmount);
+
+        $('#txtTotalAmount').val(txtMaximumPlayersFunded * txtPlayerCreditAmount);
+
+    }
+</script>
+
+@if (ViewBag.Saved == true)
+{
+    <script>
+        alert('@Messages.TeamBenefactor_EmailWasSend');
+        window.location.reload();
+
+    </script>
+}

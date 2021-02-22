@@ -1,0 +1,56 @@
+﻿@using DataService
+@model List<List<CompetitionClubRankedStanding>>
+@{
+    bool isHebrew = Request.IsHebrew();
+    bool isMaleDone = false;
+    int index = 0;
+    int tableIndex = 0;
+}
+<a href="@GlobVars.SiteUrl/LeagueRank/AthleticsCupStanding/@ViewBag.LeagueId?seasonId=@ViewBag.SeasonId" target="_blank" class="btn btn-primary">@Messages.ExternalLink</a>
+@foreach (var table in Model)
+{
+        index = 0;
+        tableIndex += 1;
+        <h5>@(isMaleDone ? Messages.Women : Messages.Men)</h5>
+        isMaleDone = true;
+        <table class="table table-bordered tableRank">
+            <thead>
+                <tr>
+                    <th class="col-sm-1">#</th>
+                    <th class="col-sm-1">@Messages.Club</th>
+                    <th class="col-sm-1">@Messages.Points</th>
+                    <th class="col-sm-1">@Messages.League_RankedStanding_Correction</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in table)
+                {
+                    index += 1;
+                    <tr>
+                        <td>@index</td>
+                        <td>@(row.ClubName)</td>
+                        <td>@(Decimal.Round(row.Points,2))</td>
+                        <td><input  style="direction:ltr;" type="number" value="@row.Correction" class="form-control" onchange="updateClubCompetitionCorrection(this, @row.ClubId,@(tableIndex == 1? 1 : 0));"/></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <br />
+}
+<script>
+    function updateClubCompetitionCorrection(element, clubId, genderId) {
+        var value = $(element).val();
+        $.ajax({
+            url: '@Url.Action("SetCorrectionForClubCompetition", "Disciplines")',
+            data: {
+                ClubId: clubId,
+                SeasonId: @ViewBag.SeasonId,
+                LeagueId: @ViewBag.LeagueId,
+                Correction: value,
+                GenderId: genderId
+            },
+            type: 'POST',
+            dataType: 'json'
+        });
+    }
+</script>

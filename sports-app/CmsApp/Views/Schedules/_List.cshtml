@@ -1,0 +1,1161 @@
+@using DataService.DTO
+@using CmsApp.Helpers
+@model Schedules
+@{
+    var gameIds = Session["GameIds"] != null ? (int[])Session["GameIds"] : new int[] { };
+
+    TempData["IsChrono"] = false;
+
+    bool userIsEditor = User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers);
+    string publishVisible = userIsEditor ? "visible" : "hidden";
+    var leagueId = Model.Leagues.First().Id;
+    var desOrder = (bool)Session["desOrder"];
+    bool isCatchball = ViewBag.IsCatchball;
+    bool isUnionViewer = ViewBag.IsUnionViewer;
+    IEnumerable<AppModel.LeagueScheduleState> states = (IEnumerable<AppModel.LeagueScheduleState>)ViewBag.StateDisplay;
+    var isTennisLeague = ViewBag.IsTennisLeague != null && ViewBag.IsTennisLeague == true;
+    var isReadOnly = ViewBag.JobRole == JobRole.RefereeAssignment;
+}
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+<input id="leagueId" type="text" value="@leagueId" hidden />
+<input id="isChronological" type="text" value="false" hidden />
+<div class="row">
+    @if (userIsEditor && !isReadOnly)
+    {
+        <a href="@Url.Action("AddEvent", "Events", new {leagueId = leagueId})"
+           data-target="#addevent"
+           data-toggle="modal"
+           class="btn btn-primary btn-edit">
+            @Messages.AddEvent
+        </a>
+    }
+
+    <a href="javascript:gcList.SubmitScheduleCond(@leagueId, false)"
+       class="btn btn-primary btn-edit">
+        <i class="glyphicon glyphicon-refresh"></i> @Messages.Refresh
+    </a>
+
+    <a href='javascript:gcList.SubmitScheduleCond(@leagueId, true, @(desOrder.ToString().ToLowerInvariant()))' id="chrono_btn"
+       class="btn btn-primary space-1">
+        @Messages.ShowGamesChronological
+    </a>
+
+    @if (!isReadOnly)
+    {
+        <a href='javascript:gcList.SubmitScheduleCond(@leagueId, false, @((!desOrder).ToString().ToLowerInvariant()))'
+           class="btn btn-primary">
+            @Messages.ChangeOrderStages
+        </a>
+    }
+
+
+    @if (userIsEditor && !isReadOnly)
+    {
+        <a href="@GlobVars.SiteUrl/LeagueTable/Schedules/@leagueId?seasonId=@Model.SeasonId" target="_blank" class="btn btn-info view" style="float: left; margin-left: 5px;">@Messages.ExternalLink</a>
+
+        <a href="#" id="publishAll" class="btn btn-primary"
+           data-toggle="tooltip" title="@Messages.TooltipPublishApp"
+           onclick="javascript:gcList.publishAllLeagueGamesCycles(@Model.SeasonId, @Model.Leagues.First().Id, $('input.gamePublish').not(':checked').length > 0)">
+            @Messages.SelectAll
+        </a>
+        <span id="export-row" style="float:left; margin-left:5px;">
+            <select id="export-columns" name="Columns" form="exportExcelForm" multiple="multiple">
+                <option value="1">@Messages.GameId</option>
+                <option value="2">@Messages.LeagueId</option>
+                <option value="3">@Messages.League</option>
+                <option value="4">@Messages.Stage</option>
+                <option value="5">@Messages.Round</option>
+                <option value="6">@Messages.Date</option>
+                <option value="7">@Messages.Time</option>
+                <option value="8">@Messages.Day</option>
+                <option value="9">@Messages.HomeTeam @Messages.Id</option>
+                <option value="10">@Messages.HomeTeam</option>
+                <option value="11">@Messages.HomeTeam @Messages.Score.ToLowerInvariant()</option>
+                <option value="12">@Messages.GuestTeam @Messages.Id</option>
+                <option value="13">@Messages.GuestTeam</option>
+                <option value="14">@Messages.GuestTeam @Messages.Score.ToLowerInvariant()</option>
+                <option value="15">@UIHelpers.GetAuditoriumCaption(Model.Section) @Messages.Id</option>
+                <option value="16">@UIHelpers.GetAuditoriumCaption(Model.Section)</option>
+                <option value="17">@Messages.RefereesIds</option>
+                @if (!isCatchball && !isTennisLeague)
+                {
+                    <option value="18">@Messages.SpectatorsIds</option>
+                    <option value="19">@Messages.Spectators</option>
+                    <option value="20">@Messages.DesksIds</option>
+                    <option value="21">@Messages.DesksNames</option>
+                }
+                <option value="22">@Messages.Cycle @Messages.Number.ToLowerInvariant()</option>
+                <option value="23">@Messages.Group</option>
+                <option value="24">@Messages.QSets</option>
+            </select>
+        </span>
+        if (ViewBag.IsTennisLeague == true)
+        {
+            <a class="btn btn-info export" href="#" onclick="$('#exportExcelForm').submit();" data-toggle="tooltip" title="@Messages.TooltipExportToExcel" style="float:left; margin-left:5px;">
+                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                @using (Html.BeginForm("ExportToExcelTennisLeague", "Schedules", new { leagueId = leagueId, seasonId = Model.SeasonId }, FormMethod.Post, new { id = "exportExcelForm" }))
+                {
+                    @Html.Hidden("gameIds")
+                }
+            </a>
+        }
+        else
+        {
+            <a class="btn btn-info export" href="#" onclick="$('#exportExcelForm').submit();" data-toggle="tooltip" title="@Messages.TooltipExportToExcel" style="float:left; margin-left:5px;">
+                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                @using (Html.BeginForm("ExportToExcel", "Schedules", new { leagueId = leagueId, seasonId = Model.SeasonId }, FormMethod.Post, new { id = "exportExcelForm" }))
+                {
+                    @Html.Hidden("gameIds")
+                }
+            </a>
+        }
+
+        <a href="#" class="btn btn-info" onclick="$('#uploadFileBtn').click()" data-toggle="tooltip" title="@Messages.TooltipImportFromExcel" style="float:left; margin-left:5px;">
+            <i href="#" class="glyphicon glyphicon-open" style="transform: rotate(180deg)"></i> @Messages.ImportFromExcel
+        </a>
+    }
+</div>
+
+
+@if (userIsEditor && !isReadOnly)
+{
+    using (Html.BeginForm("ImportFromExcel", "Schedules", FormMethod.Post, new { id = "importExcelForm", enctype = "multipart/form-data" }))
+    {
+        <input type="file" id="uploadFileBtn" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" name="importedExcel" style="display: none" />
+    }
+}
+
+@{
+    Html.RenderPartial("_ShedulesDateConditions", Model);
+    <div id="event_list">
+        @Html.Action("List", "Events", new { leagueId = leagueId, seasonId = Model.SeasonId })
+    </div>
+}
+
+@foreach (var group in Model.Groups)
+{
+    if (Model.Groups.Count() > 1 && (group.GameTypeId == GameTypeId.Playoff || group.GameTypeId == GameTypeId.Knockout))
+    {
+        <h4>@group.GroupName</h4>
+    }
+
+    int StageIndex = desOrder ? group.Stages.Count() + 1 : 0;
+    foreach (var stage in group.Stages)
+    {
+        if (desOrder)
+        {
+            StageIndex--;
+        }
+        else
+        {
+            StageIndex++;
+        }
+        var stageElemId = $"{group.GroupName.Replace(' ', '_')}_{stage.StageNumber}";
+        var idOpen = $"{stageElemId}open";
+        var idClose = $"{stageElemId}close";
+        bool stagePublished = stage.Items.All(gc => gc.IsPublished);
+        string isStageChecked = stagePublished ? "checked" : "";
+        var state = states.FirstOrDefault(r => r.ElementDivId == stageElemId);
+        <table>
+            <tr>
+                <td>
+                    <a href="javascript:gcList.stageOpen('@stageElemId','@leagueId')" id=@idOpen style="display: @(state != null && state.IsHidden == true ? "block" : "none")">
+                        <i class="glyphicon glyphicon-plus"></i>
+                    </a>
+                    <a href="javascript:gcList.stageClose('@stageElemId','@leagueId')" id=@idClose style="display:
+                        @(state != null && state.IsHidden == true ? "none" : "block")">
+                        <i class="glyphicon glyphicon-minus"></i>
+                    </a>
+                </td>
+                <td>
+                    <h3>
+                        <input type="checkbox"
+                               id="stageItemsChbx_@stageElemId"
+                               class="stageItemsChbx"
+                               value="@(stageElemId)" @isStageChecked
+                               onclick="javascript:gcList.publishGameCyclesByStage(@Model.SeasonId, @Model.Leagues[0].Id, @stage.StageId, this.checked, '@stageElemId')" />
+                        @UIHelpers.GetStageName(group.GameTypeId, group.BracketsCount, StageIndex, stage.StageName, group.Rounds ?? 1)
+                    </h3>
+                </td>
+            </tr>
+        </table>
+
+        <div id=@stageElemId style="display: @(state != null && state.IsHidden == true ? "none" : "block")">
+            @foreach (var gamesInRound in stage.Items.GroupBy(t => t.RoundNum))
+            {
+                var cycleNum = 0;
+                var differences = new Dictionary<int?, int>();
+                if (Model.RoundStartCycle == RoundStartCycle.StartEachRoundFromCycleOne)
+                {
+                    var min = gamesInRound.First().CycleNum;
+                    foreach (var game in gamesInRound)
+                    {
+                        if (!differences.ContainsKey(game.GroupId))
+                        {
+                            differences.Add(game.GroupId, game.CycleNum - min);
+                        }
+
+                        game.CycleNum -= differences[game.GroupId];
+                    }
+                }
+                foreach (var games in gamesInRound.GroupBy(t => t.CycleNum))
+                {
+                    cycleNum++;
+                    <div class="row">
+                        <div class="col-lg-9" style="display: inline-block; vertical-align: middle; float: none">
+                            @using (Ajax.BeginForm("MoveDate", null, new AjaxOptions { UpdateTargetId = "schedules" }, null))
+                            {
+                                <table class="cyclemoveform">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <h4>
+                                                    @if (!(Model.Groups.Count() > 0 && Model.Groups.All(g => g.GameTypeId == GameTypeId.Playoff || g.GameTypeId == GameTypeId.Knockout)))
+                                                    {
+                                                        if (Model.RoundStartCycle == RoundStartCycle.StartEachRoundFromCycleOne)
+                                                        {
+                                                            <text>@Messages.Cycle @cycleNum</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>@Messages.Cycle @(games.Key + 1)</text>
+                                                        }
+                                                    }
+                                                </h4>
+                                            </td>
+                                            @if (userIsEditor)
+                                            {
+                                                if (group.GameTypeId == GameTypeId.Division)
+                                                {
+                                                    <td>
+                                                        @if (!isReadOnly)
+                                                        {
+                                                            <a class="btn btn-primary"
+                                                               @{ string add_url = Url.Action("AddNew", new { stageId = stage.StageId, num = games.Key }); var gIL = games.FirstOrDefault(t => t.RoundNum.HasValue); if (gIL != null) { add_url = Url.Action("AddNewByCycle", new { stageId = stage.StageId, num = games.Key, roundNum = gIL.RoundNum }); } }
+                                                               href="@add_url"
+                                                               data-target="#addsycle"
+                                                               data-toggle="modal">@Messages.AddGame</a>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <div class="space-3"></div>
+                                                    </td>
+                                                }
+                                                <td>
+                                                    <div style="position: relative">
+                                                        @if (isReadOnly)
+                                                        {
+                                                            <span>@games.First().StartDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                                            <input type="hidden" name="StartDate" value="@games.First().StartDate.ToString("dd/MM/yyyy HH:mm")" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <input type="text" name="StartDate" value="@games.First().StartDate.ToString("dd/MM/yyyy HH:mm")" class="form-control frm-date required" />
+                                                        }
+
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="space-2"></div>
+                                                </td>
+                                                <td>
+                                                    @if (!isReadOnly)
+                                                    {
+                                                        <input type="checkbox" name="IsAll" value="True" /> @Messages.AllCycles
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="space-2"></div>
+                                                </td>
+                                                <td>
+                                                    @if (!isReadOnly)
+                                                    {
+                                                        <button class="btn btn-primary" disabled>@Messages.MoveCycle</button>
+                                                        <input type="hidden" name="StageId" value="@stage.StageId" />
+                                                        <input type="hidden" name="CycleNum" value="@games.Key" />
+                                                    }
+
+                                                </td>
+                                                if (group.GameTypeId == GameTypeId.Division)
+                                                {
+                                                    <td>
+                                                        &nbsp;
+                                                        @if (!isReadOnly)
+                                                        {
+
+                                                            var spinnerName = $"spinner_{stage.StageId}_{games.Key}_{leagueId}";
+                                                            <a onclick="deleteCycle('@stage.StageId','@games.Key','@leagueId')" class="@AppCss.Delete"></a>
+                                                            <span>&nbsp;</span>
+                                                            <span id="@spinnerName" style="display:none" class="fa fa-spin fa-spinner"></span>
+                                                        }
+
+                                                    </td>
+                                                }
+                                            }
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+                        <!--
+                        -->
+                        <div class="col-lg-3" style="display: inline-block; vertical-align: middle; float: none">
+                            <div class="pull-right" style="visibility: @publishVisible">
+                                @Messages.IsPublished
+                                @{
+                                    string gameCylesGroupNumAndStage = "publish_" + stage.StageId + '_' + games.Key;
+                                    bool published = games.All(g => g.IsPublished);
+                                    string isChecked = published ? "checked" : "";
+                                }
+                                @if (!isReadOnly)
+                                {
+                                    <input id=@gameCylesGroupNumAndStage type="checkbox"
+                                           class="gamePublish" @isChecked
+                                           onclick="gcList.publishGamesCyclesByCycleNumber(@Model.SeasonId, @leagueId, @stage.StageId, @games.Key)" />
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="prt_div">
+                        <table id="res_tbl" class="table table-bordered offset-2 @gameCylesGroupNumAndStage">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>@Messages.Status</th>
+                                    <th>@Messages.Group</th>
+                                    @if (group.GameTypeId == GameTypeId.Playoff || group.GameTypeId == GameTypeId.Knockout || group.GameTypeId == GameTypeId.Knockout34)
+                                    {
+                                        <th>@Messages.Ranked</th>
+                                    }
+                                    @if (Model.Games?.Any(t => t.RoundNum.HasValue && t.RoundNum > 1) == true)
+                                    {
+                                        <th>@Messages.Round</th>
+                                    }
+                                    <th style="min-width:150px;">@Messages.StartDate</th>
+                                    <th>@Messages.Day</th>
+                                    <th style="min-width: 200px;">
+                                        <div class="col-sm-3">@UIHelpers.GetAuditoriumCaption(Model.Section)</div>
+                                        <div class="col-sm-9">
+                                            @{
+                                                var distinctedAuditoriums = games.Select(x => x.AuditoriumId)?.Distinct()?.ToList();
+                                                var selectedAuditoriumId = distinctedAuditoriums.Count == 1 ? distinctedAuditoriums.FirstOrDefault() : null;
+                                                var auditoriumsValue = Model.Auditoriums ?? new List<AuditoriumShort>();
+                                                var auditoriumMain = new SelectList(auditoriumsValue, nameof(AuditoriumShort.Id), nameof(AuditoriumShort.Name), selectedAuditoriumId);
+                                            }
+                                            @Html.DropDownList("AuditoriumId", auditoriumMain, Messages.Select,
+                                                                                                           new
+                                                                                                           {
+                                                                                                               id = $"all_auditorium_{stage.StageId}_{games.Key}",
+                                                                                                               @class = "form-control auditoriumsSearchList",
+                                                                                                               style = "height:30px;",
+                                                                                                               onchange = $"setAllAuditouriums('{stage.StageId}','{games.Key}')"
+                                                                                                           })
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="col-sm-3">@Messages.Referee</div>
+                                        <div class="col-sm-9">
+                                            @{
+                                                List<AppModel.User> refereeList = Model.Referees.Values.Union(Model.Spectators.Values)?.ToList();
+                                                var refereeMultiList = new SelectList(refereeList, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), null);
+                                            }
+                                            @Html.DropDownList("RefereeMultiList", refereeMultiList, new {
+                                           stageId = stage.StageId,
+                                           cycleIds = $"{string.Join(",", games.Select(x => x.CycleId).ToArray())}",
+                                           @class = "refereeMainSelect form-control",
+                                           multiple = "",
+                                           style = "height:30px;"
+                                       })
+                                        </div>
+                                    </th>
+                                    @if (!isCatchball && !isTennisLeague)
+                                    {
+                                        <th>@Messages.Spectator</th>
+                                        <th>@Messages.Desk</th>
+                                    }
+                                    @if (group.IsIndividual)
+                                    {
+                                        <th class="text-center">@Messages.Competitor #1</th>
+                                    }
+                                    else
+                                    {
+                                        <th class="text-center">@Messages.HomeTeam</th>
+
+                                    }
+                                    <th></th>
+                                    @if (userIsEditor)
+                                    {
+                                        <th class="remove_print">@Messages.Swap</th>
+                                    }
+                                    <th></th>
+                                    @if (group.IsIndividual)
+                                    {
+                                        <th class="text-center">@Messages.Competitor #2</th>
+                                    }
+                                    else
+                                    {
+                                        <th class="text-center">@Messages.GuestTeam</th>
+                                    }
+                                    <th>@Messages.Remark</th>
+                                    @if (games.Any(x=>!string.IsNullOrEmpty(x.Note) && !string.Equals(x.Note, "null", StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        <th>@Messages.Note</th>
+                                    }
+                                    @if (userIsEditor)
+                                    {
+                                        <th class="remove_print" style="min-width:140px;"></th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var gameIndex = 0;
+                                }
+                                @foreach (var m in games.OrderBy(gm => gm.GroupId).ThenBy(gm => gm.StartDate))
+                                {
+                                    gameIndex++;
+                                    //var refereeService = new RefereeService(m.CycleId, m.LeagueId);
+                                    //var deskService = new DeskService(m.CycleId, m.LeagueId);
+                                    var auditoriumsModel = Model.Auditoriums == null ? new List<AuditoriumShort>() : Model.Auditoriums;
+                                    var auditoriums = new SelectList(auditoriumsModel, nameof(AuditoriumShort.Id), nameof(AuditoriumShort.Name), m.AuditoriumId);
+                                    var spectatorsModel = Model.Spectators?.Values == null ? new List<AppModel.User>() : Model.Spectators.Values;
+                                    var spectators = new MultiSelectList(spectatorsModel, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), m.SpectatorIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
+                                    var GoldenSet = m.GameSets.FirstOrDefault(s => s.IsGoldenSet == true);
+                                    var Penalty = m.GameSets.FirstOrDefault(s => s.IsPenalties == true);
+                                    var isWaitingDivision = m.GameStatus != GameStatus.Started && m.GameStatus != GameStatus.Ended && m.Group.TypeId == GameTypeId.Division;
+                                    var @_checked = m.IsPublished ? "checked" : string.Empty;
+                                    var dayOfWeek = LangHelper.GetDayOfWeek(m.StartDate);
+                                <tr id="row@(m.CycleId)">
+
+                                    <td class="remove_print">
+                                        @if (m.IsDateUpdated)
+                                        {
+                                            <span class="fa fa-circle" style="color: darkorange" data-toggle="tooltip" title="@Messages.TooltipDataIsChanged"></span>
+                                        }
+                                        @if (!isReadOnly)
+                                        {
+                                            <input type="checkbox" id="gameCycleItemChbx_@m.CycleId"
+                                                   class="gameCycleItemChbx" name="gameCycleItemsChbx" value="@(m.CycleId)" @_checked
+                                                   onclick="gcList.publishGamesCycle(@stage.StageId, @games.Key, @m.CycleId)" />
+                                        }
+                                    </td>
+                                    @using (Ajax.BeginForm("Update", null,
+                                        new AjaxOptions
+                                        {
+                                            OnSuccess = "gcList.cycleUpdated(data)",
+                                            OnFailure = "gcList.cycleUpdateError(data)"
+                                        },
+                                        new { id = "gamefrm" + m.CycleId }))
+                                    {
+                                        <td>
+                                            @if (m.GameStatus == GameStatus.Started)
+                                            {
+                                                <span class="label label-success game_status">@Messages.Started</span>
+                                            }
+                                            else if (m.GameStatus == GameStatus.Ended)
+                                            {
+                                                <span class="label label-danger game_status">@Messages.Ended</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="label label-default game_status">@Messages.Waiting</span>
+                                            }
+                                        </td>
+                                        if (m.Group != null)
+                                        {
+                                            <td>@m.Group.Name</td>
+                                        }
+                                        else
+                                        {
+                                            <td class="text-center"></td>
+                                        }
+                                        if (group.GameTypeId == GameTypeId.Playoff || group.GameTypeId == GameTypeId.Knockout || group.GameTypeId == GameTypeId.Knockout34)
+                                        {
+                                            <td width="4%">
+                                                @m.Rank<br />
+                                            </td>
+                                        }
+                                        if (Model.Games?.Any(t => t.RoundNum.HasValue && t.RoundNum > 1) == true)
+                                        {
+                                            <td>@m.RoundNum</td>
+                                        }
+                                        if (userIsEditor)
+                                        {
+                                            <td style="position: relative">
+                                                @if (isReadOnly)
+                                                {
+                                                    <span>@m.StartDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                                    <input name="StartDate" type="hidden" value="@m.StartDate.ToString("dd/MM/yyyy HH:mm")" form="gamefrm@(m.CycleId)" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="row">
+                                                        <div class="col-sm-3">@Html.CheckBox("IsNotSetYet", m.IsNotSetYet, new { form = "gamefrm" + m.CycleId, @class = "isSetYet", title = Messages.MarkNotSet })</div>
+                                                        <input name="StartDate" class="form-control frm-date col-sm-9 @(m.IsGameHasReligiousTeam ? "religious": "")" type="text" value="@m.StartDate.ToString("dd/MM/yyyy HH:mm")" form="gamefrm@(m.CycleId)" />
+                                                    </div>
+                                                }
+
+                                            </td>
+                                            <td>@dayOfWeek</td>
+                                            <td>
+                                                @if (isReadOnly)
+                                                {
+                                                    @*@Html.DropDownList("AuditoriumId", auditoriums, Messages.Select, new { @class = "form-control auditoriums", disabled="disabled", form = "gamefrm" + m.CycleId })*@
+                                                    <span>@(m.AuditoriumId.HasValue ? m.Auditorium.Name : "")</span>
+                                                    <input type="hidden" name="AuditoriumId" value="@(m.AuditoriumId)" form="@("gamefrm" + m.CycleId)" />
+                                                }
+                                                else
+                                                {
+                                                    @Html.DropDownList("AuditoriumId", auditoriums, Messages.Select, new { @class = "form-control auditoriums auditoriumsSearchList", form = "gamefrm" + m.CycleId })
+                                                }
+
+                                            </td>
+                                            if (!isCatchball)
+                                            {
+                                                <td>
+                                                    @{
+
+                                                        <a class="btn btn-default btn-sm"
+                                                           href="@Url.Action("ShowRefereeModal", "Schedules", new {cycleId = m.CycleId, leagueId = m.LeagueId})"
+                                                           data-toggle="modal"
+                                                           data-target="#referees_list_modal"
+                                                           data-ajax="true"
+                                                           id="refbtn_@m.CycleId">
+                                                            @m.MainRefereeName
+                                                        </a>
+                                                    }
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                var selecedRefereeId = m.RefereeIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)?.FirstOrDefault();
+                                                var referee = new SelectList(Model.Referees?.Values == null ? new List<AppModel.User>()
+                                                    : Model.Referees.Values, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), selecedRefereeId).AsEnumerable();
+                                                <td>
+                                                    @Html.DropDownList("RefereeIds", referee, Messages.Select, new { @class = $"form-control", form = "gamefrm" + m.CycleId })
+                                                </td>
+                                                @Html.Hidden("IsCathcball", isCatchball)
+                                            }
+                                            if (!isCatchball && !isTennisLeague)
+                                            {
+                                                <td>
+                                                    @Html.DropDownList($"SpectatorIds", spectators, new { @class = "form-control spectatorids", form = "gamefrm" + m.CycleId, multiple = "multiple" })
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        //string deskName = deskService.GetMainDeskName(m.DeskIds?.Split(',')?.ToList(), m.CycleId);
+                                                        <a href="#deskModal_@m.CycleId" role="button" class="btn btn-default btn-sm" data-toggle="modal" id="deskbtn_@m.CycleId">
+                                                            @m.DeskName
+                                                        </a>
+                                                    }
+                                                    <div class="modal fade" id="deskModal_@m.CycleId" role="dialog">
+                                                        @{
+                                                            var deskList = Model.Desks?.Values == null ? new List<AppModel.User>() : Model.Desks.Values;
+                                                            var desksIds = m.DeskIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)?.ToList();
+                                                            var desks = new Desks
+                                                            {
+                                                                DesksItems = deskList,
+                                                                DesksIds = desksIds,
+                                                                CycleId = m.CycleId,
+                                                                LeagueId = m.LeagueId,
+                                                                DesksNames = m.DeskNames ?? Messages.NoDesks,
+                                                                DeskMainName = m.DeskName
+                                                            };
+                                                            Html.RenderPartial("_Desk", desks);
+                                                        }
+                                                    </div>
+                                                </td>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <td style="position: relative">
+                                                @m.StartDate
+                                            </td>
+                                            <td>@(m.AuditoriumId.HasValue ? m.Auditorium.Name : "")</td>
+
+                                            <td>
+                                                @(string.Join(",", Model.Referees
+                                                                              .Where(r => !string.IsNullOrEmpty(m.RefereeIds) && m.RefereeIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Contains(r.Key.ToString()))
+                                                                              .Select(r => r.Value.FullName)))
+                                            </td>
+                                        }
+                                        var atModel = new GamePartialModel(m)
+                                        {
+                                            SeasonId = Model.SeasonId,
+                                            isWaitingDivision = isWaitingDivision,
+                                            GoldenSet = GoldenSet,
+                                            Penalty = Penalty,
+                                            athletesByGroups = Model.athletesByGroup
+                                        };
+                                        var gpModel = new GamePartialModel(m)
+                                        {
+                                            SeasonId = Model.SeasonId,
+                                            isWaitingDivision = isWaitingDivision,
+                                            GoldenSet = GoldenSet,
+                                            Penalty = Penalty,
+                                            teamsByGroups = Model.teamsByGroups,
+                                            GameIndex = gameIndex
+                                        };
+                                        if (group.IsIndividual)
+                                        {
+                                            Html.RenderPartial("_HomeAthlete", atModel);
+                                        }
+                                        else
+                                        {
+                                            Html.RenderPartial("_HomeTeam", gpModel);
+                                        }
+
+                                        <td class="text-center homeScore">
+                                            @if (Penalty != null)
+                                            {
+                                                var value = m.GameSets.Sum(x => x.HomeTeamScore) - Penalty.HomeTeamScore;
+                                                <text>(@Penalty.HomeTeamScore) @value</text>
+
+                                            }
+                                            @if (!ViewBag.IsPenaltySection)
+                                            {
+                                                @m.HomeTeamScore
+                                            }
+                                        </td>
+                                        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+                                        {
+                                            <td class="remove_print">
+                                                @if (group.IsIndividual)
+                                                {
+                                                    if (m.GuestAthleteId != null && m.HomeAthleteId != null)
+                                                    {
+                                                        <a class="btn btn-sm btn-primary" href="@Url.Action("Toggle", new { id = m.CycleId, isIndividual = group.IsIndividual })"
+                                                           data-ajax-update="#schedules"
+                                                           data-ajax="true">
+                                                            <i href="#" class="glyphicon glyphicon-resize-horizontal"></i>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="btn btn-sm btn-primary" href="@Url.Action("Toggle", new { id = m.CycleId, isIndividual = group.IsIndividual })"
+                                                           data-ajax-update="#schedules"
+                                                           disabled="disabled"
+                                                           data-ajax="true">
+                                                            <i href="#" class="glyphicon glyphicon-resize-horizontal"></i>
+                                                        </a>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (m.HomeTeamId != null && m.GuestTeamId != null)
+                                                    {
+                                                        <a class="btn btn-sm btn-primary" href="@Url.Action("Toggle", new { id = m.CycleId, isIndividual = group.IsIndividual })"
+                                                           data-ajax-update="#schedules"
+                                                           data-ajax="true">
+                                                            <i href="#" class="glyphicon glyphicon-resize-horizontal"></i>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="btn btn-sm btn-primary" href="@Url.Action("Toggle", new { id = m.CycleId, isIndividual = group.IsIndividual })"
+                                                           data-ajax-update="#schedules"
+                                                           disabled="disabled"
+                                                           data-ajax="true">
+                                                            <i href="#" class="glyphicon glyphicon-resize-horizontal"></i>
+                                                        </a>
+                                                    }
+                                                }
+
+                                            </td>
+                                        }
+                                        <td class="text-center guestScore">
+                                            @if (Penalty != null)
+                                            {
+                                                var value = m.GameSets.Sum(x => x.GuestTeamScore) - Penalty.GuestTeamScore;
+                                                <text>@value (@Penalty.GuestTeamScore)</text>
+                                            }
+                                            @if (!ViewBag.IsPenaltySection)
+                                            {
+                                                @m.GuestTeamScore
+                                            }
+                                        </td>
+                                        if (group.IsIndividual)
+                                        {
+                                            Html.RenderPartial("_GuestAthlete", atModel);
+                                        }
+                                        else
+                                        {
+                                            Html.RenderPartial("_GuestTeam", gpModel);
+                                        }
+                                        <td style="min-width: 150px;">@Html.TextAreaFor(@x => m.Remark, new { @class = "form-control remark", id = "Remark", placeholder = @Messages.Remark + " ...", form = "gamefrm" + (m.CycleId), rows = "1", runat = "server", @Name = "Remark" })</td>
+                                        if (games.Any(x => !string.IsNullOrEmpty(x.Note) && !string.Equals(x.Note, "null", StringComparison.OrdinalIgnoreCase)))
+                                        {
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(m.Note) && !string.Equals(m.Note, "null", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                <span id="note" style="float: left; width: 150px; overflow: hidden; height: auto; margin-left: 0px">@m.Note</span>
+                                                }
+                                            </td>
+                                        }
+                                    }
+
+                                    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+                                    {
+                                    <td class="remove_print">
+                                        @if (m.GameTypeId == GameTypeId.Division)
+                                        {
+                                            if (!isReadOnly)
+                                            {
+                                                <a class="btn btn-sm btn-danger"
+                                                   href="@Url.Action("Delete", new { id = m.CycleId })"
+                                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                                   data-ajax-update="#schedules"
+                                                   data-ajax="true"
+                                                   title="@Messages.Delete">
+                                                    <i class="glyphicon glyphicon-trash"></i>
+                                                </a>
+                                            }
+                                        }
+
+                                        <input name="CycleId" type="hidden" value="@m.CycleId" form="gamefrm@(m.CycleId)" />
+                                        <a class="btn btn-sm btn-success"
+                                           name="savebtn"
+                                           id="savebtn_@m.CycleId"
+                                           disabled="disabled"
+                                           onclick="gcList.SubmitGameForm(@m.CycleId)"
+                                           title="@Messages.Save">
+                                            <i class="glyphicon glyphicon-saved"></i>
+                                        </a>
+
+                                        @*@Html.ActionLink(Messages.ToGame, "Edit", "GameCycle", new { id = m.CycleId }, new { @class = "btn btn-sm btn-success" })*@
+                                        @if (!isReadOnly)
+                                        {
+                                            if (group.IsIndividual)
+                                            {
+                                                if (ViewBag.IsTennisLeague == true)
+                                                {
+                                                    if (m.HomeAthleteId != null && m.GuestAthleteId != null)
+                                                    {
+                                                        <a class="btn btn-sm btn-primary edit-tennis" href="@Url.Action("EditTennisLeague", "GameCycle", new {id = m.CycleId, seasonId = Model.SeasonId})"
+                                                           data-toggle="modal"
+                                                           data-referees="@m.RefereeIds"
+                                                           data-target="#editTennisLeague"
+                                                           data-ajax-update="#editTennisLeague_window_pl"
+                                                           data-ajax="true"
+                                                           title="@Messages.ToGame">
+                                                            <i class="glyphicon glyphicon-pencil"></i>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="btn btn-sm btn-primary edit-tennis" href="@Url.Action("EditTennisLeague", "GameCycle", new {id = m.CycleId, seasonId = Model.SeasonId})"
+                                                           disabled="disabled"
+                                                           data-referees="@m.RefereeIds"
+                                                           data-toggle="modal"
+                                                           data-target="#editTennisLeague"
+                                                           data-ajax-update="#editTennisLeague_window_pl"
+                                                           data-ajax="true"
+                                                           title="@Messages.ToGame">
+                                                            <i class="glyphicon glyphicon-pencil"></i>
+                                                        </a>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (m.HomeAthleteId != null && m.GuestAthleteId != null)
+                                                    {
+                                                        <a class="btn btn-sm btn-primary"
+                                                           href="@Url.Action("Edit", "GameCycle", new {id = m.CycleId})"
+                                                           data-toggle="modal"
+                                                           data-target="#edit_game_modal"
+                                                           data-ajax-update="#edit_game_modal_body"
+                                                           data-ajax="true"
+                                                           title="@Messages.ToGame">
+                                                            <i class="glyphicon glyphicon-pencil"></i>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="btn btn-sm btn-primary"
+                                                           href="@Url.Action("Edit", "GameCycle", new {id = m.CycleId})"
+                                                           disabled="disabled"
+                                                           data-toggle="modal"
+                                                           data-target="#edit_game_modal"
+                                                           data-ajax-update="#edit_game_modal_body"
+                                                           data-ajax="true"
+                                                           title="@Messages.ToGame">
+                                                            <i class="glyphicon glyphicon-pencil"></i>
+                                                        </a>
+                                                    }
+                                                }
+
+                                            }
+                                            else
+                                            {
+                                                if (ViewBag.IsTennisLeague == true)
+                                                {
+                                                    if (m.HomeTeamId != null && m.GuestTeamId != null)
+                                                    {
+                                                        if (Model.IsDepartmentLeague)
+                                                        {
+                                                            <a class="btn btn-sm btn-primary edit-tennis" href="@Url.Action("EditTennisLeague", "GameCycle", new {id = m.CycleId, departmentId = Model.DepartmentId})"
+                                                               data-toggle="modal"
+                                                               data-referees=""
+                                                               data-target="#editTennisLeague"
+                                                               data-ajax-update="#editTennisLeague_window_pl"
+                                                               data-ajax="true"
+                                                               title="@Messages.ToGame">
+                                                                <i class="glyphicon glyphicon-pencil"></i>
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a class="btn btn-sm btn-primary edit-tennis" href="@Url.Action("EditTennisLeague", "GameCycle", new {id = m.CycleId, seasonId = Model.SeasonId})"
+                                                               data-toggle="modal"
+                                                               data-referees="@m.RefereeIds"
+                                                               data-target="#editTennisLeague"
+                                                               data-ajax-update="#editTennisLeague_window_pl"
+                                                               data-ajax="true"
+                                                               title="@Messages.ToGame">
+                                                                <i class="glyphicon glyphicon-pencil"></i>
+                                                            </a>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="btn btn-sm btn-primary edit-tennis" href="@Url.Action("EditTennisLeague", "GameCycle", new {id = m.CycleId, seasonId = Model.SeasonId})"
+                                                           disabled="disabled"
+                                                           data-disabled="true"
+                                                           data-toggle="modal"
+                                                           data-referees="@m.RefereeIds"
+                                                           data-target="#editTennisLeague"
+                                                           data-ajax-update="#editTennisLeague_window_pl"
+                                                           data-ajax="true"
+                                                           title="@Messages.ToGame">
+                                                            <i class="glyphicon glyphicon-pencil"></i>
+                                                        </a>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (m.HomeTeamId != null && m.GuestTeamId != null)
+                                                    {
+                                                        if (Model.IsDepartmentLeague)
+                                                        {
+                                                            <a class="btn btn-sm btn-primary"
+                                                               href="@Url.Action("Edit", "GameCycle", new {id = m.CycleId, departmentId = Model.DepartmentId})"
+                                                               data-toggle="modal"
+                                                               data-target="#edit_game_modal"
+                                                               data-ajax-update="#edit_game_modal_body"
+                                                               data-ajax="true"
+                                                               title="@Messages.ToGame">
+                                                                <i class="glyphicon glyphicon-pencil"></i>
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a class="btn btn-sm btn-primary"
+                                                               href="@Url.Action("Edit", "GameCycle", new {id = m.CycleId})"
+                                                               data-toggle="modal"
+                                                               data-target="#edit_game_modal"
+                                                               data-ajax-update="#edit_game_modal_body"
+                                                               data-ajax="true"
+                                                               title="@Messages.ToGame">
+                                                                <i class="glyphicon glyphicon-pencil"></i>
+                                                            </a>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (Model.IsDepartmentLeague)
+                                                        {
+                                                            <a class="btn btn-sm btn-primary"
+                                                               href="@Url.Action("Edit", "GameCycle", new {id = m.CycleId, departmentId = Model.DepartmentId})"
+                                                               disabled="disabled"
+                                                               data-target="#edit_game_modal"
+                                                               data-ajax-update="#edit_game_modal_body"
+                                                               data-ajax="true"
+                                                               title="@Messages.ToGame">
+                                                                <i class="glyphicon glyphicon-pencil"></i>
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a class="btn btn-sm btn-primary"
+                                                               href="@Url.Action("Edit", "GameCycle", new {id = m.CycleId})"
+                                                               disabled="disabled"
+                                                               data-target="#edit_game_modal"
+                                                               data-ajax-update="#edit_game_modal_body"
+                                                               data-ajax="true"
+                                                               title="@Messages.ToGame">
+                                                                <i class="glyphicon glyphicon-pencil"></i>
+                                                            </a>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    </td>
+                                    }
+                                </tr>
+                                }
+                            </tbody>
+
+                        </table>
+                    </div>
+                }
+            }
+        </div>
+    }
+
+}
+
+<div class="modal" role="dialog" id="referees_list_modal">
+    <div class="modal-dialog" role="document" id="referees_list_modal_dialog">
+        <div class="modal-content" id="modal_window_referee">
+
+        </div>
+    </div>
+</div>
+
+@if (ViewBag.IsTennisLeague)
+{
+    <div class="modal fade" id="editTennisLeague" role="dialog">
+        <div class="modal-dialog modal-lg" id="editTennisLeague_window_pl">
+        </div>
+    </div>
+}
+
+<div class="modal" tabindex="-1" role="dialog" id="edit_game_modal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content" id="edit_game_modal_body">
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="~/Scripts/pages/tennisleaguegame.js?ver=3"></script>
+<script type="text/javascript" src="~/Scripts/pages/gameCycleList.js"></script>
+<script>
+    $(document).ready(function() {
+        gcList.documentReady();
+        $('#choice-submit').click(function () {
+            gcList.SubmitScheduleCond('@leagueId', true);
+        });
+
+        if ("@isUnionViewer" === "True") {
+            $('a').attr('disabled', true);
+            $('button').attr('disabled', true);
+            $('.btn').attr('disabled', true);
+            $('.gameCycleItemChbx').attr('disabled', true);
+            $('.dropdown-toggle').attr('disabled', true);
+            $('select').attr('disabled', true);
+            $('.frm-date').attr('disabled', true);
+            $(".export").attr('disabled', false);
+            $(".view").attr('disabled', false);
+            $(".edit-team").attr('disabled', false);
+            $('#export-row > span > div > button').attr('disabled', false);
+            $('input[name="IsAll"]').attr('disabled', true);
+            $('#dateFilterType').attr('disabled', false);
+            $('.gamePublish').attr('disabled', true);
+            $('.stageItemsChbx').attr('disabled', true);
+            $('#export-columns').attr('disabled', false);
+        }
+
+        if ("@ViewBag.IsTennisLeagueReferee" === "True") {
+
+            $('a').attr('disabled', true);
+            $('button').attr('disabled', true);
+            $('.btn').attr('disabled', true);
+            $('.gameCycleItemChbx').attr('disabled', true);
+            $('.dropdown-toggle').attr('disabled', true);
+            $('select').attr('disabled', true);
+            $('.frm-date').attr('disabled', true);
+            $(".export").attr('disabled', false);
+            $(".view").attr('disabled', false);
+            $(".edit-team").attr('disabled', false);
+            $('#export-row > span > div > button').attr('disabled', false);
+            $('input[name="IsAll"]').attr('disabled', true);
+            $('#dateFilterType').attr('disabled', false);
+            $('.gamePublish').attr('disabled', true);
+            $('.stageItemsChbx').attr('disabled', true);
+            $('#export-columns').attr('disabled', false);
+            $("#chrono_btn").attr('disabled', false);
+
+            $(".edit-tennis").each(function (index, elem) {
+                var referees = $(elem).attr("data-referees");
+                if (referees) {
+                    var refereesArray = referees.split(",");
+                    for (var i = 0; i < refereesArray.length; i++) {
+                        if (refereesArray[i].trim() == "@ViewBag.UserId") {
+                            if ($(elem).attr("data-disabled") !== "true") {
+                                $(elem).attr('disabled', false);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        setTimeout(function() {
+
+
+        if ('@isCatchball' == 'False') {
+            $('.spectatorids').multiselect({
+                numberDisplayed: 1,
+                buttonWidth: '130px'
+            });
+        }
+        $("#export-columns").multiselect({
+            includeSelectAllOption: true,
+            buttonText: function(options, select) {
+                return '@Messages.ChooseColumns';
+            },
+            selectAllText: "@Messages.SelectAllPlayers"
+        });
+
+        $('.refereeMainSelect').multiselect({
+            includeSelectAllOption: true,
+            selectAllText: '@Messages.SelectAllPlayers',
+            nonSelectedText: '@Messages.Select',
+            nSelectedText: '@Messages.Selected',
+            allSelectedText: false,
+            onChange: function (option, checked) {
+                var select = $(this)[0].$select[0];
+                var checkboxClickedValue = $(option).val();
+                var stageId = $(select).attr("stageId");
+                var cycleIdsStr = $(select).attr("cycleIds");
+                var cycleIds = JSON.parse("[" + cycleIdsStr + "]");
+                $.ajax({
+                    url: "/Games/UpdateRoundReferees",
+                    type: "POST",
+                    data: {
+                        stageId: stageId,
+                        cycleIds: cycleIds,
+                        refereeId: checkboxClickedValue,
+                        isChecked: checked
+                    },
+                    success: function (data) {
+                        for (var i = 0; i < cycleIds.length; i++) {
+                            $("#refbtn_" + cycleIds[i]).html(data[i]);
+                        }
+                    }
+                });
+            },
+            onSelectAll: function() {
+                var select = $(this)[0].$select[0];
+                var clickedValues = $(select).val();
+                var stageId = $(select).attr("stageId");
+                var cycleIdsStr = $(select).attr("cycleIds");
+                var cycleIds = JSON.parse("[" + cycleIdsStr + "]");
+                    $.ajax({
+                        url: "/Games/UpdateRoundAllReferees",
+                        type: "POST",
+                        data: {
+                            stageId: stageId,
+                            cycleIds: cycleIds,
+                            refereeIds: clickedValues,
+                            isChecked: true
+                        },
+                        success: function (data) {
+                            for (var i = 0; i < cycleIds.length; i++) {
+                                $("#refbtn_" + cycleIds[i]).html(data[i]);
+                            }
+                        }
+                    });
+            },
+            onDeselectAll: function() {
+                var select = $(this)[0].$select[0];
+                var clickedValues = $(select).val();
+                var stageId = $(select).attr("stageId");
+                var cycleIdsStr = $(select).attr("cycleIds");
+                var cycleIds = JSON.parse("[" + cycleIdsStr + "]");
+                    $.ajax({
+                        url: "/Games/UpdateRoundAllReferees",
+                        type: "POST",
+                        data: {
+                            stageId: stageId,
+                            cycleIds: cycleIds,
+                            refereeIds: clickedValues,
+                            isChecked: false
+                        },
+                        success: function (data) {
+                            for (var i = 0; i < cycleIds.length; i++) {
+                                $("#refbtn_" + cycleIds[i]).html(data[i]);
+                            }
+                        }
+                    });
+            },
+
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+        }, 1000);
+
+        $("textarea[name^='Remark']").change(function(data) {
+            var formId = data.target.form.id;
+            var cycleId = formId.replace('gamefrm', '');
+            $("#savebtn_" + cycleId).removeAttr('disabled');
+        });
+    });
+
+    function setAllAuditouriums(stageId, cycleNum) {
+            var auditoriums = $(".publish_" + stageId + "_" + cycleNum).find(".auditoriums");
+            var selectedAuditoriumId = $("#all_auditorium_" + stageId + "_" + cycleNum).val();
+            if (auditoriums.length > 0) {
+                $.ajax({
+                    url: "/Games/SetAllAuditouriums",
+                    type: "POST",
+                    data: {
+                        stageId: stageId,
+                        cycleNum: cycleNum,
+                        auditoriumId: selectedAuditoriumId
+                    },
+                    success: function () {
+                        auditoriums.each(function (index, elem) {
+                            $('option[value="' + selectedAuditoriumId + '"]', elem).prop('selected', true);
+                            //$(elem).multiselect('refresh');
+                        });
+                    }
+                });
+            }
+    }
+
+    function deleteCycle(stageId, cycleNum, leagueId) {
+            var spinner = $("#spinner_" + stageId + "_" + cycleNum + "_" + leagueId);
+            var needDelete = confirm('@Messages.DeleteConfirm');
+            if (needDelete) {
+            $.ajax({
+                    type: "POST",
+                url: '@Url.Action("DeleteCycle", "Schedules")',
+                data: {
+                        stageId: stageId,
+                    cycleNum: cycleNum,
+                    leagueId: leagueId
+                },
+                beforeSend: function() {
+                    $(spinner).show();
+                    },
+                complete: function() {
+                    $(spinner).hide();
+                    },
+                success: function(data) {
+                    $(spinner).hide();
+                    $("#schedules").html(data);
+                    }
+                });
+            }
+        }
+</script>
+<script src="~/Scripts/pages/officialsFeature.js"></script>
+<div class="modal fade" id="barcket-potential-teams" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>

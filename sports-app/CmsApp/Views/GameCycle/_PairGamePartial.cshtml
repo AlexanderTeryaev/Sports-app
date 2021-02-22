@@ -1,0 +1,207 @@
+﻿@model TennisLeagueViewModel
+@{
+    var game = Model.Games.FirstOrDefault(g => g.HomeInformation.PairPlayerId.HasValue || g.GuestInformation.PairPlayerId.HasValue);
+    var gameScores = game?.Sets?.Where(s => s.IsPairScores)?.ToList();
+    var homePlayer1List = new SelectList(Model.HomeTeam.RegisteredPlayersList, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), game?.HomeInformation?.PlayerId);
+    var guestPlayer1List = new SelectList(Model.GuestTeam.RegisteredPlayersList, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), game?.GuestInformation?.PlayerId);
+    var homePlayer2List = new SelectList(Model.HomeTeam.RegisteredPlayersList, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), game?.HomeInformation?.PairPlayerId);
+    var guestPlayer2List = new SelectList(Model.GuestTeam.RegisteredPlayersList, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), game?.GuestInformation?.PairPlayerId);
+
+    bool isHebrew = Request.IsHebrew();
+    string pullLeft = !isHebrew ? "pull-left" : "pull-right";
+    string pullRigth = !isHebrew ? "pull-right" : "pull-left";
+    var gameIndex = Model.GameSettings.NumberOfGames + 1;
+}
+<div class="row bottom-bordered game-row" style="margin-top:10px;" data-set="@(gameIndex)" data-type="pair" id="game_row_@(gameIndex)">
+    <div class="col-lg-3 col-sm-3" id="home_player_@gameIndex">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <label class="control-label">@Messages.Pairs</label>
+                @Html.DropDownList("HomePlayerId", homePlayer1List, Messages.Select, new
+               {
+                   @id = $"homePlayerId_{gameIndex}",
+                   @class = "form-control not-pair-select player-list",
+                   data_team = Model.HomeTeam.TeamId,
+                   data_type = "pair",
+                   data_set = gameIndex
+               })
+                @Html.DropDownList("HomePairPlayerId", homePlayer2List, Messages.Select, new
+           {
+               @id = $"homePairPlayerId_{gameIndex}",
+               @class = "form-control pair-select player-list",
+               data_team = Model.HomeTeam.TeamId,
+               data_type = "pair",
+               data_set = gameIndex
+           })
+            </div>
+        </div>
+        <div class="row" style="margin-top:30px;">
+            <div class="col-lg-12">
+                <label class="checkbox-inline">
+                    @if (game?.GuestInformation?.IsTechnicalWinner == true)
+                    {
+                        @Html.CheckBox("IsTechnicalWinner",game?.HomeInformation?.IsTechnicalWinner ?? false, new
+                   {
+                       @class = "technical_winner",
+                       data_type = "home",
+                       data_set = gameIndex,
+                       id = $"home_tech_winner_{gameIndex}",
+                       disabled = "disabled",
+                       onclick = "tennisGame.setTechWinner(event);"
+                   })
+                    }
+                    else
+                    {
+                        @Html.CheckBox("IsTechnicalWinner",game?.HomeInformation?.IsTechnicalWinner ?? false, new
+                   {
+                       @class = "technical_winner",
+                       data_type = "home",
+                       data_set = gameIndex,
+                       id = $"home_tech_winner_{gameIndex}",
+                       onclick = "tennisGame.setTechWinner(event);"
+                   })
+                    }
+                    @Messages.TechWin
+                </label>
+            </div>
+
+        </div>
+    </div>
+    <div class="col-lg-6 col-sm-6 side-bordered" id="results_@gameIndex">
+        <div class="row">
+            <div class="col-lg-12">
+                @for (int j = 0; j < Model.GameSettings.BestOfSets; j++)
+                {
+                    var currentGame = gameScores?.Any() == true ? gameScores[j] : null;
+                    bool isTieBreak = currentGame == null ? false : currentGame.IsTieBreak;
+                    string isTieBreakComboboxChecked = isTieBreak ? "checked" : "";
+                    bool isBreakTieGame = (Model.GameSettings.BestOfSets == j + 1);
+                    string sm_col_width = "5";
+                    string lg_col_width = "5";
+                    if (isBreakTieGame)
+                    {
+                        sm_col_width = "4";
+                        lg_col_width = "4";
+                    }
+                    <div class="row results-row" style="margin-bottom:10px;">
+                        <div class="col-lg-@(lg_col_width) col-sm-@(sm_col_width) edit_tenis_offset"><input data-set="@(gameIndex)" type="number" min="0" value="@(currentGame?.HomeScore)" id="home_score_game_@(gameIndex)_set_@(j + 1)" class="form-control score-value home-score" /></div>
+                        <div class="col-lg-1 col-sm-1"><text style="font-size:18px;"><b>:</b></text></div>
+                        <div class="col-lg-@(lg_col_width) col-sm-@(sm_col_width)"><input data-set="@(gameIndex)" type="number" min="0" value="@(currentGame?.GuestScore)" id="guest_score_game_@(gameIndex)_set_@(j + 1)" class="form-control score-value guest-score" /></div>
+                        @if (isBreakTieGame)
+                        {
+                            <div class="col-lg-2 col-sm-2" style="padding: 6px 0px;text-align: center;"><input type="checkbox" id="tie_break_id" name="tie_break" value="1" @(isTieBreakComboboxChecked)><label for="tie_break_id">T-B</label></div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="row" style="margin-top:25px;margin-bottom:15px;">
+            <div class="col-lg-12" id="button_div_@gameIndex">
+                @if (game?.IsEnded == true)
+                {
+                    <button type="button" class="btn btn-danger @pullLeft reset-game-btn" name="event-input" data-set="@(gameIndex)" id="reset-game-@(gameIndex)">
+                        @Messages.ResetGame
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-primary @pullLeft end-game-btn" name="event-input" data-set="@(gameIndex)" id="end-game-@(gameIndex)">
+                        @Messages.EndGame
+                    </button>
+                }
+                <button type="button" class="@AppCss.Save save-score-btn @pullRigth" data-set="@(gameIndex)" id="save-score-@(gameIndex)" disabled></button>
+            </div>
+        </div>
+        <div class="row alert alert-warning text-center" id="alert-message-@(gameIndex)">
+            @Messages.TennisLeagueGameSelectPlayers
+        </div>
+    </div>
+    <div class="col-lg-3 col-sm-3" id="guest_player_@(gameIndex)">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <label class="control-label">@Messages.Pairs</label>
+                @Html.DropDownList("GuestPlayerId", guestPlayer1List, Messages.Select, new
+                {
+                   @id = $"guestPlayerId_{gameIndex}",
+                   @class = "form-control not-pair-select player-list",
+                   data_team = Model.GuestTeam.TeamId,
+                   data_type = "pair",
+                   data_set = gameIndex
+                })
+                @Html.DropDownList("GuestPairPlayerId", guestPlayer2List,Messages.Select, new
+                {
+                   @id = $"guestPairPlayerId_{gameIndex}",
+                   @class = "form-control pair-select player-list",
+                   data_team = Model.GuestTeam.TeamId,
+                   data_type = "pair",
+                   data_set = gameIndex
+                })
+            </div>
+        </div>
+        <div class="row" style="margin-top:30px;">
+            <div class="col-lg-12">
+                <label class="checkbox-inline">
+                    @if (game?.HomeInformation?.IsTechnicalWinner == true)
+                    {
+                        @Html.CheckBox("IsTechnicalWinner",game?.GuestInformation?.IsTechnicalWinner ?? false, new
+                   {
+                       @class = "technical_winner",
+                       data_type = "guest",
+                       data_set = gameIndex,
+                       id = $"guest_tech_winner_{gameIndex}",
+                       disabled = "disabled",
+                       onclick = "tennisGame.setTechWinner(event);"
+
+                   })
+
+                    }
+                    else
+                    {
+                        @Html.CheckBox("IsTechnicalWinner",game?.GuestInformation?.IsTechnicalWinner ?? false, new
+                   {
+                       @class = "technical_winner",
+                       data_type = "guest",
+                       data_set = gameIndex,
+                       id = $"guest_tech_winner_{gameIndex}",
+                       onclick = "tennisGame.setTechWinner(event);"
+                   })
+                    }
+                    @Messages.TechWin
+                </label>
+            </div>
+        </div>
+    </div>
+    <script>
+            var frm = $("#" + "game_row_@(gameIndex)");
+            function setUniqueValuesForTwoSelections(frm, selectId1, selectId2) {
+                var currentFirstVal = $("#" + selectId1, frm).find(":selected").val();
+                var currentSecondVal = $("#" + selectId2, frm).find(":selected").val();
+                if (currentFirstVal) {
+                    $("#" + selectId2, frm).find("[value='" + currentFirstVal + "']").attr("disabled", "disabled").siblings().removeAttr("disabled");
+                }
+                if (currentSecondVal) {
+                    $("#" + selectId1, frm).find("[value='" + currentSecondVal + "']").attr("disabled", "disabled").siblings().removeAttr("disabled");
+                }
+
+                $("#" + selectId1, frm).on('change', function () {
+                    var selectId1SelectedVal = $(this).find(":selected").val();
+                    if (selectId1SelectedVal) {
+                        $("#" + selectId2, frm).find("[value='" + selectId1SelectedVal + "']").attr("disabled", "disabled").siblings().removeAttr("disabled");
+                    } else {
+                        $("#" + selectId2, frm).find("[value='" + selectId1SelectedVal + "']").removeAttr("disabled").siblings().removeAttr("disabled");
+                    }
+                });
+                $("#" + selectId2, frm).on('change', function () {
+                    var selectId2SelectedVal = $(this).find(":selected").val();
+                    if (selectId2SelectedVal) {
+                        $("#" + selectId1, frm).find("[value='" + selectId2SelectedVal + "']").attr("disabled", "disabled").siblings().removeAttr("disabled");
+                    } else {
+                        $("#" + selectId1, frm).find("[value='" + selectId2SelectedVal + "']").removeAttr("disabled").siblings().removeAttr("disabled");
+                    }
+                });
+            }
+            setUniqueValuesForTwoSelections(frm, "homePlayerId_@(gameIndex)", "homePairPlayerId_@(gameIndex)");
+            setUniqueValuesForTwoSelections(frm, "guestPlayerId_@(gameIndex)", "guestPairPlayerId_@(gameIndex)");
+    </script>
+</div>
+

@@ -1,0 +1,52 @@
+﻿@model IEnumerable<AppModel.TennisGroup>
+
+<div class="row offset-2">
+    <div class="col-sm-6">
+        @if (ViewBag.IsDepartmentLeague)
+        {
+            <a href="@Url.Action("CreateTennisStage", "Stages", new { leagueId = ViewBag.LeagueId, id = ViewBag.CategoryId, seasonId = ViewBag.SeasonId, departmentId = ViewBag.DepartmentId })"
+               class="btn btn-primary"
+               data-ajax-update="#stages"
+               data-ajax-method="POST"
+               data-ajax-begin="this.style.visibility='hidden'"
+               data-ajax-success="this.style.visibility='visible'"
+               data-ajax="true">@Messages.AddStage</a>
+        }
+        else
+        {
+            <a href="@Url.Action("CreateTennisStage", "Stages", new { leagueId = ViewBag.LeagueId, id = ViewBag.CategoryId, seasonId = ViewBag.SeasonId })"
+               class="btn btn-primary"
+               data-ajax-update="#stages"
+               data-ajax-method="POST"
+               data-ajax-begin="this.style.visibility='hidden'"
+               data-ajax-success="this.style.visibility='visible'"
+               data-ajax="true">@Messages.AddStage</a>
+        }
+
+    </div>
+</div>
+
+
+<div class="row offset-2">
+    <div id="stages" class="col-sm-6">
+        @Html.Action("TennisIndex", "Stages", new {leagueId = ViewBag.LeagueId, id = ViewBag.CategoryId, seasonId = ViewBag.SeasonId})
+    </div>
+</div>
+
+<div class="row">
+    <div id="groupslist" class="col-sm-12">
+        @Html.Action("TennisIndex", "Groups", new {id = ViewBag.CategoryId, seasonId = ViewBag.SeasonId})
+    </div>
+</div>
+
+<div class="modal fade" id="groupsedit" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content"></div>
+    </div>
+</div>
+<script>
+    function activateTab(tab) {
+        $('.nav-tabs a[href="#' + tab + '"]').tab('show');
+        window.location.reload();
+    };
+</script>

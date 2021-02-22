@@ -1,0 +1,43 @@
+﻿@using (Html.BeginForm("ImportInitialApprovalDate", null, FormMethod.Post,
+                    new
+                    {
+                        id = "frmImportSportsmen",
+                        enctype = "multipart/form-data"
+                    }))
+{
+    <div class="row" style="margin-top:50px;">
+        <input type="file" id="file-import-from-excel" name="file" />
+    </div>
+    <div class="row" style="margin-top:15px;">
+        <button type="submit">Submit import form</button>
+    </div>
+
+    <div id="loading" style="display:none; margin-top: 20px;">
+        LOADING... <span class="fa fa-spin fa-spinner"></span>
+    </div>
+}
+
+<script>
+    window.addEventListener("submit", function (e) {
+        var form = e.target;
+        if (form.getAttribute("enctype") === "multipart/form-data") {
+            if (form.dataset.ajax) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var xhr = new XMLHttpRequest();
+                xhr.open(form.method, form.action);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        if (form.dataset.ajaxUpdate) {
+                            var updateTarget = document.querySelector(form.dataset.ajaxUpdate);
+                            if (updateTarget) {
+                                updateTarget.innerHTML = xhr.responseText;
+                            }
+                        }
+                    }
+                };
+                xhr.send(new FormData(form));
+            }
+        }
+    }, true);
+</script>

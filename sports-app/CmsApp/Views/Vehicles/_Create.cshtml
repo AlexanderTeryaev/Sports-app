@@ -1,0 +1,105 @@
+﻿@model VehicleModel
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+    <h4 class="modal-title">@Messages.CreateNewVehicle</h4>
+</div>
+@using (Ajax.BeginForm("Create", "Vehicles", new { unionId = Model.UnionId, seasonId = Model.SeasonId, },
+    new AjaxOptions { HttpMethod = "POST" }, new { id = "createvehicleform", autocomplete = "off" }))
+{
+    @Html.HiddenFor(m => m.UnionId, new { form = "createvehicleform" })
+    @Html.HiddenFor(m => m.SeasonId, new { form = "createvehicleform" })
+    @Html.HiddenFor(m => m.VehicleId, new { form = "createvehicleform" })
+
+    <div class="modal-body">
+        <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#driverDetails">@Messages.DriverDetails</a></li>
+            <li><a data-toggle="tab" href="#vehicleLicense">@Messages.VehicleLicense</a></li>
+            <li><a data-toggle="tab" href="#vehicleDetails">@Messages.VehicleDetails</a></li>
+            <li><a data-toggle="tab" href="#engineDetail">@Messages.EngineDetail</a></li>
+        </ul>
+        <div class="tab-content row offset-3">
+            <div class="tab-pane active in fade" id="driverDetails">
+                <div class="col-sm-12" id="driverDetailsMainDiv">
+                    @{Html.RenderPartial("_DriverDetails", Model);}
+                </div>
+            </div>
+            <div class="tab-pane in fade" id="vehicleLicense">
+                <div class="col-sm-12">
+                    @{Html.RenderPartial("_VehicleLicense", Model);}
+                </div>
+            </div>
+            <div class="tab-pane in fade" id="vehicleDetails">
+                <div class="col-sm-12">
+                    @{Html.RenderPartial("_VehicleDetails", Model);}
+                </div>
+            </div>
+            <div class="tab-pane in fade" id="engineDetail">
+                <div class="col-sm-12">
+                    @{Html.RenderPartial("_EngineDetails", Model);}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-primary" id="saveVehiclebtn">@Messages.Save</a>
+        <a class="btn btn-danger" data-dismiss="modal">@Messages.Close</a>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        $(".veh-date-short").datetimepicker({
+            format: 'd/m/Y',
+            timepicker: false,
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+
+        $(".veh-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+            step: 15,
+            closeOnDateSelect: false,
+            onChangeDateTime: function () {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            },
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+    })
+
+    $("#saveVehiclebtn").click(function () {
+        $.ajax({
+            url: "/Vehicles/Create",
+            type: "POST",
+            data: $("#createvehicleform").serialize(),
+            success: function (data) {
+                if (data.Success == true) {
+                    $("#createNewVehicleModal").modal("hide");
+                    $.ajax({
+                        url: "/Vehicles/List",
+                        type: "POST",
+                        data: {
+                            id: $("#UnionId").val(),
+                            seasonId: $("#SeasonId").val()
+                        },
+                        success: function (list) {
+                            $("#vehicles_List").html(list);
+                        }
+                    })
+                }
+                else {
+                    $("#createNewVehicleModal_pl").html(data);
+                }
+            }
+
+        })
+    });
+</script>
+
+
+

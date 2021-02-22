@@ -1,0 +1,459 @@
+﻿/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding: 15px;
+    width: 940px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+.desktop-only {
+    display: unset;
+}
+
+.modal-sm {
+    max-width: 400px;
+}
+
+.table {
+    margin-bottom: 5px;
+}
+
+.tableRank {
+    width: 940px;
+}
+
+.playOff {
+    padding-left: 30px;
+    vertical-align: central;
+}
+
+.main-title {
+    color: #333333;
+    font-size: 14px;
+}
+
+.disciplines-title {
+    -webkit-print-color-adjust: exact;
+    text-align: center;
+    color: #000080;
+}
+
+.table-bordered tr:first-child {
+    font-weight: bold;
+}
+
+.modal-body .table-bordered tr:first-child {
+    font-weight: normal;
+}
+
+.table-bordered tr:first-child a {
+    color: #ce0058;
+}
+
+#waterpolo-basketball tr:first-child a {
+    color: #01559e;
+}
+
+#waterpolo-basketball .table-bordered > thead tr:nth-child(odd) {
+    background-color: #01559e;
+    border-color: #01559e;
+}
+
+h3.main-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 0px;
+    margin-top: 0px;
+}
+
+.btn.main-btn, .btn.main-btn:hover {
+    background-color: #ce0058;
+    height: 22px;
+    line-height: 11px;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+
+.res-table tbody tr td {
+    font-size: 14px;
+    vertical-align: middle;
+    line-height: 30px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border: none;
+}
+
+a {
+    color: #333333;
+}
+
+
+.res-table tbody .img-circle {
+    width: 30px;
+    height: 30px;
+}
+
+.res-table .result {
+    color: #5C5C5C;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.league-table-rank thead {
+    background-color: #fcfcfc;
+}
+
+.league-table-rank tbody tr:hover {
+    background-color: #fddecf;
+}
+
+.rank-team-logo img {
+    width: 30px;
+    height: 30px;
+    margin-left: 20px;
+}
+
+footer .bot-title {
+    margin-top: 2px;
+    margin-right: 3px;
+    font-style: italic;
+    font-weight: bold;
+}
+
+footer .bot-logo {
+    width: 70px;
+}
+
+.res-table .res-stat .label {
+    display: block;
+    font-size: 14px;
+    font-weight: normal;
+    padding-top: 6.25px;
+    height: 22px;
+    line-height: 11px;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.res-table .res-stat .label-danger {
+    background: red;
+}
+
+
+.logo {
+    width: 50px;
+    height: 50px;
+}
+
+.res-table tr {
+    background: #ffffff;
+}
+
+
+.res-table tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+.res-table tr:nth-child(even) {
+    background: #f6f6f6;
+}
+
+.table-bordered > thead > tr > th {
+    border: none !important;
+}
+
+
+.res-table tr.chosen_result {
+    background: #d9edf7;
+    font-weight: bold;
+    border: solid 2px rgb(128, 128, 128);
+}
+
+
+.table-bordered > tbody > tr > td {
+    line-height: 30px;
+    height: 30px;
+    border: none !important;
+}
+
+.table-bordered {
+    border: none !important;
+}
+
+    .table-bordered > thead > tr > th {
+    }
+
+
+    .table-bordered > thead tr:nth-child(odd) {
+        background: #ce0058;
+        color: white;
+    }
+
+    .table-bordered tr {
+        background: #ffffff;
+    }
+
+        .table-bordered tr:nth-child(odd) {
+            background: #ffffff;
+        }
+
+        .table-bordered tr:nth-child(even) {
+            background: #f6f6f6;
+        }
+
+h2.main-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.flip-to-ltr {
+    direction: ltr;
+}
+
+.white_arrow > thead tr > .tablesorter-header[aria-sort="descending"]:not([colspan]) {
+    background-image: url("../Content/img/white-desc.gif");
+    background-repeat: no-repeat;
+    background-position: center right;
+    white-space: normal;
+    cursor: pointer;
+    padding-left: 2px;
+    padding-right: 2px;
+} .white_arrow > thead tr > .tablesorter-header[aria-sort="ascending"] {
+    background-image: url("../Content/img/white-asc.gif");
+    background-repeat: no-repeat;
+    background-position: center right;
+    white-space: normal;
+    cursor: pointer;
+    padding-left: 2px;
+    padding-right: 2px;
+} .black_arrow > thead tr > .tablesorter-header[aria-sort="descending"] {
+    background-image: url("../Content/img/black-desc.gif");
+    background-repeat: no-repeat;
+    background-position: center right;
+    white-space: normal;
+    cursor: pointer;
+    padding-left: 2px;
+    padding-right: 2px;
+} .black_arrow > thead tr > .tablesorter-header[aria-sort="ascending"] {
+    background-image: url("../Content/img/black-asc.gif");
+    background-repeat: no-repeat;
+    background-position: center right;
+    white-space: normal;
+    cursor: pointer;
+    padding-left: 2px;
+    padding-right: 2px;
+} .white_arrow > thead tr > .tablesorter-header[aria-sort="none"] {
+    background-image: url("../Content/img/white-unsorted.gif");
+    background-repeat: no-repeat;
+    background-position: center right;
+    white-space: normal;
+    cursor: pointer;
+    padding-left: 2px;
+    padding-right: 2px;
+} .black_arrow > thead tr > .tablesorter-header[aria-sort="none"] {
+    background-image: url("../Content/img/black-unsorted.gif");
+    background-repeat: no-repeat;
+    background-position: center right;
+    white-space: normal;
+    cursor: pointer;
+    padding-left: 2px;
+    padding-right: 2px;
+} 
+  
+.table.table.extendedTable {
+    text-align: right;
+    direction: ltr;
+    width: 940px;
+    display: none;
+} @media only screen and (max-width: 800px) {
+    .desktop-only {
+        display: none;
+    }
+} @media only screen and (orientation: landscape) and (max-height: 800px) {
+    .desktop-only {
+        display: none;
+    }
+} @media (min-width: 768px) {
+    .container {
+        max-width: none;
+    }
+} #stage0 {
+    float: left;
+    margin-top: 15px;
+} .text-success h4 {
+    font-weight: bold;
+    color: #4b87cc;
+} .label-success {
+    background-color: #4b87cc;
+} .btn-arena {
+    padding-left: 3px;
+    padding-right: 3px;
+} td h4 {
+    font-size: 14px;
+} @media print {
+    h4, .res-table .result {
+        font-size: small;
+    }
+    .disciplines-title,h1,h2,h3 {
+        -webkit-print-color-adjust: exact !important;
+    }
+} @media print and (color) {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+} @media only screen and (max-width: 850px) {
+    .body-content, .tableRank, .col-sm-12, .table.table.extendedTable {
+        width: 100% !important;
+        margin: 0px;
+        padding: 2px;
+    }
+} @media only screen and (max-width: 850px) {
+    .res-table tr, .res-table .result, .text-success h4, .table, .table res-table {
+        max-width: 100% !important;
+        font-size: 11px;
+        -webkit-overflow-scrolling: touch !important;
+
+    }
+    .table-responsive .table {
+        display: inline;
+    }
+} @media only screen and (max-width: 768px) {
+    .modal-content {
+        -webkit-overflow-scrolling: touch !important;
+         max-width: none;
+
+    }
+    .table-responsive {
+       white-space: nowrap;
+	   overflow-y: hidden;
+	   overflow-x: scroll;
+	   -webkit-overflow-scrolling: touch;
+    }
+    .body-content {
+       -webkit-overflow-scrolling: touch !important; 
+    }
+    .modal-body {
+        padding:0px;
+    }
+} @media only screen and (max-width: 850px) {
+    .res-table tbody tr td, .res-table .res-stat .label, .res-table tbody tr td a, .table-bordered > tbody > tr > td {
+        font-size: 11px;
+        padding-left: 3px;
+        padding-right: 3px;
+        line-height: 15px;
+        text-align: center;
+               -webkit-overflow-scrolling: touch !important; 
+
+    }
+}
+/* @media only screen and (max-width: 850px) {
+    .res-table .res-stat .label, .container-brackets, .brackets-header {
+        display: none;
+    }
+} */
+@media only screen and (max-width: 850px) {
+    .container-fluid .row {
+        margin-right: 0px !important;
+    }
+} @media only screen and (max-width: 850px) {
+    h3.main-title, h2.main-title {
+        margin-top: 3px;
+        padding-right: 10px;
+        padding-left: 10px;
+        font-size: 16px;
+        margin-bottom: 3px;
+    }
+} @media only screen and (max-width: 850px) {
+    .logo {
+        width: 40px;
+        height: 40px;
+    }
+} @media only screen and (max-width: 850px) {
+    .row {
+        padding-left: 0px;
+        padding-right: 0px;
+        width: 100%;
+        margin: 0px;
+    }
+} @media only screen and (max-width: 850px) {
+    .btn-info {
+        display: none;
+    }
+} @media only screen and (max-width: 850px) {
+    .res-table .result {
+        font-size: 14px;
+    }
+} @media only screen and (max-width: 850px) {
+    h4 {
+        font-size: 14px;
+        margin: 5px;
+    }
+} @media only screen and (max-width: 850px) {
+    .res-table tbody tr td.res-stat, .btn-group, .rank-team-logo img {
+        display: none;
+    }
+} @media only screen and (max-width: 850px) {
+    .playOff {
+        padding: 0px;
+    }
+} @media only screen and (max-width: 850px) {
+    .res-table tbody .img-circle {
+        width: 25px;
+        height: 25px;
+    }
+} @media only screen and (max-width: 850px) {
+    .table thead:first-child tr:first-child th {
+        text-align: center;
+    }
+} @media only screen and (max-width: 850px) {
+    .main-title {
+        font-size: 11px;
+    }
+} .circle {
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    display: inline-block;
+} .red {
+    background-color: red;
+} .navbar-top .flags {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    width: 150px;
+    height: 32px;
+} .flags a {
+    width: 32px;
+    height: 32px;
+    float: left;
+    margin-right: 10px;
+} .flags a.ua {
+    background: url(../Content/img/ua.png) no-repeat 0 0;
+} .flags a.he {
+        background: url(../Content/img/he.png) no-repeat 0 0;
+    } .flags a.en {
+        background: url(../Content/img/en.png) no-repeat 0 0;
+    } .flags a.he {
+        background: url(../Content/img/he.png) no-repeat 0 0;
+    } .flags a.en {
+        background: url(../Content/img/en.png) no-repeat 0 0;
+    } @media print {
+ th, h3, h1 {color: #000080 !important;} 
+ .res-table tr {border-bottom: solid 1px rgb(128, 128, 128);}   
+   }

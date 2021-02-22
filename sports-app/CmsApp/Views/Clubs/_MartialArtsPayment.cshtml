@@ -1,0 +1,190 @@
+﻿@model ICollection<AppModel.ClubPayment>
+<style>
+    .glyphicon:hover {
+        cursor: pointer;
+    }
+
+    .delete-payment:hover {
+        color: red;
+    }
+
+    .update-payment:hover {
+        color: green;
+    }
+</style>
+<table class="table table-striped" id="clubPaymentTable">
+    <thead>
+        <tr>
+            <th class="col-sm-4">@Messages.Paid</th>
+            <th class="col-sm-6">@Messages.Date</th>
+            @if (ViewBag.HasPermission == true)
+            {
+                <th class="col-sm-2"></th>
+            }
+        </tr>
+    </thead>
+    <tbody id="clubPaymentTableBody">
+        @foreach (var payment in Model)
+        {
+            <tr id="tr_payment_@payment.Id">
+                <td>
+                    @if (ViewBag.HasPermission == true)
+                    {
+                        @Html.TextBoxFor(m => payment.Paid, new { @class = "form-control", type = "number", min = "0", step = "1" })
+                    }
+                    else
+                    {
+                        @Html.DisplayTextFor(m => payment.Paid)
+                    }
+                </td>
+                <td>
+                    @if (ViewBag.HasPermission == true)
+                    {
+                        @Html.TextBoxFor(m => payment.DateOfPayment, new { @class = "form-control frm-date" })
+                    }
+                    else
+                    {
+                        <text>@payment.DateOfPayment.ToString(Messages.DateFormat)</text>
+                    }
+                </td>
+                @if (ViewBag.HasPermission == true)
+                {
+                    <td>
+                        <a onclick="updatePayment(this)" class="glyphicon glyphicon-saved update-payment" data-id="@payment.Id"></a>&nbsp;
+                        <a onclick="deletePayment(this)" class="glyphicon glyphicon-trash delete-payment" data-id="@payment.Id"></a>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+    @if (ViewBag.HasPermission == true)
+    {
+        <tfoot>
+            <tr>
+                <td>
+                    @Html.TextBox("Paid", string.Empty, new { @class = "form-control", type = "number", min = "0", step = "1" })
+                </td>
+                <td>
+                    @Html.TextBox("DateOfPayment", string.Empty, new { @class = "form-control frm-date" })
+                </td>
+                <td colspan="2">
+                    <a onclick="createNewPayment(this)" id="createNewPayment" class="btn btn-default">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </a>
+                </td>
+            </tr>
+        </tfoot>
+    }
+</table>
+
+<script>
+    function loadPicker() {
+        $(".frm-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+            step: 15,
+            closeOnDateSelect: false,
+            onChangeDateTime: function () {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            },
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+    }
+
+    $(document).ready(function () {
+        loadPicker();
+    })
+
+    function addRowToTable(paid, dateOfPayment, id) {
+        var tr = "";
+
+        tr += "<tr id='tr_payment_" + id + "'>";
+        tr += "<td>";
+        tr += '<input class="form-control"  data-val-required="Required" id="payment_Paid" min="0" name="payment.Paid" step="1" type="number" value="' + paid + '" autocomplete="off">';
+        tr += "</td>";
+        tr += "<td>";
+        tr += '<input class="form-control frm-date" data-val="true" data-val-date="The field DateOfPayment must be a date." data-val-required="Required" id="payment_DateOfPayment" name="payment.DateOfPayment" type="text" value="' + dateOfPayment + '" autocomplete="off"';
+        tr += "</td>";
+        tr += "<td>";
+        tr += '<a onclick="updatePayment(this)" class="glyphicon glyphicon-saved update-payment" data-id="' + id + '"></a>&nbsp;&nbsp;';
+        tr += '<a onclick="deletePayment(this)" class="glyphicon glyphicon-trash delete-payment" data-id="' + id + '"></a>';
+        tr += "</td>";
+        tr += "</tr>";
+
+        return tr;
+    }
+
+    function createNewPayment(event) {
+            var tr = $(event).closest("tr");
+            var paid = tr.find("#Paid");
+            var dateOfPayment = tr.find("#DateOfPayment");
+            if (paid && dateOfPayment) {
+                $.ajax({
+                    url: "@Url.Action("CreateNewClubPayment","Clubs")",
+                    type: "POST",
+                    data: {
+                        clubId: "@ViewBag.ClubId",
+                        paid: paid.val(),
+                        dateOfPayment: dateOfPayment.val()
+                    },
+                    success: function (data) {
+                        if (data.Success == true) {
+                            var row = addRowToTable(paid.val(), dateOfPayment.val(), data.Id);
+                            $("#clubPaymentTableBody").append(row);
+                            loadPicker();
+                            paid.val(" ");
+                            dateOfPayment.val(" ");
+                        }
+                    }
+                });
+            }
+            else {
+                alert("@Messages.AllFieldsAreRequired");
+            }
+
+     }
+
+    function deletePayment(event) {
+        var confirmedToDelete = confirm("@Messages.DeleteConfirm");
+            var id = $(event).attr("data-id");
+            if (confirmedToDelete) {
+                $.ajax({
+                    url: "@Url.Action("DeleteNewClubPayment", "Clubs")",
+                    type: "POST",
+                    data: {
+                        id: id
+                    },
+                    success: function (data) {
+                        if (data.Success == true) {
+                            $("#tr_payment_" + id).remove();
+                        }
+                    }
+                })
+            }
+    }
+
+    function updatePayment (event) {
+        var id = $(event).attr("data-id");
+            var tr = $("#tr_payment_" + id);
+            var paid = $(tr).find("#payment_Paid").val();
+            var dateOfPayment = $(tr).find("#payment_DateOfPayment").val();
+            if (paid && dateOfPayment) {
+                $.ajax({
+                    url: "@Url.Action("UpdateClubPayment", "Clubs")",
+                    type: "POST",
+                    data: {
+                        id: id,
+                        clubId: "@ViewBag.ClubId",
+                        paid: paid,
+                        dateOfPayment: dateOfPayment
+                    }
+                });
+            }
+            else {
+                alert("@Messages.AllFieldsAreRequired");
+            }
+        }
+</script>

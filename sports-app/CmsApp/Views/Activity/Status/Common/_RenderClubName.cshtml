@@ -1,0 +1,5 @@
+﻿@model ActivityRegistrationItem
+
+<td data-search="@(Model.Club?.Replace("\"", "{QUOTE}").Trim() ?? string.Empty)" style="font-weight: bold;">
+    @Model.Club
+</td>

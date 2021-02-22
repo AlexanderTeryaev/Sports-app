@@ -1,0 +1,381 @@
+﻿@model ClubsViewModel
+<link href="~/Content/css/jquery.timesetter.css" rel="stylesheet" />
+<script src="~/Content/js/jquery.timesetter.js"></script>
+<script src="~/Scripts/jquery.tablesorter.min.js"></script>
+<link href="~/Content/css/tablesorter.css" rel="stylesheet" />
+@{
+    var arenas = new SelectList(ViewBag.Auditoriums, "AuditoriumId", "Name");
+    bool isHebrew = Request.IsHebrew();
+}
+<div class="tab-pane fade col-sm-12 offset-2 active in" id="sections_pl">
+    <div class="row">
+        <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6" style="border: 0.5px dotted">
+            <div class="form-inline" style="margin-top:20px;margin-left:6px">
+                <label for="clubArenas">@Messages.Choose @UIHelpers.GetAuditoriumCaption(ViewBag.Section):</label>
+                @Html.DropDownList("clubArenas", arenas, Messages.Select, new { @class = "form-control", @style = "width:55%" })
+                <label id="errorMessage" style="color:red;font-size: 12px;font-weight: normal;"></label>
+            </div>
+            <div style="margin-top:25px;margin-left:6px">
+                <label for="trainingDays">@Messages.TrainingDays:</label>
+                <br />
+                <div class="form-inline" id="trainingDays">
+                    <div class="radio-input" @*id="trainingDays"*@>
+                        @Html.RadioButtonFor(model => model.TrainingDay, "Sunday", new { @class = "radiobtnTrainingDays", @checked = "checked" })@Messages.Sunday
+                        @Html.RadioButtonFor(model => model.TrainingDay, "Monday", new { @class = "radiobtnTrainingDays" })@Messages.Monday
+                        @Html.RadioButtonFor(model => model.TrainingDay, "Tuesday", new { @class = "radiobtnTrainingDays" })@Messages.Tuesday
+                        @Html.RadioButtonFor(model => model.TrainingDay, "Wednesday", new { @class = "radiobtnTrainingDays" })@Messages.Wednesday
+                        @Html.RadioButtonFor(model => model.TrainingDay, "Thursday", new { @class = "radiobtnTrainingDays" })@Messages.Thursday
+                        @Html.RadioButtonFor(model => model.TrainingDay, "Friday", new { @class = "radiobtnTrainingDays" })@Messages.Friday
+                        @Html.RadioButtonFor(model => model.TrainingDay, "Saturday", new { @class = "radiobtnTrainingDays" })@Messages.Saturday
+                    </div>
+                </div>
+            </div>
+            <div class="row" style="margin-top:50px; margin-right:8px; margin-left:8px;">
+                <form class="form-inline">
+                    <div class="form-group">
+                        <label for="hdnStartTime" class="">@Messages.StartTime:</label>
+                        <div class="">
+                            @Html.HiddenFor(model => model.StartTime, new { data_format = "HH:mm ", id = "hdnStartTime" })
+                            <div class="StartingTime"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="hdnEndTime">@Messages.EndTime:</label>
+                        <div class="">
+                            @Html.HiddenFor(model => model.EndTime, new { data_format = "HH:mm", id = "hdnEndTime" })
+                            <div class="EndTime"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <hr />
+            <div class="form-inline" style="margin-left:6px">
+                <button id="saveTrainingDayBtn" class="btn btn-primary">@Messages.Save</button>
+            </div>
+            <hr />
+            <div style="margin-top:10px;margin-bottom:20px">
+                <table class="tablesorter table table-bordered" id="trainingDaysTable">
+                    <thead>
+                        <tr>
+                            <th class="header">&nbsp;&nbsp;&nbsp;@UIHelpers.GetAuditoriumCaption(ViewBag.Section)<br /></th>
+                            <th class="sorter-weekday">&nbsp;&nbsp;&nbsp;@Messages.TrainingDays<br /></th>
+                            <th class="header">&nbsp;&nbsp;&nbsp;@Messages.StartTime<br /></th>
+                            <th class="header">&nbsp;&nbsp;&nbsp;@Messages.EndTime<br /></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var day in Model.ClubTrainingDays)
+                        {
+                            <tr id="training_@day.Id">
+                                <td>@day.Auditorium</td>
+                                <td>@day.TrainingDay</td>
+                                <td>@day.TrainingStartTime</td>
+                                <td>@day.TrainingEndTime</td>
+                                <td align="center"><button class="btn" onclick="deleteTrainingDay(@day.Id)">@Messages.Delete</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <td><b>@Messages.Teams</b></td>
+                        <td align="center">
+                            @Html.CheckBox("blockAllTeams", (bool)ViewBag.IsAllBlocked, new { onclick = "blockAllTeams()" })
+                        </td>
+                    </tr>
+                </thead>
+                <tbody id="sortTbody">
+                    @foreach (var team in Model.ClubTrainings)
+                    {
+                        <tr class="ui-sortable-handle" data-id="@team.TeamId" name="@team.TeamPosition">
+                            <td>
+                                @team.TeamTitle
+                            </td>
+                            <td align="center">
+                                @Html.CheckBox($"block_{team.TeamId}", team.IsBlocked, new { @class = "blockCheckdoxes", @onclick = $"blockTeam({team.TeamId})" })
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="row col-md-8" style="margin-top:50px">
+            <div class="col-md-3">
+                @Html.LabelFor(m => m.StartDate, Messages.StartDate):
+                @Html.TextBoxFor(m => m.StartDate, new { @class = "form-control date-time-generate" })
+            </div>
+            <div class="col-md-3">
+                @Html.LabelFor(m => m.EndDate, Messages.EndDate):
+                @Html.TextBoxFor(m => m.EndDate, new { @class = "form-control date-time-generate" })
+            </div>
+            <div class="col-md-2">
+                <br />
+                <button id="generateBtn" onclick="generateTraining()" class="btn btn-primary">@Messages.Generate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.HiddenFor(m => m.ClubId, new { id = "clubIdHidden" })
+@Html.HiddenFor(m => m.SeasonId, new { id = "seasonIdHidden" })
+<script>
+    $(function () {
+        $.tablesorter.addParser({
+            id: 'weekdays',
+            is: function (s) {
+                return false;
+            },
+            format: function (s) {
+                return s.toLowerCase().replace(/sunday/, 0).replace(/monday/, 1).replace(/tuesday/, 2)
+                    .replace(/wednesday/, 3).replace(/thursday/, 4).replace(/friday/, 5).replace(/saturday/, 6);
+            },
+            type: 'numeric'
+        });
+        $("#trainingDaysTable").tablesorter({
+            headers: {
+                1: {
+                    sorter: 'weekdays'
+                }
+            }
+        });
+    });
+
+    $(document).ready(function () {
+        if ("@isHebrew" == "True") {
+            $("#trainingDays").attr('class', 'pull-right');
+        }
+         $(".nav-tabs a").click(function () {
+            $(this).tab('show');
+        });
+        if ('@(TempData["ShowTrainings"])' == 'True') {
+            $("#clubTrainingTab").tab('show');
+            $("#clubTrainings")[0].className = "tab-pane fade col-lg-12 offset-2";
+            setTimeout(function () {
+                $("#clubTrainings")[0].className = "tab-pane fade col-lg-12 offset-2";
+            }, 500);
+        }
+    })
+    $("#selectAll").change(function () {
+        $(".blockCheckdoxes").prop('checked', $(this).prop("checked"));
+    });
+
+    function blockTeam (teamId) {
+        var teamId = teamId;
+        var blockValue = $("#block_" + teamId).is(':checked');
+        var clubId = $("#clubIdHidden").val();
+        var seasonId = $("#seasonIdHidden").val();
+
+        $.ajax({
+            url: "@Url.Action("UpdateIsBlockedValue", "Clubs")",
+            type: "POST",
+            data: {
+                clubId: clubId,
+                seasonId: seasonId,
+                teamId: teamId,
+                isBlockedValue: blockValue
+            }
+        })
+    }
+
+    function blockAllTeams () {
+        var clubId = $("#clubIdHidden").val();
+        var seasonId = $("#seasonIdHidden").val();
+        var blockValue = $("#blockAllTeams").is(':checked');
+        $.ajax({
+            url: "@Url.Action("UpdateAllBlockedValues", "Clubs")",
+            type: "POST",
+            data: {
+                clubId: clubId,
+                seasonId: seasonId,
+                blockValue: blockValue
+            }
+        }).success(function () {
+            $("input:checkbox.blockCheckdoxes").prop('checked', blockValue);
+        });
+    }
+
+    var fixHelper = function (e, ui) {
+        ui.children().each(function () {
+            $(this).width($(this).width());
+        });
+        return ui;
+    };
+
+    $(function () {
+        $('#sortTbody').sortable({
+            items: "tr",
+            cursor: 'move',
+            helper: fixHelper,
+            update: function (event, ui) {
+
+                var ids = [];
+                var childs = event.target.children;
+                $.each(childs, function (key, elem) {
+                    var id = $(elem).attr('data-id');
+                    ids.push(id);
+                });
+
+                var postData = {
+                    clubId: @Model.ClubId,
+                    seasonId: @Model.SeasonId,
+                    ids: ids
+                }
+                $.ajax({
+                    url: '@Url.Action("ChangeOrder", "Clubs")',
+                    data: postData,
+                    type: 'POST',
+                    dataType: 'json',
+                    success: function (result) {
+                        if (result.Success) {
+                            console.log('Order updated');
+                        } else {
+                            console.log('Order not updated');
+                        }
+                    }
+                })
+            }
+        }).disableSelection();
+    });
+
+    $(".date-time-generate").datetimepicker({
+        format: 'd/m/Y H:i',
+        formatTime: 'H:i',
+        formatDate: 'd/m/Y',
+        step: 15,
+        closeOnDateSelect: false,
+        closeOnTimeSelect: true,
+        onChangeDateTime: function () {
+            $(this).data("input").trigger("changedatetime.xdsoft");
+        }
+    });
+
+    function getSettings() {
+        var options1 = {
+            hour: {
+                value: 0,
+                min: 0,
+                max: 24,
+                step: 1,
+                symbol: "h"
+            },
+            minute: {
+                value: 0,
+                min: 0,
+                max: 60,
+                step: 1,
+                symbol: "m"
+            },
+            direction: "increment", // increment or decrement
+            inputHourTextbox: null, // hour textbox
+            inputMinuteTextbox: null, // minutes textbox
+            postfixText: "", // text to display after the input fields
+            numberPaddingChar: '0' // number left padding character ex: 00052
+        };
+        return options1;
+    };
+
+    $(".StartingTime").timesetter(getSettings());
+    $(".EndTime").timesetter(getSettings());
+
+    $("#saveTrainingDayBtn").click(function (e) {
+
+        var clubId = $("#clubIdHidden").val();
+        var auditoriumId = $("#clubArenas").val()
+        var trainingDay = $('input[class=radiobtnTrainingDays]:checked', '.radio-input').val();
+        var trainingStartTime = $(".StartingTime #txtHours").val() + ":" + $(".StartingTime #txtMinutes").val();
+        var trainingEndTime = $(".EndTime #txtHours").val() + ":" + $(".EndTime #txtMinutes").val();
+        if (auditoriumId == "") {
+            $("#errorMessage").text("Please Select Auditorium!");
+            e.preventDefault();
+            setTimeout(function () {
+                $("#errorMessage").hide('blind', {}, 500)
+            }, 5000);
+            return false;
+        }
+
+        $.ajax({
+            url: "@Url.Action("SetClubTrainingDays", "Clubs")",
+            type: "POST",
+            data: {
+                clubId: clubId,
+                auditoriumId: auditoriumId,
+                trainingDay: trainingDay,
+                trainingStartTime: trainingStartTime,
+                trainingEndTime: trainingEndTime
+            }
+        }).success(function (data) {
+            var trianingId = 0;
+            var auditoriumName = $('#clubArenas option:selected').text();
+            if (data.Message == "Save") {
+                trainingId = data.Id;
+                $("#trainingDaysTable > tbody")
+                    .append("<tr id=\"training_" + trainingId + "\"><td>" + auditoriumName + "</td>" +
+                        "<td>" + trainingDay + "</td>" +
+                        "<td>" + trainingStartTime + "</td>" +
+                        "<td>" + trainingEndTime + "</td>" +
+                        "<td align='center'><button class = \"btn\" onclick=\"deleteTrainingDay(" + trainingId + ")\" >@Messages.Delete</button></td></tr>");
+            }
+            else if (data.Message == "Update"){
+                var trainingId = data.Id;
+                var values = $('td', "#training_" + trainingId);
+                values[0].innerText = auditoriumName;
+                values[1].innerText = trainingDay;
+                values[2].innerText = trainingStartTime;
+                values[3].innerText = trainingEndTime;
+            }
+        })
+    });
+
+    function deleteTrainingDay(id) {
+        var result = confirm("Delete this training day?");
+        if (result) {
+            $.ajax({
+                url: "@Url.Action("DeleteTrainingDay", "Clubs")",
+                type: "POST",
+                data: {
+                    trainingDayId: id
+                }
+            }).success(function () {
+                $('#training_' + id).remove();
+                $('.tablesorter').trigger('update');
+            })
+        }
+    }
+
+    function generateTraining() {
+        var startDate = $("#StartDate").val();
+        var endDate = $("#EndDate").val();
+        var clubId = $("#clubIdHidden").val();
+        var seasonId = $("#seasonIdHidden").val();
+        $.ajax({
+            url: "@Url.Action("GenerateClubTrainings", "Clubs")",
+            type: "POST",
+            data: {
+                clubId: clubId,
+                sesonId: seasonId,
+                startDate: startDate,
+                endDate: endDate
+            }
+        }).success(function (data) {
+            if (!data.Success) {
+                var counter = data.TeamList.length-1;
+                var teamLists = "";
+                var symbol = "";
+                for (var i = 0; i < data.TeamList.length; i++) {
+                    symbol = counter == i ? "." : ", ";
+                    teamLists += data.TeamList[i] + symbol;
+                }
+                var message = data.Message + " " + teamLists;
+                alert(message);
+            }
+            else {
+                location.reload();
+            }
+        })
+    }
+</script>

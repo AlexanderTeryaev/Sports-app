@@ -1,0 +1,97 @@
+﻿@model IEnumerable<DataService.DTO.PositionSettingsDto>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th width="40%">@Messages.Rank</th>
+            <th width="40%">@Messages.Points</th>
+            <th width="10%"></th>
+            <th width="10%"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var setting in Model)
+            {
+                <tr>
+                    <td>@Html.TextBox("Position", setting.Position, new { @class = "form-control", @type = "number", min = 0 })</td>
+                    <td>@Html.TextBox("Points", setting.Points, new { @class = "form-control", @type = "number", min = 0 })</td>
+                    <td>
+                        <a class="btn btn-primary updatesettings" data-id="@setting.Id">
+                            <span class="fa fa-save" id="update_@setting.Id"></span>
+                            <span style="display:none" class="fa fa-spin fa-spinner" id="loading_@setting.Id"></span>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="@Url.Action("DeletePositionSetting", new { id = setting.Id, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId })"
+                           class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#position-settings"
+                           data-ajax="true">
+                        </a>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+    <tfoot>
+        @using (Ajax.BeginForm("CreatePositionSetting", new { leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId },
+            new AjaxOptions { UpdateTargetId = "position-settings", HttpMethod = "POST", OnBegin = "beginFunction", OnSuccess = "successFunction" },
+            new { id = "positionsettingsform" }))
+        {
+            <tr>
+                <td>
+                    <input name="Position" type="number" min="0" class="form-control" form="positionsettingsform" required />
+                    @Html.ValidationMessage("Position")
+                </td>
+                <td>
+                    <input name="Points" type="number" class="form-control" form="positionsettingsform" required />
+                    @Html.ValidationMessage("Points")
+                </td>
+                <td colspan="2">
+                    <button type="submit" class="btn btn-primary" style="min-width:125px;" form="positionsettingsform">
+                        <span id="maininfosettings">@Messages.AddNew</span>
+                        <span style="display:none" class="fa fa-spin fa-spinner" id="settingsformspinner"></span>
+                    </button>
+                </td>
+            </tr>
+        }
+    </tfoot>
+</table>
+
+<script>
+    function beginFunction() {
+        $("#maininfosettings").hide();
+        $("#settingsformspinner").show();
+    }
+    function successFunction() {
+        $("#maininfosettings").show();
+        $("#settingsformspinner").hide();
+    }
+
+    $(".updatesettings").on("click", function () {
+        var position = $(this).closest("tr").find("#Position").val();
+        var points = $(this).closest("tr").find("#Points").val();
+        var id = $(this).attr("data-id");
+        $.ajax({
+            url: "/LeagueRank/UpdatePositionSettings/",
+            type: "POST",
+            data: {
+                leagueId: "@ViewBag.LeagueId",
+                seasonId: "@ViewBag.SeasonId",
+                id: id,
+                position: position,
+                points: points
+            },
+            beforeSend: function () {
+                $("#loading_" + id).show();
+                $("#update_" + id).hide();
+            },
+            success: function (data) {
+                $("#position-settings").html(data);
+                $("#loading_" + id).hide();
+                $("#update_" + id).show();
+            }
+        });
+    });
+</script>

@@ -1,0 +1,75 @@
+﻿@using Resources
+@model UnionTennisRankForm
+@{
+    var count = 1;
+    var rankList = Model.RankList;
+}
+<div id="sections_pl" name="rankdiv">
+    <div class="row">
+        <div class="col-sm-6 form-inline">
+            <label class="control-label">@Messages.Ages:</label>
+            @Html.DropDownListFor(m => m.CompetitionAgeId, Model.ListAges, "- select -", new { @class = "form-control", @id = "dropdownage", style = "min-width:200px;", onchange = "updateAgeRanks()" })
+        </div>
+    </div>
+    <div class="row">
+        @if (rankList != null && rankList.Any())
+        {
+            <div id="unionrank" name="unionrank" class="row" style="margin-top: 20px;">
+                <div class="col-sm-12">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="col-sm-1">@Messages.Rank</th>
+                                <th class="col-sm-2">@Messages.FullName</th>
+                                <th class="col-sm-2">@Messages.Birthday</th>
+                                <th class="col-sm-2">@Messages.ClubName</th>
+                                <th class="col-sm-2">@Messages.AveragePoints</th>
+                                <th class="col-sm-2">@Messages.PointsToAverage</th>
+                                <th class="col-sm-1">@Messages.Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < rankList.Count(); i++)
+                            {
+                                var group = rankList.ElementAt(i);
+                                if (i > 0 && group.TotalPoints != rankList.ElementAt(i - 1).TotalPoints)
+                                {
+                                    count = i + 1;
+                                }
+                                <tr>
+                                    <td>@count</td>
+                                    <td>@group.FullName</td>
+                                    <td>@group.Birthday.Value.ToShortDateString()</td>
+                                    <td>@group.TrainingTeam</td>
+                                    <td align="center">@group.AveragePoints</td>
+                                    <td align="center">@group.PointsToAverage</td>
+                                    <td align="center">@group.TotalPoints</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<script>
+    function updateAgeRanks() {
+        if ($("#dropdownage").val() != null && $("#dropdownage").val() != undefined) {
+                    var params = {
+                        unionId: @Model.UnionId,
+                        seasonId: @Model.SeasonId,
+                        ageId: $("#dropdownage").val(),
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("TennisUnionRanks", "LeagueRank")',
+                        data: params,
+                        success: function (data) {
+                            $(".body-content").html(data);
+                        }
+                    });
+        }
+    }
+</script>
+

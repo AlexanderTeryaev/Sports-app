@@ -1,0 +1,226 @@
+﻿@model VehicleModel
+@{
+    var type = new List<SelectListItem>
+{
+new SelectListItem {Text = Messages.Motorcycle, Value = "Motorcycle"},
+new SelectListItem {Text = Messages.ATV, Value = "ATV"}
+};
+    var productModelsDictionary = (Dictionary<int, IEnumerable<KeyValuePair<int, string>>>)ViewBag.DictionaryOfVehicleModelsValues;
+    var productMotoList = (IEnumerable<SelectListItem>)ViewBag.ListOfMotorcycleProductTypes;
+    var productAtvList = (IEnumerable<SelectListItem>)ViewBag.ListOfAtvDriverProductTypes;
+    var licenseMotoList = (IEnumerable<SelectListItem>)ViewBag.ListOfMotorcycleDriverLicensesTypes;
+    var licenseAtvList = (IEnumerable<SelectListItem>)ViewBag.ListOfAtvDriverLicensesTypes;
+    var currentModel = string.IsNullOrEmpty(Model.Type) ? "Motorcycle" : Model.Type;
+
+}
+<div class="row">
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.Type:</label>
+        @Html.DropDownListFor(m => m.Type, type, new { @class = "form-control", form = "createvehicleform" })
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.Product:</label>
+        <div id="productTypesDiv">
+
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.Model:</label>
+        <div id="model-div-insider"></div>
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.YearOfProduction:</label>
+        @{ var yearOfProduction = Model.YearOfProduction?.ToShortDateString() ?? string.Empty; }
+        @Html.TextBoxFor(m => yearOfProduction, new { @class = "form-control veh-date-short", form = "createvehicleform" })
+        @Html.ValidationMessageFor(m => m.YearOfProduction, $"\"{Messages.YearOfProduction}\" {Messages.FieldIsRequired}")
+    </div>
+</div>
+<div class="row">
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.Weight (@Messages.Kg):</label>
+        @Html.TextBoxFor(m => m.Weight, new { @class = "form-control", type = "numeric", min = "0", form = "createvehicleform" })
+        @Html.ValidationMessageFor(m => m.Weight, $"\"{Messages.Weight}\" {Messages.FieldIsRequired}")
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.ChassisNo:</label>
+        @Html.TextBoxFor(m => m.ChassisNo, new { @class = "form-control", form = "createvehicleform" })
+        @Html.ValidationMessageFor(m => m.ChassisNo, $"\"{Messages.ChassisNo}\" {Messages.FieldIsRequired}")
+    </div>
+</div>
+<div class="row">
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.TypeOfDriversLicense:</label>
+        <div id="licenseTypesDiv">
+
+        </div>
+    </div>
+</div>
+
+<script>
+    var productModel = [];
+    var listOfMotoProducts = [];
+    var listOfAtvProducts = [];
+    var listOfMotoLicenses = [];
+    var listOfAtvLicenses = [];
+</script>
+
+@foreach (var modelValue in productModelsDictionary)
+{
+    <script>
+            var modelsIds = '@String.Join(",", modelValue.Value?.Select(r => r.Key))'.split(',');
+            var modelsNames = '@String.Join(",", modelValue.Value?.Select(r => r.Value))'.split(',');
+            var models = {
+                "productId": '@modelValue.Key',
+                "modelsIds": modelsIds,
+                "modelsNames": modelsNames
+            };
+            productModel.push(models);
+    </script>
+}
+
+@foreach (var value in productMotoList)
+{
+    <script>
+            var model = {
+                "value": "@value.Value",
+                "name": "@value.Text",
+                "selected": "@value.Selected" === "True"
+            };
+            listOfMotoProducts.push(model);
+    </script>
+}
+
+@foreach (var value in productAtvList)
+{
+    <script>
+            var model = {
+                "value": "@value.Value",
+                "name": "@value.Text",
+                "selected": "@value.Selected" === "True"
+            };
+            listOfAtvProducts.push(model);
+    </script>
+}
+
+@foreach (var value in licenseMotoList)
+{
+    <script>
+            var model = {
+                "value": "@value.Value",
+                "name": "@value.Text",
+                "selected": "@value.Selected" === "True"
+            };
+            listOfMotoLicenses.push(model);
+    </script>
+}
+
+@foreach (var value in licenseAtvList)
+{
+    <script>
+            var model = {
+                "value": "@value.Value",
+                "name": "@value.Text",
+                "selected": "@value.Selected" === "True"
+
+            };
+            listOfAtvLicenses.push(model);
+    </script>
+}
+
+<script>
+
+    function generateDropdown(listModel, appendDivId, dropdownName, dropdownId, isProduct) {
+        if (listModel) {
+
+            var newDropdown;
+            if (isProduct) {
+                newDropdown = $('<select id="' + dropdownId + '" class="form-control productDropdown" name="' + dropdownName + '" form="createvehicleform">').appendTo("#" + appendDivId);
+            }
+            else {
+                newDropdown = $('<select id="' + dropdownId + '" class="form-control" name="' + dropdownName + '" form="createvehicleform">').appendTo("#" + appendDivId);
+            }
+            for (var i = 0; i < listModel.length; i++) {
+                var value = listModel[i].value;
+                var name = listModel[i].name;
+                var isSelected = listModel[i].selected;
+                if (isSelected) {
+                    newDropdown.append($("<option>").attr('value', value).attr('selected', true).text(name));
+                }
+                else {
+                    newDropdown.append($("<option>").attr('value', value).text(name));
+                }
+            }
+        }
+    }
+
+    function generateDropdowns() {
+        var type = $("#Type").val();
+
+        if (type === "Motorcycle") {
+
+            $("#ATVProductType").remove();
+            generateDropdown(listOfMotoProducts, "productTypesDiv", "ProductId", "MotorcycleProductType", true);
+
+            $("#atvLicenseDropdown").remove();
+            generateDropdown(listOfMotoLicenses, "licenseTypesDiv", "TypeOfLicenseId", "motoLicenseDropdown", false);
+        }
+        else if (type === "ATV") {
+
+            $("#MotorcycleProductType").remove();
+            generateDropdown(listOfAtvProducts, "productTypesDiv", "ProductId", "ATVProductType", true);
+            $("#motoLicenseDropdown").remove();
+            generateDropdown(listOfAtvLicenses, "licenseTypesDiv", "TypeOfLicenseId", "atvLicenseDropdown", false);
+        }
+    }
+
+    function showNecessaryModelDropdown(productDropdown) {
+        var productId = $(productDropdown).val();
+        var modelDropdown = $(".model");
+        if (modelDropdown.length) {
+            modelDropdown.remove();
+        }
+        for (var i = 0; i < productModel.length; i++) {
+            if (productId == productModel[i].productId) {
+                var values = productModel[i].modelsIds;
+                var textVal = productModel[i].modelsNames;
+                var newDropdown = $('<select id="model" class="model form-control" name="ModelId" form="createvehicleform">').appendTo("#model-div-insider");
+                for (var j = 0; j < values.length; j++) {
+                    if (values[j] === "@Model.ModelId") {
+                        newDropdown.append($("<option>").attr('value', values[j]).attr('selected', true).text(textVal[j]));
+                    }
+                    else {
+                        newDropdown.append($("<option>").attr('value', values[j]).text(textVal[j]));
+                    }
+                }
+            }
+        }
+    }
+
+    $(document).ready(function () {
+        generateDropdowns();
+        showNecessaryModelDropdown($("#"+ '@currentModel' +"ProductType"));
+
+        $(".veh-date-short").datetimepicker({
+            format: 'd/m/Y',
+            timepicker: false,
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+    });
+
+    $("#Type").change(function () {
+        generateDropdowns();
+        var type = $(this).val();
+        showNecessaryModelDropdown($("#" + type + "ProductType"));
+        $(".productDropdown").change(function () {
+            showNecessaryModelDropdown($(this));
+        });
+    });
+
+    $(".productDropdown").change(function () {
+        showNecessaryModelDropdown($(this));
+    });
+</script>

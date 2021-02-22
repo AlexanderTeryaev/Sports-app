@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[Leagues] ADD [IsClubCompetition] int DEFAULT 0 NOT NULL

@@ -1,0 +1,100 @@
+﻿h1, h2, h3, h4, h5, div, span, label, input, table, table tr td, table tr th {
+    direction: rtl;
+    text-align: right;
+}
+
+.navbar-top .flags {
+    right: inherit;
+    left: 20px;
+}
+
+.space {
+    margin-right:0;
+    margin-left: 2px;
+}
+
+.space-1 {
+    margin-right:0;
+    margin-left: 5px;
+}
+
+.space-2 {
+    margin-right:0;
+    margin-left: 10px;
+}
+
+.space-3 {
+    margin-right:0;
+    margin-left: 15px;
+}
+
+.space-4 {
+    margin-right:0;
+    margin-left: 30px;
+}
+
+.space-5 {
+    margin-right:0;
+    margin-left: 40px;
+}
+
+.space-6 {
+    margin-right:0;
+    margin-left: 60px;
+}
+
+.space-7 {
+    margin-right:0;
+    margin-left: 80px;
+}
+
+.space-8 {
+    margin-right:0;
+    margin-left: 100px;
+}
+
+.space-9 {
+    margin-right:0;
+    margin-left: 150px;
+}
+
+.filters .form-group.last {
+    margin-left: 0;
+}
+
+.filters label {
+    margin-left: 5px;
+}
+
+.text-align {
+    text-align:left;
+}
+
+.timepicker-picker table {
+    direction: ltr;
+}
+
+.bootstrap-datetimepicker-widget span
+{
+    text-align:center;
+}
+
+@media (min-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: inherit;
+        right: 0px;
+    }
+
+    .main {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+}
+.flip-to-ltr {
+    direction: ltr;
+}
+
+.bootstrap-switch-container {
+    direction: ltr;
+}

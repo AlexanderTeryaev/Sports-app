@@ -1,0 +1,64 @@
+﻿@model ActivityModel
+
+<div id="custom-group-settings" style="display: @(Model.ActivityFormType == ActivityFormType.CustomGroup && Model.UnionId != null && Model.ClubId == null ? "block" : "none");">
+    <div id="select-leagues" class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.RestrictLeagues, new { @class = "restrict-leagues" }) @Messages.Activity_SelectLeagues:
+        </label>
+        <select multiple="multiple" @(!Model.RestrictLeagues ? "disabled" : "") class="form-control restrict-leagues-dropdown">
+            @*<option value="" disabled="disabled">@Messages.Select</option>*@
+            @foreach (var league in Model.Leagues)
+            {
+                <option value="@league.LeagueId" @(Model.RestrictedLeagues.Any(x => x.LeagueId == league.LeagueId) ? "selected" : "")>@league.Name</option>
+            }
+        </select>
+        @Html.HiddenFor(x => x.RestrictedLeaguesJson)
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.AllowNewTeamRegistration) @Messages.Activity_AllowNewTeamRegistration
+        </label>
+    </div>
+        @*
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.RegistrationPrice) @Messages.Activity_EnableRegistrationPrice
+        </label>
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.InsurancePrice) @Messages.Activity_EnableInsurancePrice
+        </label>
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.MembersFee) @Messages.Activity_EnableMembersFee
+        </label>
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.HandlingFee) @Messages.Activity_EnableHandlingFee
+        </label>
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.AllowNoInsurancePayment) @Messages.Activity_AllowNoInsurancePayment
+        </label>
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.AllowNoFeePayment) @Messages.Activity_AllowNoFeePayment
+        </label>
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.AllowNoHandlingFeePayment) @Messages.Activity_AllowNoHandlingFeePayment
+        </label>
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.NoPriceOnBuiltInRegistration) @Messages.Activity_NoPriceOnBuiltInRegistration
+        </label>
+    </div>*@
+</div>

@@ -1,0 +1,180 @@
+﻿@model NotificationsForm
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+<div class="col-sm-6">
+    @if (!Model.NeedHideTextField)
+    {
+        if (ViewBag.JobRole != JobRole.RefereeAssignment)
+        {
+            <div class="row">
+                <div class="col-sm-12">
+                    @using (Html.BeginForm("Add", "Notifications", FormMethod.Post, new { id = "noteform", enctype = "multipart/form-data" }))
+                    {
+                        <div class="form-group">
+                            <label class="control-label">@Messages.Subject:</label>
+                            @Html.TextBoxFor(m => m.Subject, new { @class = "form-control" })
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">@Messages.Message:</label>
+                            @Html.TextAreaFor(m => m.Message, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Message)
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <div class="btn btn-default btn-file">
+                                    <span>@Messages.AddFile</span>
+                                    <input type="file" id="EmailFile" name="EmailFile" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|jpeg|JPEG|png|PNG|pdf|PDF)$"
+                                           data-val-regex="@Messages.SelectValidFile" />
+                                </div><small>@Messages.FileType</small>
+                            </div>
+                            @if (Model.ClubManagers.Any())
+                            {
+                                <div class="col-sm-3">
+                                    @Html.DropDownList("ClubManagerIds", Model.ClubManagers, new { multiple = "multiple", form = "noteform" })
+                                </div>
+                            }
+                            @if (Model.TeamManagers.Any())
+                            {
+                                <div class="col-sm-3">
+                                    @Html.DropDownList("TeamManagerIds", Model.TeamManagers, new { multiple = "multiple", form = "noteform" })
+                                </div>
+                            }
+                            <div class="form-inline col-sm-2">
+                                @Html.LabelFor(m => m.SendByEmail, Messages.SendAlsoByEmail)
+                                @Html.CheckBoxFor(m => m.SendByEmail)
+                            </div>
+                            <div class="form-group col-sm-2">
+                                <button class="btn btn-primary">@Messages.Send</button>
+                            </div>
+                        </div>
+                        @Html.HiddenFor(m => m.SeasonId)
+                        @Html.HiddenFor(m => m.EntityId)
+                        @Html.HiddenFor(m => m.RelevantEntityLogicalName)
+                    }
+
+                </div>
+            </div>
+        }
+        <div class="row">
+            <div class="col-sm-12" id="notes_list">
+                @Html.Action("List", new { entityId = Model.EntityId, logicalName = Model.RelevantEntityLogicalName, seasonId = Model.SeasonId })
+            </div>
+        </div>
+    }
+</div>
+
+<div id="clubEmailModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body" style="padding:5px;">
+                <div class="row no-marging">
+                    @if (!string.IsNullOrEmpty(Model.ClubEmail))
+                    {
+                        <div class="alert alert-info no-marging">
+                            <h5>
+                                @Messages.SendThrowClubEmail
+                            </h5>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.UnionEmail))
+                    {
+                        <div class="alert alert-info no-marging">
+                            <h5>
+                                @Messages.SendThrowUnionEmail
+                            </h5>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning no-marging">
+                            <h5>
+                                <span class="glyphicon glyphicon-warning-sign"></span>&nbsp;&nbsp;
+                                @(Model.RelevantEntityLogicalName == LogicaName.Union
+                                                        ? Messages.NoClubEmailWasDefined.Replace(Messages.Club.ToLower(), Messages.Union.ToLower())
+                                                        : Messages.NoClubEmailWasDefined)
+                            </h5>
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                @if (!string.IsNullOrEmpty(Model.ClubEmail) || (!string.IsNullOrEmpty(Model.UnionEmail) && Model.IsUnionManager))
+                {
+                    <button onclick="sendByClubEmail(false)" type="button" class="btn btn-secondary" data-dismiss="modal">@Messages.No</button>
+                    <button onclick="sendByClubEmail(true)" type="button" class="btn btn-primary">@Messages.Yes</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $("#ClubManagerIds").multiselect({
+        buttonText: function (options, select) {
+            return "@Messages.Choose @Messages.ClubManagers.ToLower()";
+        },
+        includeSelectAllOption: true,
+        selectAllText: '@Messages.SelectAllGymnastics.Replace(Messages.Gymnastics.ToLower(), string.Empty)',
+        maxHeight: 450,
+        onDropdownHide: function(element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    $("#TeamManagerIds").multiselect({
+        buttonText: function (options, select) {
+            return "@Messages.Choose @Messages.TeamManagers.ToLower()";
+        },
+        includeSelectAllOption: true,
+        selectAllText: '@Messages.SelectAllGymnastics.Replace(Messages.Gymnastics.ToLower(), string.Empty)',
+        maxHeight: 450,
+        onDropdownHide: function(element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    function ClearInputField() {
+        $('#Message').val('');
+    }
+
+    $("#SendByEmail").change(function () {
+        var isChecked = $(this).is(":checked");
+        if (isChecked) {
+            $("#clubEmailModal").modal("toggle");
+        }
+        else {
+            sendByClubEmail(false);
+        }
+    });
+
+    function sendByClubEmail(isClubEmailChecked) {
+            if (isClubEmailChecked) {
+                $("#noteform").append('<input type="hidden" value="True" name= "IsClubEmailChecked" id="clubEmailHidden" />');
+            }
+            else {
+                var clubEmailHidden = $("#clubEmailHidden");
+                if (clubEmailHidden) {
+                    $("#clubEmailHidden").remove();
+                }
+            }
+            $("#clubEmailModal").modal("hide");
+     }
+
+</script>

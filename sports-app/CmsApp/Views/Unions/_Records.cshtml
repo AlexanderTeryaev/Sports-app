@@ -1,0 +1,186 @@
+﻿@using AppModel
+@model List<DisciplineRecord>
+@{
+    var formats = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }.Select(i => new SelectListItem
+    {
+        Value = i.ToString(),
+        Text = i.ToString()
+    });
+    var rawDisciplines = (List<Discipline>)ViewBag.Disciplines;
+    var rawCategories = (List<CompetitionAge>)ViewBag.Categories;
+    IEnumerable<SelectListItem> disciplines = null;
+    IEnumerable<SelectListItem> categories = null;
+}
+
+<div class="col-sm-12" style="margin-right:30px;margin-left:30px;">
+    <div class="row" style="margin-left: 30px;">
+        <h4>@Messages.Records</h4>
+    </div>
+    <div class="row" style="margin-left: 30px;">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>@Messages.Name</th>
+                    <th>@Messages.Format</th>
+                    <th>@Messages.AthleticsDisciplines</th>
+                    <th>@Messages.Categories</th>
+                    <th>@Messages.IntentionalIsraeliRecord</th>
+                    <th>@Messages.IsraeliRecord</th>
+                    <th>@Messages.SeasonRecord</th>
+                    <th style="width:120px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var discipineRecord in Model)
+                {
+                <tr>
+                    <td>
+                        @discipineRecord.Name
+                    </td>
+                    <td>
+                        @discipineRecord.Format
+                    </td>
+                    <td>
+                        @{ 
+                            disciplines = rawDisciplines.Where(d => d.Format.HasValue && d.Format == discipineRecord.Format).Select(d => new SelectListItem
+                            {
+                                Value = d.DisciplineId.ToString(),
+                                Text = d.Name,
+                                Selected = discipineRecord.isDisciplineSelected(d.DisciplineId)
+                            });
+                        }
+                        @Html.DropDownList($"Disciplines_{discipineRecord.Id}", disciplines, new { form = "create_new_record", @class = "form-control discipline_selector", multiple="multiple", data_recordid=discipineRecord.Id })
+                    </td>
+                    <td>
+                        @{
+                            categories = rawCategories.Select(d => new SelectListItem
+                            {
+                                Value = d.id.ToString(),
+                                Text = d.age_name,
+                                Selected = discipineRecord.isCategorySelected(d.id)
+                            });
+                        }
+                        @Html.DropDownList($"Categories_{discipineRecord.Id}", categories, new { form = "create_new_record", @class = "form-control category_selector", multiple="multiple", data_recordid=discipineRecord.Id })
+                    </td>
+                    <td>
+                        @Html.TextBox("IntentionalIsraeliRecord", discipineRecord.IntentionalIsraeliRecord, new { @class="form-control", form = $"edit_record_bests{discipineRecord.Id}", format=discipineRecord.Format, style="direction:ltr;",data_recordid=discipineRecord.Id})
+                    </td>
+                    <td>
+                        @Html.TextBox("IsraeliRecord", discipineRecord.IsraeliRecord, new { @class="form-control", form = $"edit_record_bests{discipineRecord.Id}", format=discipineRecord.Format, style="direction:ltr;",data_recordid=discipineRecord.Id})
+                    </td>
+                    <td>
+                        @Html.TextBox("SeasonRecord", discipineRecord.SeasonRecords.FirstOrDefault(x=>x.SeasonId == ViewBag.SeasonId)?.SeasonRecord1, new { @class="form-control", form = $"edit_record_bests{discipineRecord.Id}", format=discipineRecord.Format, style="direction:ltr;",data_recordid=discipineRecord.Id})
+                    </td>
+                    <td>
+                        @using (Ajax.BeginForm("EditRecordBests", "Unions", new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "records-tab" }, new { id = $"edit_record_bests{discipineRecord.Id}", style="display:inline;" }))
+                        {
+                            @Html.Hidden("UnionId", ((int)ViewBag.UnionId).ToString());
+                            @Html.Hidden("SectionId", (int)ViewBag.SectionId);
+                            @Html.Hidden("SeasonId", (int)ViewBag.SeasonId);
+                            @Html.Hidden("RecordId", discipineRecord.Id);
+                            <input type="submit" class="btn btn-primary" id="submit_save_record_button_@discipineRecord.Id" name="submission" onclick="$(this).attr('disabled', 'disabled'); $(this).parent().submit();" disabled value="@Messages.Save" />
+                        }
+                        <a class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           href="@Url.Action("RemoveRecord", "Unions" , new { Id=discipineRecord.Id, SectionId=ViewBag.SectionId, UnionId = ViewBag.UnionId, SeasonId = ViewBag.SeasonId })"
+                           data-ajax-update="#records-tab"
+                           data-ajax="true"></a>
+                    </td>
+                </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="8"></td>
+                </tr>
+                <tr>
+                    <th colspan="2">
+                        @Messages.Name
+                    </th>
+                    <th colspan="2">
+                        @Messages.Format
+                    </th>
+                    <th colspan="4">
+
+                    </th>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        @Html.TextBox("Name", string.Empty, new { form = "create_new_record", @class="form-control" })
+                    </td>
+                    <td colspan="2">
+                        @Html.DropDownList("Format", formats, Messages.Format, new { form = "create_new_record", @class="form-control" })
+                    </td>
+                    <td colspan="4">
+                        @using (Ajax.BeginForm("CreateNewRecord", "Unions", new AjaxOptions { HttpMethod = "POST", UpdateTargetId= "records-tab"}, new { id = "create_new_record" }))
+                        {
+                            @Html.Hidden("UnionId", ((int)ViewBag.UnionId).ToString());
+                            @Html.Hidden("SectionId", (int)ViewBag.SectionId);
+                            @Html.Hidden("SeasonId", (int)ViewBag.SeasonId);
+                            
+                            <input type="submit" class="btn btn-primary" name="submission" value="@Messages.CreateNewRecord" />
+                        }
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+
+
+<script>
+$( document ).ready(function() {
+    $(".discipline_selector").multiselect({
+        onChange: function (option, checked) {
+            var select = $(this)[0].$select[0];
+            var checkboxClickedValue = $(option).val();
+            var recordId = $(select).attr("data-recordid");
+            $.ajax({
+                 url: "/Unions/ChangeDisciplineRelatedToRecord/",
+                type: "POST",
+                data: {
+                       'disciplineId': checkboxClickedValue,
+                        'recordId': recordId,
+                        'isChecked': checked
+                    }
+            });
+        },
+        onDropdownShow: function () {
+            /*
+            var selectItem = $(this)[0].$select[0];
+            $selectItem = $(selectItem);
+            var recordId = $selectItem.attr("data-recordid");
+            var otherSelectors = $(".discipline_selector:not([data-recordid='" + recordId + "'])");
+            $selectItem.next().find("input").attr("disabled", false);
+            otherSelectors.each(function (index, element) {
+                var valuesSelectedByOtherSelectors = $(element).val();
+                for (index in valuesSelectedByOtherSelectors) {
+                    var value = valuesSelectedByOtherSelectors[index];
+                    $selectItem.next().find("input[value='" + value + "']").attr("disabled", true);
+                }
+            });
+            */
+        }
+    });
+
+    $(".category_selector").multiselect({
+        onChange: function (option, checked) {
+            var select = $(this)[0].$select[0];
+            var checkboxClickedValue = $(option).val();
+            var recordId = $(select).attr("data-recordid");
+            console.log(checkboxClickedValue);
+            $.ajax({
+                 url: "/Unions/ChangeCategoryRelatedToRecord/",
+                type: "POST",
+                data: {
+                       'categoryId': checkboxClickedValue,
+                       'recordId': recordId,
+                       'isChecked': checked
+                }
+            });
+        }
+    });
+
+});
+</script>

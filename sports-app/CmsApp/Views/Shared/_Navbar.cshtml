@@ -1,0 +1,40 @@
+﻿
+<li><a href="@Url.Action("Index", "Home")"><i class="@Messages.ChevronCss"></i> @Messages.Home</a></li>
+
+@if (!User.IsInRole(AppRole.Players) && !User.HasTopLevelJob(JobRole.ActivityRegistrationActive) && !User.HasTopLevelJob(JobRole.Activitymanager) && !User.HasTopLevelJob(JobRole.Activityviewer))
+{
+    if (!(User.HasTopLevelJob(JobRole.CommitteeOfReferees) || User.HasTopLevelJob(JobRole.UnionCoach) || User.HasTopLevelJob(JobRole.Referee)))
+    {
+        <li><a href="@Url.Action("Index", "Search")"><i class="@Messages.ChevronCss"></i> @Messages.Search</a></li>
+    }
+}
+
+@if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+{
+    <li><a href="@Url.Action("Index", "Sections")"><i class="@Messages.ChevronCss"></i> @Messages.Sections</a></li>
+
+    @*<li><a href="/users"><i class="glyphicon glyphicon-user"></i> משתמשי מערכת ניהול</a></li>*@
+    @*<li><a href="@Url.Action("Index", "Settings")"><i class="glyphicon glyphicon-wrench"></i> @Messages.Settings</a></li>*@
+}
+
+@if (!User.IsInRole(AppRole.Players) && !User.HasTopLevelJob(JobRole.ActivityRegistrationActive) && !User.HasTopLevelJob(JobRole.Activitymanager) && !User.HasTopLevelJob(JobRole.Activityviewer))
+{
+    if (!(User.HasTopLevelJob(JobRole.CommitteeOfReferees) || User.HasTopLevelJob(JobRole.UnionCoach) || User.HasTopLevelJob(JobRole.Referee)))
+    {
+        <style>
+            .nav-bar-search-li .twitter-typeahead .tt-menu {
+                width: 600px;
+                background-color: white;
+                position: fixed !important;
+                right: 0;
+                left: unset !important;
+                top: unset !important;
+            }
+        </style>
+    <li class="nav-bar-search-li" style="margin: 10px 10px;">
+        <label style="color:white;">@Messages.Search @UIHelpers.GetPlayerCaption(ViewBag.SectionAlias, false)</label>
+        <input style="width:90%;" class="auto-search-players-nav-bar form-control" data-remote="@Url.Action("FindPlayerByNav","Search")" data-link="@Url.Action("Edit", "Players")" />
+    </li>
+    <script>setNavSearch();</script>
+    }
+}

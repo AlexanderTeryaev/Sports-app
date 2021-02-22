@@ -1,0 +1,120 @@
+﻿@using Resources
+@model IEnumerable<AppModel.League>
+
+@{
+    var CompType = UIHelper.GetCompetitionTypeById(ViewBag.CompetitionsType);
+}
+
+<style>
+    .mobile-only {
+        display: none;
+    }
+
+    @Html.Raw('@')media only screen and (max-width: 600px) {
+        #print, #print_print_id {
+            display: none;
+        }
+        .mobile-only {
+            display: block;
+        }
+    }
+</style>
+<a href="#" id="print" class="btn btn-primary remove_print float-last">
+    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+</a>
+@Html.DropDownList("SeasonId", new SelectList(ViewBag.Seasons, "Id", "Name", ViewBag.SeasonId), new { @class = "form-control", @id = "ddlSeasons", style = "width: 150px;", title="Season" })
+@if (ViewBag.IsPast != null && ViewBag.IsPast == true)
+{
+    <h3 class="main-title disciplines-title">
+        @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+        {
+            <img src="@ViewBag.Logo" class="img-circle logo" alt="" />
+        }
+        @($"{ViewBag.UnionName} - {Messages.Results} { CompType }")
+    </h3>
+}
+else
+{
+    <h3 class="main-title disciplines-title">
+        @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+        {
+            <img src="@ViewBag.Logo" class="img-circle logo" alt="" />
+        }
+        @($"{ViewBag.UnionName} - {@Messages.CompetitionSchedule} { CompType }")
+    </h3>
+}
+
+
+<style>
+    .modal-backdrop {
+        opacity: 0.0 !important;
+    }
+</style>
+<table class="table res-table">
+    <thead>
+        <tr class="disciplines-title">
+            <th>@Messages.StartDate</th>
+            <th>@Messages.CompetitionName</th>
+            <!--
+                <th>מספר מקצועות</th>
+                <th>מספר אתלטים</th>
+            -->
+            <th>@Messages.Address</th>
+            <th class="remove_print"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var index = 0;
+            var competitions = new List<AppModel.League>();
+            if (ViewBag.IsPast != null && ViewBag.IsPast == true)
+            {
+                competitions = Model.OrderByDescending(c => c.LeagueStartDate ?? DateTime.MinValue).ToList();
+            }
+            else
+            {
+                competitions = Model.OrderBy(c => c.LeagueStartDate ?? DateTime.MaxValue).ToList();
+            }
+        }
+        @foreach (var competition in competitions)
+        {
+
+            <tr>
+                <td>
+                    @if (competition.LeagueStartDate != null)
+                    {@competition.LeagueStartDate.Value.ToString("dd/MM/yyyy")}
+            </td>
+            <td>@competition.Name</td>
+
+            <td>@competition.PlaceOfCompetition</td>
+
+            <td class="remove_print">
+                <a href="@Url.Action( ViewBag.SectionAlias == GamesAlias.WeightLifting ? "WeightliftingSessions" : "AthleticsDisciplines", new { id = competition.LeagueId })"
+                   class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.ToCompetition</a>
+            </td>
+        </tr>
+        index += 1;
+    }
+    </tbody>
+</table>
+@section scripts
+    {
+    <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+    <script>
+    $('#ddlSeasons').change(function () {
+            var seasonId = $(this).val();
+            var extras = "";
+            var type = "@ViewBag.CompetitionsType";
+            var isPast = "@ViewBag.isPast";
+            extras = extras + "?seasonId=" + seasonId;
+            if (type != "") {
+                extras = extras + "&type=" + type;
+            }
+            if (isPast != "") {
+                extras = extras + "&isPast=" + isPast;
+            }
+            window.location.href = '@Url.Action("AthleticCompetitions", new { id = ViewBag.CompetitionsId})' + extras;
+    });
+    </script>
+}
+

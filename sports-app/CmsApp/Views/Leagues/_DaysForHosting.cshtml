@@ -1,0 +1,144 @@
+﻿@model IEnumerable<DaysForHostingViewModel>
+@{
+    var isUnderTeam = ViewBag.TeamId != null;
+    var teamHostigDays = ViewBag.TeamsHostingDays != null ? (Dictionary<int, bool>)ViewBag.TeamsHostingDays : null;
+    Func<Dictionary<int, bool>, int, string> setIsCheckedStatus = (dictionary, id) =>
+    {
+        return dictionary.ContainsKey(id) && dictionary[id] ? "checked" : string.Empty;
+    };
+}
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@Messages.DaysForHosting</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-sm-12">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.Day</th>
+                            <th>@Messages.StartTime</th>
+                            <th>@Messages.EndTime</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            foreach (var day in Model)
+                            {
+                                <tr>
+                                    <td>@UIHelpers.GetDayCapture(day.Day)</td>
+                                    <td>@day.StartTime</td>
+                                    <td>@day.EndTime</td>
+                                    @if (isUnderTeam)
+                                    {
+                                        <td>
+                                            <input class="hosting-checkbox" @setIsCheckedStatus(teamHostigDays, day.Id.Value)
+                                                   data-id="@day.Id"
+                                                   type="checkbox" />
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            <a href="@Url.Action("DeleteDayForHosting",
+                                                new { id = day.Id, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId })"
+                                               data-ajax-update="#daysForHostingModal_pl"
+                                               data-ajax="true"
+                                               class="@AppCss.Delete"></a>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                    @if (!isUnderTeam)
+                    {
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    @Html.DropDownList("Day", (List<SelectListItem>)ViewBag.DaysSelectListItem, new { @class = "form-control", @required = "required" })
+                                </td>
+                                <td>
+                                    @Html.TextBox("StartTime", string.Empty, new { @class = "form-control", type = "time", @required = "required" })
+                                </td>
+                                <td>
+                                    @Html.TextBox("EndTime", string.Empty, new { @class = "form-control", type = "time", @required = "required" })
+                                </td>
+                                <td>
+                                    <a onclick="formSubmit()" class="btn btn-primary">
+                                        @Messages.AddNew
+                                        <span style="display:none" id="spinner_days" class="@AppCss.Loading"></span>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    }
+
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+    </div>
+</div>
+
+<script>
+    function formSubmit() {
+        var day = $("#Day").val();
+        var startTime = $("#StartTime").val();
+        var endTime = $("#EndTime").val();
+        var isValid = true;
+        if (!day) {
+            alert("@($"{Messages.Day} {Messages.FieldIsRequired.ToLower()}")")
+            isValid = false;
+        }
+        if (!endTime) {
+            alert("@($"{Messages.StartTime} {Messages.FieldIsRequired.ToLower()}")")
+            isValid = false;
+        }
+        if (!endTime) {
+            alert("@($"{Messages.EndTime} {Messages.FieldIsRequired.ToLower()}")")
+            isValid = false;
+        }
+        if (isValid) {
+            $.ajax({
+                url: "/Leagues/CreateDayForHosting",
+                type: "POST",
+                data: {
+                    day: day,
+                    startTime: startTime,
+                    endTime: endTime,
+                    leagueId: '@ViewBag.LeagueId',
+                    seasonId: '@ViewBag.SeasonId'
+                },
+                beforeSend: function (data) {
+                    $("#spinner_days").show();
+                },
+                success: function (data) {
+                    $("#daysForHostingModal_pl").html(data);
+                    $("#spinner_days").hide();
+                }
+            })
+        }
+    }
+    $(".hosting-checkbox").on("click", function () {
+        var isChecked = $(this).is(":checked");
+        $.ajax({
+            url: '/Leagues/ProcessTeamHostingDay',
+            type: 'POST',
+            data: {
+                id: $(this).attr("data-id"),
+                isChecked: isChecked,
+                teamId: '@ViewBag.TeamId'
+            }
+        })
+    });
+
+</script>

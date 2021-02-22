@@ -1,0 +1,742 @@
+﻿@model Workers
+@{
+    var showAll = ViewBag.ShowAll ?? false;
+    var jobs = new MultiSelectList(Model.JobsRoles?.Values.Select(c =>
+    {
+        c.Title = LangHelper.GetJobName(c.RoleName); return c;
+    })
+        ?? new List<AppModel.JobsRole>(), nameof(AppModel.JobsRole.RoleId), nameof(AppModel.JobsRole.Title), Model.SelectedValues);
+    bool isHebrew = Request.IsHebrew();
+    var btnClass = isHebrew ? "pull-left" : "pull-right";
+    var jobsOfficials = new MultiSelectList(Model.ReportOfficials?.Values ?? new List<DataService.UserJobDto>(), nameof(DataService.UserJobDto.Id), nameof(DataService.UserJobDto.FullName));
+    string distanceSettings = ViewBag.DistanceSettings != null ? ViewBag.DistanceSettings : string.Empty;
+    var canBlockRefereesRegistration = User.IsInAnyRole(AppRole.Admins) || Model.IsUnionManager;
+}
+<style>
+    .large-modal {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .large-content {
+        height: auto;
+        min-height: 100%;
+        border-radius: 0;
+    }
+
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+
+<div id="sections_pl" style="overflow-x: scroll">
+    @if ((User.IsInAnyRole(AppRole.Admins) || Model.IsUnionManager) && ViewBag.IsClubOrUnion && ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <div id="refereePaymentReportDiv" class="row remove_print">
+            <div class="panel-default">
+                <div class="panel-heading">@Messages.PaymentReport</div>
+                <div class="panel-body">
+                    <form>
+                        <label class="radio-inline">
+                            <input name="distanceCheck" id="refereeTableCheck" checked type="radio" value="table">@Messages.PaymentReport_ByDistTable
+                        </label>
+                        <label class="radio-inline">
+                            <input name="distanceCheck" id="refereeGoogleCheck" type="radio" value="googleMapsApi"> @Messages.PaymentReport_ByGoogleApi
+                        </label>
+                        <a id="refereeEditDistance" class="btn btn-default @btnClass">@Messages.Edit <i id="refereeDistanceLoading" style="display: none" class="@AppCss.Loading"></i></a>
+                    </form>
+                </div>
+            </div>
+            <hr />
+        </div>
+    }
+    <div class="row offset-2 remove_print">
+        <div class="col-sm-12">
+            @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+            {
+                <a class="btn btn-primary btn-edit"
+                   href="@Url.Action("CreateWorker", "Jobs", new { relevantEntityId = @Model.RelevantEntityId, logicalName = @Model.RelevantEntityLogicalName, seasonId = @ViewBag.SeasonId, onlyReferees = true, unionId = Model.UnionId })"
+                   data-target="#referee_modal_view"
+                   data-toggle="modal" id="loadModal">
+                    <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                </a>
+            }
+
+            @if (ViewBag.IsClubOrUnion &&
+                 (User.IsInAnyRole(AppRole.Admins) ||
+                  Model.IsUnionManager ||
+                  User.HasTopLevelJob(JobRole.Referee) ||
+                  User.HasTopLevelJob(JobRole.CommitteeOfReferees)))
+            {
+                <a class="btn btn-info" id="refereeExportOfficialsList">
+                    <i class="glyphicon glyphicon-export"></i>@Messages.ExportToExcel
+                    <i class="fa fa-spin fa-spinner" id="refereeExportloading" style="display: none"></i>
+                </a>
+                <a href="#" id="refereePrint" class="btn btn-info remove_print">
+                    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+                </a>
+                <a id="showInactiveReferees" class="btn btn-primary" href="@Url.Action("WorkerList", "Jobs", new
+                                                                       {
+                                                                           id = Model.RelevantEntityId,
+                                                                           logicalName = Model.RelevantEntityLogicalName,
+                                                                           seasonId = Model.SeasonId,
+                                                                           onlyReferees = true,
+                                                                           showInactive = true
+                                                                       })"
+                   data-ajax="true"
+                   data-ajax-update="#referee_list"
+                   data-ajax-mode="replace"
+                   data-ajax-loading="#showInactiveLoading"
+                   data-ajax-method="GET">
+                    @Messages.ShowInactiveReferees
+                    <span id="showInactiveLoading" class="@AppCss.Loading" style='display: none'></span>
+                </a>
+            }
+        </div>
+    </div>
+    @if (ViewBag.IsClubOrUnion && (User.IsInAnyRole(AppRole.Admins) || Model.IsUnionManager) && ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <div class="row offset-2" id="refereeDownloadAllReports">
+            <form class="form-inline">
+                <div class="form-group">
+                    @Html.LabelFor(m => m.StartReportDate, Messages.StartDate)
+                    @Html.TextBoxFor(m => m.StartReportDate, new { @class = "form-control frm-date-wo-time" })
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.EndReportDate, Messages.EndDate)
+                    @Html.TextBoxFor(m => m.EndReportDate, new { @class = "form-control frm-date-wo-time" })
+                </div>
+            </form>
+            <div class="offset-2">
+                @Html.DropDownList("ReportOfficialsIds", jobsOfficials, new { @class = "reportids form-control", multiple = "multiple" })
+                <a id="exportJobsOfficials" class="btn btn-primary">@Messages.ExportOfficials<i id="refereeExportOfficialsLoad" class="@AppCss.Loading" style="display: none;"></i></a>
+            </div>
+        </div>
+    }
+
+    @using (Ajax.BeginForm("AddExistingUser", "Jobs", new { showAll = showAll, onlyReferees = true }, new AjaxOptions { UpdateTargetId = "referee_list" },
+                                                                                                                                        new { id = "worker_form", autocomplete = "off" }))
+    {
+        var userlist = Model.UsersList.GroupBy(p => p.UserId).Select(p => new
+        {
+            UserId = p.First().UserId,
+            Id = p.First().Id,
+            FullName = p.First().FullName,
+            JobName = p.First().RoleName != JobRole.CommitteeOfReferees ? string.Join(", ", p.Select(j => j.JobName).ToArray()) : p.First().JobName,
+            Email = p.First().Email,
+            Phone = p.First().Phone,
+            BirthDay = p.First().BirthDate,
+            Address = p.First().Address,
+            City = p.First().City,
+            RoleName = p.First().RoleName,
+            IdentNum = p.First().IdentNum,
+            UserJobIds = p.Select(x => x.Id).ToArray(),
+            RefereeRanks = p.First().KarateRefereeRanks.Where(c => c.Type.Contains("Israel")),
+            IsraelRefereeLicenses = p.First().KarateRefereeRanks.Where(c => c.Type.Contains("Israel")).ToList(),
+            EkfRefereeLicenses = p.First().KarateRefereeRanks.Where(c => c.Type.Contains("EKF")).ToList(),
+            WkfRefereeLicenses = p.First().KarateRefereeRanks.Where(c => c.Type.Contains("WKF")).ToList(),
+            ConnectedClub = p.First().ConnectedClubName,
+            GamesCount = p.First().GamesCount,
+            MartialArtsCompetitionsCount = p.First().MartialArtsCompetitionsCount,
+            IsCompetitionRegistrationBlocked = p.First().IsCompetitionRegistrationBlocked,
+            Active = p.First().Active
+        }).OrderByDescending(p => p.Active).ThenBy(p => p.FullName);
+
+
+        @Html.Hidden("SeasonId", (object)ViewBag.SeasonId == null ? string.Empty : (object)ViewBag.SeasonId.ToString())
+
+        <table class="table table-bordered offset-3 referees-table">
+            <thead>
+                <tr>
+                    <th class="remove_print"></th>
+                    <th>@Messages.Active</th>
+                    @if (ViewBag.IsClubOrUnion && ViewBag.IsClubOrUnion && Model.SectionAlias.ToLower() == SectionAliases.MartialArts)
+                    {
+                        <th>@Messages.BlockRefereeRegistration</th>
+                    }
+                    <th>#</th>
+                    <th>@Messages.IdentNum</th>
+                    <th>@Messages.Name</th>
+                    <th>@Messages.Role</th>
+                    <th>@Messages.Email</th>
+                    <th>@Messages.Phone</th>
+                    <th>@Messages.BirthDay</th>
+                    <th>@Messages.Address</th>
+                    <th>@Messages.City</th>
+                    <th>@(Model.IsIndividualSection ? Messages.Competitions : Messages.Games)</th>
+                    @if (ViewBag.DontShowKarate == null ? false : !ViewBag.DontShowKarate)
+                    {
+                        <th>@Messages.ConnectedClub</th>
+                        <th width="22%">@Messages.IsraelLicense - @Messages.Kumite.ToLowerInvariant()</th>
+                        <th width="22%">@Messages.IsraelLicense - @Messages.Kata.ToLowerInvariant()</th>
+                        <th width="22%">@Messages.EKFLicense - @Messages.Kumite.ToLowerInvariant()</th>
+                        <th width="22%">@Messages.EKFLicense - @Messages.Kata.ToLowerInvariant()</th>
+                        <th width="22%">@Messages.WKFLiscense - @Messages.Kumite.ToLowerInvariant()</th>
+                        <th width="22%">@Messages.WKFLiscense - @Messages.Kata.ToLowerInvariant()</th>
+                    }
+
+                    @if (showAll)
+                    {
+                        <th class="remove_print"></th>
+                    }
+                    <th class="remove_print"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in userlist)
+                {
+                    var needReport = user.RoleName.Equals(JobRole.Referee, StringComparison.InvariantCultureIgnoreCase) ||
+                                     user.RoleName.Equals(JobRole.Spectator, StringComparison.InvariantCultureIgnoreCase) ||
+                                     user.RoleName.Equals(JobRole.Desk, StringComparison.InvariantCultureIgnoreCase);
+                <tr>
+                    <td class="res-stat remove_print">
+                        @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                        {
+                            <a class="@AppCss.Edit"
+                               id="user@(user.UserId)"
+                               href="@Url.Action("EditWorker", "Jobs", new
+                                {
+                                    id = user.Id,
+                                    relevantEntityId = @Model.RelevantEntityId,
+                                    logicalName = @Model.RelevantEntityLogicalName,
+                                    seasonId = ViewBag.SeasonId,
+                                    showAll = showAll,
+                                    onlyReferees = true,
+                                    SectionAlias = Model.SectionAlias
+                               })"
+                               data-target="#referee_modal_view"
+                               data-toggle="modal"></a>
+                        }
+
+                    </td>
+                    <td class="text-center">
+                        @if (user.RoleName.Contains(JobRole.Referee.ToLower()))
+                        {
+                            <input type="checkbox" name="activeJob"
+                                   @(user.Active ? "checked" : "")
+                                   onchange="UpdateUsersJobActiveFlag(@user.Id)" />
+                        }
+                    </td>
+                    @if (ViewBag.IsClubOrUnion && Model.SectionAlias.ToLower() == SectionAliases.MartialArts)
+                    {
+                        <td>
+                            <input type="checkbox" class="block-referee-reg-checkbox"
+                                   @(user.IsCompetitionRegistrationBlocked ? "checked" : "")
+                                   data-ids="@(Json.Encode(user.UserJobIds))"
+                                   @(canBlockRefereesRegistration ? "" : "disabled") />
+                        </td>
+                    }
+                    <td>@user.Id</td>
+                    <td>@user.IdentNum</td>
+                    <td>@user.FullName</td>
+                    <td>@user.JobName</td>
+
+                    <td>@user.Email</td>
+                    <td>@user.Phone</td>
+                    <td>@{ var birthday = user.BirthDay.HasValue ? user.BirthDay.Value.ToString("dd/MM/yyyy") : ""; }@birthday</td>
+                    <td>@user.Address</td>
+                    <td>@user.City</td>
+                    <td>
+                        @if (Model.SectionAlias.Equals(GamesAlias.MartialArts))
+                        {
+                            @user.MartialArtsCompetitionsCount
+                        }
+                        else
+                        {
+                            @user.GamesCount
+                        }
+                    </td>
+
+                    @if (ViewBag.DontShowKarate == null ? false : !ViewBag.DontShowKarate)
+                    {
+                        <td>@user.ConnectedClub</td>
+                        <td>
+                            @if (user.RefereeRanks != null && user.RefereeRanks.Any())
+                            {
+                                <ul>
+                                    @if (user.IsraelRefereeLicenses.Any())
+                                    {
+                                        foreach (var rank in user.IsraelRefereeLicenses.Where(c => c.Type.Contains("Kumite") || c.Type.Contains("Referee")))
+                                        {
+                                            <li>@UIHelpers.GetRankName(rank.Type) - <b>@(rank.Date?.ToShortDateString() ?? string.Empty)</b></li>
+                                        }
+                                    }
+                                </ul>
+                            }
+                        </td>
+                    }
+                    <td>
+                        <ul>
+                            @if (user.IsraelRefereeLicenses.Any())
+                            {
+                                foreach (var rank in user.IsraelRefereeLicenses.Where(c => c.Type.Contains("Kata")))
+                                {
+                                    <li>@UIHelpers.GetRankName(rank.Type) - <b>@(rank.Date?.ToShortDateString() ?? string.Empty)</b></li>
+                                }
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            @if (user.EkfRefereeLicenses.Any())
+                            {
+                                foreach (var rank in user.EkfRefereeLicenses.Where(c => c.Type.Contains("Kumite") || c.Type.Contains("Referee")))
+                                {
+                                    <li>@UIHelpers.GetRankName(rank.Type) - <b>@(rank.Date?.ToShortDateString() ?? string.Empty)</b></li>
+                                }
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            @if (user.EkfRefereeLicenses.Any())
+                            {
+                                foreach (var rank in user.EkfRefereeLicenses.Where(c => c.Type.Contains("Kata")))
+                                {
+                                    <li>@UIHelpers.GetRankName(rank.Type) - <b>@(rank.Date?.ToShortDateString() ?? string.Empty)</b></li>
+                                }
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            @if (user.WkfRefereeLicenses.Any())
+                            {
+                                foreach (var rank in user.WkfRefereeLicenses.Where(c => c.Type.Contains("Kumite") || c.Type.Contains("Referee")))
+                                {
+                                    <li>@UIHelpers.GetRankName(rank.Type) - <b>@(rank.Date?.ToShortDateString() ?? string.Empty)</b></li>
+                                }
+                            }
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            @if (user.WkfRefereeLicenses.Any())
+                            {
+                                foreach (var rank in user.WkfRefereeLicenses.Where(c => c.Type.Contains("Kata")))
+                                {
+                                    <li>@UIHelpers.GetRankName(rank.Type) - <b>@(rank.Date?.ToShortDateString() ?? string.Empty)</b></li>
+                                }
+                            }
+                        </ul>
+                    </td>
+
+                    <td class="refereereportcolumn remove_print">
+                        @if (needReport)
+                        {
+                            <a data-user-id="@user.UserId"
+                               data-jobid="@user.Id"
+                               data-user-official="@user.RoleName"
+                               id="refereReportBtn"
+                               class="btn btn-primary"
+                               data-toggle="tooltip"
+                               title="@Messages.ReportTooltip.Replace("{0}", LangHelper.GetJobName(user.RoleName).ToLower())">
+                                <i class="fa fa-file-text"></i>
+                            </a>
+                        }
+                    </td>
+                    <td class="refereereportcolumn remove_print">
+                        @if (needReport && ViewBag.JobRole != JobRole.RefereeAssignment)
+                        {
+                            <a data-user-id="@user.UserId" data-jobid="@user.Id" data-user-official="@user.RoleName.ToString()" id="refereReportBtn" class="btn btn-primary" data-toggle="tooltip" title="@Messages.ReportTooltip.Replace("{0}", LangHelper.GetJobName(user.RoleName).ToLower())">
+                                <i class="fa fa-file-text"></i>
+                            </a>
+                        }
+                    </td>
+
+                    <td class="remove_print">
+                        @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                        {
+                            <a href="@Url.Action("DeleteWorker", new
+                                 {
+                                     @id = user.Id,
+                                     relevantEntityId = @Model.RelevantEntityId,
+                                     logicalName = @Model.RelevantEntityLogicalName,
+                                     seasonId = ViewBag.SeasonId,
+                                     showAll = showAll,
+                                     onlyReferees = true
+                                 })"
+                               class="@AppCss.Delete"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#referee_list"
+                               data-ajax="true"></a>
+                        }
+
+                    </td>
+                </tr>
+                }
+            </tbody>
+            @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+            {
+                <tfoot class="remove_print">
+
+                    <tr>
+                        <td></td>
+
+                        <td colspan="3">
+                            <div class="form-group no-marging">
+                                @Html.TextBoxFor(m => m.FullName, new
+                                {
+                                    @class = "form-control auto-search",
+                                    placeholder = Messages.SearchExisting,
+                                    data_remote = Url.Action("Search", "Jobs", new { id = Model.RelevantEntityId, logicalName = Model.RelevantEntityLogicalName }),
+                                    data_field = "RefereeId"
+                                })
+                                @Html.ValidationMessageFor(m => m.FullName)
+                                @Html.HiddenFor(m => m.RefereeId)
+                            </div>
+                        </td>
+                        <td colspan="2">
+                            @Html.DropDownListFor(m => m.JobId, Model.JobsList, Messages.Select, new { @class = "form-control", id = "ddljob" })
+                            @Html.ValidationMessageFor(m => m.JobId)
+                        </td>
+                        <td>
+                            <button class="btn btn-primary">@Messages.Save</button>
+                            @Html.HiddenFor(m => m.RelevantEntityId)
+                            @Html.HiddenFor(m => m.RelevantEntityLogicalName)
+                        </td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    }
+    <script>
+
+
+        $('#usersform').validateBootstrap(true);
+
+        function updateRefereesList(onlyReferees) {
+            $.post('@Url.Action("WorkerList", "Jobs")',
+                {
+                    id: @Model.RelevantEntityId,
+                    logicalName: '@Model.RelevantEntityLogicalName',
+                    seasonId: '@ViewBag.SeasonId',
+                    onlyReferees: onlyReferees,
+                    unionId: '@(Model.RelevantEntityLogicalName == LogicaName.Union ? Model.RelevantEntityId : 0)'
+                },
+                function (data) {
+                    $('#referee_list').html(data);
+                });
+        }
+
+        setAutoSearch();
+
+    </script>
+</div>
+
+<div class="modal fade" id="referee_modal_view" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="worker_modal_form"></div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="refereeOfficialsform" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="refereeOfficialsform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="refereeDistanceform" role="dialog">
+    <div class="modal-dialog large-modal">
+        <div class="modal-content large-content" id="refereeDistanceform_pl">
+        </div>
+    </div>
+</div>
+<div class="modal fade official-report-modal" id="refereeReportform" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="refereeReportform_pl">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="refereeReportexport" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="refereeReportexport_pl">
+        </div>
+    </div>
+</div>
+
+<script>
+        function changeRefereeSettingsValue() {
+            var distance = '@distanceSettings';
+            if (distance == "refereeGoogleCheck") {
+                $("#refereeGoogleCheck").attr('checked', true);
+                $("#refereeDistanceCheck").attr('checked', false);
+            }
+            else {
+                $("#refereeGoogleCheck").attr('checked', false);
+                $("#refereeDistanceCheck").attr('checked', true);
+            }
+        }
+
+        function hideRefereeEdit() {
+            var isTable = $("#refereeTableCheck").is(":checked");
+            if (isTable) {
+                $("#refereeEditDistance").show();
+            }
+            else {
+                $("#refereeEditDistance").hide();
+            }
+            return isTable;
+        }
+
+        function changeRefereeReportStatus() {
+            var isChecked = $("#IsReportsEnabled").is(':checked');
+            if (isChecked || $("#reportsHidden").val() == "True") {
+                $(".refereereportcolumn").show();
+                $("#refereeDownloadAllReports").show();
+                $("#refereePaymentReportDiv").show();
+            } else {
+                $(".refereereportcolumn").hide();
+                $("#refereeDownloadAllReports").hide();
+                $("#refereePaymentReportDiv").hide();
+            }
+    }
+
+    function UpdateUsersJobActiveFlag(usersJobId) {
+        $.ajax({
+            url: "/Jobs/UpdateUsersJobActiveStatus",
+            type: "POST",
+            traditional: true,
+            data: {
+                id: usersJobId,
+            },
+            beforeSend: function () {
+
+            },
+            success: function (data) {
+                alert(data.Message);
+            }
+        });
+    }
+
+        $(document).ready(function () {
+            changeRefereeSettingsValue();
+            changeRefereeReportStatus();
+            hideRefereeEdit();
+
+            $(".reportids").multiselect({
+                buttonText: function(options, select) {
+                    return '@Messages.ChooseOfficials';
+                },
+                buttonTitle: function (options, select) {
+                    var labels = [];
+                    options.each(function () {
+                        labels.push($(this).text());
+                    });
+                    return labels.join(' - ');
+                },
+                includeSelectAllOption: true,
+                onDropdownHide: function(element) {
+                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                },
+                onDropdownShown: function (element) {
+                    $(element.currentTarget).find('.multiselect-search').focus();
+                }
+            });
+            $(".frm-date").datetimepicker({
+                format: 'd/m/Y H:i',
+                formatDate: 'd/m/Y',
+
+                step: 15,
+                closeOnDateSelect: false,
+                onChangeDateTime: function () {
+                    $(this).data("input").trigger("changedatetime.xdsoft");
+                },
+
+                scrollMonth: false,
+                scrollTime: false,
+                scrollInput: false
+            });
+        });
+
+
+    $("#refereeFilterOfficials").click(function () {
+        var filterArray = $("#JobsIds").val();
+        var filteredOfficialsVal = filterArray != null && filterArray[0] !== 0 ? filterArray : undefined;
+        $.ajax({
+            url: "/Jobs/WorkerList",
+            type: "GET",
+            traditional: true,
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                seasonId: @Model.SeasonId,
+                filteredOfficialsIds: filteredOfficialsVal,
+                showAll: '@showAll' === 'True' ? true : false,
+                onlyReferees: true
+            },
+            beforeSend: function() {
+                $("#refereeFilterLoad").show();
+            },
+            success: function (data) {
+                $("#refereeFilterLoad").hide();
+                $("#referee_list").html(data);
+            }
+        });
+    });
+
+    $("#refereeExportOfficialsList").click(function () {
+        var filterArray = $("#JobsIds").val();
+        var filteredOfficialsVal = filterArray != null && filterArray[0] !== 0 ? filterArray : undefined;
+        $.ajax({
+            url: "/Jobs/ExportWorkersToExcel",
+            type: "POST",
+            traditional: true,
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                seasonId: @Model.SeasonId,
+                filteredOfficialsIds: filteredOfficialsVal,
+                showAll: '@showAll' === 'True' ? true : false,
+                isReferee: true,
+                unionId : '@Model.UnionId'
+            },
+            beforeSend: function() {
+                $("#refereeExportloading").show();
+            },
+            complete: function() {
+                $('#refereeExportloading').hide();
+            },
+            success: function(data) {
+                $("#refereeOfficialsform_pl").html(data);
+                $("#refereeOfficialsform").modal('show');
+            }
+        });
+    });
+
+    $('#refereePrint').click(function () {
+        var tbl = $(".referees-table");
+        if (tbl.length > 0) {
+            tablePrint(tbl);
+        }
+    });
+
+    function tablePrint(el) {
+        var wnd = window.open('', '@Messages.Workers', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.Workers</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 200);
+    }
+
+    $("#editDistance").click(function () {
+        $.ajax({
+            url: "/Jobs/DistanceEdit",
+            type: "POST",
+            traditional: true,
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                seasonId: "@Model.SeasonId"
+            },
+            beforeSend: function () {
+                $("#refereeDistanceLoading").show();
+            },
+            success: function(data) {
+                $("#refereeDistanceform_pl").html(data);
+                $("#refereeDistanceform").modal('show');
+                $("#refereeDistanceLoading").hide();
+            }
+        });
+    });
+
+    $('table').on('click', '#refereReportBtn', function () {
+        var id = $(this).attr('data-user-id');
+        var jobId = $(this).attr('data-jobid');
+        var distanceSettings = $("#refereeTableCheck").is(":checked") ? "table" : "googleMapsApi";
+        var officialType = $(this).attr('data-user-official');
+
+        var requestData = {
+            userId: id,
+            officialType: officialType,
+            seasonId: @Model.SeasonId,
+            logicalName: '@Model.RelevantEntityLogicalName',
+            relevantId: @Model.RelevantEntityId,
+            distanceSettings: distanceSettings,
+            jobId: jobId
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: '/Jobs/ShowReport',
+            data: requestData,
+            success: function(data) {
+                if (!data.Message) {
+                    $("#refereeReportform_pl").html(data);
+                    $("#refereeReportform").data("report-request-data", requestData);
+                    $("#refereeReportform").modal('show');
+                } else {
+                    alert(data.Message);
+                }
+            }
+        });
+    });
+
+    $("#exportJobsOfficials").click(function () {
+        var distanceSettings = $("#refereeTableCheck").is(":checked") ? "table" : "googleMapsApi";
+        var filterArray = $("#ReportOfficialsIds").val();
+        var filteredOfficialsVal = filterArray != null && filterArray[0] !== 0 ? filterArray : undefined;
+
+        if (filteredOfficialsVal == undefined) {
+            alert("@Messages.ExportOfficialsError");
+        }
+        else {
+            $.ajax({
+                url: "/Jobs/ExportChoosenJobs",
+                type: "POST",
+                traditional: true,
+                data: {
+                    id: $("#RelevantEntityId").val(),
+                    logicalName: $("#RelevantEntityLogicalName").val(),
+                    seasonId: $("#SeasonId").val(),
+                    jobsJds: filteredOfficialsVal,
+                    startReportDate: $("#StartReportDate").val(),
+                    endReportDate: $("#EndReportDate").val(),
+                    distanceSettings: distanceSettings,
+                    jobId: "@Model.JobId"
+                },
+                beforeSend: function () {
+                    $("#refereeExportOfficialsLoad").show();
+                },
+                complete: function () {
+                    $("#refereeExportOfficialsLoad").hide();
+                },
+                success: function (data) {
+                    $("#refereeReportexport_pl").html(data);
+                    $("#refereeReportexport").modal('show');
+                }
+            });
+        }
+
+    });
+
+    $("#refereeTableCheck, #refereeGoogleCheck").click(function () {
+        var isTable = hideEdit();
+        $.ajax({
+            type: "POST",
+            url: "/Jobs/ChangeDistanceSettings",
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                type: isTable ? 'tableCheck' : 'googleCheck'
+            }
+        })
+    })
+
+</script>

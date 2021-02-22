@@ -1,0 +1,1 @@
+ALTER TABLE [LogLig].[dbo].[CompetitionRegistrations] Add IsTeam BIT NOT NULL DEFAULT 0

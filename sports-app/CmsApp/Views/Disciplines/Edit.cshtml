@@ -1,0 +1,67 @@
+﻿@using CmsApp.Controllers
+@model EditDisciplineViewModel
+@{ 
+    string tournamentCap = string.Equals(Model.SectionAlias, SectionAliases.Gymnastic, StringComparison.OrdinalIgnoreCase) ? Messages.Competitions : Messages.Tournaments;
+}
+<div class="row">
+    <div class="col-lg-9">
+        <h3 class="sub-header">
+            <a href="@Url.Action(nameof(UnionsController.Edit), "Unions", new { id = Model.UnionId })">@Model.UnionName</a>
+            &raquo; @Model.Name
+        </h3>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" role="tablist">
+    <li class="active"><a href="#info" data-toggle="tab">@Messages.Info</a></li>
+    <li><a href="#tournaments" data-toggle="tab">@tournamentCap</a></li>
+    <li><a href="#officials" data-toggle="tab">@Messages.Workers</a></li>
+    @if (Model.SectionAlias != GamesAlias.Gymnastic && Model.SectionAlias != GamesAlias.Athletics)
+    { 
+    <li><a href="#schedule" data-toggle="tab">@Messages.GamesTable</a></li>
+    <li><a href="#notification" data-toggle="tab">@Messages.Notifications</a></li>
+    }
+</ul>
+
+<div id="groupmodal" class="tab-content row offset-3">
+    <div class="tab-pane fade in active col-sm-10 offset-2" id="info">
+        @Html.Action("Details",new { id = Model.Id, seasonId = Model.SeasonId })
+    </div>
+
+    <div class="tab-pane fade col-sm-7 offset-2" id="tournaments">
+        @Html.Action("EilatTournament", "Unions", new { disciplineId = Model.Id, seasonId = Model.SeasonId })
+    </div>
+
+    <div class="tab-pane fade col-sm-12 offset-2" id="officials">
+        <div id="workers_list">
+            @Html.Action("WorkerList", "Jobs", new { id = Model.Id, logicalName = LogicaName.Discipline, seasonId = Model.SeasonId })
+        </div>
+    </div>
+    @if (Model.SectionAlias != GamesAlias.Gymnastic && Model.SectionAlias != GamesAlias.Athletics)
+    { 
+    <div class="tab-pane fade col-sm-7 offset-2" id="schedule">
+        @Html.Action("List", "Sections", new
+   {
+       model = new Schedules
+       {
+           UnionId = Model.UnionId
+       },
+       seasonId = Model.SeasonId,
+       idUnion = Model.UnionId,
+       disciplineId = Model.Id
+   })
+    </div>
+    
+
+    <div class="tab-pane fade col-sm-7 offset-2" id="notification">
+        @Html.Action("Add", "Notifications", new { entityId = Model.Id, logicalName = LogicaName.Discipline })
+    </div>
+    }
+</div>
+
+
+<div class="modal fade" id="newleague" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content"></div>
+    </div>
+</div>

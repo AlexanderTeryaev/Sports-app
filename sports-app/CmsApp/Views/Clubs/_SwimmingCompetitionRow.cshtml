@@ -1,0 +1,139 @@
+﻿@model UnionCompetitionForm
+@{
+    var hasSportsmen = false;
+    bool isHebrew = Request.IsHebrew();
+    var competitions = Model.Competitions;
+    competitions = Model.Competitions.Where(c => c.StartRegistrationDate != null).OrderBy(c => c.StartDate ?? DateTime.MaxValue).ToList();
+}
+
+@foreach (var competition in competitions)
+{
+<tr class="@(competition.IsEnded ? "isEnded" : string.Empty) @(competition.IsStarted ? string.Empty : "isNotStarted") @(competition.IsMaxed ? "isMaxed" : string.Empty)">
+    <td>
+        <a data-id="@competition.LeagueId" class="btn btn-primary information">
+            <i class="glyphicon glyphicon-info-sign" name="info-icon"></i>
+            <i class="fa fa-spin fa-spinner" name="spinner" style="display:none"></i>
+        </a>
+    </td>
+    @if (Model.IsAthletics)
+    {
+        <td>@competition.StartDate</td>
+    }
+    <td>
+        <a href="@Url.Action("AthleticsRegistrationList", "Clubs", new { clubId = Model.ClubId, seasonId = Model.SeasonId, leagueId = competition.LeagueId })" style="color:#f45c0e;"
+           data-toggle="modal"
+           data-target="#athleticsregistrationlist"
+           data-ajax-update="#athleticsregistrationlist_pl"
+           data-ajax="true">
+            <b>@competition.CompetitionName</b>
+        </a>
+    </td>
+
+    <td>@competition.StartDate</td>
+    <td>@competition.EndDate</td>
+    <td>@competition.StartRegistrationDate</td>
+    <td>@competition.EndRegistrationDate</td>
+    <td>@competition.Place</td>
+    <td>
+        @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager))
+        {
+            <a data-id="@competition.LeagueId" class="btn btn-primary is_admin register">@Messages.Register</a>
+        }
+        else
+        {
+            <a data-id="@competition.LeagueId" class="btn btn-primary register">@Messages.Register</a>
+        }
+    </td>
+
+</tr>
+    if (competition.CompetitionDisciplines.Any())
+                            {
+        <tr style="display:none" id="collapse_@competition.LeagueId">
+            <td colspan="8">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="row" style="margin-bottom:20px;">
+                            <div class="col-sm-2">
+                                <strong>@Messages.Discipline</strong>
+                            </div>
+                            <div class="col-sm-2">
+                                <strong>@Messages.Category</strong>
+                            </div>
+                            <div class="col-sm-2">
+                                <strong>@Messages.MaxSportsmen</strong>
+                            </div>
+                            <div class="col-sm-2">
+                                <strong>@Messages.MinResult</strong>
+                            </div>
+                            <div class="col-sm-2">
+                                <strong>@Messages.StartTime</strong>
+                            </div>
+                            <div class="col-sm-2"></div>
+                        </div>
+                        
+                        @foreach (var discipline in competition.CompetitionDisciplines.Where(cd => !cd.IsDeleted))
+                        {
+                            var sortedPlayers = discipline.DisciplinePlayers.OrderBy(r => r.UserName);
+                            var players = new MultiSelectList(sortedPlayers,
+                                nameof(DataService.DTO.PlayerShortDTO.UserId), nameof(DataService.DTO.PlayerShortDTO.UserName),
+                                discipline.RegisteredPlayers.Select(rpl => rpl.UserId)).ToList();
+                            if (players.Any()) {
+                                players.Insert(0, new SelectListItem() { Text = Messages.SelectAllPlayers, Value=""});
+                            }
+
+                        <div class="row" style="margin-bottom:30px;">
+                            <div class="col-sm-2">
+                                <text>@UIHelpers.GetCompetitionDisciplineName(discipline.DisciplineId)</text>
+                            </div>
+                            <div class="col-sm-2">
+                                <text>@UIHelpers.GetCompetitionCategoryName(discipline.CategoryId)</text>
+                            </div>
+                            <div class="col-sm-2">
+                                <text>@discipline.MaxSportsmen</text>
+                            </div>
+                            <div class="col-sm-2">
+                                <text>@discipline.MinResult</text>
+                            </div>
+                            <div class="col-sm-2">
+                                <text>@if(discipline.StartTime.HasValue){ @discipline.StartTime}</text>
+                            </div>
+                            <div class="col-sm-2">
+                                @Html.DropDownList($"PlayersIds", players, new
+                                {
+                                    @class = $"form-control atleticsIds",
+                                    @multiple = "multiple",
+                                    data_discipline = discipline.Id,
+                                    data_clubId = Model.ClubId,
+                                    data_maxsportsmen = discipline.MaxSportsmen,
+                                    data_league = discipline.CompetitionId,
+                                    id = $"competition_{competition.LeagueId}_{discipline.Id}"
+                                })
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </td>
+        </tr>
+    }
+    else
+    {
+        <tr style="display:none" id="collapse_@competition.LeagueId">
+            <td colspan="8">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="row" style="margin-bottom:20px;">
+                            <div class="col-sm-12">
+                                @Messages.NoDisciplinesForThisCompetition
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <button class="btn btn-danger cancel">@Messages.Cancel</button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    }
+
+}

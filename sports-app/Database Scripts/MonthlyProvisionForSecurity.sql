@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[Teams] ADD [MonthlyProvisionForSecurity] Int NULL;

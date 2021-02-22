@@ -1,0 +1,1 @@
+ALTER TABLE [LogLig].[dbo].[CompetitionResults] DROP CONSTRAINT FK_CompetitionResults_CompetitionDisciplineRegistrations;

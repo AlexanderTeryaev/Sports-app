@@ -1,0 +1,1 @@
+  insert into UsersTypes Values (6, 'AppUsers', 'appusers')

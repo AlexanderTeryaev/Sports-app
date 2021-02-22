@@ -1,0 +1,360 @@
+﻿@model CompetitionForm
+@helper ShowImage(string imgName, int width, int height)
+{
+    string src = GlobVars.ContentPath + "/league/" + imgName;
+    <img width="@width" height="@height" class="img-responsive img-thumbnail" src="@src" />
+}
+
+@{
+    bool isAthletics = ViewBag.FromAthletics ?? false;
+    bool isSwimming = ViewBag.FromSwimming ?? false;
+    bool isMartialArts = ViewBag.FromMartialArts ?? false;
+    bool isTennis = ViewBag.FromTennis ?? false;
+    bool isWeightLifting = ViewBag.FromWeightLifting ?? false;
+    bool isRowing = ViewBag.FromRowing ?? false;
+    bool isBicycle = ViewBag.FromBicycle ?? false;
+    bool isClimbing = ViewBag.FromClimbing ?? false;
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <h2 class="modal-title">
+        @if (!string.IsNullOrEmpty(Model.Logo))
+        {
+            @ShowImage(Model.Logo, 48, 48)
+        }
+        "@Model.NameOfCompetition"
+    </h2>
+</div>
+<div class="modal-body">
+    <div class="row">
+        @if (!string.IsNullOrEmpty(Model.Image))
+        {
+            <div class="form-group col-sm-4">
+                @ShowImage(Model.Image, 256, 256)
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.DisciplineName) && !isMartialArts && !isAthletics && !isBicycle)
+        {
+            <div class="form-group col-sm-6">
+                <label for="DisciplineName">@Messages.Discipline:</label>
+                @Html.DisplayTextFor(m => m.DisciplineName)
+            </div>
+        }
+        else if (isMartialArts)
+        {
+            <div class="form-group col-sm-6">
+                <label for="TypeId">@Messages.Type:</label>
+                <text>@LangHelper.GetLeagueTypeValue(Model.TypeId)</text>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.AboutCompetition))
+        {
+            <div class="form-group col-sm-6">
+                <label for="AboutCompetition">@Messages.AboutCompetition :</label>
+                @Html.DisplayTextFor(m => m.AboutCompetition)
+            </div>
+        }
+        @if (Model.StartDate.HasValue)
+        {
+            <div class="form-group col-sm-6">
+                <label for="StartDate">@Messages.StartDate.ToLowerInvariant():</label>
+                @Html.DisplayTextFor(m => m.StartDate.Value)
+            </div>
+        }
+        @if (Model.EndDate.HasValue)
+        {
+            <div class="form-group col-sm-6">
+                <label for="EndDate">@Messages.EndDate.ToLowerInvariant():</label>
+                @Html.DisplayTextFor(m => m.EndDate.Value)
+            </div>
+        }
+        @if (Model.StartRegistrationDate.HasValue)
+        {
+            <div class="form-group col-sm-6">
+                <label for="EndRegistrationDate">@Messages.StartRegistrationDate.ToLowerInvariant():</label>
+                @Html.DisplayTextFor(m => m.StartRegistrationDate.Value)
+            </div>
+        }
+        @if (Model.EndRegistrationDate.HasValue)
+        {
+            <div class="form-group col-sm-6">
+                <label for="EndRegistrationDate">@Messages.EndRegistrationDate.ToLowerInvariant():</label>
+                @Html.DisplayTextFor(m => m.EndRegistrationDate.Value)
+            </div>
+        }
+
+        @if (Model.StartTeamRegistrationDate.HasValue)
+        {
+            <div class="form-group col-sm-6">
+                <label for="EndRegistrationDate">@Messages.Teams.ToLowerInvariant() - @Messages.StartRegistrationDate.ToLowerInvariant():</label>
+                @Html.DisplayTextFor(m => m.StartTeamRegistrationDate.Value)
+            </div>
+        }
+        @if (Model.EndTeamRegistrationDate.HasValue)
+        {
+            <div class="form-group col-sm-6">
+                <label for="EndRegistrationDate">@Messages.Teams.ToLowerInvariant() - @Messages.EndRegistrationDate.ToLowerInvariant():</label>
+                @Html.DisplayTextFor(m => m.EndTeamRegistrationDate.Value)
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.Place))
+        {
+            <div class="form-group col-sm-6">
+                <label for="Place">@Messages.Place.ToLowerInvariant():</label>
+                @Html.DisplayTextFor(m => m.Place)
+            </div>
+        }
+
+        @if (Model.MaxRegistrations.HasValue)
+        {
+            <div class="form-group col-sm-6">
+                <label for="MaxRegistrations">@Messages.MaximumCompetitionRegistrationsAllowed:</label>
+                @Html.DisplayTextFor(m => m.MaxRegistrations.Value)
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.CompetitionStructure))
+        {
+            <div class="form-group col-sm-6">
+                <label for="CompetitionStructure">@Messages.CompetitionStructure :</label>
+                @Html.DisplayTextFor(m => m.CompetitionStructure)
+            </div>
+        }
+        @if (isBicycle)
+        {
+            if (!string.IsNullOrEmpty(Model.LevelName))
+            {
+                <div class="form-group col-sm-6">
+                    <label for="CompetitionStructure">@Messages.Level :</label>
+                    @Html.DisplayTextFor(m => m.LevelName)
+                </div>
+            }
+            if (!string.IsNullOrEmpty(Model.TypeName))
+            {
+                <div class="form-group col-sm-6">
+                    <label for="CompetitionStructure">@Messages.Type :</label>
+                    @Html.DisplayTextFor(m => m.TypeName)
+                </div>
+            }
+        }
+    </div>
+    @if (isTennis)
+    {
+        <div class="row">
+            @if (Model.MinimumPlayers.HasValue)
+            {
+                <div class="form-group col-sm-6">
+                    <label for="MinimumPlayers">@Messages.LeagueDetail_MinimumPlayersTeam:</label>
+                    @Html.DisplayTextFor(m => m.MinimumPlayers.Value)
+                </div>
+            }
+            @if (Model.MaximumPlayers.HasValue)
+            {
+                <div class="form-group col-sm-6">
+                    <label for="MaximumPlayers">@Messages.LeagueDetail_MaximumPlayersTeam:</label>
+                    @Html.DisplayTextFor(m => m.MaximumPlayers.Value)
+                </div>
+            }
+        </div>
+        <div class="row">
+            @if (Model.MinimumAge.HasValue)
+            {
+                <div class="form-group col-sm-6">
+                    <label for="MinimumAge">@Messages.MinimumAge:</label>
+                    @Html.DisplayTextFor(m => m.MinimumAge.Value)
+                </div>
+            }
+            @if (Model.MaximumAge.HasValue)
+            {
+                <div class="form-group col-sm-6">
+                    <label for="MaximumPlayers">@Messages.MaximumAge:</label>
+                    @Html.DisplayTextFor(m => m.MaximumAge.Value)
+                </div>
+            }
+        </div>
+    }
+    <div class="row">
+
+        @if (Model.RoutesRanks.Any())
+        {
+            <div class="form-group col-sm-6">
+                <label for="CompetitionStructure">@Messages.IndividualRoutes.ToLowerInvariant() :</label>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.Route</th>
+                            <th>@Messages.PlayerInfoRank</th>
+                            <th>@Messages.Composition</th>
+                            <th>@Messages.MaximumCompetitionRegistrationsAllowed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var route in Model.RoutesRanks)
+                        {
+                            <tr>
+                                <td>@route.RouteName</td>
+                                <td>@route.RankName</td>
+                                <td>@route.Composition</td>
+                                <td>@route.MaxRegistrationsAllowed</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (Model.RoutesTeamRanks.Any())
+        {
+            <div class="form-group col-sm-6">
+                <label for="CompetitionStructure">@Messages.TeamRoutes.ToLowerInvariant() :</label>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.Route</th>
+                            <th>@Messages.PlayerInfoRank</th>
+                            <th>@Messages.Composition</th>
+                            <th>@Messages.MaximumCompetitionRegistrationsAllowed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var route in Model.RoutesTeamRanks)
+                        {
+                            <tr>
+                                <td>@route.RouteName</td>
+                                <td>@route.RankName</td>
+                                <td>@route.Composition</td>
+                                <td>@route.MaxRegistrationsAllowed</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+    <div class="row">
+        @if (Model.CompetitionDisciplines != null && Model.CompetitionDisciplines.Any())
+        {
+            <div class="form-group col-sm-12">
+                <label for="CompetitionStructure">@Messages.Competition @(isWeightLifting || isClimbing ? Messages.Categories : Messages.Disciplines.ToLower()) :</label>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            @if (!isWeightLifting && !isClimbing)
+                            {
+                                <th>@(isRowing ? Messages.Boat : Messages.Discipline)</th>
+                            }
+                            @if (isRowing)
+                            {
+                                <th>@Messages.Distance</th>
+                            }
+                            <th>@Messages.Category</th>
+                            @if (!isWeightLifting && !isRowing)
+                            {
+                                <th>@Messages.MaxSportsmen</th>
+                                if (!isSwimming && !isClimbing)
+                                {
+                                    if (!isRowing)
+                                    {
+                                        <th>@Messages.MinResult</th>
+                                    }
+                                    <th>@Messages.StartTime</th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var discipline in Model.CompetitionDisciplines)
+                        {
+                            <tr>
+                                @if (!isWeightLifting && !isClimbing)
+                                {
+                                    <td>@UIHelpers.GetCompetitionDisciplineName(discipline.DisciplineId)</td>
+                                }
+                                @if (isRowing)
+                                {
+                                    <td>@discipline.RowingDistance.Name</td>
+                                }
+                                <td>@UIHelpers.GetCompetitionCategoryName(discipline.CategoryId)</td>
+                                @if (!isWeightLifting)
+                                {
+                                    <td>@discipline.MaxSportsmen</td>
+                                    if (!isSwimming && !isClimbing)
+                                    {
+                                        if (!isRowing)
+                                        {
+                                            <td>@discipline.MinResult</td>
+                                        }
+                                        <td>
+                                            @if (discipline.StartTime.HasValue)
+                                            {
+                                                @discipline.StartTime
+                                            }
+                                        </td>
+                                    }
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+    <div class="row">
+        @if (isBicycle && Model.CompetitionExperties != null && Model.CompetitionExperties.Any())
+        {
+            <div class="form-group col-sm-12">
+                <label for="CompetitionStructure">@Messages.Competition @Messages.Expertises:</label>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <td>@Messages.Expertise</td>
+                            <td>@Messages.CompetitionHeat</td>
+                            <td>@Messages.Heat</td>
+                            <td>@Messages.Level</td>
+                            <td>@Messages.Categories</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var exp in Model.CompetitionExperties)
+                        {
+                            foreach (var expCompHeat in exp.CompetitionExpertiesHeats)
+                            {
+                                var levelName = expCompHeat.CompetitionLevel != null ? expCompHeat.CompetitionLevel.level_name : "";
+                                var categories = "" + ((char)0x200E);
+                                foreach(var cat in expCompHeat.CompetitionExpertiesHeatsAges)
+                                {
+                                    if(categories == ((char)0x200E).ToString())
+                                    {
+                                        categories = string.Concat(categories, cat.CompetitionAge.age_name);
+                                    }
+                                    else
+                                    {
+                                        categories += string.Concat(", ", cat.CompetitionAge.age_name);
+                                    }
+                                    categories += ((char)0x200E);
+                                }
+                                foreach (var expHeat in expCompHeat.CompetitionExpertiesDisciplineHeats)
+                                {
+                                    <tr>
+                                        <td>@exp.DisciplineExpertise.Name</td>
+                                        <td>@expCompHeat.BicycleCompetitionHeat.Name</td>
+                                        <td>@expHeat.Discipline.Name</td>
+                                        <td>@levelName</td>
+                                        <td>@categories</td>
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+    </div>
+</div>
+
+

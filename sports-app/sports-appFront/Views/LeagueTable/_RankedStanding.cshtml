@@ -1,0 +1,53 @@
+﻿@using Resources
+@model DataService.LeagueRankedStanding
+
+<h4>@Messages.League_RankedStandings</h4>
+<table class="table table-bordered tableRank">
+    <thead>
+    <tr style="background-color: #01559e;">
+        <th>#</th>
+        <th>@Messages.Team</th>
+        <th>@Messages.Points</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    @if (Model.Teams?.Any() == true)
+    {
+        var counter = 0;
+        var previousTeamPoints = int.MinValue;
+        foreach (var standing in Model.Teams.OrderByDescending(x => x.Points))
+        {
+            <tr>
+                <td>
+                    @if (standing.Points <= 0)
+                    {
+                        <text> - </text>
+                    }
+                    else
+                    {
+                        if (standing.Points != previousTeamPoints)
+                        {
+                            previousTeamPoints = standing.Points;
+
+                            counter++;
+                        }
+
+                        @counter
+                    }
+                </td>
+                <td>@standing.Name</td>
+                <td>@standing.Points</td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="3">
+                <i>@Messages.League_RankedStanding_NoFinishedGamesInStage</i>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

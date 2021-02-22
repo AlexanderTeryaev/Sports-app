@@ -1,0 +1,178 @@
+﻿@model BannerModel
+@helper ShowImage(string imgName)
+{
+    <img class="img-responsive img-thumbnail" style="height: 100px" src="@( GlobVars.ContentPath + "/banners/" + imgName)" />
+}
+@if (User.IsInAnyRole(AppRole.Admins))
+{
+    using (Ajax.BeginForm("AddBanner", "Banners", new AjaxOptions { UpdateTargetId = "banners" }, new { id = "bannersform", autocomplete = "off" }))
+    {
+        <div class="col-sm-6 form-group">
+            <div class="row form-group">
+                <label for="game-url" class="col-sm-2">@Messages.ExternalLink: </label>
+                <div class="col-sm-6">
+                    <input type="text" id="LinkUrl" name="LinkUrl" class="form-control" />
+                </div>
+                <div class="col-sm-2">
+                    <button class="btn btn-primary" id="btnAdd">@Messages.Save</button>
+                </div>
+            </div>
+
+            <div class="row form-group">
+                <label for="game-url" class="col-sm-2">@Messages.Banner: </label>
+                <div class="col-sm-2">
+                    @Html.Editor("BannerFile", "ImageUpload", new { css = "validfile", id = "BannerFile", name = "BannerFile" })
+                </div>
+            </div>
+
+            <input type="text" id="count" name="Count" value="0" class="form-control" style="display:none" />
+            <input type="text" id="unionid" name="UnionId" value=@Model.parentId class="form-control" style="display:none" />
+            <input type="text" id="clubid" name="ClubId" value=@Model.parentId class="form-control" style="display:none" />
+            <input type="text" id="isunion" name="isUnion" value=@Model.isUnion class="form-control" style="display:none" />
+        </div>
+    }
+}
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                @if (User.IsInAnyRole(AppRole.Admins))
+                {
+                    <th></th>
+                }
+                <th>#</th>
+                <th>@Messages.Clicks</th>
+                <th>@Messages.ExternalLink</th>
+                <th>@Messages.Banner</th>
+                @if (User.IsInAnyRole(AppRole.Admins))
+                {
+                    <th></th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model.Banners)
+            {
+                
+                    <tr id="row@(m.Id)">
+                        @using (Ajax.BeginForm("UpdateBanner", null,
+new AjaxOptions
+{
+    OnSuccess = "updateSuccess()",
+    OnFailure = "updateFailed(data)"
+},
+new { id = "bannerfrm" + m.Id }))
+                        {
+                            if (User.IsInAnyRole(AppRole.Admins))
+                            {
+                                <td><a class="@AppCss.Edit edit-team" data-target="#banneredit" href="@Url.Action("Edit", "Banners", new { id = @m.Id, isUnion = Model.isUnion })" data-toggle="modal"></a></td>
+                            }
+
+                            <td>@m.Id</td>
+                            <td>@m.Count</td>
+                            <td>@m.LinkUrl</td>
+                            <td class="flip-to-ltr">
+                                <div class="offset-2"></div>
+                                @ShowImage(m.ImageUrl)
+                            </td>
+                            if (User.IsInAnyRole(AppRole.Admins))
+                            {
+                                <td>
+                                    <a href="@Url.Action("DeleteBanner", new { bannerId = m.Id, parentId = Model.parentId, isUnion = Model.isUnion })" class="@AppCss.Delete"
+                                       data-ajax-confirm="@Messages.DeleteConfirm"
+                                       data-ajax-update="#banners"
+                                       data-ajax="true">
+                                    </a>
+                                </td>
+                            }
+                        }
+                    </tr>
+            }
+        </tbody>
+    </table>
+<script>
+    $(document).ready(function () {
+        if ('@(TempData["IsSuccess"])' == 'False') {
+            alert(@TempData["Error"]);
+        }
+    });
+
+    $('#bannersform').validateBootstrap(true);
+    setBannerUpload('#bannersform', '#banner');
+
+    $("#bannersform").submit(function (event) {
+        event.preventDefault();
+        //$("#bannersform").submit();
+
+        return false;
+    });
+
+    $("#btnAdd").click(function (event) {
+        event.preventDefault();
+        // event.preventDefault(); doesn't work in IE8 so do the following instead
+        var linkUrl = $("#LinkUrl").val();
+        var x = document.getElementsByName("BannerFile");
+        var file = x[0].value;
+        if (linkUrl != "" && file != "") {
+            $("#bannersform").submit();
+        } else {
+            alert("@Messages.BannerAlertMessage");
+        }
+        
+    });
+
+    function updateSuccess() {
+        window.location.reload();
+    }
+
+    function findRow(bannerId) {
+        var row = $("#row" + bannerId);
+        return row;
+    }
+
+    function SubmitBannerForm(bannerId) {
+        var row = findRow(bannerId);
+        var form = (row).find("bannerfrm" + bannerId);
+        $(row).find("#bannerfrm" + bannerId).submit();
+    }
+
+    function setBannerUpload(formName, place) {
+        var bar = $(".banner-progress-bar");
+        var percent = $(".progress-bar");
+        var status = $(place);
+
+        var targetId = $(formName).data("targetid");
+
+        $(formName).ajaxForm({
+            beforeSend: function () {
+                /*var percentVal = "0%";
+                bar.width(percentVal)
+                percent.html(percentVal);*/
+            },
+            uploadProgress: function (event, position, total, percentComplete) {
+                /*var percentVal = percentComplete + "%";
+                bar.width(percentVal)
+                percent.html(percentVal);*/
+            },
+            success: function (responseText, statusText, xhr, form) {
+                /*var percentVal = "100%";
+                bar.width(percentVal)
+                percent.html(percentVal);
+
+                var tarId = form.data("targetid");
+                $("#" + tarId).html(responseText);*/
+                
+            },
+            complete: function (xhr) {
+                /*status.html(xhr.responseText);*/
+                window.location.reload();
+            },
+            clearForm: "true",
+            beforeSubmit: validator
+        });
+
+        function validator() {
+            return $(formName).valid();
+        }
+    }
+</script>

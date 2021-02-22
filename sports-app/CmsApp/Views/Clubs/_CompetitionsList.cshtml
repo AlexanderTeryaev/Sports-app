@@ -1,0 +1,1361 @@
+﻿@using CmsApp.Controllers
+@model UnionCompetitionForm
+@{
+    var isSwimming = Model.SectionAlias == GamesAlias.Swimming;
+    var isRowingOrAthletic = Model.IsAthletics || Model.SectionAlias == GamesAlias.Rowing;
+}
+<style>
+    #registrationlist > .modal-dialog {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #registrationlist > .modal-content {
+        height: auto;
+        min-height: 100%;
+        border-radius: 0;
+    }
+
+    .dropdown-menu {
+        max-height: 500px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    tr.club_competition {
+        background-color: antiquewhite;
+    }
+</style>
+<div class="row" id="sections_pl">
+    <div class="col-sm-12">
+        @if (Model.Competitions != null && Model.Competitions.Any())
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th></th>
+                        @if (Model.IsBicycle || Model.IsClimbing)
+                        {
+                            <th>@Messages.Register</th>
+                        }
+                        @if (Model.SectionAlias == GamesAlias.Rowing || Model.IsBicycle || Model.IsClimbing)
+                        {
+                            <th>@Messages.Status</th>
+                        }
+                        @if (isRowingOrAthletic)
+                        {
+                            <th>@Messages.StartDate</th>
+                        }
+                        @if (Model.IsGymnastic)
+                        {
+                            <th>@Messages.Status</th>
+                        }
+                        <th>@Messages.Title</th>
+                        @if (Model.IsGymnastic)
+                        {
+                            <th>@Messages.Discipline</th>
+                        }
+                        else if (Model.IsMartialArts)
+                        {
+                            <th>@Messages.Type</th>
+                        }
+                        @if (!isRowingOrAthletic)
+                        {
+                            <th>@Messages.StartDate</th>
+                        }
+                        <th>@Messages.EndDate</th>
+                        @if (isRowingOrAthletic || Model.IsWeightLifting || Model.IsGymnastic || isSwimming || Model.IsBicycle || Model.IsClimbing)
+                        {
+                            <th>@Messages.StartRegistrationDate</th>
+                        }
+                        <th>@Messages.EndRegistrationDate</th>
+                        @if (isRowingOrAthletic || Model.IsWeightLifting || Model.IsBicycle || Model.IsClimbing)
+                        {
+                            <th>@Messages.PlaceOfEvent</th>
+                        }
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.IsGymnastic)
+                    {
+                        Html.RenderPartial("_GymnasticCompetitionRow", Model);
+                    }
+                    else if (Model.IsAthletics)
+                    {
+                        Html.RenderPartial("_AthleticsCompetitionRow", Model);
+                    }
+                    else if (Model.SectionAlias == GamesAlias.Rowing)
+                    {
+                        Html.RenderPartial("_RowingCompetitionRow", Model);
+                    }
+                    else if (isSwimming)
+                    {
+                        Html.RenderPartial("_SwimmingCompetitionRow", Model);
+                    }
+                    else if (Model.IsWeightLifting)
+                    {
+                        Html.RenderPartial("_WeightLiftingCompetitionRow", Model);
+                    }
+                    else if(Model.IsBicycle)
+                    {
+                        Html.RenderPartial("_BicycleCompetitionRow", Model);
+                    }
+                    else if (Model.IsClimbing)
+                    {
+                        Html.RenderPartial("_ClimbingCompetitionRow", Model);
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <h3>@Messages.NoCompetitions</h3>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="competitionmodal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="competitionmodal_pl">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="successfulreg" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div style="display:none" id="succesful-div" class="alert alert-success">
+                    <strong><i class="fa fa-check-square-o"></i></strong> &nbsp;&nbsp; @Messages.SuccessfulRegistration
+                </div>
+                <div style="display:none" id="error-div" class="alert alert-danger">
+                    <strong><i class="fa fa-ban"></i></strong>&nbsp;&nbsp; @Messages.ErrorWhileUpdating
+                    <div style="white-space: pre-line" id="error_message"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="errorAddingTeams" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div style="display:none" id="error-div-team" class="alert alert-danger">
+                    <strong><i class="fa fa-ban"></i></strong>&nbsp;&nbsp; @Messages.ErrorWhileAddingTeams
+                    <div style="white-space: pre-line" id="error_message_team"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="registrationlist" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="registrationlist_pl">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="athleticsregistrationlist" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="athleticsregistrationlist_pl" style="width: fit-content;">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="gymnasticorder" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="gymnasticorder_pl">
+        </div>
+    </div>
+</div>
+
+<script>
+
+    @if(Model.SectionAlias == SectionAliases.Rowing)
+    {
+        <text>
+            var isRowing = true;
+        </text>
+    }
+    else
+    {
+        <text>
+            var isRowing = false;
+        </text>
+    }
+    var isAnythingChanged = false;
+
+    $(document).ready(function () {
+
+        setTimeout(function () {
+            $(".registerTeamNum").change(
+                function () {
+                    var teamRegNum = $(this).val();
+                    var disciplineId = $(this).attr('data-discipline');
+                    var clubId = $(this).attr('data-club');
+
+                    $.ajax({
+                        url:
+                            "@Url.Action(nameof(ClubsController.UpdateTeamRegistrationNumber), nameof(ClubsController).TrimControllerName())",
+                        type: "POST",
+                        data: {
+                            disciplineId: disciplineId,
+                            clubId: clubId,
+                            teamRegistrationNumber: teamRegNum
+                        },
+                        success: function (data) {
+
+                        }
+
+                    });
+                })
+
+            $(".append-teams").click(
+                function () {
+                    var disciplineId = $(this).attr('data-id');
+                    var clubId = $(this).attr('club-id');
+                    var maxSportsman = $(this).attr('data-maxsportsmen');
+                    var leagueId = $(this).attr('data-league');
+                    var isCoxwain = $(this).attr('data-coxwain').toLowerCase() == 'true' ? true : false;
+                    //console.log(isCoxwain);
+                    //console.log(disciplineId);
+                    //console.log(clubId);
+
+                    $.ajax({
+                        url:
+                            "@Url.Action(nameof(ClubsController.CreateTeamForCompetitionDiscipline), nameof(ClubsController).TrimControllerName())",
+                        type: "POST",
+                        data: {
+                            disciplineId: disciplineId,
+                            clubId: clubId
+                        },
+                        success: function (data) {
+                            if (data.Success) {
+                                var team = "@Messages.Team " + data.TeamNumber;
+                                var teamId = data.TeamId;
+                                //var html = '<div class="row row-margin-bottom"><div class="col-sm-3"></div><div class="col-sm-2"><a disabled data-id="Bla" class="btn btn-default">' + team + '</a></div><div class="col-sm-3"></div></div>';
+
+                                //$("#row_disc_" + disciplineId).append(html);
+
+                                var html = $('<div />');
+                                html.attr("class", "row row-margin-bottom");
+                                var div1 = $('<div />'); div1.attr("class", "col-sm-3");
+                                var div2 = $('<div />'); div2.attr("class", "col-sm-2");
+                                var a = $('<a />'); a.attr("disabled", "disabled"); a.attr("data-id", "Bla"); a.attr("class", "btn btn-default"); a.html(team);
+                                var div3 = $('<div />'); div3.attr("class", "col-sm-3");
+
+                                div2.append(a);
+                                html.append(div1);
+                                html.append(div2);
+
+                                $.ajax({
+                                    url:
+                                        "@Url.Action(nameof(ClubsController.GetPlayersForRegistration), nameof(ClubsController).TrimControllerName())",
+                                    type: "POST",
+                                    data: {
+                                        disciplineId: disciplineId,
+                                        clubId: clubId,
+                                        seasonId: @Model.SeasonId
+                                    },
+                                    success: function (playersData) {
+                                        //console.log(playersData.players);
+                                        var s = $('<select />');
+
+                                        $('<option />', { value: '', text: '@Messages.SelectAllPlayers' }).appendTo(s);
+
+                                        var teamName = "";
+                                        var optGroup = "";
+                                        for (var i = 0; i < playersData.players.length; i++) {
+
+                                            optGroup = $('<optgroup />');
+                                            optGroup.attr("label", playersData.players[i][0].TeamTitle);
+                                            for (var j = 0; j < playersData.players[i].length; j++) {
+                                                var val = playersData.players[i][j];
+                                                if (jQuery.inArray(val.UserId, playersData.alreadyRegistered) != -1) {
+                                                    $('<option />', { value: val.UserId, text: val.UserNameAge, disabled: true }).appendTo(optGroup);
+                                                }
+                                                else
+                                                    $('<option />', { value: val.UserId, text: val.UserNameAge }).appendTo(optGroup);
+                                            }
+                                            s.append(optGroup);
+                                        }
+
+
+                                        var id = "playersReg_" + disciplineId + "_" + data.TeamId;
+                                        s.attr("id", id);
+                                        s.attr("class", "form-control");
+                                        s.attr("multiple", "multiple");
+                                        s.attr("data-maxsportsmen", maxSportsman);
+                                        s.attr("data-league", leagueId);
+                                        s.attr("data-discipline", disciplineId);
+                                        s.attr("data-clubId", clubId);
+                                        s.attr("data-teamId", teamId);
+                                        s.attr("data-coxwain", isCoxwain);
+                                        s.attr("data-selectedcount", 0);
+
+                                        div3.append(s);
+                                        html.append(div3);
+
+                                        if (isCoxwain) {
+                                            var coxWainSelection = s.clone();
+                                            var div4 = $('<div />'); div4.attr("class", "col-sm-3");
+
+                                            var id1 = "coxwainReg_" + disciplineId + "_" + data.TeamId;
+                                            coxWainSelection.attr("id", id1);
+                                            coxWainSelection.attr("class", "form-control");
+                                            coxWainSelection.attr("data-maxsportsmen", 1);
+                                            coxWainSelection.attr("data-selectedcount", 0);
+
+                                            coxWainSelection.find('option').get(0).remove();
+                                            div4.append(coxWainSelection);
+                                            html.append(div4);
+
+                                            coxWainSelection.multiselect({
+                                                numberDisplayed: 1,
+                                                enableFiltering: true,
+                                                enableCaseInsensitiveFiltering: true,
+                                                buttonText: function (options, select) {
+                                                    return '@Messages.Coxwain';
+                                                },
+                                                onChange: function (option, checked) {
+                                                    isAnythingChanged = true;
+                                                    var select = $(this)[0].$select[0];
+                                                    var values = $(select).val();
+                                                    if (values != null && values.length > 0) {
+                                                        //console.log(values);
+                                                        if (values.length > 1) {
+                                                            alert("@Messages.OneCoxwainAllowed");
+                                                            var $ul = $(select).parent().find('ul');
+                                                            var input = $ul.find('input[type=checkbox][value=' + option[0].value + ']');
+
+                                                            //console.log(input);
+                                                            input.prop("checked", false);
+                                                            input.parent().parent().parent().removeClass("active");
+                                                            var newVal = [values[0]];
+                                                            //console.log(newVal);
+                                                            $(select).val(newVal);
+                                                        }
+                                                    }
+                                                },
+                                                onDropdownHidden: function (options, select) {
+                                                    var select = $(this)[0].$select[0];
+                                                    var id = $(select).attr("data-discipline");
+                                                    var clubId = $(select).attr("data-clubId")
+                                                    var sportsmanPerTeam = $(select).attr("data-maxsportsmen");
+                                                    var values = $(select).val();
+                                                    if (values != null && values.length != parseInt(sportsmanPerTeam)) {
+                                                        $("#succesful-div").hide();
+                                                        $("#error-div").show();
+                                                        $("#error_message").html("@Messages.YouMustSelectExactSportsmanPerTeam" + ": " + sportsmanPerTeam);
+                                                        $("#successfulreg").modal('show');
+                                                    }
+                                                    else {
+                                                        var teamId = $(select).attr("data-teamId")
+                                                        var players = GetPlayerValues(id, teamId);
+
+                                                        //check unregister event
+                                                        var selectedCount = parseInt($(select).attr("data-selectedcount"));
+                                                        if (values == null && selectedCount > 0) {
+                                                            if (players != null) alert("@Messages.PleaseDeselectSportsmanToUnregisterTheTeam");
+                                                            else RegisterPlayers(id, clubId, players, teamId, values)
+                                                            return;
+                                                        }
+
+                                                        if (isAnythingChanged) {
+                                                            if (players != null)
+                                                                RegisterPlayers(id, clubId, players, teamId, values)
+                                                            else 
+                                                                alert("@Messages.PleaseNowSelectPlayersToSaveTheTeam");
+                                                        } 
+                                                    }
+                                                },
+                                                onDropdownHide: function (element) {
+                                                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                                                },
+                                                onDropdownShown: function (element) {
+                                                    $(element.currentTarget).find('.multiselect-search').focus();
+                                                }
+                                            });
+
+                                            $("#" + id1 + " option:selected").removeAttr("selected");
+                                        }
+
+                                        $("#row_disc_" + disciplineId).append(html);
+                                        $("#" + id + " option:selected").removeAttr("selected");
+
+                                        s.multiselect({
+                                            enableCaseInsensitiveFiltering: true,
+                                            buttonText: function (options, select) {
+                                                return '@Messages.Register';
+                                            },
+                                            onDropdownHidden: function (options, select) {
+                                                var select = $(this)[0].$select[0];
+                                                var id = $(select).attr("data-discipline");
+                                                var clubId = $(select).attr("data-clubId")
+                                                var isCoxwain = $(select).attr('data-coxwain').toLowerCase() == 'true' ? true : false;
+                                                var sportsmanPerTeam = $(select).attr("data-maxsportsmen");
+                                                var values = $(select).val();
+                                                if (values != null && values.length > 0 && values[0] == "") {
+                                                    values = values.splice(1);
+                                                }
+                                                var sportsmanPerTeamNum = parseInt(sportsmanPerTeam);
+                                                //if (isCoxwain) sportsmanPerTeamNum = sportsmanPerTeamNum - 1;
+                                                if (values != null && values.length != sportsmanPerTeamNum) {
+                                                    $("#succesful-div").hide();
+                                                    $("#error-div").show();
+                                                    $("#error_message").html("@Messages.YouMustSelectExactSportsmanPerTeam" + ": " + sportsmanPerTeamNum);
+                                                    $("#successfulreg").modal('show');
+                                                }
+                                                else {
+                                                    var teamId = $(select).attr("data-teamId")
+                                                    //var coxwain; GetCoxwainValue(id, teamId);
+                                                    if (isAnythingChanged) {
+
+                                                        var selectedCount = parseInt($(select).attr("data-selectedcount"));
+                                                        if (values == null && selectedCount > 0) {
+                                                            if (isCoxwain) {
+                                                                var coxwain = GetCoxwainValue(id, teamId);
+                                                                if (coxwain != null) alert("@Messages.PleaseDeselectCoxwainToUnregisterTheTeam");
+                                                                else RegisterPlayers(id, clubId, values, teamId, coxwain);
+                                                            }
+                                                            else
+                                                                RegisterPlayers(id, clubId, values, teamId);
+
+                                                            return;
+                                                        }
+
+                                                        if (isCoxwain) {
+                                                            var coxwain = GetCoxwainValue(id, teamId);
+                                                            if (coxwain != null)
+                                                                RegisterPlayers(id, clubId, values, teamId, coxwain);
+                                                            else 
+                                                                alert("@Messages.PleaseNowSelectCoxwainToSaveTheTeam");
+                                                        }
+                                                        else
+                                                            RegisterPlayers(id, clubId, values, teamId)
+                                                    }
+
+                                                }
+                                            },
+                                            onChange: function (option, checked) {
+
+                                                isAnythingChanged = true;
+                                                var select = $(this)[0].$select[0];
+                                                var checkboxClickedValue = $(option).val();
+                                                var maxSportsmen = $(select).attr("data-maxsportsmen");
+                                                var isCoxwain = $(select).attr('data-coxwain').toLowerCase() == 'true' ? true : false;
+                                                var $ul = $(select).parent().find('ul');
+                                                //if (isCoxwain) maxSportsmen = (maxSportsmen - 1).toString();
+                                                if (checkboxClickedValue == "") {
+                                                    var $input = $ul.find('input[type=checkbox]');
+                                                    var selectedValues = [];
+                                                    if (checked) {
+                                                        $input.each(function (index) {
+                                                            if (index > 0)
+                                                                selectedValues.push($(this).val());
+                                                        });
+                                                        if (selectedValues != null && maxSportsmen.length > 0 && selectedValues.length > maxSportsmen) {
+                                                            alert("@Messages.MaximumRegistrationsAllowed");
+                                                            var $input = $ul.find('input[value=""]');
+                                                            $input.closest('label').parent().parent().removeClass('active');
+                                                            $input.removeAttr("checked");
+                                                            $(option).removeAttr("selected");
+                                                        } else {
+                                                            $input.prop('checked', true);
+                                                            $input.each(function (index) {
+                                                                $(this).parent().parent().parent().attr("class", "active");
+                                                            });
+                                                            $(select).val(selectedValues);
+                                                        }
+                                                    } else {
+                                                        $input.prop('checked', false);
+                                                        $input.each(function (index) {
+                                                            $(this).parent().parent().parent().removeClass("active");
+                                                        });
+                                                        $(select).val(selectedValues);
+                                                    }
+                                                }
+                                                if (!checked) {
+                                                    var $selectAllInput = $ul.find('input[value=""]');
+                                                    $selectAllInput.prop('checked', false);
+                                                    $selectAllInput.closest('label').parent().parent().removeClass('active');
+                                                }
+
+                                                var values = $(select).val();
+                                                if (values != null && values.length > 0 && values[0] == "") {
+                                                    values = values.splice(1);
+                                                }
+                                                var leagueId = $(select).attr("data-league");
+                                                var disciplineId = $(select).attr("data-discipline");
+                                                if (values != null && maxSportsmen.length > 0 && values.length > maxSportsmen) {
+                                                    alert("@Messages.MaximumRegistrationsAllowed");
+                                                    var value = $(option).val();
+                                                    var $input = $ul.find('input[value=' + value + ']');
+                                                    $input.closest('label').parent().parent().removeClass('active');
+                                                    $input.removeAttr("checked");
+                                                    $(option).removeAttr("selected");
+                                                }
+                                            },
+                                            onDropdownHide: function (element) {
+                                                $(element.currentTarget).find('.multiselect-clear-filter').click();
+                                            },
+                                            onDropdownShown: function (element) {
+                                                $(element.currentTarget).find('.multiselect-search').focus();
+                                            }
+                                        });
+
+
+
+                                    }
+                                });
+
+
+                            }
+                            else {
+                                $("#error-div-team").show();
+                                $("#error_message_team").html(data.Message);
+                                $("#errorAddingTeams").modal('show');
+                            }
+                        }
+
+                    });
+
+
+                }
+            )
+        }, 2000);
+
+        function GetPlayerValues(disciplineId, teamId) {
+            //console.log("GET PL");
+            var id = "playersReg_" + disciplineId + "_" + teamId;
+            var values = $("#" + id).val();
+            var sportsmanPerTeam = $("#" + id).attr("data-maxsportsmen");
+            //console.log(values);
+            if (values != null && values.length > 0 && values[0] == "") {
+                values = values.splice(1);
+            }
+            var isCoxwain = $("#" + id).attr('data-coxwain').toLowerCase() == 'true' ? true : false;
+            var sportsmanPerTeamNum = parseInt(sportsmanPerTeam);
+            //if (isCoxwain) sportsmanPerTeamNum = sportsmanPerTeamNum - 1;
+            if (values == null || (values != null && values.length != sportsmanPerTeamNum)) {                
+                return null;
+            }
+            else
+                return values;
+        }
+
+        function GetCoxwainValue(disciplineId, teamId) {
+            //console.log("GET COX");
+            var id = "coxwainReg_" + disciplineId + "_" + teamId;
+            var values = $("#" + id).val();
+            var sportsmanPerTeam = 1;
+            //console.log(values);
+            if (values == null || (values != null && values.length != sportsmanPerTeam)) {                
+                return null;
+            }
+            else
+                return values;
+        }
+
+        function RegisterPlayers(disciplineId, clubId, values, teamId, coxwain) {
+            $.ajax({
+                url:
+                    "@Url.Action(nameof(ClubsController.DisciplineCompetitionRegistration), nameof(ClubsController).TrimControllerName())",
+                type: "POST",
+                data: {
+                    disciplineId: disciplineId,
+                    clubId: clubId,
+                    sportsmenIds: values != null ? values : undefined,
+                    teamId: teamId,
+                    coxwainIds: coxwain != null ? coxwain : undefined
+                },
+                success: function (data) {
+                    isAnythingChanged = false;
+                    var idP = "playersReg_" + disciplineId + "_" + teamId;
+                    var idC = "coxwainReg_" + disciplineId + "_" + teamId;  
+
+                    if (data.Success === true) {
+                        if (isRowing) {
+                            var playersCount = values != null ? values.length : 0;
+                            $("#" + idP).attr("data-selectedcount", playersCount);
+                            var isCoxwain = $("#" + idP).attr('data-coxwain').toLowerCase() == 'true' ? true : false;
+                            if (isCoxwain) {
+                                var coxwainCount = coxwain != null ? coxwain.length : 0;
+                                $("#" + idC).attr("data-selectedcount", coxwainCount);
+                            }
+                        }
+                        
+                        $("#succesful-div").hide();
+                        $("#error-div").hide();
+                        $("#succesful-div").show();
+                    } else {
+
+                        $("#succesful-div").hide();
+                        $("#error-div").hide();
+                        $("#error-div").show();
+                        $("#error_message").html(data.Message);                      
+
+                        
+                        if (data.UserId) {
+                            var id = idP;
+                            if (data.IsCoxwain) id = idC;
+
+                            var $ul = $("#" + id).parent().find('ul');
+                            var $input = $ul.find('input[value=' + data.UserId + ']');
+                            $input.closest('label').parent().parent().removeClass('active');
+                            $input.removeAttr("checked");
+
+                            var option = $("#" + id).find('option[value=' + data.UserId + ']');
+                            option.removeAttr("selected");
+                        }
+                        else if (data.AverageAge) {
+
+                            var $ul = $("#" + idP).parent().find('ul');
+
+                            var $input = $ul.find('input[type=checkbox]');
+                            $input.prop('checked', false);
+                            $input.each(function (index) {
+                                $(this).parent().parent().parent().removeClass("active");
+                            });
+                            $("#" + idP).val([]);
+
+                            if (data.IsCoxwain) {
+                                var $ulC = $("#" + idC).parent().find('ul');
+
+                                var $inputC = $ulC.find('input[type=checkbox]');
+                                $inputC.prop('checked', false);
+                                $inputC.each(function (index) {
+                                    $(this).parent().parent().parent().removeClass("active");
+                                });
+                                $("#" + idC).val([]);
+                            }
+                        } 
+                    }
+                    $("#successfulreg").modal('show');
+                }
+
+            });
+        }
+
+        setTimeout(function() {
+            $(".atleticsIds").multiselect({
+            enableCaseInsensitiveFiltering: true,
+            buttonText: function(options, select) {
+                return '@Messages.Register';
+            },
+            onDropdownHidden: function(options, select) {
+                var select = $(this)[0].$select[0];
+                var id = $(select).attr("data-discipline");
+                var clubId = $(select).attr("data-clubId")
+                var coxwainVal = $(select).attr('data-coxwain');
+                var isCoxwain = false;
+                if (coxwainVal != null) isCoxwain = coxwainVal.toLowerCase() == 'true' ? true : false;
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+                var sportsmanPerTeam = $(select).attr("data-maxsportsmen");
+                var sportsmanPerTeamNum = parseInt(sportsmanPerTeam);
+                //if (isCoxwain) sportsmanPerTeamNum = sportsmanPerTeamNum - 1;
+                if (isRowing && values != null && values.length != sportsmanPerTeamNum) {
+                    $("#succesful-div").hide();
+                    $("#error-div").show();
+                    $("#error_message").html("@Messages.YouMustSelectExactSportsmanPerTeam" + ": " + sportsmanPerTeamNum);
+                    $("#successfulreg").modal('show');
+                    return;
+                }
+                var teamId = $(select).attr("data-teamId");
+                if (isAnythingChanged) {
+                    if (isRowing) {
+                        //check unregister event
+                        var selectedCount = parseInt($(select).attr("data-selectedcount"));
+                        if (values == null && selectedCount > 0) {
+                            if (isCoxwain) {
+                                var coxwain = GetCoxwainValue(id, teamId);
+                                if (coxwain != null) alert("@Messages.PleaseDeselectCoxwainToUnregisterTheTeam");
+                                else RegisterPlayers(id, clubId, values, teamId, coxwain);
+                            }
+                            else
+                                RegisterPlayers(id, clubId, values, teamId);
+
+                            return;
+                        }
+                            
+                        if (isCoxwain) {
+                            var coxwain = GetCoxwainValue(id, teamId);
+                            if (coxwain != null)
+                                RegisterPlayers(id, clubId, values, teamId, coxwain);
+                            else 
+                                alert("@Messages.PleaseNowSelectCoxwainToSaveTheTeam");
+                        }               
+                        else
+                            RegisterPlayers(id, clubId, values, teamId)
+                    }
+                    else
+                        RegisterPlayers(id, clubId, values, teamId)
+                    
+                }
+            },
+            onChange: function (option, checked) {
+                isAnythingChanged = true;
+                var select = $(this)[0].$select[0];
+                var checkboxClickedValue = $(option).val();
+                var maxSportsmen = $(select).attr("data-maxsportsmen");
+                var coxwainVal = $(select).attr('data-coxwain');
+                var isCoxwain = false;
+                if (coxwainVal != null) isCoxwain = coxwainVal.toLowerCase() == 'true' ? true : false;
+                var $ul = $(select).parent().find('ul');
+                //if (isCoxwain) maxSportsmen = (maxSportsmen - 1).toString();
+                if (checkboxClickedValue == "") {
+                    var $input = $ul.find('input[type=checkbox]');
+                    var selectedValues = [];
+                    if (checked) {
+                        $input.each(function(index) {
+                            if (index > 0)
+                                selectedValues.push($(this).val());
+                        });
+                        if (selectedValues != null && maxSportsmen.length > 0 && selectedValues.length > maxSportsmen) {
+                            alert("@Messages.MaximumRegistrationsAllowed");
+                            var $input = $ul.find('input[value=""]');
+                            $input.closest('label').parent().parent().removeClass('active');
+                            $input.removeAttr("checked");
+                            $(option).removeAttr("selected");
+                        } else {
+                            $input.prop('checked', true);
+                            $input.each(function(index) {
+                                $(this).parent().parent().parent().attr("class", "active");
+                            });
+                            $(select).val(selectedValues);
+                        }
+                    } else {
+                        $input.prop('checked', false);
+                        $input.each(function(index) {
+                            $(this).parent().parent().parent().removeClass("active");
+                        });
+                        $(select).val(selectedValues);
+                    }
+                }
+                if (!checked) {
+                    var $selectAllInput = $ul.find('input[value=""]');
+                    $selectAllInput.prop('checked', false);
+                    $selectAllInput.closest('label').parent().parent().removeClass('active');
+                }
+
+                var values = $(select).val();
+                if (values != null && values.length > 0 && values[0] == "") {
+                    values = values.splice(1);
+                }
+
+                var leagueId = $(select).attr("data-league");
+                var disciplineId = $(select).attr("data-discipline");
+                if (values != null && maxSportsmen.length > 0 && values.length > maxSportsmen) {
+                    alert("@Messages.MaximumRegistrationsAllowed");
+                    var value = $(option).val();
+                    var $input = $ul.find('input[value=' + value + ']');
+                    $input.closest('label').parent().parent().removeClass('active');
+                    $input.removeAttr("checked");
+                    $(option).removeAttr("selected");
+                }
+            },
+                onDropdownHide: function (element) {
+                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                },
+                onDropdownShown: function (element) {
+                    $(element.currentTarget).find('.multiselect-search').focus();
+                }
+            });
+
+            $(".coxwainIds").multiselect({
+                numberDisplayed: 1,
+                enableFiltering: true,
+                enableCaseInsensitiveFiltering: true,
+                buttonText: function (options, select) {
+                    return '@Messages.Coxwain';
+                },
+                onChange: function (option, checked) {
+                    isAnythingChanged = true;
+                    var select = $(this)[0].$select[0];
+                    var values = $(select).val();
+                    if (values != null && values.length > 0) {
+                        if (values.length > 1) {
+                            alert("@Messages.OneCoxwainAllowed");
+                            var $ul = $(select).parent().find('ul');
+                            var input = $ul.find('input[type=checkbox][value=' + option[0].value + ']');
+
+                            //console.log(input);
+                            input.prop("checked", false);
+                            input.parent().parent().parent().removeClass("active");
+                            var newVal = [values[0]];
+                            //console.log(newVal);
+                            $(select).val(newVal);
+                        }
+                    }
+                },
+                onDropdownHidden: function (options, select) {
+                    var select = $(this)[0].$select[0];
+                    var id = $(select).attr("data-discipline");
+                    var clubId = $(select).attr("data-clubId")
+                    var sportsmanPerTeam = $(select).attr("data-maxsportsmen");
+                    var values = $(select).val();                    
+                    if (values != null && values.length != parseInt(sportsmanPerTeam)) {
+                        $("#succesful-div").hide();
+                        $("#error-div").show();
+                        $("#error_message").html("@Messages.YouMustSelectExactSportsmanPerTeam" + ": " + sportsmanPerTeam);
+                        $("#successfulreg").modal('show');
+                    }
+                    else {
+                        var teamId = $(select).attr("data-teamId")
+                        var players = GetPlayerValues(id, teamId);
+
+                        //check unregister event
+                        var selectedCount = parseInt($(select).attr("data-selectedcount"));
+                        if (values == null && selectedCount > 0) {
+                            if (players != null) alert("@Messages.PleaseDeselectSportsmanToUnregisterTheTeam");
+                            else RegisterPlayers(id, clubId, players, teamId, values)
+                            return;
+                        }
+
+                        if (isAnythingChanged) {
+                            if (players != null)
+                                RegisterPlayers(id, clubId, players, teamId, values)
+                            else 
+                                alert("@Messages.PleaseNowSelectPlayersToSaveTheTeam");
+                        } 
+
+                    }
+                },
+                onDropdownHide: function (element) {
+                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                },
+                onDropdownShown: function (element) {
+                    $(element.currentTarget).find('.multiselect-search').focus();
+                }
+            });
+        }, 2000);
+
+        setTimeout(function() {
+            $(".refereesIds").multiselect({
+                buttonText: function (options, select) {
+                    return '@Messages.RegisterReferee ';
+                },
+                onDropdownHidden: function (option, select) {
+                    var selectItem = $(this)[0].$select[0];
+                    var leagueId = $(selectItem).attr("data-leagueid");
+                    $.ajax({
+                        url: "/Clubs/RegisterReferees/",
+                        type: "POST",
+                        data: {
+                            clubId: "@Model.ClubId",
+                            seasonId: "@Model.SeasonId",
+                            leagueId: leagueId,
+                            refereeIds: $("#refereesIds_" + leagueId).val()
+                        }
+                    });
+                },
+                onDropdownHide: function(element) {
+                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                },
+                onDropdownShown: function (element) {
+                    $(element.currentTarget).find('.multiselect-search').focus();
+                }
+            });
+        }, 1000);
+
+        $(".isEnded, .isNotStarted").find(".register").not('.is_admin').attr("disabled", true);
+    });
+
+    function InitializeRegisterMultiselects(elementId) {
+        setTimeout(function() {
+            $(elementId).find(".gymnasticsIds").multiselect({
+                enableCaseInsensitiveFiltering: true,
+                buttonText: function(options, select) {
+                    return '@Messages.Register';
+                },
+                onDropdownShow: function() {
+                    var selectItem = $(this)[0].$select[0];
+                    var leagueId = $(selectItem).attr("data-leagueid");
+                    var competitionRouteId = $(selectItem).attr("data-competitionrouteid");
+                    var type = $(selectItem).attr("data-type");
+
+                    var composition = [];
+                    composition.push($("#gymnastics_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_2_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_3_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_4_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_5_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_6_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_7_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_8_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_9_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_10_" + leagueId + "_" + competitionRouteId));
+
+                    var compositionAdditionalItems = [];
+                    compositionAdditionalItems.push($("#additionalgym_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_2_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_3_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_4_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_5_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_6_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_7_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_8_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_9_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_10_" + leagueId + "_" + competitionRouteId).val());
+                    var selectedCompositionItems = [];
+
+                    selectedCompositionItems.push($(composition[0]).val());
+                    selectedCompositionItems.push($(composition[1]).val());
+                    selectedCompositionItems.push($(composition[2]).val());
+                    selectedCompositionItems.push($(composition[3]).val());
+                    selectedCompositionItems.push($(composition[4]).val());
+                    selectedCompositionItems.push($(composition[5]).val());
+                    selectedCompositionItems.push($(composition[6]).val());
+                    selectedCompositionItems.push($(composition[7]).val());
+                    selectedCompositionItems.push($(composition[8]).val());
+                    selectedCompositionItems.push($(composition[9]).val());
+
+
+                    for (var i = 0; i < selectedCompositionItems.length; i++) {
+                        if (!selectedCompositionItems[i]) {
+                            selectedCompositionItems[i] = [];
+                        }
+                        if (compositionAdditionalItems[i]) {
+                            selectedCompositionItems[i].push(compositionAdditionalItems[i]);
+                        }
+
+                    }
+
+                    for (var k = 0; k < 10; k++) {
+                        var t = k + 1;
+                        if (type == "composition" + t) {
+                            composition[k].parent().parent().find("input").attr("disabled", false);
+
+                            composition[k].children().each(function(index, child) {
+                                var value = $(child).val();
+                                for (var j = 0; j < selectedCompositionItems.length; j++) {
+                                    if (j == k) continue;
+                                    for (var i = 0; i < selectedCompositionItems[j].length; i++) {
+                                        if (value == selectedCompositionItems[j][i]) {
+                                            composition[k].parent().parent().find("input[value='" + value + "']")
+                                                .attr("disabled", true);
+                                        }
+                                    }
+                                }
+                                if (value == compositionAdditionalItems[k]) {
+                                    composition[k].parent().parent().parent().find("input[value='" + value + "']")
+                                        .attr("disabled", true);
+                                }
+                            });
+                            break;
+                        }
+                    }
+                },
+                onDropdownHidden: function() {
+                    var selectItem = $(this)[0].$select[0];
+                    var leagueId = $(selectItem).attr("data-leagueid");
+                    var competitionRouteId = $(selectItem).attr("data-competitionrouteid");
+
+                    var composition = [];
+                    composition.push($("#gymnastics_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_2_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_3_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_4_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_5_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_6_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_7_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_8_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_9_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_10_" + leagueId + "_" + competitionRouteId));
+
+                    var compositionAdditionalItems = [];
+                    compositionAdditionalItems.push($("#additionalgym_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_2_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_3_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_4_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_5_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_6_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_7_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_8_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_9_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_10_" + leagueId + "_" + competitionRouteId).val());
+                    var selectedCompositionItems = [];
+
+                    selectedCompositionItems.push($(composition[0]).val());
+                    selectedCompositionItems.push($(composition[1]).val());
+                    selectedCompositionItems.push($(composition[2]).val());
+                    selectedCompositionItems.push($(composition[3]).val());
+                    selectedCompositionItems.push($(composition[4]).val());
+                    selectedCompositionItems.push($(composition[5]).val());
+                    selectedCompositionItems.push($(composition[6]).val());
+                    selectedCompositionItems.push($(composition[7]).val());
+                    selectedCompositionItems.push($(composition[8]).val());
+                    selectedCompositionItems.push($(composition[9]).val());
+                    for (var i = 0; i < selectedCompositionItems.length; i++) {
+                        if (!selectedCompositionItems[i]) {
+                            selectedCompositionItems[i] = [];
+                        }
+                        if (compositionAdditionalItems[i]) {
+                            selectedCompositionItems[i].push(compositionAdditionalItems[i]);
+                        }
+                    }
+                    for (var k = 0; k < 10; k++) {
+                        composition[k].children().each(function(index, child) {
+                            var value = $(child).val();
+                            for (var j = 0; j < selectedCompositionItems.length; j++) {
+                                if (j == k) continue;
+                                for (var i = 0; i < selectedCompositionItems[j].length; i++) {
+                                    if (value == selectedCompositionItems[j][i]) {
+                                        composition[k].parent().parent().find("input[value='" + value + "']")
+                                            .attr("disabled", false);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                },
+                onDropdownHide: function(element) {
+                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                },
+                onDropdownShown: function (element) {
+                    $(element.currentTarget).find('.multiselect-search').focus();
+                }
+            });
+        }, 1);
+
+        setTimeout(function() {
+            $(elementId).find(".additionalgymnastics").multiselect({
+                buttonText: function() {
+                    return '@Messages.Choose @Messages.Reserved.ToLowerInvariant()';
+                },
+                onDropdownShow: function() {
+                    var selectItem = $(this)[0].$select[0];
+                    var competitionRouteId = $(selectItem).attr("data-competitionRouteId");
+                    var leagueId = $(selectItem).attr("data-leagueId");
+                    var type = $(selectItem).attr("data-type");
+
+
+                    var composition = [];
+                    composition.push($("#gymnastics_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_2_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_3_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_4_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_5_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_6_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_7_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_8_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_9_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_10_" + leagueId + "_" + competitionRouteId));
+
+                    var compositionAdditionalItems = [];
+                    compositionAdditionalItems.push($("#additionalgym_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_2_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_3_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_4_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_5_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_6_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_7_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_8_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_9_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_10_" + leagueId + "_" + competitionRouteId).val());
+
+                    var selectedCompositionItems = [];
+
+                    selectedCompositionItems.push($(composition[0]).val());
+                    selectedCompositionItems.push($(composition[1]).val());
+                    selectedCompositionItems.push($(composition[2]).val());
+                    selectedCompositionItems.push($(composition[3]).val());
+                    selectedCompositionItems.push($(composition[4]).val());
+                    selectedCompositionItems.push($(composition[5]).val());
+                    selectedCompositionItems.push($(composition[6]).val());
+                    selectedCompositionItems.push($(composition[7]).val());
+                    selectedCompositionItems.push($(composition[8]).val());
+                    selectedCompositionItems.push($(composition[9]).val());
+
+                    for (var i = 0; i < selectedCompositionItems.length; i++) {
+                        if (!selectedCompositionItems[i]) {
+                            selectedCompositionItems[i] = [];
+                        }
+                        if (compositionAdditionalItems[i]) {
+                            selectedCompositionItems[i].push(compositionAdditionalItems[i]);
+                        }
+
+                    }
+
+                    for (var k = 0; k < 10; k++) {
+                        var t = k + 1;
+                        if (type == "composition" + t) {
+                            var extrastr = t + "_";
+                            if (k == 0) {
+                                extrastr = "";
+                            }
+                            var additionalSelection =
+                                $("#additionalgym_" + extrastr + leagueId + "_" + competitionRouteId);
+                            additionalSelection.parent().parent().parent().find("input").attr("disabled", false);
+
+                            additionalSelection.children().each(function(index, child) {
+                                var value = $(child).val();
+                                for (var j = 0; j < selectedCompositionItems.length; j++) {
+                                    for (var i = 0; i < selectedCompositionItems[j].length; i++) {
+                                        if (value == selectedCompositionItems[j][i]) {
+                                            additionalSelection.parent().parent().parent()
+                                                .find("input[value='" + value + "']:not(:checked)")
+                                                .attr("disabled", true);
+                                        }
+                                    }
+                                }
+                                for (var j = 0; j < compositionAdditionalItems.length; j++) {
+                                    if (k == j) continue;
+                                    if (value != "" && value == compositionAdditionalItems[j]) {
+                                        additionalSelection.parent().parent().parent()
+                                            .find("input[value='" + value + "']:not(:checked)").attr("disabled", true);
+                                    }
+                                }
+
+                            });
+                            break;
+                        }
+                    }
+                },
+                onDropdownHidden: function() {
+                    var selectItem = $(this)[0].$select[0];
+                    var competitionRouteId = $(selectItem).attr("data-competitionRouteId");
+                    var leagueId = $(selectItem).attr("data-leagueId");
+                    var type = $(selectItem).attr("data-type");
+
+
+                    var composition = [];
+                    composition.push($("#gymnastics_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_2_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_3_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_4_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_5_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_6_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_7_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_8_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_9_" + leagueId + "_" + competitionRouteId));
+                    composition.push($("#gymnastics_10_" + leagueId + "_" + competitionRouteId));
+
+                    var compositionAdditionalItems = [];
+                    compositionAdditionalItems.push($("#additionalgym_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_2_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_3_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_4_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_5_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_6_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_7_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_8_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_9_" + leagueId + "_" + competitionRouteId).val());
+                    compositionAdditionalItems.push($("#additionalgym_10_" + leagueId + "_" + competitionRouteId).val());
+
+                    var selectedCompositionItems = [];
+
+                    selectedCompositionItems.push($(composition[0]).val());
+                    selectedCompositionItems.push($(composition[1]).val());
+                    selectedCompositionItems.push($(composition[2]).val());
+                    selectedCompositionItems.push($(composition[3]).val());
+                    selectedCompositionItems.push($(composition[4]).val());
+                    selectedCompositionItems.push($(composition[5]).val());
+                    selectedCompositionItems.push($(composition[6]).val());
+                    selectedCompositionItems.push($(composition[7]).val());
+                    selectedCompositionItems.push($(composition[8]).val());
+                    selectedCompositionItems.push($(composition[9]).val());
+
+                    for (var i = 0; i < selectedCompositionItems.length; i++) {
+                        if (!selectedCompositionItems[i]) {
+                            selectedCompositionItems[i] = [];
+                        }
+                        if (compositionAdditionalItems[i]) {
+                            selectedCompositionItems[i].push(compositionAdditionalItems[i]);
+                        }
+
+                    }
+
+                },
+                onDropdownHide: function(element) {
+                    $(element.currentTarget).find('.multiselect-clear-filter').click();
+                },
+                onDropdownShown: function (element) {
+                    $(element.currentTarget).find('.multiselect-search').focus();
+                }
+            });
+        }, 5);
+    }
+
+    $(".information").on("click", function () {
+        var trElement = $(this).closest("tr");
+        var competitionId = $(this).attr("data-id");
+        $.ajax({
+            url: "/Clubs/CompetitionDetails",
+            type: "POST",
+            data: { competitionId: competitionId, clubId: @Model.ClubId, section: "@Sections.Gymnastic" },
+            beforeSend: function() {
+                trElement.find("i[name='info-icon']").hide();
+                trElement.find("i[name='spinner']").show();
+            },
+            success: function(data) {
+                trElement.find("i[name='info-icon']").show();
+                trElement.find("i[name='spinner']").hide();
+                $("#competitionmodal_pl").html(data);
+                $("#competitionmodal").modal('show');
+            }
+        });
+    });
+
+    $(".register").on("click", function () {
+        var competitionId = $(this).attr("data-id");
+        var elementId = "#collapse_" + competitionId;
+        $(elementId).toggle();
+        if ($(elementId).find(".multiselect-container").length <= 0) {
+            InitializeRegisterMultiselects(elementId);
+        }
+    });
+
+    $(".heat_pop").on("click", function () {
+        var competitionId = $(this).attr("data-id");
+        var elementId = "#collapse_heat_" + competitionId;
+        $(elementId).toggle();
+    });
+
+    $(".cancel").on("click", function () {
+        var competitionId = $(this).attr("data-id");
+        $("#collapse_" + competitionId).hide();
+    });
+
+    $(".saveGymnastsBtn").on("click", function () {
+        var competitionId = $(this).attr("data-id");
+        var playersRegistrations = [];
+
+        for (var i = 0; i < 10; i++) {
+            if (i == 0) {
+                $(".competition_" + competitionId).each(function (index, value) {
+                    var playersIds = $(value).val();
+                    var competitionRouteId = $(value).attr("data-competitionrouteid");
+                    var additionalGymnasticId = $("#additionalgym_" + competitionId + "_" + competitionRouteId).val();
+                    var composition = $(value).attr("data-composition");
+                    var instrumentId = $(value).attr("data-instrumentid");
+                    var isTeam = $(value).attr("data-isteam");
+                    var registrations = {
+                        "competitionRouteId": competitionRouteId,
+                        "playersIds": playersIds,
+                        "composition": composition,
+                        "additionalGymnasticId": additionalGymnasticId,
+                        "instrumentId": instrumentId,
+                        "isTeam": isTeam
+                    };
+                    if (playersIds != null || playersIds != undefined) {
+                        playersRegistrations.push(registrations);
+                    }
+                });
+            } else {
+                var t = i + 1;
+                $(".competition_" + t + "_" + competitionId).each(function (index, value) {
+                    var playersIds = $(value).val();
+                    var competitionRouteId = $(value).attr("data-competitionrouteid");
+                    var additionalGymnasticId = $("#additionalgym_" + t + "_" + competitionId + "_" + competitionRouteId).val();
+                    var composition = $(value).attr("data-composition");
+                    var instrumentId = $(value).attr("data-instrumentid");
+                    var isTeam = $(value).attr("data-isteam");
+                    var registrations = {
+                        "competitionRouteId": competitionRouteId,
+                        "playersIds": playersIds,
+                        "composition": composition,
+                        "additionalGymnasticId": additionalGymnasticId,
+                        "CompositionNumber": i,
+                        "instrumentId": instrumentId,
+                        "isTeam": isTeam
+                    };
+                    if (playersIds != null || playersIds != undefined) {
+                        playersRegistrations.push(registrations);
+                    }
+                });
+            }
+        }
+
+        var success = true;
+        var message = "";
+        for (var i = 0; i < playersRegistrations.length; i++) {
+            var gymnasticsCount = playersRegistrations[i].playersIds.length;
+            var composition = playersRegistrations[i].composition;
+            var competitionRouteId = playersRegistrations[i].competitionRouteId;
+            var isRegisteredInSecondComposition = playersRegistrations[i].isRegisteredInSecondComposition;
+            if (composition && (gymnasticsCount > composition || gymnasticsCount < composition)) {
+                if (playersRegistrations[i].CompositionNumber == undefined || playersRegistrations[i].CompositionNumber == null || playersRegistrations[i].CompositionNumber == "0" ) {
+                    alert("@Messages.CorrectCompositionFor" + competitionRouteId + " @Messages.CurrentGymnastics: " + gymnasticsCount + ". @Messages.RequiredGymnastics: " + composition);
+                }
+                else {
+                    alert("@Messages.Choose @Messages.Composition #" + (playersRegistrations[i].CompositionNumber+1) + " " + "@Messages.SuitableToCompetitionRoute" + competitionRouteId + "\r\n@(Messages.CurrentGymnastics): " + gymnasticsCount + ".\r\n@(Messages.RequiredGymnastics): " + composition);
+                }
+                success = false;
+            }
+            if (playersRegistrations[i].playersIds.includes(playersRegistrations[i].additionalGymnasticId)) {
+                if (playersRegistrations[i].CompositionNumber == undefined || playersRegistrations[i].CompositionNumber == null || playersRegistrations[i].CompositionNumber == "0") {
+                    alert("@Messages.SelectAnotherAdditional @Messages.Competition.ToLowerInvariant() @Messages.Route.ToLowerInvariant() #" + competitionRouteId);
+                }
+                else {
+                    alert("@Messages.AdditionalGymnastMustBeDifferentOverComposition " + (playersRegistrations[i].CompositionNumber+1) + " " + "@Messages.CantHaveSameAdditionalGymnastInMoreThanOneComposition @Messages.Competition.ToLowerInvariant() @Messages.Route.ToLowerInvariant() #" + playersRegistrations[i].CompositionNumber + " - " + competitionRouteId);
+                }
+                success = false;
+            }
+        }
+
+        if (success) {
+                $.ajax({
+                    url: "/Clubs/RegisterPlayers",
+                    type: "POST",
+                    data: {
+                        playersRegistrations: playersRegistrations,
+                        clubId: "@Model.ClubId",
+                        competitionId: competitionId,
+                        seasonId: "@Model.SeasonId",
+                    },
+                    success: function (data) {
+                        if (data.Success === true) {
+                            $("#succesful-div").hide();
+                            $("#error-div").hide();
+                            $("#succesful-div").show();
+                            $("#collapse_" + competitionId).hide();
+                            $("#collapse_" + competitionId).prev().children("td:nth(1)").children("a").click();
+                        }
+                        else {
+
+                            $("#succesful-div").hide();
+                            $("#error-div").hide();
+                            $("#error-div").show();
+                            $("#error_message").html(data.Message);
+                        }
+                        $("#successfulreg").modal('show');
+                    }
+                });
+        }
+    });
+
+    $(".gymorder").on("click",
+        function() {
+            $.ajax({
+                url: "/Clubs/PlayersOrder/",
+                type: "POST",
+                data: {
+                    clubId: "@Model.ClubId",
+                    competitionId: $(this).attr("data-id"),
+                    seasonId: "@Model.SeasonId",
+                    competitionRouteId: $(this).attr("data-competitionrouteid"),
+                    instrumentId: $(this).attr("data-instrumentid")
+                },
+                success: function(data) {
+                    $("#gymnasticorder_pl").html(data);
+                    $("#gymnasticorder").modal("show");
+                }
+            });
+            $("#gymnasticorder").modal("show");
+        });
+</script>

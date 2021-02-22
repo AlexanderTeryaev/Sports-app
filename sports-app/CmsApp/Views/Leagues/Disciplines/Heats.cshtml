@@ -1,0 +1,221 @@
+﻿@model List<DataService.DTO.HeatDto>
+
+@foreach (var heat in Model)
+{
+<tr id="tr_heat_@heat.Id" style="display: none" class="heats_table_@heat.CompetitionDisciplineId">
+    <td></td>
+    <td style="font-weight: bold">@heat.Name</td>
+    <td>@Messages.StartTime</td>
+    <td>
+    @Html.Hidden("startTime", heat.StartTime ?? DateTime.MinValue, new { data_format = "HH:mm ", id = "heatStartTime_" + heat.Id + "i" })
+    <div class="heatStartTime" id="heatStartTime_@heat.Id" onchange="timeChanged(@heat.Id)"></div></td>
+    <td colspan="2">@Messages.Final @Html.CheckBox("IsFinal", heat.IsFinal, new { onclick = $"setIsFinal(this,{heat.Id})" })</td>
+    <td><button class="btn btn-primary glyphicon glyphicon-list" style="margin: 8px 0; padding: 2px 12px; line-height: 30px;" title="@Messages.Standings"></button></td>
+    <td><a onclick="deleteHeat('@heat.Id')" class="@AppCss.Delete"></a></td>
+</tr>
+<tr id="tr_heat_lanes_@heat.Id" style="display: none" class="heats_table_@heat.CompetitionDisciplineId">
+    <td></td>
+    <td colspan="9">
+        <table class="table table-bordered" style="background-color: lightskyblue;">
+            <thead style="background-color: white;">
+                <tr>
+                    <th>@Messages.Lane</th>
+                    <th>@Messages.Name</th>
+                    <th>@Messages.Club</th>
+                    <th>@Messages.BirthDay</th>
+                    <th>@Messages.EntryTime</th>
+                    <th>@Messages.Result</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id ="heats_lanes_section_@heat.Id">
+                @Html.Partial("Disciplines/HeatLanesList", heat)
+            </tbody>
+        </table>
+    </td>
+</tr>
+        }
+<script>
+    $('input').on("input", function () {
+        if ($(this).val().length == $(this).attr("maxlength")) {
+            if ($(this).next().length != 0 && $(this).next()[0] && $(this).next()[0].type != 'hidden') {
+                $(this).next().focus();
+            } else {
+                $($($(this).parent().next()).parent().next()[0]).find('.resultField')[0].focus();
+            }
+        }
+    });
+    $(".heatStartTime").each(function(i, value) {
+        var $value = $(value);
+        var id = $value[0].id;
+        var initialValue = $("#" + id + "i")[0].value;
+        var d;
+        var timestamp = Date.parse(initialValue);
+        if (isNaN(timestamp) == false) {
+            d = new Date(timestamp);
+        } else {
+            d = new Date("01/01/1970 " + initialValue.split(' ')[1]);
+        }
+        var h = d.getHours();
+        var m = d.getMinutes();
+        $value.setHour(h);
+        $value.setMinute(m);
+    });
+
+    function getJobWorkTimeSettings() {
+        var options1 = {
+            hour: {
+                value: 0,
+                min: 0,
+                max: 24,
+                step: 1,
+                symbol: "h"
+            },
+            minute: {
+                value: 0,
+                min: 0,
+                max: 60,
+                step: 1,
+                symbol: "m"
+            },
+            direction: "increment", // increment or decrement
+            inputHourTextbox: null, // hour textbox
+            inputMinuteTextbox: null, // minutes textbox
+            postfixText: "", // text to display after the input fields
+            numberPaddingChar: '0' // number left padding character ex: 00052
+        };
+        return options1;
+    };
+
+    function setIsFinal(element, heatId) {
+        var value = $(element).is(":checked");
+        $.ajax({
+            url: '@Url.Action("SetHeatIsFinal", "Leagues")',
+            data: {
+                Id: heatId,
+                isFinal: value
+            },
+            type: 'POST',
+            dataType: 'json'
+        });
+    }
+
+    function removeSwimmer(competitionResultId, competitionDisciplineId) {
+        $.ajax({
+            url: '@Url.Action("RemoveSwimmer", "Leagues")',
+            data: {
+                competitionResultId: competitionResultId,
+                competitionDisciplineId: competitionDisciplineId,
+                seasonId: @ViewBag.SeasonId
+            },
+            success: function (data) {
+                $('#heats_lanes_section_' + data.heatId).load('/Leagues/GetHeatForCompetitionDiscipline',
+                    {
+                        competitionDisciplineId: data.competitionDisciplineId,
+                        seasonId: data.seasonId,
+                        heatId: data.heatId
+                    });
+            },
+            type: 'POST',
+            dataType: 'json'
+        });
+    }
+
+    function timeChanged(heatId) {
+        var heatStartTime = $("#heatStartTime_" + heatId + " #txtHours").val() + ":" + $("#heatStartTime_" + heatId + " #txtMinutes").val();
+        $.post('@Url.Action("SetHeatStartTime", "Leagues")',
+            {
+                heatId: heatId,
+                heatStartTime: heatStartTime
+            },
+            function (data) {
+                $(".svButton_" + heatId).removeClass("btn-primary")
+                    .addClass("btn-success");
+            });
+    }
+
+    $(".heatStartTime").each(function (i, value) {
+        var $value = $(value);
+        $value.timesetter(getJobWorkTimeSettings());
+    });
+
+    function deleteHeat(id) {
+        var isConfirmed = confirm("@Messages.DeleteConfirm");
+        if (isConfirmed) {
+            $.ajax({
+                url: "@Url.Action("DeleteHeat", "Leagues")",
+                type: "POST",
+                data: { heatId: id },
+                success: function (data) {
+                    $("#tr_heat_" + id).remove();
+                    $("#tr_heat_lanes_" + id).remove();
+                    if (data.isLast)
+                    {
+                        location.reload();
+                    }
+                }
+            });
+        }
+    }
+
+    function addSwimmer(heatId, laneId, competitionDisciplineId) {
+        var selectObject = $('#player_ids_' + heatId + '_' + laneId);
+        var selectedValue = selectObject.val();
+        $.ajax({
+            url: '@Url.Action("AddSwimmer", "Leagues")',
+            data: {
+                competitionDisciplineId: competitionDisciplineId,
+                userId: selectedValue,
+                heatId: heatId,
+                laneId: laneId,
+                seasonId: @ViewBag.SeasonId
+            },
+            success: function(data) {
+                $('#heats_lanes_section_' + data.heatId).load('/Leagues/GetHeatForCompetitionDiscipline',
+                    {
+                        competitionDisciplineId: data.competitionDisciplineId,
+                        seasonId: data.seasonId,
+                        heatId: data.heatId
+                    });
+            },
+            type: 'POST',
+            dataType: 'json'
+        });
+    }
+
+    function updateExistingResult(regId) {
+        var result1 = $("#result_box_" + regId + " > .resultField[name = 'Result1']").val();
+        var result2 = $("#result_box_" + regId + " > .resultField[name='Result2']").val();
+        var result3 = $("#result_box_" + regId + " > .resultField[name='Result3']").val();
+        var result4 = $("#result_box_" + regId + " > .resultField[name='Result4']").val();
+
+        var dataToSend = {
+            "Result1": result1,
+            "Result2": result2,
+            "Result3": result3,
+            "Result4": result4,
+            "CompetitionResultId": regId
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/UpdateSwimmingResult",
+            data: dataToSend,
+            success: function(data) {
+
+            }
+        });
+
+    }
+
+    function setButtonAvailability(heatId, laneId) {
+        var selectObject = $('#player_ids_' + heatId + '_' + laneId);
+        var selectedValue = selectObject.val();
+        if (selectedValue) {
+            $('#buttonAddNew_' + heatId + '\\ _' + laneId).prop('disabled', false);
+        } else {
+            $('#buttonAddNew_' + heatId + '\\ _' + laneId).prop('disabled', true);
+        }
+    }
+</script>

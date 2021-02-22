@@ -1,0 +1,508 @@
+﻿@model TournamentsPDF
+@{
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+    int errId = TempData["ErrId"] != null ? (int)TempData["ErrId"] : 0;
+    Func<string, string, string> selectedFunc = (current, selected) => { return current.Equals(selected) ? "selected" : string.Empty; };
+    bool isRefereeRole = User.GetSessionWorkerValueOrTopLevelSeasonJob(Model.SeasonId) == JobRole.RefereeAssignment;
+    var isAthleticsOrWeightLiftingOrRowing = Array.IndexOf((new string[] { GamesAlias.Athletics, GamesAlias.WeightLifting.ToLower(), GamesAlias.Rowing }), Model.Section) >= 0;
+        var isBicycle = Model.Section == GamesAlias.Bicycle;
+
+}
+
+
+
+<label class="control-label" style="margin-top: 10px;">
+    @if (isAthleticsOrWeightLiftingOrRowing)
+    {
+        <text>@Messages.Categories:</text>
+    }
+    else
+    {
+        <text>@Messages.Ages:</text>
+    }
+</label>
+
+<table id="tbCompetitionAges" class="table table-striped" style="margin-bottom: 0px;">
+    <thead>
+        <tr>
+            <th class="th-col th-col-5"></th>
+            <th class="th-col th-col-5">@Messages.Id</th>
+            <th class="th-col th-col-15" style="min-width:140px">@Messages.Name</th>
+            @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <th class="th-col th-col-15" style="min-width:140px">@Messages.ForeignName</th>
+            }
+            @if (Model.Section == GamesAlias.WeightLifting.ToLower())
+            {
+                <th class="th-col th-col-15" style="min-width:120px">@Messages.FromWeight</th>
+                <th class="th-col th-col-15" style="min-width:120px">@Messages.ToWeight</th>
+            }
+            @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <th class="th-col th-col-5" style="min-width:80px">@Messages.FromAge</th>
+                <th class="th-col th-col-5" style="min-width:80px">@Messages.ToAge</th>
+            }
+            else
+            {
+                <th class="th-col th-col-15" style="min-width:120px">@Messages.FromBirthday</th>
+                <th class="th-col th-col-15" style="min-width:120px">@Messages.ToBirthday</th>
+            }
+            @if (string.Equals(Model.Section, GamesAlias.Rowing, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <th class="th-col th-col-15">@Messages.AverageAge</th>
+            }
+            <th class="th-col th-col-10" style="min-width:100px">@Messages.Gender</th>
+            @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <th class="th-col th-col-10" style="min-width:200px">@Messages.Heat</th>
+                <th class="th-col th-col-15" style="min-width:160px">@Messages.FriendshipName</th>
+                <th class="th-col th-col-5">@Messages.UciId</th>
+                <th class="th-col th-col-5">@Messages.IsraelChampionship</th>
+            }
+            <th class="th-col th-col-5"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < Model.listAges.Count; i++)
+        {
+            var item = Model.listAges[i];
+            var updBtn = "edt_update" + item.id;
+            var id = "edt_competition_age" + item.id;
+            var foreignName = "edt_competition_age_foreign" + item.id;
+            var fromid = "edt_competition_from" + item.id;
+            var toid = "edt_competition_to" + item.id;
+            var fromWeightId = $"edt_competition_from_weight{item.id}";
+            var toWeightId = $"edt_competition_to_weight{item.id}";
+            var averageAge = "edt_competition_average" + item.id;
+            var genderid = "genderDropDown_" + item.id;
+            var from_age = "edt_competition_from_age" + item.id;
+            var to_age = "edt_competition_to_age" + item.id;
+
+            var fromStr = item.from_birth?.ToString("dd/MM/yyyy");
+            var toStr = item.to_birth?.ToString("dd/MM/yyyy");
+        <tr>
+            <td>
+                @if (!isRefereeRole)
+                {
+                    <a class="@AppCss.Save"
+                       onclick="editAge(@item.id)"
+                       data-ajax="true"
+                       data-ident="@item.id"
+                       id="@updBtn"
+                       disabled="disabled"></a>
+                }
+            </td>
+            <td>@item.id</td>
+            <td><input type="text" id="@id" name="@id" data-nameTpl="@id" class="form-control detectChange" data-ident="@item.id" value="@item.age_name" /></td>
+            @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <td><input type="text" id="@foreignName" name="@foreignName" data-nameTpl="@foreignName" class="form-control detectChange" data-ident="@item.id" value="@item.age_foreign_name" /></td>
+            }
+            @if (Model.Section == GamesAlias.WeightLifting.ToLower())
+            {
+                <td><input type="number" min="0" step="1" id="@fromWeightId" name="@fromWeightId" data-nameTpl="@fromWeightId" class="form-control detectChange" data-ident="@item.id" value="@item.from_weight" /></td>
+                <td><input type="number" min="0" step="1" id="@toWeightId" name="@toWeightId" data-nameTpl="@toWeightId" class="form-control detectChange" data-ident="@item.id" value="@item.to_weight" /></td>
+            }
+            @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <td><input type="number" min="0" id="@from_age" name="@from_age" data-nameTpl="@from_age" class="form-control averageInputClass detectChange" data-ident="@item.id" value="@item.from_age" /></td>
+
+                <td><input type="number" min="0" id="@to_age" name="@to_age" data-nameTpl="@to_age" class="form-control averageInputClass detectChange" data-ident="@item.id" value="@item.to_age" /></td>
+            }
+            else
+            {
+                <td><input type="text" id="@fromid" name="@fromid" data-nameTpl="@fromid" class="form-control frm-date-wo-time detectChange" data-ident="@item.id" value="@fromStr" /></td>
+
+                <td><input type="text" id="@toid" name="@toid" data-nameTpl="@toid" class="form-control frm-date-wo-time detectChange" data-ident="@item.id" value="@toStr" /></td>
+            }
+            @if (string.Equals(Model.Section, GamesAlias.Rowing, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <td><input type="number" min="0" id="@averageAge" name="@averageAge" data-nameTpl="@averageAge" class="form-control averageInputClass detectChange" data-ident="@item.id" value="@item.AverageAge" /></td>
+            }
+            <td>
+                <select class="form-control detectChange" data-ident="@item.id" id="@genderid">
+                    <option>@Messages.Select</option>
+                    <option value="0" @selectedFunc("0", item.gender?.ToString())>@Messages.Female</option>
+                    <option value="1" @selectedFunc("1", item.gender?.ToString())>@Messages.Male</option>
+                    <option value="3" @selectedFunc("3", item.gender?.ToString())>@Messages.All</option>
+                </select>
+            </td>
+            @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+            {
+                <td>
+                    @Html.DropDownListFor(m => item.DisciplineId, Model.listAgeDisciplines.FirstOrDefault(x => x.Key == item.id).Value, new { @class = "form-control detectChange", data_ident = @item.id, @id = "selectedDisciplineId" + @item.id })
+                </td>
+                <td>
+                    @Html.DropDownListFor(m => item.FriendshipTypeId, Model.listAgeFriendshipsTypes.FirstOrDefault(x => x.Key == item.id).Value, new { @class = "form-control detectChange", data_ident = item.id, @id = "selectedFriendshipTypeId" + @item.id })
+                </td>
+                <td>
+                    @Html.CheckBox("IsUCICategory", item.IsUCICategory ?? false, new { @class = "detectChange", data_ident = item.id, @id = "IsUCICategory" + @item.id })
+                </td>
+
+                if (item?.Discipline?.RoadHeat == true)
+                {
+                    <td>
+                        @Html.CheckBox("IsIsraelChampionship", item.IsIsraelChampionship ?? false, new { @class = "detectChange", data_ident = item.id, @id = "IsIsraelChampionship" + @item.id })
+                    </td>
+                }
+                else
+                {
+                    <td>
+                        @Html.CheckBox("IsIsraelChampionship", item.IsIsraelChampionship ?? false, new { @class = "detectChange", data_ident = item.id, @id = "IsIsraelChampionship" + @item.id, @disabled = "disabled" })
+                    </td>
+                }
+            }
+            <td>
+                @if (!isRefereeRole)
+                {
+                    <a class="@AppCss.Delete"
+                       data-ajax-confirm="@Messages.DeleteConfirm"
+                       onclick="removeAge(@item.id)"
+                       data-ajax-update="#leagues"
+                       data-ajax="true"></a>
+                }
+            </td>
+        </tr>
+        }
+    </tbody>
+    @if (!isRefereeRole)
+    {
+        <tfoot>
+            <tr>
+                <td colspan="2"></td>
+                <td>
+                    <input type="text" id="competition_age" name="competition_age" data-nameTpl="competition_age" class="form-control" />
+                </td>
+                @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    <td>
+                        <input type="text" id="competition_age_foreign" name="competition_age_foreign" data-nameTpl="competition_age_foreign" class="form-control" />
+                    </td>
+                }
+                @if (Model.Section == GamesAlias.WeightLifting.ToLower())
+                {
+                    <td>
+                        <input type="number" step="1" min="0" id="competition_from_weight" name="competition_from_weight" data-nameTpl="competition_from_weight" class="form-control" />
+                    </td>
+                    <td>
+                        <input type="number" step="1" min="0" id="competition_to_weight" name="competition_to_birth" data-nameTpl="competition_to_birth" class="form-control" />
+                    </td>
+                }
+                @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    <td>
+                        <input type="number" min="0" id="competition_from_age" name="competition_from_age" data-nameTpl="competition_from_age" class="form-control averageInputClass" />
+                    </td>
+                    <td>
+                        <input type="number" min="0" id="competition_to_age" name="competition_to_age" data-nameTpl="competition_to_age" class="form-control averageInputClass" />
+                    </td>
+                }
+                else
+                {
+                    <td>
+                        <input type="text" id="competition_from_birth" name="competition_from_birth" data-nameTpl="competition_from_birth" class="form-control frm-date-wo-time" />
+                    </td>
+                    <td>
+                        <input type="text" id="competition_to_birth" name="competition_to_birth" data-nameTpl="competition_to_birth" class="form-control frm-date-wo-time" />
+                    </td>
+                }
+                @if (string.Equals(Model.Section, GamesAlias.Rowing, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    <td><input type="number" min="0" id="competition_average" name="competition_average" data-nameTpl="competition_average" class="form-control averageInputClass" /></td>
+                }
+                <td>
+                    <select class="form-control" id="genderDropDown">
+                        <option>@Messages.Select</option>
+                        <option value="0">@Messages.Female</option>
+                        <option value="1">@Messages.Male</option>
+                        <option value="3">@Messages.All</option>
+                    </select>
+                </td>
+                @if (string.Equals(Model.Section, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    <td>
+                        @Html.DropDownListFor(m => Model.SelectedDisciplineId, Model.listDisciplines, new { @class = "form-control multiSelectClass", @id = "selectedDisciplineId", @multiple = "multiple" })
+                    </td>
+                    <td>
+                        @Html.DropDownListFor(m => Model.SelectedFriendshipsTypesId, Model.listFriendshipsTypes, new { @class = "form-control multiSelectClass", @id = "selectedFriendshipTypeId", @multiple = "multiple" })
+                    </td>
+                    <td>
+                        @Html.CheckBox("IsUCICategory", false, new { @class = "", @id = "IsUCICategory" })
+                    </td>
+                    <td>
+                        @Html.CheckBox("IsIsraelChampionship", false, new { @class = "", @id = "IsIsraelChampionship" })
+                    </td>
+                }
+                <td>
+                    <button type="button" class="btn btn-primary" id="add_competition_age">
+                        <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                    </button>
+                </td>
+            </tr>
+        </tfoot>
+    }
+</table>
+
+
+
+
+<script>
+    $('#friendshiptypes').validateBootstrap(true);
+
+    $(document).ready(function () {
+
+        $(".multiSelectClass").multiselect({
+            enableCaseInsensitiveFiltering: false,
+            multiselect: true,
+            buttonText: function (options, select) {
+                return '@Messages.Select';
+            }, 
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+         $('#add_competition_age').click(function () {
+            var age = $("#competition_age_foreign").val();
+            var frombirth = $("#competition_from_birth").val();
+            var tobirth = $("#competition_to_birth").val();
+            var fromWeight = $("#competition_from_weight").val();
+            var toWeight = $("#competition_to_weight").val();
+            var gender = $("#genderDropDown").val();
+            var isUCICategory = null;
+            var isIsraelChampionship = null;
+            var average;
+            var fromAge;
+            var toAge;
+             var isBicycle = "@isBicycle" == "True";
+             var foreignName = $("#competition_age_foreign").val();
+            if (!isRowing && !isBicycle) {
+                if ((age === undefined || age === null || age.length <= 0) || (frombirth === undefined || frombirth === null || frombirth.length <= 0) || (tobirth === undefined || tobirth === null || tobirth.length <= 0)) {
+                    alert("@Messages.AgeAndDatesRequired");
+                    return;
+                }
+            }
+            else {
+                var ageCheck = (age === undefined || age === null || age.length <= 0);
+                if (ageCheck) {
+                    alert("@Messages.AgeRequired");
+                    return;
+                }
+                if (isRowing) {
+                    average = $("#competition_average").val();
+                    var fromCheck = (frombirth === undefined || frombirth === null || frombirth.length <= 0);
+                    var toBirthCheck = (tobirth === undefined || tobirth === null || tobirth.length <= 0);
+                    var averageCheck = average === '';
+                    var dateORaverage = (!(fromCheck || toBirthCheck) && averageCheck)
+                        || ((fromCheck && toBirthCheck) && !averageCheck);
+                    if (!dateORaverage) {
+                        alert("@Messages.Rowing_DatesOrAverage");
+                        return
+                    }
+                }
+                else {
+                    fromAge = $("#" + "competition_from_age").val();
+                    toAge = $("#" + "competition_to_age").val();
+                    isUCICategory = $("#" + "IsUCICategory").prop("checked") == true;
+                    isIsraelChampionship = $("#" + "IsIsraelChampionship").prop("checked") == true;
+                    var fromAgeCheck = (fromAge === undefined || fromAge === null || fromAge <= 0);
+                    var toAgeCheck = (toAge === undefined || toAge === null || toAge <= 0);
+                    if (fromAgeCheck || toAgeCheck) {
+                        alert("@Messages.Bicycle_AgeAndAgeRangeRequired");
+                        return;
+                    }
+                    if (parseInt(fromAge) > parseInt(toAge)) {
+                        alert("@Messages.Bicycle_FromAgeBiggerThanToAge");
+                        return;
+                    }
+                }
+
+            }
+            var disciplineId = $("#selectedDisciplineId").val();             
+            var friendshipTypeId = $("#selectedFriendshipTypeId").val();
+            $.ajax({
+                url: '/Unions/AddCompetitionAge',
+                data: {
+                    "ageName": age,
+                    "frombirth": frombirth,
+                    "tobirth": tobirth,
+                    "unionId": "@Model.UnionId",
+                    "seasonId":"@Model.SeasonId",
+                    "gender": gender,
+                    "fromWeight": fromWeight,
+                    "toWeight": toWeight,
+                    //"disciplineId": disciplineId,
+                    //"friendshipTypeId": friendshipTypeId,
+                    "averageAge": average,
+                    "fromAge": fromAge,
+                    "toAge": toAge,
+                    "isUCICategory": isUCICategory,
+                    "isIsraelChampionship": isIsraelChampionship,
+                    "bicycleDiscIds": disciplineId,
+                    "friendshipTypeIds": friendshipTypeId,
+                    "foreignName": foreignName
+                },
+                dataType: "json",
+                type: "POST",
+                success: function (result) {
+                    if (result.Success) {
+                        window.location.reload();
+                    }
+                    else {
+                        alert(result.Error);
+                    }
+                },
+                error: function (exception) {
+                    alert("Something went wrong.");
+                }
+            });
+        });
+
+
+        $('.averageInputClass').on('keydown', function (e) {
+            if (e.which == 40 || e.which == 69 || e.which == 189)
+                e.preventDefault();
+        });
+
+        $('.averageInputClass').on('change', function (e) {
+            var val = $(this).val();
+            if (val != null && val != "") {
+                var tryParse = parseInt(val);
+
+                if (isNaN(tryParse) || tryParse < 0 || val[0] == "0") {
+                    $(this).val("0");
+                }
+            }
+
+        });
+
+        $('.detectChange').on('change', function (e) {
+
+            var val = $(this).attr("data-ident");
+            $("#edt_update" + val).removeAttr("disabled");
+
+
+        });
+    });
+
+    function removeAge(id) {
+        $.ajax({
+            url: '/Unions/RemoveCompetitionAge',
+            data: { "ageId": id },
+            dataType: "json",
+            type: "POST",
+            success: function (result) {
+                if (result.Success) {
+                    window.location.reload();
+                }
+                else {
+                    alert(result.Error);
+                }
+            },
+            error: function (exception) {
+                alert("Something went wrong.");
+            }
+        });
+    };
+
+    function editAge(id) {
+        var ageId = "edt_competition_age" + id;
+        var frombirthId = "edt_competition_from" + id;
+        var tobirthId = "edt_competition_to" + id;
+        var ageForeignId = "edt_competition_age_foreign" + id;
+        var age = $("#" + ageId).val();
+        var frombirth = $("#" + frombirthId).val();
+        var tobirth = $("#" + tobirthId).val();
+        var foreignName = $("#" + ageForeignId).val();
+        var fromWeight = $("#" + "edt_competition_from_weight" + id).val();
+        var toWeight = $("#" + "edt_competition_to_weight" + id).val();
+        var gender = $("#genderDropDown_" + id).val();
+        var isUCICategory = null;
+        var isIsraelChampionship = null;
+        var average;
+        var fromAge;
+        var toAge;
+        var isBicycle = "@isBicycle" == "True";
+        if (!isRowing && !isBicycle) {
+            if ((age === undefined || age === null || age.length <= 0) || (frombirth === undefined || frombirth === null || frombirth.length <= 0) || (tobirth === undefined || tobirth === null || tobirth.length <= 0)) {
+                alert("@Messages.AgeAndDatesRequired");
+                return;
+            }
+        }
+        else {
+            var ageCheck = (age === undefined || age === null || age.length <= 0);
+            if (ageCheck) {
+                    alert("@Messages.AgeRequired");
+                    return;
+            }
+            if (isRowing) {
+                average = $("#edt_competition_average" + id).val();
+                var fromCheck = (frombirth === undefined || frombirth === null || frombirth.length <= 0);
+                var toBirthCheck = (tobirth === undefined || tobirth === null || tobirth.length <= 0);
+                var averageCheck = average === '';
+                var dateORaverage = (!(fromCheck || toBirthCheck) && averageCheck)
+                    || ((fromCheck && toBirthCheck) && !averageCheck);
+                if (!dateORaverage) {
+                    alert("@Messages.Rowing_DatesOrAverage");
+                    return
+                }
+            }
+            else {
+                fromAge = $("#" + "edt_competition_from_age" + id).val();
+                toAge = $("#" + "edt_competition_to_age" + id).val();
+                isUCICategory = $("#" + "IsUCICategory" + id).prop("checked") == true;
+                isIsraelChampionship = $("#" + "IsIsraelChampionship" + id).prop("checked") == true;
+                var fromAgeCheck = (fromAge === undefined || fromAge === null || fromAge <= 0);
+                var toAgeCheck = (toAge === undefined || toAge === null || toAge <= 0);
+                if (fromAgeCheck || toAgeCheck) {
+                    alert("@Messages.Bicycle_AgeAndAgeRangeRequired");
+                    return;
+                }
+                if (parseInt(fromAge) > parseInt(toAge)) {
+                    alert("@Messages.Bicycle_FromAgeBiggerThanToAge");
+                    return;
+                }
+            }
+
+        }
+        var disciplineId = $("#selectedDisciplineId" + id).val();
+        var friendshipTypeId = $("#selectedFriendshipTypeId" + id).val();
+        $.ajax({
+            url: '/Unions/EditCompetitionAge',
+            data: { 
+                "ageId": id,
+                "ageName": age,
+                "frombirth": frombirth,
+                "tobirth": tobirth,
+                "fromWeight": fromWeight,
+                "toWeight": toWeight,
+                "gender": gender,
+                "disciplineId": disciplineId,
+                "friendshipTypeId": friendshipTypeId,
+                "averageAge": average,
+                "fromAge": fromAge,
+                "toAge": toAge,
+                "isUCICategory": isUCICategory,
+                "isIsraelChampionship": isIsraelChampionship,
+                "foreignName": foreignName
+            },
+            dataType: "json",
+            type: "POST",
+            success: function (result) {
+                if (result.Success) {
+                    //window.location.reload();
+                    $("#edt_update" + id).attr("disabled", true);
+                }
+                else {
+                    alert(result.Error);
+                }
+            },
+            error: function (exception) {
+                alert("Something went wrong.");
+            }
+        });
+    };
+</script>

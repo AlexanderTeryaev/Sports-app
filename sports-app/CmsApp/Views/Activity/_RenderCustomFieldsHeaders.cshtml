@@ -1,0 +1,15 @@
+﻿@model Tuple<CultEnum, bool, List<AppModel.ActivityFormsDetail>>
+
+@foreach (var field in Model.Item3.Where(x => 
+    x.PropertyName.ToLower().Contains("custom") &&
+    !x.IsDisabled &&
+    x.Type != ActivityFormControlType.CustomText.ToString() &&
+    x.Type != ActivityFormControlType.CustomTextMultiline.ToString() &&
+    x.Type != ActivityFormControlType.CustomFileReadonly.ToString() &&
+    x.Type != ActivityFormControlType.CustomPrice.ToString() &&
+    x.Type != ActivityFormControlType.CustomLink.ToString()))
+{
+    <th @(Model.Item2 ? "data-type=html-input" : "") style="min-width: 150px;">
+        @(Model.Item1 != CultEnum.He_IL ? field.LabelTextEn : field.LabelTextHeb)
+    </th>
+}

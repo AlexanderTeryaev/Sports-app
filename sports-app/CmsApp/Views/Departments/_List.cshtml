@@ -1,0 +1,70 @@
+﻿@model DepartmentsForm
+
+<table class="table table-bordered">
+    <tbody>
+        @foreach (var department in Model.Deparments)
+        {
+            var frmId = $"departmentfrm_{department.DepartmentId}";
+            <tr>
+                <td>
+                    @department.DepartmentId
+                </td>
+                <td>
+                    <a class="@AppCss.Edit"
+                       href="@Url.Action("Edit", "Departments", new { id = department.DepartmentId, seasonId = Model.SeasonId, sportId = department.ParentSectionId })">
+                    </a>
+                </td>
+                <td>
+                    @using (Html.BeginForm("Update", "Departments", FormMethod.Post, new { id = frmId }))
+                    {
+                        <div class="col-lg-5">
+                            @Html.TextBox("DepartmentTitle", department.DepartmentTitle, new { @class = "form-control", form = frmId, maxlength = "50", required = "required" })
+                            @Html.ValidationMessage("DepartmentTitle")
+                        </div>
+                        <div class="col-lg-5">
+                            @Html.DropDownList("SelectedSportId", department.Sports, Messages.Select, new { @class = "form-control", form = frmId, required = "required" })
+                            @Html.ValidationMessage("SelectedSportId")
+                        </div>
+                        @Html.Hidden("DepartmentId",department.DepartmentId, new { form = frmId })
+                        @Html.HiddenFor(m => m.ParentClubId, new { form = frmId })
+                        @Html.HiddenFor(m => m.SeasonId, new { form = frmId })
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-primary btn-save glyphicon glyphicon-saved btn" form="@frmId" autocomplete="off"></button>
+                </td>
+                <td>
+                    <a href="@Url.Action("Delete", new {departmentId = department.DepartmentId, parentClubId = Model.ParentClubId, seasonId = Model.SeasonId})" class="@AppCss.Delete">
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <td></td>
+            <td></td>
+            <td colspan="2">
+                @using (Html.BeginForm("Create", "Departments", FormMethod.Post, new { id = "departmentsform" }))
+                {
+                    <div class="col-lg-5">
+                        @Html.TextBox("DepartmentTitle", null, new { @class = "form-control", form = "departmentsform", maxlength = "50", required = "required", placeholder = Messages.AddNew })
+                        @Html.ValidationMessage("DepartmentTitle")
+                    </div>
+                    <div class="col-lg-5">
+                        @Html.DropDownList("SelectedSportId", Model.Sports, Messages.Select, new { @class = "form-control", form = "departmentsform", required = "required" })
+                        @Html.ValidationMessage("SelectedSportId")
+                    </div>
+                    @Html.HiddenFor(m => m.ParentClubId, new { form = "departmentsform" })
+                    @Html.HiddenFor(m => m.SeasonId, new { form = "departmentsform" })
+                    <button class="btn btn-primary" form="departmentsform">@Messages.Save</button>
+                }
+            </td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    $('#departmentsform').validateBootstrap(true);
+</script>

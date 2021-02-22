@@ -1,0 +1,109 @@
+﻿@using Resources
+@using DataService.DTO
+@model IEnumerable<AppModel.WeightLiftingSession>
+@{ 
+    List<CompetitionDisciplineDto> categories = (List<CompetitionDisciplineDto>)ViewBag.CategoriesList;
+}
+
+<style>
+    .mobile-only {
+        display: none;
+    }
+
+    @Html.Raw('@')media only screen and (max-width: 600px) {
+        #print, #print_print_id {
+            display: none;
+        }
+        .mobile-only {
+            display: block;
+        }
+    }
+</style>
+<a href="#" id="print" class="btn btn-primary remove_print" style="float:left;">
+    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+</a>
+
+<a href="@Url.Action("WeightliftingAllCategoryResults", new { id = ViewBag.CompetitionId, isModal = true })"
+    data-target="#weightliftingsallcategorieslist" data-toggle="modal" class="btn btn-primary" style="margin-left:10px; margin-right:10px;">@Messages.CategoryResults</a>
+
+<h3 class="main-title disciplines-title">
+    @Messages.HeatsList - @ViewBag.CompetitionName
+</h3>
+
+<style>
+    .modal-backdrop {
+        opacity: 0.0 !important;
+    }
+</style>
+<table class="table res-table">
+    <thead>
+        <tr class="disciplines-title">
+            <th>#</th>
+            <th>@Messages.DateTime</th>
+            <th>@Messages.WeightIn @Messages.FromHour</th>
+            <th>@Messages.WeightIn @Messages.ToHour</th>
+            <th class="remove_print"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var index = 0;
+        }
+        @foreach (var session in Model.OrderBy(c => c.StartTime))
+        {
+            <tr>
+                <td>@session.SessionNum</td>
+                <td>@session.StartTime</td>
+                <td>@session.WeightStartTime</td>
+                <td>@session.WeightFinishTime</td>
+                <td>
+                    <a href="@Url.Action("WeightliftingSessionAppointments", new { id = session.Id, LeagueId = ViewBag.CompetitionId })"
+                       data-target="#weightliftingregistrationlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.Registrations</a>
+                    <a href="@Url.Action("WeightDeclarationResultsBySession", new { id = $"{session.Id}_{ViewBag.CompetitionId}", isModal = true })"
+                       data-target="#weightliftingsessionresultlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.ResultsByHeat</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<table class="table res-table">
+    <thead>
+        <tr class="disciplines-title">
+            <th>@Messages.Status</th>
+            <th>@Messages.Category</th>
+            <th>@Messages.Total @Messages.Sportsmans.ToLower()</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var competitionDisciplineDto in categories)
+        {
+            <tr>
+                <td>
+                    <a class="btn btn-sm btn-primary fa fa-info"
+                       href="@Url.Action("CategoryRegistration", "LeagueTable", new { leagueId = competitionDisciplineDto.CompetitionId, disciplineId = competitionDisciplineDto.Id, seasonId = ViewBag.SeasonId })"
+                       data-target="#weightliftingsallcategorieslist" data-toggle="modal" style="margin: 8px 0;padding: 2px 12px;">
+                    </a>
+                </td>
+                <td>@competitionDisciplineDto.CategoryName</td>
+                <td>@competitionDisciplineDto.RegistrationsCount</td>
+                <td>
+                    <a href="@Url.Action("WeightDeclarationResults", "LeagueTable", new { id=competitionDisciplineDto.Id })"class="btn btn-primary" data-target="#weightliftingcategoriesresultslist" data-toggle="modal" style="margin: 8px 0;padding: 2px 12px;">@Messages.Results</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<div class="modal fade" id="weightliftingregistrationlist" tabindex="-1" role="dialog"></div>
+<div class="modal fade" id="weightliftingsessionresultlist" tabindex="-1" role="dialog"></div>
+<div class="modal fade" id="weightliftingsallcategorieslist" tabindex="-1" role="dialog"></div>
+<div class="modal fade" id="weightliftingcategoriesresultslist" tabindex="-1" role="dialog"></div>
+
+@section scripts
+    {
+    <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+}

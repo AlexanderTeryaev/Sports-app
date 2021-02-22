@@ -1,0 +1,62 @@
+﻿<div>
+    <div id="referee_list">
+        @Html.Action("WorkerList", "Jobs", new { id = ViewBag.UnionId, logicalName = LogicaName.Union, seasonId = ViewBag.SeasonId, onlyReferees = true, unionId = ViewBag.UnionId })
+    </div>
+</div>
+<link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500">
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiwCq-EDCvfhQ786WvFgSQvrSxCgjzsYM&libraries=places"></script>
+<script>
+    var autocomplete;
+    function initialize() {
+        autocomplete = new google.maps.places.Autocomplete(
+            (document.getElementById('workerAddress')),
+            { types: ['geocode'] });
+        google.maps.event.addListener(autocomplete, 'place_changed', function () {
+        });
+    }
+    let refid;
+    $(document).ready(function () {
+       
+        var codes = $("option");
+
+        for (let i = 0; i < codes.length; i++) {
+            if (codes[i].innerHTML == "Referee" || codes[i].innerHTML == "שופט") {
+                refid = codes[i].value;
+            }
+        }
+        setInterval(CheckRoleSearch, 100);
+        $("#loadModal").on("click", function () {
+            setInterval(CheckLoadAdd, 100);
+        });
+        $('*[data-target="#referee_modal_view"]').on("click", function () {
+            setInterval(CheckLoadEdit, 100);
+        });
+        $("#loadModal").trigger();
+    });
+
+    function CheckRoleSearch() {
+
+        if ($("#ddljob").prop("disabled") == false) {
+            $("#ddljob").prop("disabled", true);
+            $("#ddljob option[value='" + refid + "']").prop('selected', true);
+            $("#ddljob").prop("disabled", true);
+        }
+    }
+
+    function CheckLoadAdd() {
+        initialize();
+        if ($("#userform").children()[0] != undefined) {
+            $("#CreateJob").val(refid);
+            $("#CreateJob").prop("disabled", true);
+        }
+    }
+    function CheckLoadEdit() {
+        initialize();
+        if ($("#userform").children()[0] != undefined) {
+            var jobId = $('#createEditJob').val();
+            $('#createEditJob').val(jobId);
+            $("#createEditJob").prop("disabled", true);
+        }
+    }
+
+</script>

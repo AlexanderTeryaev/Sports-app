@@ -1,0 +1,107 @@
+﻿@model AppModel.GamesCycle
+
+@{
+    var refereeService = new RefereeService(Model.CycleId, Model.Stage.LeagueId);
+    var auditoriumsList = ViewBag.Auditoriums != null ? ViewBag.Auditoriums : Enumerable.Empty<AppModel.Auditorium>();
+    var auditoriums = new SelectList(auditoriumsList, "AuditoriumId", "Name", Model.AuditoriumId);
+    var spectatorsList = ViewBag.Spectators != null ? ViewBag.Spectators : Enumerable.Empty<AppModel.User>();
+    var spectators = new MultiSelectList(spectatorsList, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), Model.SpectatorIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+}
+
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+@Html.HiddenFor(model => model.CycleId)
+<table class="table">
+    <thead>
+        <tr>
+            <th class="col-sm-2">@Messages.Auditorium:</th>
+            <th class="col-sm-2">@Messages.Referee:</th>
+            <th class="col-sm-2">@Messages.Spectator</th>
+            <th class="col-sm-2">@Messages.Date</th>
+            <th class="col-sm-2"></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                @Html.DropDownList("AuditoriumId", auditoriums, Messages.Select, new { @class = "form-control" })
+            </td>
+            <td>
+                @{
+                    string refName = refereeService.GetMainRefereeName(Model.CycleId);
+                }
+                <a class="btn btn-default btn-sm"
+                   href="@Url.Action("ShowRefereeModal", "Schedules", new { cycleId = Model.CycleId, leagueId = Model.Group.Stage.LeagueId })"
+                   data-toggle="modal"
+                   data-target="#referees_game_modal"
+                   data-ajax="true"
+                   id="refbtn_@Model.CycleId">
+                    @refName
+                </a>
+            </td>
+            <td>
+                @Html.DropDownList($"SpectatorItems", spectators, new { @class = "form-control spectatorids", @multiple = "multiple" })
+            </td>
+            <td>
+                <div style="position:relative">
+                    <input name="StartDate" class="form-control game-date" type="text" value="@Model.StartDate.ToString("dd/MM/yyyy HH:mm")" />
+                </div>
+            </td>
+            <td>
+                <input type="submit" value="@Messages.Save" class="btn btn-sm btn-primary" />
+                @if (savedId != 0)
+                {
+                    <i class="glyphicon glyphicon-ok text-success"></i>
+                }
+            </td>
+        </tr>
+    </tbody>
+</table>
+@Html.HiddenFor(m => m.CycleId)
+
+<script src="~/Scripts/pages/officialsFeature.js"></script>
+<script>
+    $(document).ready(function () {
+        $(".game-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+            step: 15,
+            closeOnDateSelect: false,
+            closeOnTimeSelect: true,
+            onChangeDateTime: function () {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            }
+        });
+        $('.spectatorids').multiselect({
+            numberDisplayed: 1,
+            buttonWidth: '130px',
+            onDropdownHidden: function () {
+                var spectatorsIds = $("#SpectatorItems").val();
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("SaveSpectators", "GameCycle")",
+                    data: {
+                        cycleId: "@Model.CycleId",
+                        spectatorIds: spectatorsIds
+                    }
+                });
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+    })
+</script>

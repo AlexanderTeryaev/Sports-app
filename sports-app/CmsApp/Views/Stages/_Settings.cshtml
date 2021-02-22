@@ -1,0 +1,121 @@
+﻿@model GameForm
+<div id="groupmodal">
+    @if (TempData["Close"] != null)
+    {
+    <script type="text/javascript">
+        $(function () {
+            $('#close').submit();
+        });
+    </script>
+    }
+    <div class="modal-header">
+        <button type="button" id="close" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+        <h4 class="modal-title">@Messages.AddStage</h4>
+    </div>
+
+    @using (Ajax.BeginForm("CreateSetting", null,
+                                      new AjaxOptions
+                                      {
+                                          UpdateTargetId = "settings"
+                                      },
+                                      new { id = "gameform", autocomplete = "off" }))
+    {
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-sm-3 form-group">
+                <label class="control-label">@Messages.ActiveWeeksNumber:</label>
+                @Html.EditorFor(m => m.ActiveWeeksNumber, new { htmlAttributes = new { @class = "form-control" }})
+            </div>
+            <div class="col-sm-3 form-group">
+                <label class="control-label">@Messages.BreakWeeksNumber:</label>
+                @Html.EditorFor(m => m.BreakWeeksNumber, new { htmlAttributes = new { @class = "form-control" } })
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-sm-8">
+                <label class="control-label">@Messages.GamesDays:</label>
+                <div class="row">
+                    @for (int i = 0; i < Model.DaysList.Length; i++)
+                    {
+                    <div class="col-sm-1 text-center">
+                        <b>@Model.DaysList[i]</b>
+                        <input type="checkbox" class="required" name="DaysArr" value="@(i)" @IsChecked(Model.GameDays, i) />
+                    </div>
+                    }
+                </div>
+                <span class="field-validation-valid" data-valmsg-for="DaysArr" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4 form-group">
+                <label class="control-label">@Messages.FirstGameStart:</label>
+                @Html.TextBoxFor(m => m.StartDate, new { @class = "frm-date" })
+            </div>
+            <div class="col-sm-3 form-group">
+                <label class="control-label">@Messages.GamesInterval:</label>
+                @Html.TextBoxFor(m => m.GamesInterval, new { @class = "form-control", placeholder = "00:00" })
+                @Html.ValidationMessageFor(m => m.GamesInterval, Messages.InvalidTime)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-3">
+                <label class="control-label">@Messages.Points:</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.Win:</label>
+                @Html.TextBoxFor(m => m.PointsWin, new { @class = "form-control" })
+            </div>
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.Draw:</label>
+                @Html.TextBoxFor(m => m.PointsDraw, new { @class = "form-control" })
+            </div>
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.Loss:</label>
+                @Html.TextBoxFor(m => m.PointsLoss, new { @class = "form-control" })
+            </div>
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.TechWin:</label>
+                @Html.TextBoxFor(m => m.PointsTechWin, new { @class = "form-control" })
+            </div>
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.TechLoss:</label>
+                @Html.TextBoxFor(m => m.PointsTechLoss, new { @class = "form-control" })
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4">
+                @if (TempData["Saved"] != null)
+                {
+                <span class="text-success">@Messages.DataSavedSuccess</span>
+                }
+            </div>
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" value=@Messages.Save class="btn btn-primary" />
+                </div>
+            </div>
+        </div>
+        @Html.HiddenFor(m => m.LeagueId)
+        @Html.HiddenFor(m => m.StageId)
+        @Html.HiddenFor(m => m.GameId)
+    </div>
+    }
+</div>
+
+@functions {
+  string IsChecked(string list, int val)
+  {
+      if (string.IsNullOrEmpty(list))
+          return null;
+
+      return Array.IndexOf(list.Split(','), val.ToString()) > -1 ? "checked" : null;
+  }
+}
+
+<script>
+    $(function () {
+        $('#gameform').validateBootstrap(true);
+    });
+</script>

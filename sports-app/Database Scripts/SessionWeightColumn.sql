@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[CompetitionDisciplineRegistrations] Add Weight decimal(20, 1) Null

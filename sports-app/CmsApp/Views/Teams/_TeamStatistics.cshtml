@@ -1,0 +1,215 @@
+﻿@model TeamStatisticsForm
+
+<div class="row">
+    <div class="col-sm-12" id="notes_list">
+        @if (Model.Seasons != null && Model.Seasons.Any())
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <td>OVERALL</td>
+                        <td>GP</td>
+                        <td>MIN</td>
+                        <td>FG</td>
+                        <td>FGA</td>
+                        <td>3PT</td>
+                        <td>3PA</td>
+                        <td>FT</td>
+                        <td>FTA</td>
+                        <td>OR</td>
+                        <td>DR</td>
+                        <td>REB</td>
+                        <td>AST</td>
+                        <td>ST</td>
+                        <td>TO</td>
+                        <td>BS</td>
+                        <td>PF</td>
+                        <td>PTS</td>
+                        <td>EFF</td>
+                        <td>+/-</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var season in Model.Seasons)
+                    {
+                        var generalStat = Model.GeneralStatistics.Where(c => c.Key.Id == season.Id).FirstOrDefault().Value;
+                        <tr>
+                            <td>
+                                <b>@season.Name</b>
+                            </td>
+                            <td>@generalStat.GP</td>
+                            <td></td>
+                            <td>@generalStat.FGAverage</td>
+                            <td>@generalStat.FGAAverage</td>
+                            <td>@generalStat.ThreePTAverage</td>
+                            <td>@generalStat.ThreePAAverage</td>
+                            <td>@generalStat.FTAverage</td>
+                            <td>@generalStat.FTAAverage</td>
+                            <td>@generalStat.OREBAverage</td>
+                            <td>@generalStat.DREBAverage</td>
+                            <td>@generalStat.REBAverage</td>
+                            <td>@generalStat.ASTAverage</td>
+                            <td>@generalStat.STLAverage</td>
+                            <td>@generalStat.TOAverage</td>
+                            <td>@generalStat.BLKAverage</td>
+                            <td>@generalStat.PFAverage</td>
+                            <td>@generalStat.PTSAverage</td>
+                            <td>@generalStat.EFFAverage</td>
+                            <td>@generalStat.PlusMinusAverage</td>
+
+                        </tr>
+                        var homeGames = Model.HomeStatistics.Where(c => c.Key.Id == season.Id).Select(c => c.Value).FirstOrDefault();
+                        var guestGames = Model.GuestStatistics.Where(c => c.Key.Id == season.Id).Select(c => c.Value).FirstOrDefault();
+                        if (homeGames != null)
+                        {
+                            var maxHomeMin = homeGames.OrderByDescending(c => c.MinAverage).FirstOrDefault()?.MinAverage ?? 0;
+                            var maxHomeFG = homeGames.OrderByDescending(c => c.FGAverage).FirstOrDefault()?.FGAverage ?? 0;
+                            var maxHomeFGA = homeGames.OrderByDescending(c => c.FGAAverage).FirstOrDefault()?.FGAAverage ?? 0;
+                            var maxHomeThreePT = homeGames.OrderByDescending(c => c.ThreePTAverage).FirstOrDefault()?.ThreePTAverage ?? 0;
+                            var maxHomeThreePA = homeGames.OrderByDescending(c => c.ThreePAAverage).FirstOrDefault()?.ThreePAAverage ?? 0;
+                            var maxHomeFT = homeGames.OrderByDescending(c => c.FTAverage).FirstOrDefault()?.FTAverage ?? 0;
+                            var maxHomeFTA = homeGames.OrderByDescending(c => c.FTAAverage).FirstOrDefault()?.FTAAverage ?? 0;
+                            var maxHomeOREB = homeGames.OrderByDescending(c => c.OREBAverage).FirstOrDefault()?.OREBAverage ?? 0;
+                            var maxHomeDREB = homeGames.OrderByDescending(c => c.DREBAverage).FirstOrDefault()?.DREBAverage ?? 0;
+                            var maxHomeREB = homeGames.OrderByDescending(c => c.REBAverage).FirstOrDefault()?.REBAverage ?? 0;
+                            var maxHomeAST = homeGames.OrderByDescending(c => c.ASTAverage).FirstOrDefault()?.ASTAverage ?? 0;
+                            var maxHomeSTL = homeGames.OrderByDescending(c => c.STLAverage).FirstOrDefault()?.STLAverage ?? 0;
+                            var maxHomeTO = homeGames.OrderByDescending(c => c.TOAverage).FirstOrDefault()?.TOAverage ?? 0;
+                            var maxHomeBLK = homeGames.OrderByDescending(c => c.BLKAverage).FirstOrDefault()?.BLKAverage ?? 0;
+                            var maxHomePF = homeGames.OrderByDescending(c => c.PFAverage).FirstOrDefault()?.PFAverage ?? 0;
+                            var maxHomePTS = homeGames.OrderByDescending(c => c.PTSAverage).FirstOrDefault()?.PTSAverage ?? 0;
+                            var maxHomeEFF = homeGames.OrderByDescending(c => c.EFFAverage).FirstOrDefault()?.EFFAverage ?? 0;
+                            var maxHomePlusMinus = homeGames.OrderByDescending(c => c.PlusMinusAverage).FirstOrDefault()?.PlusMinusAverage ?? 0;
+
+                            <tr>
+                                <td colspan="20">
+                                    <a onclick="changeIconStatus(@season.Id,'home')" id="show_home_games_@season.Id" class="fa fa-plus">&nbsp; @Messages.Show @Messages.All.ToLowerInvariant() @Messages.Home.ToLowerInvariant() @Messages.PlayerStatistic.ToLowerInvariant()</a>
+                                    <a onclick="changeIconStatus(@season.Id,'home')" id="hide_home_games_@season.Id" class="fa fa-minus" style="display:none">&nbsp;@Messages.Hide @Messages.All.ToLowerInvariant() @Messages.Home.ToLowerInvariant() @Messages.PlayerStatistic.ToLowerInvariant()</a>
+                                </td>
+                            </tr>
+                            foreach (var gameStat in homeGames)
+                            {
+                                <tr class="hideble home display_@season.Id">
+                                    <td><font>@gameStat.PlayersName</font></td>
+                                    <td>@gameStat.GP</td>
+                                    <td><font color="@(gameStat.MinAverage == maxHomeMin && maxHomeMin != 0 ? "#f45c0e" : "#000000")">@String.Format("{0:00.00}", gameStat.MinAverage)</font></td>
+                                    <td><font color="@(gameStat.FGAverage == maxHomeFG && maxHomeFG != 0 ? "#f45c0e" : "#000000")">@gameStat.FGAverage</font></td>
+                                    <td><font color="@(gameStat.FGAAverage == maxHomeFGA && maxHomeFGA != 0 ? "#f45c0e" : "#000000")">@gameStat.FGAAverage</font></td>
+                                    <td><font color="@(gameStat.ThreePTAverage == maxHomeThreePT && maxHomeThreePT != 0 ? "#f45c0e" : "#000000")">@gameStat.ThreePTAverage</font></td>
+                                    <td><font color="@(gameStat.ThreePAAverage == maxHomeThreePA && maxHomeThreePA != 0  ? "#f45c0e" : "#000000")">@gameStat.ThreePAAverage</font></td>
+                                    <td><font color="@(gameStat.FTAverage == maxHomeFT && maxHomeFT != 0  ? "#f45c0e" : "#000000")">@gameStat.FTAverage</font></td>
+                                    <td><font color="@(gameStat.FTAAverage == maxHomeFTA && maxHomeFTA != 0  ? "#f45c0e" : "#000000")">@gameStat.FTAAverage</font></td>
+                                    <td><font color="@(gameStat.OREBAverage == maxHomeOREB && maxHomeOREB != 0  ? "#f45c0e" : "#000000")">@gameStat.OREBAverage</font></td>
+                                    <td><font color="@(gameStat.DREBAverage == maxHomeDREB && maxHomeDREB != 0  ? "#f45c0e" : "#000000")">@gameStat.DREBAverage</font></td>
+                                    <td><font color="@(gameStat.REBAverage == maxHomeREB && maxHomeREB != 0  ? "#f45c0e" : "#000000")">@gameStat.REBAverage</font></td>
+                                    <td><font color="@(gameStat.ASTAverage == maxHomeAST && maxHomeAST != 0  ? "#f45c0e" : "#000000")">@gameStat.ASTAverage</font></td>
+                                    <td><font color="@(gameStat.STLAverage == maxHomeSTL && maxHomeSTL != 0  ? "#f45c0e" : "#000000")">@gameStat.STLAverage</font></td>
+                                    <td><font color="@(gameStat.TOAverage == maxHomeTO && maxHomeTO != 0  ? "#f45c0e" : "#000000")">@gameStat.TOAverage</font></td>
+                                    <td><font color="@(gameStat.BLKAverage == maxHomeBLK && maxHomeBLK != 0  ? "#f45c0e" : "#000000")">@gameStat.BLKAverage</font></td>
+                                    <td><font color="@(gameStat.PFAverage == maxHomePF && maxHomePF != 0 ? "#f45c0e" : "#000000")">@gameStat.PFAverage</font></td>
+                                    <td><font color="@(gameStat.PTSAverage == maxHomePTS && maxHomePTS != 0  ? "#f45c0e" : "#000000")">@gameStat.PTSAverage</font></td>
+                                    <td><font color="@(gameStat.EFFAverage == maxHomeEFF && maxHomeEFF != 0  ? "#f45c0e" : "#000000")">@gameStat.EFFAverage</font></td>
+                                    <td><font color="@(gameStat.PlusMinusAverage == maxHomePlusMinus && maxHomePlusMinus != 0  ? "#f45c0e" : "#000000")">@gameStat.PlusMinus</font></td>
+                                </tr>
+
+                            }
+                        }
+                        if (guestGames != null)
+                        {
+                            var maxGuestMin = guestGames.OrderByDescending(c => c.MinAverage).FirstOrDefault()?.MinAverage ?? 0;
+                            var maxGuestFG = guestGames.OrderByDescending(c => c.FGAverage).FirstOrDefault()?.FGAverage ?? 0;
+                            var maxGuestFGA = guestGames.OrderByDescending(c => c.FGAAverage).FirstOrDefault()?.FGAAverage ?? 0;
+                            var maxGuestThreePT = guestGames.OrderByDescending(c => c.ThreePTAverage).FirstOrDefault()?.ThreePTAverage ?? 0;
+                            var maxGuestThreePA = guestGames.OrderByDescending(c => c.ThreePAAverage).FirstOrDefault()?.ThreePAAverage ?? 0;
+                            var maxGuestFT = guestGames.OrderByDescending(c => c.FTAverage).FirstOrDefault()?.FTAverage ?? 0;
+                            var maxGuestFTA = guestGames.OrderByDescending(c => c.FTAAverage).FirstOrDefault()?.FTAAverage ?? 0;
+                            var maxGuestOREB = guestGames.OrderByDescending(c => c.OREBAverage).FirstOrDefault()?.OREBAverage ?? 0;
+                            var maxGuestDREB = guestGames.OrderByDescending(c => c.DREBAverage).FirstOrDefault()?.DREBAverage ?? 0;
+                            var maxGuestREB = guestGames.OrderByDescending(c => c.REBAverage).FirstOrDefault()?.REBAverage ?? 0;
+                            var maxGuestAST = guestGames.OrderByDescending(c => c.ASTAverage).FirstOrDefault()?.ASTAverage ?? 0;
+                            var maxGuestSTL = guestGames.OrderByDescending(c => c.STLAverage).FirstOrDefault()?.STLAverage ?? 0;
+                            var maxGuestTO = guestGames.OrderByDescending(c => c.TOAverage).FirstOrDefault()?.TOAverage ?? 0;
+                            var maxGuestBLK = guestGames.OrderByDescending(c => c.BLKAverage).FirstOrDefault()?.BLKAverage ?? 0;
+                            var maxGuestPF = guestGames.OrderByDescending(c => c.PFAverage).FirstOrDefault()?.PFAverage ?? 0;
+                            var maxGuestPTS = guestGames.OrderByDescending(c => c.PTSAverage).FirstOrDefault()?.PTSAverage ?? 0;
+                            var maxGuestEFF = guestGames.OrderByDescending(c => c.EFFAverage).FirstOrDefault()?.EFFAverage ?? 0;
+                            var maxGuestPlusMinus = guestGames.OrderByDescending(c => c.PlusMinusAverage).FirstOrDefault()?.PlusMinusAverage ?? 0;
+                            <tr>
+                                <td colspan="20">
+                                    <a onclick="changeIconStatus(@season.Id,'guest')" id="show_guest_games_@season.Id" class="fa fa-plus">&nbsp; @Messages.Show @Messages.All.ToLowerInvariant() @Messages.Guest.ToLowerInvariant() @Messages.PlayerStatistic.ToLowerInvariant()</a>
+                                    <a onclick="changeIconStatus(@season.Id,'guest')" id="hide_guest_games_@season.Id" class="fa fa-minus" style="display:none">&nbsp;@Messages.Hide @Messages.All.ToLowerInvariant() @Messages.Guest.ToLowerInvariant() @Messages.PlayerStatistic.ToLowerInvariant()</a>
+                                </td>
+                            </tr>
+                            foreach (var gameStat in guestGames)
+                            {
+                                <tr class="hideble guest display_@season.Id">
+                                    <td><font>@gameStat.PlayersName</font></td>
+                                    <td>@gameStat.GP</td>
+                                    <td><font color="@(gameStat.MinAverage == maxGuestMin && maxGuestMin != 0 ? "#f45c0e" : "#000000")">@String.Format("{0:00.00}", gameStat.MinAverage)</font></td>
+                                    <td><font color="@(gameStat.FGAverage == maxGuestFG && maxGuestFG != 0 ? "#f45c0e" : "#000000")">@gameStat.FGAverage</font></td>
+                                    <td><font color="@(gameStat.FGAAverage == maxGuestFGA && maxGuestFGA != 0 ? "#f45c0e" : "#000000")">@gameStat.FGAAverage</font></td>
+                                    <td><font color="@(gameStat.ThreePTAverage == maxGuestThreePT && maxGuestThreePT != 0 ? "#f45c0e" : "#000000")">@gameStat.ThreePTAverage</font></td>
+                                    <td><font color="@(gameStat.ThreePAAverage == maxGuestThreePA && maxGuestThreePA != 0  ? "#f45c0e" : "#000000")">@gameStat.ThreePAAverage</font></td>
+                                    <td><font color="@(gameStat.FTAverage == maxGuestFT && maxGuestFT != 0  ? "#f45c0e" : "#000000")">@gameStat.FTAverage</font></td>
+                                    <td><font color="@(gameStat.FTAAverage == maxGuestFTA && maxGuestFTA != 0  ? "#f45c0e" : "#000000")">@gameStat.FTAAverage</font></td>
+                                    <td><font color="@(gameStat.OREBAverage == maxGuestOREB && maxGuestOREB != 0  ? "#f45c0e" : "#000000")">@gameStat.OREBAverage</font></td>
+                                    <td><font color="@(gameStat.DREBAverage == maxGuestDREB && maxGuestDREB != 0  ? "#f45c0e" : "#000000")">@gameStat.DREBAverage</font></td>
+                                    <td><font color="@(gameStat.REBAverage == maxGuestREB && maxGuestREB != 0  ? "#f45c0e" : "#000000")">@gameStat.REBAverage</font></td>
+                                    <td><font color="@(gameStat.ASTAverage == maxGuestAST && maxGuestAST != 0  ? "#f45c0e" : "#000000")">@gameStat.ASTAverage</font></td>
+                                    <td><font color="@(gameStat.STLAverage == maxGuestSTL && maxGuestSTL != 0  ? "#f45c0e" : "#000000")">@gameStat.STLAverage</font></td>
+                                    <td><font color="@(gameStat.TOAverage == maxGuestTO && maxGuestTO != 0  ? "#f45c0e" : "#000000")">@gameStat.TOAverage</font></td>
+                                    <td><font color="@(gameStat.BLKAverage == maxGuestBLK && maxGuestBLK != 0  ? "#f45c0e" : "#000000")">@gameStat.BLKAverage</font></td>
+                                    <td><font color="@(gameStat.PFAverage == maxGuestPF && maxGuestPF != 0 ? "#f45c0e" : "#000000")">@gameStat.PFAverage</font></td>
+                                    <td><font color="@(gameStat.PTSAverage == maxGuestPTS && maxGuestPTS != 0  ? "#f45c0e" : "#000000")">@gameStat.PTSAverage</font></td>
+                                    <td><font color="@(gameStat.EFFAverage == maxGuestEFF && maxGuestEFF != 0  ? "#f45c0e" : "#000000")">@gameStat.EFFAverage</font></td>
+                                    <td><font color="@(gameStat.PlusMinusAverage == maxGuestPlusMinus && maxGuestPlusMinus != 0  ? "#f45c0e" : "#000000")">@gameStat.PlusMinusAverage</font></td>
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="text-center"><h3>@Messages.NoGamesFound</h3></div>
+        }
+
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $(".hideble").hide();
+    });
+    function changeIconStatus(seasonId, type) {
+        switch (type) {
+            case "home":
+                var homeShowIcon = $("#show_home_games_" + seasonId);
+                var homeHideIcon = $("#hide_home_games_" + seasonId);
+                if (homeShowIcon.css('display') == 'none') {
+                    homeShowIcon.show();
+                    $(".hideble.home.display_" + seasonId).hide(200);
+                    homeHideIcon.hide();
+                } else {
+                    homeShowIcon.hide();
+                    $(".hideble.home.display_" + seasonId).show(200);
+                    homeHideIcon.show();
+                }
+                break;
+            case "guest":
+                var guestShowIcon = $("#show_guest_games_" + seasonId);
+                var guestHideIcon = $("#hide_guest_games_" + seasonId);
+                if (guestShowIcon.css('display') == 'none') {
+                    guestShowIcon.show();
+                    $(".hideble.guest.display_" + seasonId).hide(200);
+                    guestHideIcon.hide();
+                } else {
+                    guestShowIcon.hide();
+                    $(".hideble.guest.display_" + seasonId).show(200);
+                    guestHideIcon.show();
+                }
+                break;
+        }
+    };
+
+</script>

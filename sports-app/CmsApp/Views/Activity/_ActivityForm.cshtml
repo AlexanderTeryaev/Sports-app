@@ -1,0 +1,99 @@
+﻿<div id="buildForm" class="activity-build-form">
+    <div id="buildForm-header" class="header">
+        <div>
+            <label>@Messages.UploadImage</label>
+            <input type="file" id="formImage" name="formImage">
+            <img id='img-upload'/>
+        </div>
+        <input class="form-control" type="text" id="activityName" name="activityName" placeholder="@Messages.Activity_BuildForm_FormName" data-val-required="@Messages.PropertyValueRequired" data-val="true" />
+        <span class="field-validation-valid" data-valmsg-for="activityName" data-valmsg-replace="true"></span>
+
+        <input class="form-control" type="text" id="activityDescription" name="activityDescription" placeholder="@Messages.Activity_BuildForm_FormDescription" data-val-required="@Messages.PropertyValueRequired" data-val="true" />
+        <span class="field-validation-valid" data-valmsg-for="activityDescription" data-valmsg-replace="true"></span>
+        <!-- <h4 id="activityEndDate"></h4>  -->
+    </div>
+    
+    <form id="testForm">
+        <div id="buildForm-body" class="body">
+            <div class="loader">
+                <svg class="circular" viewBox="25 25 50 50">
+                    <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"/>
+                </svg>
+            </div>
+        </div>
+    </form>
+
+    <div class="footer">
+        <button id="resetActivityForm" type="button" class="resetForm btn btn-danger">@Messages.Activity_BuildForm_ResetForm</button>
+        <span id="saveResult"></span>
+        <button id="saveActivityForm" type="button" class="btn btn-primary">@Messages.Save</button>
+    </div>
+    
+    <div class="modal fade" id="resetForm-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@Messages.Activity_BuildForm_ResetForm</h4>
+                </div>
+                <div class="modal-body">
+                    <p>@Messages.Activity_BuildForm_ResetForm_Description</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Cancel</button>
+                    <button type="button" id="resetForm-modal-confirm" class="btn btn-danger">@Messages.Activity_BuildForm_ResetForm_Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="custom-controls" class="activity-custom-controls">
+    <div class="header">
+        <h1>@Messages.Activity_BuildForm_AddFields</h1>
+        <small>@Messages.Activity_BuildForm_AddFields_UsingDragDrop</small>
+    </div>
+    
+    <div class="controls">
+        <span class="control" data-controltype="@ActivityFormControlType.CustomTextBox"><i class="glyphicon glyphicon-pencil"></i> @Messages.Activity_BuildForm_CustomField_TextBox</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomTextArea"><i class="glyphicon glyphicon-align-justify"></i> @Messages.Activity_BuildForm_CustomField_TextArea</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomDropdown"><i class="glyphicon glyphicon-th-list"></i> @Messages.Activity_BuildForm_CustomField_DropDown</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomText"><i class="glyphicon glyphicon-font"></i> @Messages.Activity_BuildForm_CustomField_Text</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomTextMultiline"><i class="glyphicon glyphicon-font"></i> @Messages.Activity_BuildForm_CustomField_TextMultiline</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomDropdownMultiselect"><i class="glyphicon glyphicon-th-list"></i> @Messages.Activity_BuildForm_CustomField_DropdownMultiselect</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomCheckBox"><i class="glyphicon glyphicon-check"></i> @Messages.Activity_BuildForm_CustomField_CheckBox</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomFileReadonly"><i class="glyphicon glyphicon-cloud-upload"></i> @Messages.Activity_BuildForm_CustomField_FileReadonly</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomFileUpload"><i class="glyphicon glyphicon-cloud-upload"></i> @Messages.Activity_BuildForm_CustomField_FileUpload</span>
+        <span class="control" data-controltype="@ActivityFormControlType.CustomLink"><i class="glyphicon glyphicon-new-window"></i> @Messages.Activity_BuildForm_CustomField_Link</span>
+    </div>
+</div>
+
+<script>
+    $("#buildForm").on("change", "input[type='file']",
+        function () {
+            if (this.files[0].size > @(GlobVars.MaxFileSize*1000)) {
+                alert("@string.Format(Messages.FileSize_Error_WithLimit, GlobVars.MaxFileSize / 1000)");
+
+                $(this).val("");
+            }
+
+            var fileName = $(this).val();
+            var parts = fileName.split(".");
+            var fileExt = parts[parts.length - 1];
+
+            switch (fileExt.toLowerCase()) {
+                @foreach (var ext in GlobVars.ValidImages)
+                {
+                    <text>case "@ext.Replace(".", String.Empty)":</text>
+                }
+                return;
+
+            case "xls":
+            case "xlsx":
+                return;
+
+            default:
+                $(this).val("");
+                alert("@string.Format(Messages.SelectValidFile, string.Join(", ", GlobVars.ValidImages.Union(new []{".xls", ".xlsx"})))");
+            }
+        });
+</script>

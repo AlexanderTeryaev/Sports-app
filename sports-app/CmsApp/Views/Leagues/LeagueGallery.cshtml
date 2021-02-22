@@ -1,0 +1,38 @@
+﻿@model TeamGalleryModel
+
+@helper ShowImage(string imgName)
+{
+    <img class="img-responsive img-thumbnail" style="width: 200px; height: 200px" src="@( GlobVars.ContentPath + "/leagues/" + imgName)" />
+}
+
+<div class="row" id="gallery_list">
+    <div class="col-lg-9" style="display: inline-block; vertical-align: middle; float: none">
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>@Messages.Image</th>
+                <th>@Messages.UserName</th>
+                <th>@Messages.Date</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody id="standings_table_body">
+            @foreach (var gallery in Model.TeamGalleries)
+            {
+                <tr>
+                    <td class="flip-to-ltr"><div class="offset-2"></div>
+                    @ShowImage(@gallery.TeamGallery.url)</td>
+                    <td>@gallery.TeamGallery.User.Name</td>
+                    <td>@gallery.TeamGallery.Created</td>
+                    <td>
+                        @Ajax.ActionLink(" ", "DeleteGallery", "Leagues",
+                        new { leagueId = gallery.TeamId, filename = gallery.TeamGallery.url },
+                        new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "gallery_list", Confirm = Messages.DeleteConfirm },
+                        new { @class = AppCss.Delete })
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

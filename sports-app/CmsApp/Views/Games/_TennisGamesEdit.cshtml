@@ -1,0 +1,170 @@
+﻿@model GameForm
+@{
+    var roundStartCycle = new List<SelectListItem>
+{
+new SelectListItem { Text = Messages.ContinueSequentially, Value = "1", Selected = Model.RoundStartCycle?.ToString()?.Equals("1") == true  },
+new SelectListItem { Text = Messages.StartEachRoundFromCycle, Value = "2", Selected = Model.RoundStartCycle?.ToString()?.Equals("2") == true  },
+};
+    var showCyclesOnExternal = new List<SelectListItem>
+{
+new SelectListItem { Text = Messages.Yes, Value = "1", Selected = Model.ShowCyclesOnExternal == 0, },
+new SelectListItem{Text = Messages.No, Value = "0", Selected = Model.ShowCyclesOnExternal == 1}
+};
+}
+@using (Ajax.BeginForm("EditTennis", "Games",
+    new AjaxOptions
+    {
+        UpdateTargetId = $"setting{Model.StageId}"
+    },
+    new { @class = "gameform", id = "gameform", autocomplete = "off" }))
+{
+    <div class="row">
+        <div class="col-sm-5 form-group">
+            <label class="control-label">@Messages.ShowCyclesOnExternalLink</label>
+            @Html.DropDownListFor(m => m.ShowCyclesOnExternal, showCyclesOnExternal, new { @class = "form-control" })
+        </div>
+        @if (Model.IsDivision)
+        {
+            <div class="col-sm-5 form-group">
+                <label class="control-label">@Messages.SetRoundStartCycle:</label>
+                @Html.DropDownListFor(m => m.RoundStartCycle, roundStartCycle, new { @class = "form-control" })
+            </div>
+        }
+    </div>
+    <div class="row">
+        <div class="col-sm-5 form-group">
+            <label class="control-label">@Messages.ActiveWeeksNumber:</label>
+            @Html.EditorFor(m => m.ActiveWeeksNumber, new { htmlAttributes = new { @class = "form-control", min = "1" } })
+        </div>
+        <div class="col-sm-5 form-group">
+            <label class="control-label">@Messages.BreakWeeksNumber:</label>
+            @Html.EditorFor(m => m.BreakWeeksNumber, new { htmlAttributes = new { @class = "form-control", min = "0" } })
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-8">
+            <label class="control-label">@Messages.GamesDays:</label>
+            <div class="row">
+                @for (int i = 0; i < Model.DaysList.Length; i++)
+                {
+                    <div class="col-sm-1 text-center">
+                        <b>@Model.DaysList[i]</b>
+                        <input type="checkbox" class="required" name="DaysArr" value="@(i)" @IsChecked(Model.GameDays, i) />
+                    </div>
+                }
+            </div>
+            <span class="field-validation-valid" data-valmsg-for="DaysArr" data-valmsg-replace="true"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.FirstGameStart:</label>
+            @Html.TextBoxFor(m => m.StartDate, new { @class = "from-control frm-date" })
+        </div>
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.GamesInterval:</label>
+            @Html.TextBoxFor(m => m.GamesInterval, new { @class = "form-control", placeholder = "00:00" })
+            @Html.ValidationMessageFor(m => m.GamesInterval, Messages.InvalidTime)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.DateForFirstCycleOnly:</label>
+            @Html.CheckBoxFor(m => m.IsDateForFirstCycleOnly, new {  })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3">
+            <label class="control-label">@Messages.Points:</label>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-2 form-group">
+            <label class="control-label">@Messages.Win:</label>
+            @Html.TextBoxFor(m => m.PointsWin, new { @class = "form-control" })
+        </div>
+        <div class="col-sm-2 form-group">
+            <label class="control-label">@Messages.Draw:</label>
+            @Html.TextBoxFor(m => m.PointsDraw, new { @class = "form-control" })
+        </div>
+        <div class="col-sm-2 form-group">
+            <label class="control-label">@Messages.Loss:</label>
+            @Html.TextBoxFor(m => m.PointsLoss, new { @class = "form-control" })
+        </div>
+        <div class="col-sm-2 form-group">
+            <label class="control-label">@Messages.TechWin:</label>
+            @Html.TextBoxFor(m => m.PointsTechWin, new { @class = "form-control" })
+        </div>
+        <div class="col-sm-2 form-group">
+            <label class="control-label">@Messages.TechLoss:</label>
+            @Html.TextBoxFor(m => m.PointsTechLoss, new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-4" id="statusMessage">
+            @if (TempData["Saved"] != null)
+            {
+                <span class="text-success">@Messages.DataSavedSuccess</span>
+            }
+        </div>
+        <div class="col-sm-4 form-group text-align offset-3">
+            <button class="btn btn-primary" id="btnSave">@Messages.Save</button>
+        </div>
+    </div>
+    @Html.HiddenFor(m => m.LeagueId)
+    @Html.HiddenFor(m => m.StageId)
+    @Html.HiddenFor(m => m.GameId)
+}
+
+@functions {
+    string IsChecked(string list, int val)
+    {
+        if (string.IsNullOrEmpty(list))
+            return null;
+
+        return Array.IndexOf(list.Split(','), val.ToString()) > -1 ? "checked" : null;
+    }
+}
+
+<script>
+    $(function () {
+        $('.gameform').validateBootstrap(true);
+    });
+
+    $(document).ready(function () {
+        function validateNumbers() {
+            if ($('#ActiveWeeksNumber').val() <= 0 && $('#BreakWeeksNumber').val() <= 0) {
+                $('#statusMessage').html('<span style="color:red">@Messages.SetWeeks</span>');
+                $('#btnSave').attr('disabled', true);
+            } else {
+                $('#btnSave').removeAttr("disabled");
+            }
+        }
+
+        validateNumbers();
+
+        $('#ActiveWeeksNumber').on('input', function (e) {
+            validateNumbers();
+        });
+
+        $('#BreakWeeksNumber').on('input', function (e) {
+            validateNumbers();
+        });
+
+        $(".frm-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+
+            step: 15,
+            closeOnDateSelect: false,
+            onChangeDateTime: function () {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            },
+
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+    });
+</script>

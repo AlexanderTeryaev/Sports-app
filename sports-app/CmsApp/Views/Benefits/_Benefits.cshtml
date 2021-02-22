@@ -1,0 +1,132 @@
+﻿@model BenefitModel
+
+@{
+    bool userIsEditor = User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers);
+}
+
+<table id="benefits_tbl" class="table table-bordered offset-2">
+    <thead>
+        <tr>
+            <th>@Messages.Publish</th>
+            <th>@Messages.Title</th>
+            <th>@Messages.Description</th>
+            <th>@Messages.Company</th>
+            <th>@Messages.Code</th>
+            <th>@Messages.Image (<span>@Messages.Max2MB</span>)</th>
+            @if (userIsEditor)
+            {
+                <th></th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            if (Model.BenefitList?.Count() > 0)
+            {
+                foreach (var bn in Model.BenefitList)
+                {
+                <tr id="benefit_@bn.BenefitId">
+                    <td class="remove_print">
+                        <input type="checkbox" id="BenefitChbx_@bn.BenefitId"
+                               name="IsPublished" class="BenefitChbx"
+                               value="@bn.BenefitId)" @(bn.IsPublished ? "checked" : string.Empty)
+                               onclick="bnList.publishBenefit(@bn.BenefitId)" />
+                    </td>
+                    @if (!userIsEditor || ViewBag.IsUnionViewer)
+                    {
+                        <td>@bn.Title</td>
+                        <td>@bn.Description</td>
+                        <td>@bn.Company</td>
+                        <td>@bn.Code</td>
+                    }
+                    else
+                    {
+                        <td>
+                            @Html.AntiForgeryToken()
+                            <input name="BenefitId" type="hidden" value="@bn.BenefitId">
+                            <input name="SeasonId" type="hidden" value="@bn.SeasonId" />
+                            <input name="UnionId" type="hidden" value="@bn.UnionId" />
+                            <input type="text" name="Title" value="@bn.Title" class="form-control required" form="benefitfrm@(bn.BenefitId)" />
+                        </td>
+                        <td>
+                            @Html.TextArea("Description", bn.Description, new { @class = "form-control required", @form = "benefitfrm" + bn.BenefitId })
+                        </td>
+                        <td>
+                            <input type="text" name="Company" value="@bn.Company" class="form-control required" form="benefitfrm@(bn.BenefitId)" />
+                        </td>
+                        <td>
+                            <input type="text" name="Code" value="@bn.Code" class="form-control required" form="benefitfrm@(bn.BenefitId)" />
+                        </td>
+                        <td>
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    @Html.Editor("ImageFile", "ImageUpload", new { css = "validfile", htmlAttributes = new { @class = "form-control" } })
+                                </div>
+                                @{
+                                    var styleVis = "";
+                                    if (string.IsNullOrEmpty(bn.Image))
+                                    {
+                                        styleVis = "visibility:hidden";
+                                    }
+
+                                    <div class="col-sm-2 btn" name="remove-photo" style="@styleVis">
+                                        <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                        <input type="hidden" value="false" name="RemoveImage" />
+                                    </div>
+                                }
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    @Html.ValidationMessage("Image")
+                                    @{
+                                        if (!string.IsNullOrEmpty(bn.Image))
+                                        {
+                                            string src = GlobVars.ContentPath + "/Benefits/" + bn.Image;
+                                            <img name="benefit-img" style="max-width:200px" class="img-responsive img-thumbnail" src="@src" alt="" />
+                                        }
+                                        else
+                                        {
+                                            <img name="benefit-img" style="max-width:200px;visibility:hidden" class="img-responsive img-thumbnail" src="" alt="" />
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                        <td style="min-width:90px;">
+                            <a class="btn btn-sm btn-danger"
+                               href="@Url.Action("DeleteBenefit", "Benefits", new { benefitId = bn.BenefitId, seasonId = bn.SeasonId, unionID = bn.UnionId})"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#benefit_list"
+                               data-ajax="true"
+                               title="@Messages.Delete">
+                                <i class="glyphicon glyphicon-trash"></i>
+                            </a>
+                            <a class="btn btn-sm btn-success"
+                               name="savebtn"
+                               disabled="disabled"
+                               onclick="bnList.UpdateBenefit(@bn.BenefitId)"
+                               title="@Messages.Save">
+                                <i class="glyphicon glyphicon-saved"></i>
+                            </a>
+                        </td>
+                    }
+                </tr>
+                }
+            }
+        }
+    </tbody>
+</table>
+
+<div class="modal fade" id="addbenefit" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="addbenefitform_pl"></div>
+    </div>
+</div>
+
+<script src="~/Scripts/pages/benefitsList.js?ver=2"></script>
+<script>
+    $(document).ready(function () {
+        bnList.documentReady();
+    });
+    
+</script>

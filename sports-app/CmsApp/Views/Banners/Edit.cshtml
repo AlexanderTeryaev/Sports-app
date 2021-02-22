@@ -1,0 +1,113 @@
+﻿@model BannerForm
+@helper ShowImage(string imgName)
+{
+    <img class="img-responsive img-thumbnail" style="height: 100px" src="@( GlobVars.ContentPath + "/banners/" + imgName)" />
+}
+<form action="/Banners/UpdateBanner" enctype="multipart/form-data" method="post">
+    <div class="row" style="padding:32px">
+        <div class="col-sm-8 form-group">
+            <div class="row form-group">
+                <label for="game-url" class="col-sm-2">@Messages.ExternalLink: </label>
+                <div class="col-sm-8">
+                    <input type="text" id="LinkUrl" name="LinkUrl" class="form-control" value="@Model.LinkUrl" />
+                </div>
+                
+            </div>
+
+            <div class="row form-group">
+                <label for="game-url" class="col-sm-2">@Messages.Banner: </label>
+                <div class="col-sm-6">
+                    @Html.Editor("BannerUpdateFile", "ImageUpload", new { css = "validfile", id = "BannerUpdateFile", name = "BannerUpdateFile" })
+                </div>
+            </div>
+
+            <div class="offset-2"></div>
+            @ShowImage(@Model.ImageUrl)
+
+            <input type="text" id="Id" name="Id" value=@Model.Id class="form-control" style="display:none" />
+            <input type="text" id="UnionId" name="UnionId" value=@Model.UnionId class="form-control" style="display:none" />
+            <input type="text" id="ClubId" name="ClubId" value=@Model.ClubId class="form-control" style="display:none" />
+            <input type="text" id="IsUnion" name="isUnion" value=@Model.isUnion class="form-control" style="display:none" />
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        <button class="btn btn-primary">@Messages.Save</button>
+    </div>
+</form>
+
+    <script>
+    $(document).ready(function () {
+        if ('@(TempData["IsSuccess"])' == 'False') {
+            alert(@TempData["Error"]);
+        }
+    });
+
+    $('#bannersupdateform').validateBootstrap(true);
+    setBannerUpdateUpload('#bannersupdateform');
+
+    $("#bannersupdateform").submit(function (event) {
+        event.preventDefault();
+
+        return false;
+    });
+
+    function updateSuccess() {
+        window.location.reload();
+    }
+
+    function setBanner() {
+        var bannerfrm = $("#bannersupdateform");
+        $.ajax({
+            url: "/Banners/UpdateBanner",
+            type: "POST",
+            dataType: "json",
+            data: bannerfrm.serialize(),
+            success: $(function (response) {
+
+            }),
+            error: function () {
+
+            },
+            complete: function () {
+                window.location.reload();
+            }
+        });
+    }
+
+    function setBannerUpdateUpload(formName) {
+
+        $(formName).ajaxForm({
+            beforeSend: function () {
+                /*var percentVal = "0%";
+                bar.width(percentVal)
+                percent.html(percentVal);*/
+            },
+            uploadProgress: function (event, position, total, percentComplete) {
+                /*var percentVal = percentComplete + "%";
+                bar.width(percentVal)
+                percent.html(percentVal);*/
+            },
+            success: function (responseText, statusText, xhr, form) {
+                /*var percentVal = "100%";
+                bar.width(percentVal)
+                percent.html(percentVal);
+
+                var tarId = form.data("targetid");
+                $("#" + tarId).html(responseText);*/
+
+            },
+            complete: function (xhr) {
+                /*status.html(xhr.responseText);*/
+                window.location.reload();
+            },
+            clearForm: "true",
+            beforeSubmit: validator
+        });
+
+        function validator() {
+            return $(formName).valid();
+        }
+    }
+    </script>

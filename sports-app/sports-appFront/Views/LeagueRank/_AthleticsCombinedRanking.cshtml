@@ -1,0 +1,180 @@
+﻿@using DataService.DTO
+@using Resources
+@using LogLigFront.Helpers
+@model List<CombinedPlayerRankDto>
+@{ 
+    var index = 0;
+}
+
+    <div class="modal-dialog modal-lg modal-result-custom-width-extra">
+        <div class="modal-content" style="padding: 18px;">
+            <a href="" onclick="printClick(this.parentElement);" class="print_print_id btn btn-primary remove_print desktop-only" style="float:left;">
+                <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+            </a>
+            <div class="print_id" id="print_id" data-print-title="">
+                <style>
+                td, th {
+                    text-align: center;
+                }
+                .combined_tr .ext{
+                    white-space:nowrap;
+                    direction:ltr;
+                    text-align: center;
+                }
+                .modal-result-custom-width-extra {
+                    width:100%;
+                }
+            @@media screen and (min-width: 1000px) {
+                .modal-result-custom-width-extra {
+                    min-width:1000px;
+                    width:100%;
+                }
+            }
+            @@page{size:auto; margin:5mm;}
+            }
+                </style>
+                <div class="main-title disciplines-title">
+                    <table class="borderless disciplines-title" style="width:100%;">
+                        <tr>
+                            <td style="vertical-align : middle;text-align:center;" colspan="3" rowspan="3">
+                                @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+                                {
+                                    <img src="@ViewBag.Logo" class="img-circle keep-for-print" style="max-height:100px;max-width:150px;" alt="" />
+                                }
+                            </td>
+                            <td style="text-align:center;" colspan="4">
+                                <h3 style="margin-top:0px;margin-bottom:0px;">
+                                    @ViewBag.CompetitionName
+                                </h3>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                <h4 style="margin-top:0px;margin-bottom:0px;">
+                                    @if (ViewBag.CompetitionDate != null)
+                                    {
+                                        @ViewBag.CompetitionDate.ToString("dd/MM/yyyy")
+                                    }
+                                </h4>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"><h4 style="margin-top:0px;margin-bottom:0px;">@Messages.League_RankedStandings</h4></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="row col-sm-12" style="margin-left:0px;margin-right:0px;">
+                @if (Model.Count>0)
+                {
+                    <div class="col-sm-12"><h4 style="text-align:center;">@Messages.MultiBattle</h4></div>
+                }
+                @if (Model.Where(c => c.GenderId == 1).Count() > 0)
+                {
+                    var multiBattleDisciplinesNameList = ViewBag.MultiBattleDisciplinesNameListForMen;
+                <div class="row">
+                    <h5 class="text-center">@(Messages.Men)</h5>
+                    <div class="table-responsive">
+                        <table class="table res-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>@Messages.AthleteNumber</th>
+                                    <th>@Messages.FullName</th>
+                                    <th>@Messages.YearOfBirth</th>
+                                    <th>@Messages.Club</th>
+                                    @foreach (var name in multiBattleDisciplinesNameList)
+                                    {
+                                        <th>@name</th>
+                                    }
+                                    <th>@Messages.Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.Where(c => c.GenderId == 1))
+                                {
+                                    index += 1;
+                                    <tr class="combined_tr">
+                                        <td>@index</td>
+                                        @{
+                                            var athleteNumber = row.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                        }
+                                        <td>@(athleteNumber)</td>
+                                        <td>@(row.User.FullName)</td>
+                                        <td>@(row.User.BirthDay.HasValue ? row.User.BirthDay.Value.Year.ToString() : "")</td>
+                                        <td>@(row.ClubName)</td>
+                                        @for (var i = 0; i < multiBattleDisciplinesNameList.Count; i++)
+                                        {
+                                            var wind = row.Winds[i].HasValue ? (row.Winds[i] < 0 ? row.Winds[i].ToString() : "+" + row.Winds[i].ToString()) : "";
+                                            <td class="ext">@UIHelpers.GetCompetitionDisciplineResultString(row.Results[i], row.Formats[i]) @(row.Winds[i].HasValue ? $"/ {wind}" : "")<br />@(row.Points[i])</td>
+                                        }
+                                        <td>@(Decimal.Round(row.SumPoints))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                }
+                @if (Model.Where(c => c.GenderId == 0).Count() > 0)
+                {
+                    index = 0;
+                    var multiBattleDisciplinesNameList = ViewBag.MultiBattleDisciplinesNameListForWomen;
+                <div class="row">
+                    <h5 class="text-center">@(Messages.Women)</h5>
+                    <div class="table-responsive">
+                        <table class="table res-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>@Messages.AthleteNumber</th>
+                                    <th>@Messages.FullName</th>
+                                    <th>@Messages.YearOfBirth</th>
+                                    <th>@Messages.Club</th>
+                                    @foreach (var name in multiBattleDisciplinesNameList)
+                                    {
+                                        <th>@name</th>
+                                    }
+                                    <th>@Messages.Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.Where(c => c.GenderId == 0))
+                                {
+                                    index += 1;
+                                    <tr class="combined_tr">
+                                        <td>@index</td>
+                                        @{
+                                            var athleteNumber = row.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                        }
+                                        <td>@(athleteNumber)</td>
+                                        <td>@(row.User.FullName)</td>
+                                        <td>@(row.User.BirthDay.HasValue ? row.User.BirthDay.Value.Year.ToString() : "")</td>
+                                        <td>@(row.ClubName)</td>
+                                        @for (var i = 0; i < multiBattleDisciplinesNameList.Count; i++)
+                                        {
+                                            var wind = row.Winds[i].HasValue ? (row.Winds[i] < 0 ? row.Winds[i].ToString() : "+" + row.Winds[i].ToString()) : "";
+                                            <td class="ext">@UIHelpers.GetCompetitionDisciplineResultString(row.Results[i], row.Formats[i]) @(row.Winds[i].HasValue ? $"/ {wind}" : "")<br />@(row.Points[i])</td>
+                                        }
+                                        <td>@(Decimal.Round(row.SumPoints))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                }
+
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+                @section scripts
+                {
+                    <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+                }
+            </div>
+        </div>
+    </div>

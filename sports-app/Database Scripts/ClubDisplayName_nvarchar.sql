@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[Clubs] ALTER COLUMN [ClubDisplayName] NVARCHAR (MAX) NULL;

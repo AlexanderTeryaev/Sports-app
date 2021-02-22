@@ -1,0 +1,55 @@
+﻿@model GroupsForm
+@{
+    ViewBag.Title = "_EditPoints";
+}
+<div id="groupmodal">
+
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+        <h4 class="modal-title">@Messages.AddGroup</h4>
+    </div>
+
+    @using (Ajax.BeginForm("EditPoints", null, new AjaxOptions
+    {
+        UpdateTargetId = "groupmodal"
+    },
+                 new
+                 {
+                     id = "groupform",
+                     autocomplete = "off"
+                 }))
+    {
+        <div class="modal-body">
+            <table>
+                @for (var i = 0; i < Model.Points.Count(); i++)
+                {
+                    <tr>
+                        <td width="200">
+                            @Model.Names[i]
+                            @Html.HiddenFor(m => m.Names[i])
+                            @Html.HiddenFor(m => m.IdTeams[i])
+                        </td>
+                        <td>
+                            @Html.EditorFor(m => m.Points[i], new { @class = "form-control" })
+                        </td>
+                    </tr>
+                }
+                <tr><td><br></td><td><br></td></tr>
+                <tr>
+                    <td width="200"></td>
+                    <td>
+                        <div class="form-group">
+                            <div class="col-md-offset-2 col-md-10">
+                                <input type="submit" value="Save" class="btn btn-primary" />
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+            </table>
+            @Html.HiddenFor(m => m.StageId)
+            @Html.HiddenFor(m => m.LeagueId)
+            @Html.HiddenFor(m => m.GroupId)
+        </div>
+    }
+</div>

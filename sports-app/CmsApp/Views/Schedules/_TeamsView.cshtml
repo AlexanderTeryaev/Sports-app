@@ -1,0 +1,32 @@
+﻿@model bool
+<div class="form-group col-sm-6">
+    @if (Model)
+    {
+        <label class="control-label">@Messages.HomeCompetitor:</label>
+        @Html.DropDownList("HomeAthleteId", ViewBag.TeamsList as IEnumerable<SelectListItem>,
+            new { @class = "form-control" })
+        <span id="teamerr" class="text-danger" style="display:none">@Messages.SelectOtherCompetitor</span>
+    }
+    else
+    {
+        <label class="control-label">@Messages.HomeTeam:</label>
+        @Html.DropDownList("HomeTeamId", ViewBag.TeamsList as IEnumerable<SelectListItem>,
+            new { @class = "form-control" })
+        <span id="teamerr" class="text-danger" style="display:none">@Messages.SelectOtherTeam</span>
+    }
+</div>
+<div class="form-group col-sm-6">
+    @if (Model)
+    {
+        <label class="control-label">@Messages.GuestCompetitor:</label>
+            @Html.DropDownList("GuestAthleteId", ViewBag.TeamsList as IEnumerable<SelectListItem>,
+            new { @class = "form-control" })
+    }
+    else
+    {
+        <label class="control-label">@Messages.GuestTeam:</label>
+        @Html.DropDownList("GuestTeamId", ViewBag.TeamsList as IEnumerable<SelectListItem>,
+            new { @class = "form-control" })
+    }
+
+</div>

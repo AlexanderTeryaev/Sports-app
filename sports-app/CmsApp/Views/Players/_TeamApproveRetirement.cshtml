@@ -1,0 +1,47 @@
+﻿@model PlayerTeamApproveRetirementForm
+
+
+@using (Html.BeginForm("ApproveRetirement", "Players"))
+{
+    @Html.HiddenFor(x => x.ClubId)
+    @Html.HiddenFor(x => x.LeagueId)
+    @Html.HiddenFor(x => x.SeasonId)
+    @Html.HiddenFor(x => x.TeamId)
+    @Html.HiddenFor(x => x.ApproveTeamId)
+
+    <div class="modal-body">
+        <div class="form-group">
+            @Html.LabelFor(x => x.ApproveDate, Messages.RetirementApproveDate, new {@class = "control-label"})
+            @Html.TextBoxFor(x => x.ApproveDate, new {@class = "form-control", id = "approveDateField"})
+            @Html.ValidationMessageFor(x => x.ApproveDate)
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(x => x.ApproveText, Messages.RetirementApproveText, new { @class = "control-label" })
+            @Html.TextAreaFor(x => x.ApproveText, new {@class = "form-control"})
+            @Html.ValidationMessageFor(x => x.ApproveText)
+        </div>
+        
+        <div class="form-group">
+            @Html.LabelFor(x => x.ApproveAmount, Messages.RetirementApproveRefundAmount, new { @class = "control-label" })
+            @Html.TextBoxFor(x => x.ApproveAmount, new {@class = "form-control"})
+            @Html.ValidationMessageFor(x => x.ApproveAmount)
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Cancel</button>
+        <button type="submit" class="btn btn-primary">@Messages.Save</button>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#approveDateField').datetimepicker({
+                format: 'd/m/Y',
+                closeOnDateSelect: true,
+                timepicker: false,
+                scrollInput: false
+            });
+        });
+    </script>
+}

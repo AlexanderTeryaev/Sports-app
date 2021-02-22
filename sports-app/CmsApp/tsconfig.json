@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "outDir": "./Scripts/pages",
+    "allowJs": true,
+    "noImplicitAny": false,
+    "noEmitOnError": false,
+    "removeComments": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "allowUnreachableCode": true,
+    "allowUnusedLabels": true,
+    "sourceMap": true,
+    "target": "es5"
+  },
+  "include": [
+    "./Scripts/typings/jquery/jquery.d.ts",
+    "./Content/app/**/*.ts", "Helpers/PaymentReportPdfExportHelper.cs", "Views/Disciplines/_FriendshipTypesList.cshtml", "../AppData/Extensions/Extensions.cs"
+  ]
+}

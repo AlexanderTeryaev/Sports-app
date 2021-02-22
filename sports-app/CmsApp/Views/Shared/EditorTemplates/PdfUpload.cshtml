@@ -1,0 +1,8 @@
+﻿@model string
+@{
+    var name = ViewData.TemplateInfo.HtmlFieldPrefix;
+}
+<span class="btn btn-default btn-file">
+    <span>@Messages.AddFile</span>
+    <input type="file" name="@name" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF)$" data-val-regex="@Messages.SelectValidFile" accept="application/pdf, image/*" />
+</span>

@@ -1,0 +1,252 @@
+﻿@model UciCardModel
+@{
+    Layout = "";
+    string srcPlayer = GlobVars.ContentPath + "/players/" + Model.PlayerImage;
+    string srcUnion = GlobVars.ContentPath + "/union/" + Model.UnionLogo;
+    var hiddenEng = Model.IsHebrew ? "hidden" : "";
+    var hiddenHeb = Model.IsHebrew ? "" : "hidden";
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9"><h4 class="modal-title">@Messages.UciCard</h4></div><div class="pull-right" style="line-height:25px;">
+        </div>
+    </div>
+</div>
+<div id="uciCardPrint">
+<div class="modal-body">
+    <div class="row uciCardWraper" style="margin-bottom:10px;">
+        <div class="col-sm-12">
+            <div id="uciFrontHeader" class="row">
+                <div class="col-sm-4 paddingRowFixer5 marginTop10">
+                    <img alt="Loglig Logo" src="~/Content/loglig_design/img/Logo2019uci.png">
+                </div>
+                <div class="col-sm-4 text-center">
+                    <p><b>2020</b></p>
+                </div>
+                <div class="col-sm-4 paddingRowFixer5">
+                    <img class="img-responsive marginTop1" src="@srcUnion">
+                </div>
+            </div>
+            <div id="uciFrontMain" class="row">
+                <div class="col-sm-4" style="padding-left:5px !important; padding-right:5px !important">
+                    @if (!string.IsNullOrEmpty(Model.PlayerImage))
+                    {
+                        <img class="img-responsive" src="@srcPlayer" alt="" style="min-height:125px">
+                    }
+                    <p class="marginTop10" style="font-size: x-small">@Messages.ValidUntil: <b>31.12.2020</b></p>
+                </div>
+                <div class="col-sm-3" id="uciFrontLabels" style="padding-left:0px !important">
+                    <p class="fontSmallImportant"><b>@Messages.UciId:</b></p>
+                    <p>@Messages.LastName:</p>
+                    <p>@Messages.FirstName:</p>
+                    <p>@Messages.Nationality:</p>
+                    <p>@Messages.DateOfBirth:</p>
+                    <p>@Messages.Gender:</p>
+
+                    <p class="marginTop10">@Messages.UserRole:</p>
+                    <p>@Messages.Function:</p>
+                    <p>@Messages.UciCard_UciCategory:</p>
+                    <p>@Messages.Team</p>
+                </div>
+                <div class="col-sm-5" id="uciFrontData">
+                    <p class="fontSmallImportant">
+                        @if(!string.IsNullOrEmpty(Model.UciId.ToString()))
+                        {
+                            <b>@Model.UciId</b>
+                        }
+                        else
+                        {
+                            <b>&nbsp;</b>
+                        }
+                    </p>
+                    <p><b>@Model.LastName</b></p>
+                    <p><b>@Model.FirstName</b></p>
+                    <p>
+                        @if(!string.IsNullOrEmpty(Model.Nationality))
+                        {
+                            @Model.Nationality
+                        }
+                        else
+                        {
+                            <b>&nbsp;</b>
+                        }
+                    </p>
+                    <p>@Model.BirthDay.Value.ToString("dd'.'MM'.'yyyy'.'")</p>
+                    <p>@Model.GenderName</p>
+
+                    <p class="marginTop10"><b>@Model.Role</b></p>
+                    <p>
+                        @if(!string.IsNullOrEmpty(Model.Function))
+                        {
+                            <b>@Model.Function</b>
+                        }
+                        else
+                        {
+                            <b>&nbsp;</b>
+                        }
+                    </p>
+                    <p>
+                        @if(!string.IsNullOrEmpty(Model.UciCategory))
+                        {
+                            @Model.UciCategory
+                        }
+                        else
+                        {
+                            <b>&nbsp;</b>
+                        }                        
+                    </p>
+                    <p>
+                        @if(!string.IsNullOrEmpty(Model.TeamForUci))
+                        {
+                            @Model.TeamForUci
+                        }
+                        else
+                        {
+                            <b>&nbsp;</b>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-body">
+    <div class="row uciCardWraper" style="margin-bottom:10px;">
+        <div class="col-sm-12">
+            <div id="uciBackHeader" class="row">
+                <div class="col-sm-2 paddingRowFixer5">
+                    <img class="img-responsive marginTop1" src="@srcUnion">
+                </div>
+                <div class="col-sm-8 text-center">
+
+                </div>
+                <div class="col-sm-2 paddingRowFixer5">
+                    <img alt="Loglig Logo" src="~/Content/loglig_design/img/Logo2019uci.png" class="marginTop5">
+                </div>
+            </div>
+            <div id="uciBackMain" class="row marginTop5">
+                <div class="col-sm-6 paddingRowFixer5" id="uciBackLabels">
+                    <p>@Messages.FederationId  <b>@Model.IdentNum</b></p>
+                    <p>@Messages.NationalCategory <b>@Model.NationalCategory</b></p>
+                    <p>@Messages.Club <b>@Model.ClubName</b></p>
+
+                    <p class="marginTop3" style="font-size:small !important"><b>@Model.UnionForeignName</b></p>
+                    <p>@Model.UnionAddress</p>
+                    <p>@Model.UnionWebSite</p>
+                    <p>@Model.UnionEmail</p>
+                    <p>@Model.UnionPhone</p>
+                </div>
+                <div class="col-sm-6 paddingRowFixer5" id="">
+                    @*<div style="min-height:115px; border: 1px solid">
+                        <p><i>Optional fields</i></p>
+                    </div>*@
+                </div>
+            </div>
+            <div class="row marginTop3" id="uciEmergency">
+                <div class="col-sm-6 paddingRowFixer5">
+                    <p style="text-transform:uppercase"><b>@Messages.EmergencyContact:</b></p>
+                </div>
+                <div class="col-sm-6 paddingRowFixer5">
+                    <p>@Model.EmergencyContact</p>
+                </div>
+            </div>
+            <div class="row" id="uciBackFooter">
+                <div class="col-sm-12 paddingRowFixer5">
+                    <p>
+                        "I agree to abide and be bound by the UCI Constitution and Regulations, in particular the UCI Anti-Doping Rules.
+                        I also recognize the exclusive jurisdiction of the Court of Arbitration for Sport (CAS) in Lausanne, Switzerland, 
+                        as provided for under the relevant provisions of the UCI Regulations."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-info" onclick="printFriendshipCard()">@Messages.Print</button>
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+</div>
+
+@if(Model.IsHebrew)
+{
+    <text>
+<style>
+    #uciFrontHeader div, #uciBackHeader div {
+        float: left;
+    }
+
+    #uciBackMain div, #uciFrontMain div, #uciEmergency div, #uciBackFooter div {
+        float: left;
+        text-align: left;
+        direction: ltr;
+    }
+</style>
+</text>
+}
+@*<style>
+
+    </style>*@
+
+<script>
+
+    var isHeb = "@Model.IsHebrew" == "True";
+
+    function printFriendshipCard(el) {
+
+        var divToPrint = document.getElementById('uciCardPrint');
+        console.log(el);
+        //if (isHeb) {
+        //    divToPrint.setAttribute("dir", "rtl");
+        //    $("#unionLogoEng").show();
+        //    $("#unionLogoHeb").hide();
+        //    $("#playerImageEng").show();
+        //    $("#playerImageHeb").hide();
+        //    $("#bottomTextEng").show();
+        //    $("#bottomTextHeb").hide();
+        //    $("#bottomLogoEng").show();
+        //    $("#bottomLogoHeb").hide();
+        //    swapContent();
+        //}
+        var wnd = window.open('', '@Messages.UciCard', 'height=600, width=600');
+        wnd.document.write('<html><head><title></title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body><div class="container">');
+        @*wnd.document.write('<h3 style="text-align: center;">@Messages.RegistrationStatus @ViewBag.DisciplineName @ViewBag.CategoryName - @ViewBag.CompetitionName @ViewBag.CompetitionDate</h3>');*@
+        wnd.document.write(divToPrint.outerHTML);
+        wnd.document.write('</div></body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 1000);
+        //if (isHeb) {
+        //    divToPrint.removeAttribute("dir");
+        //    $("#unionLogoEng").hide();
+        //    $("#unionLogoHeb").show();
+        //    $("#playerImageEng").hide();
+        //    $("#playerImageHeb").show();
+        //    $("#bottomTextEng").hide();
+        //    $("#bottomTextHeb").show();
+        //    $("#bottomLogoEng").hide();
+        //    $("#bottomLogoHeb").show();
+        //    swapContent();
+        //}
+    }
+
+
+    function swapContent() {
+        var basic = $('#basicInfo').html();
+        var bicycle = $('#bicycleInfo').html();
+
+        $('#basicInfo').html(bicycle);
+        $('#bicycleInfo').html(basic);
+    }
+</script>

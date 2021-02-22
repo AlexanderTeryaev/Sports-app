@@ -1,0 +1,48 @@
+﻿@model  GamesUrlForm
+
+<form class="form-horizontal">
+    @Html.HiddenFor(x => x.SeasonId)
+    <div class="form-group">
+        <label for="game-url" class="col-sm-1 control-label">@Messages.GamesUrl: </label>
+        <div class="col-sm-4">
+            <input class="form-control" id="schedules_url" value="@Model.GamesUrl" placeholder="@Messages.GamesUrl" type="text">
+        </div>
+        <div class="col-sm-2">
+            <a href="#" id="save_schedule_url" data-team-id="@Model.TeamId" class="btn btn-primary">@Messages.Save</a>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-1 control-label" for="team_name">@Messages.Team:</label>
+        <div class="col-sm-4">
+            <input class="form-control" id="team_name" value="@Model.TeamName" name="teamname" placeholder="@Messages.Team" type="text">
+        </div>
+    </div>
+
+</form>
+
+<div class="row">
+    <table class="table table-bordered" id="schedules_result">
+        <thead>
+        <tr>
+            <th>@Messages.DateTime</th>
+            <th>@Messages.HomeTeam</th>
+            <th>@Messages.Score</th>
+            <th>@Messages.GuestTeam</th>
+            <th>@UIHelpers.GetAuditoriumCaption(ViewBag.Section)</th>
+
+        </tr>
+        </thead>
+        <tbody>
+           @foreach (var row in Model.TeamSchedule)
+           {
+               <tr>
+                   <td>@row.StartDate</td>
+                   <td>@row.HomeTeam</td>
+                   <td>@row.Score</td>
+                   <td>@row.GuestTeam</td>
+                   <td>@row.Auditorium</td>
+               </tr>
+           }
+        </tbody>
+    </table>
+</div>

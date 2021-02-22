@@ -1,0 +1,553 @@
+﻿@using CmsApp.Controllers;
+@model ClubsForm
+@{
+    int savedId = (int?)TempData["SavedId"] ?? 0;
+    int errId = (int?)TempData["ErrId"] ?? 0;
+    bool fromUnion = ViewBag.FromUnion != null && ViewBag.FromUnion == true;
+    string tooltip, move, exportImgs, importPic, import, downloadForm, addTournament = string.Empty;
+    UIHelpers.GetButtonCaption(Model.SectionAlias, out downloadForm, out import, out importPic, out exportImgs, out move, out tooltip);
+}
+
+@if (Model.IsIndividualSection)
+{
+    <div class="row desktop-only">
+        <div class="col-sm-6" style="margin-bottom:20px;width: 70%;">
+            <a href="#" id="printclubsinfo" class="btn btn-info remove_print">
+                <i class="glyphicon glyphicon-print"></i>@Messages.Print
+            </a>
+            <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportclubslist').submit()">
+                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                @using (Html.BeginForm("ExportClubsList", "Clubs", new { id = Model.UnionId, seasonId = Model.SeasonId },
+FormMethod.Post, new { id = "exportclubslist" })) { }
+            </a>
+            @if (Model.SectionAlias.Equals(GamesAlias.Bicycle, StringComparison.OrdinalIgnoreCase))
+            {
+                <a class="btn btn-info export" href="@Url.Action("DownloadExcel", "Unions", new { unionId = Model.UnionId })"
+                   data-toggle="tooltip" title="@tooltip" style="margin-left:5px;">
+                    <i href="#" class="glyphicon glyphicon-open"></i> @downloadForm
+                </a>
+                <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayers", "Players", new { formName = "union", unionId = Model.UnionId, seasonId = Model.SeasonId })"
+                   data-target="#playerimportform"
+                   data-toggle="modal"
+                   style="margin-left:5px;">
+                    <i class="glyphicon glyphicon-save"></i> @import
+                </a>
+            }
+
+            <a class="btn btn-info btn-edit export" onclick="exportPlayersImages()" style="margin-left:5px;">
+                <i class="glyphicon glyphicon-save"></i> @exportImgs
+                <i class="fa fa-spin fa-spinner" id="spinner" style="display:none"></i>
+            </a>
+
+            @if (Model.SectionAlias.Equals(GamesAlias.Gymnastic, StringComparison.OrdinalIgnoreCase)
+                            || Model.SectionAlias.Equals(GamesAlias.MartialArts, StringComparison.OrdinalIgnoreCase)
+                            || Model.SectionAlias.Equals(GamesAlias.Athletics, StringComparison.OrdinalIgnoreCase)
+                            || Model.SectionAlias.Equals(GamesAlias.Tennis, StringComparison.OrdinalIgnoreCase)
+                            || Model.UnionId == 53)
+            {
+                if (!Model.SectionAlias.Equals(GamesAlias.Tennis, StringComparison.OrdinalIgnoreCase) && Model.UnionId != 53)
+                {
+                    <a id="totoBtnExp" class="btn btn-info" href="#" onclick="$('#exportclubactivityreport').submit()">
+                        <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ClubActivityReport
+                        @using (Html.BeginForm("ClubActivityReport", "Clubs", new { id = Model.UnionId, seasonId = Model.SeasonId },
+                    FormMethod.Post, new { id = "exportclubactivityreport" })) { }
+                    </a>
+                }
+                if (Model.UnionId != 52)
+                {
+                    <a href="@Url.Action(nameof(ClubsController.ExportTotoReport), nameof(ClubsController).TrimControllerName(),
+                                 new { id = Model.UnionId, seasonId = Model.SeasonId })" class="btn btn-info"
+                       target="_new">
+                        <i class="glyphicon glyphicon-open"></i> @Messages.TotoReport <span id="totoLoading" style="display:none" class="fa fa-spin fa-spinner"></span>
+                    </a>
+
+                }
+            }
+            @if (Model.UnionId == 36)
+            {
+                <a href="@Url.Action("ExportDebtReport", "Clubs", new { unionId = Model.UnionId, seasonId = Model.SeasonId })" target="_new" class="btn btn-info">
+                    <i class="glyphicon glyphicon-export"></i>
+                    @Messages.DebtReport
+                </a>
+
+                <a class="btn btn-primary btn-edit" href="@Url.Action("ImportAccountingBalances", "Clubs",
+                    new { unionId = Model.UnionId, seasonId = Model.SeasonId })"
+                   data-target="#accountingbalancesimportform"
+                   data-toggle="modal">
+                    <i class="glyphicon glyphicon-save"></i>@Messages.ImportAccountingBalances
+                </a>
+
+
+                <div class="modal fade" id="accountingbalancesimportform" tabindex="-1" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content" id="accountingbalancesimportform_pl"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+<div class="table-responsive">
+    <table class="table table-bordered" id="print_clubsind_table">
+        @if (Model.UnionId.HasValue)
+        {
+            <thead>
+                <tr>
+                    @if (ViewBag.SortingOrder == "clubId_desc")
+                    {
+                        <th class="desktop-only-cell" onclick="sortBy('clubId')">@Messages.Id <i id="move_down" class="glyphicon glyphicon-chevron-up"></i></th>
+                    }
+                    else
+                    {
+                        <th class="desktop-only-cell" onclick="sortBy('clubId_desc')">@Messages.Id <i id="move_down" class="glyphicon glyphicon-chevron-down"></i></th>
+                    }
+                    @if (fromUnion)
+                    {
+                        if (ViewBag.SortingOrder == "clubNumber_desc")
+                        {
+                            <th class="desktop-only-cell" onclick="sortBy('clubNumber')">@Messages.ClubNumber <i id="move_down" class="glyphicon glyphicon-chevron-up"></i></th>
+                        }
+                        else
+                        {
+                            <th class="desktop-only-cell" onclick="sortBy('clubNumber_desc')">@Messages.ClubNumber <i id="move_down" class="glyphicon glyphicon-chevron-down"></i></th>
+                        }
+                    }
+                    <th class="remove_print"></th>
+                    <th class="remove_print" style="width: 50px">@Messages.ClubApprove</th>
+                    @if (Model.IsRegionalLevelEnabled)
+                    {
+                        <th class="remove_print" style="width: 50px">@Messages.RegionalClubApprove</th>
+                        <th>@Messages.RegionalName</th>
+                    }
+                    @if (ViewBag.SortingOrder == "clubName_desc")
+                    {
+                        <th class="desktop-min-width-300 mobile-min-width-200" onclick="sortBy('clubName')">@Messages.ClubName <i id="move_down" class="glyphicon glyphicon-chevron-up"></i></th>
+                    }
+                    else
+                    {
+                        <th class="desktop-min-width-300 mobile-min-width-200" onclick="sortBy('clubName_desc')">@Messages.ClubName <i id="move_down" class="glyphicon glyphicon-chevron-down"></i></th>
+                    }
+                    @if (Model.UnionId == 36)
+                    {
+                        <th>@Messages.AccountingKeyNumber</th>
+                    }
+                    @if (Model.SectionAlias == GamesAlias.Tennis)
+                    {
+                        <th>@Messages.ClubBalance</th>
+                    }
+                    <th>@Messages.Waiting</th>
+                    <th>@Messages.Approved</th>
+                    @if (Model.IsIndividualSection)
+                    {
+                        if (Model.UnionId != 52)
+                        {
+                            <th>@Messages.ActivePlayers</th>
+                        }
+                        if (Model.UnionId == 38)
+                        {
+                            <th>@Messages.Itennis</th>
+                        }
+                        <th>@Messages.ClubManager</th>
+                    }
+                    @if (Model.SectionAlias == GamesAlias.Swimming)
+                    {
+                        if (ViewBag.SortingOrder == "sportCenter_desc")
+                        {
+                            <th onclick="sortBy('sportCenter')">@Messages.SportCenter <i id="move_down" class="glyphicon glyphicon-chevron-up"></i></th>
+                        }
+                        else
+                        {
+                            <th onclick="sortBy('sportCenter_desc')">@Messages.SportCenter <i id="move_down" class="glyphicon glyphicon-chevron-down"></i></th>
+                        }
+                    }
+                    <th class="remove_print" data-toggle="tooltip" title="@Messages.ShowAllInformation_tooltip">
+                        <a class="btn btn-primary" onclick="stepByStepUnionPlayerStatistics()">
+                            <span class="fa fa-info-circle" id="main_logo"></span>
+                            <span class="fa fa-spin fa-spinner" id="main_spinner" style="display: none">&nbsp;</span>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        }
+        <tbody>
+            @foreach (var club in Model.Clubs)
+            {
+                string formId = "clubsform" + club.ClubId;
+                if (Model.isEditorOrUnionManager)
+                {
+                    <tr>
+                        <td class="ids">
+                            @club.ClubId
+                        </td>
+                        @if (fromUnion)
+                        {
+                            <td align="center" class="desktop-only-cell">@club.ClubNumber</td>
+                        }
+                        <td class="remove_print">
+                            <a class="@AppCss.Edit"
+                               href="@Url.Action("Edit", "Clubs",
+                             new {
+                                 id = club.ClubId,
+                                 sectionId = club.SectionId,
+                                 unionId = club.UnionId,
+                                 seasonId = club.Seasons.OrderBy(x => x.Id).LastOrDefault(x => x.IsActive)?.Id ?? Model.SeasonId
+                             })">
+                            </a>
+                        </td>
+
+                        @{
+                            var isRegistrationApproved = club.IsClubApproved ??
+                                                         Model.ClubsRegistrations?.Any(x => x.ClubId == club.ClubId && x.IsActive) == true;
+                        }
+                        @if (Model.UnionId != null)
+                        {
+                            <td class="text-center remove_print">
+                                @if (Model.CanApproveClubs)
+                                {
+                                    <input type="checkbox" onchange="updateApprovedCheckbox(this.checked, '@formId')" @(isRegistrationApproved ? "checked" : "") />
+                                }
+                                else
+                                {
+                                    <input type="checkbox" readonly disabled @(isRegistrationApproved ? "checked" : "") />
+                                }
+                            </td>
+
+                            if (Model.IsRegionalLevelEnabled)
+                            {
+                                <td class="text-center remove_print">
+                                    <input type="checkbox" readonly disabled @(club.IsClubApproveByRegional ? "checked" : "") />
+                                </td>
+                                <td>@(club.Regional?.Name)</td>
+                            }
+                        }
+
+                        <td>
+                            @using (Ajax.BeginForm("Update", "Clubs", new AjaxOptions { UpdateTargetId = "clubs" }, new { id = formId, OnComplete = "disableSaveBtn('" + formId + "')" }))
+                            {
+                                <span class="form-group">
+                                    <input type="text" name="Name" value="@club.Name" form="@formId" class="form-control required" maxlength="50" onchange="enableSaveBtn('@formId')" />
+                                    @Html.ValidationMessage("Name")
+                                </span>
+                                <input type="hidden" name="ClubId" form="@formId" value="@club.ClubId" />
+                                <input type="hidden" name="Approved" form="@formId" value="@isRegistrationApproved" />
+                            }
+                        </td>
+                        @if (Model.UnionId == 36)
+                        {
+                            <td>
+                                <input type="number" onchange="enableSaveBtn('@formId')" name="AccountingKeyNumber" value="@club.AccountingKeyNumber" form="@formId" class="form-control" />
+                            </td>
+                        }
+                        @if (Model.SectionAlias == GamesAlias.Tennis)
+                        {
+                            <td align="center" style="direction: ltr;">@(club.ClubBalances.Sum(x => x.Income) - @club.ClubBalances.Sum(x => x.Expense))</td>
+                        }
+                        @if (Model.UnionId.HasValue)
+                        {
+                            <td id="waiting_@club.ClubId"><span></span></td>
+                            <td id="approved_@club.ClubId"><span></span></td>
+                            if (Model.IsIndividualSection)
+                            {
+                                if (Model.UnionId != 52)
+                                {
+                                    <td id="activeplayers_@club.ClubId"><span></span></td>
+                                }
+                                if (Model.UnionId == 38)
+                                {
+                                    <td id="itennis_@club.ClubId"><span></span></td>
+                                }
+                                <td>
+                                    @{
+                                        var clubManagersList = club.UsersJobs.Where(j => JobRole.ClubManager.Equals(j.Job.JobsRole.RoleName, StringComparison.OrdinalIgnoreCase))?.Select(uj => uj.User.FullName);
+                                        var clubList = clubManagersList.Any() ? string.Join(",", clubManagersList) : string.Empty;
+                                    }
+
+                                    @clubList
+                                </td>
+                            }
+                            if (Model.SectionAlias == GamesAlias.Swimming)
+                            {
+                                <td>
+                                    @{
+                                        var sportCenterName = string.Empty;
+                                        if (club.SportCenter != null)
+                                        {
+                                            bool isHebrew = Request.IsHebrew();
+                                            if (isHebrew)
+                                            {
+                                                sportCenterName = club.SportCenter.Heb;
+                                            }
+                                            else
+                                            {
+                                                sportCenterName = club.SportCenter.Eng;
+                                            }
+                                        }
+                                    }
+                                    @sportCenterName
+                                </td>
+                            }
+                            <td class="remove_print">
+                                <a class="btn btn-primary" onclick="getClubPlayersInformation('@club.ClubId')">
+                                    <span class="fa fa-info-circle" id="inf_span_@club.ClubId"></span>
+                                    <span class="fa fa-spin fa-spinner" id="spin_span_@club.ClubId" style="display:none"></span>
+                                </a>
+                            </td>
+                        }
+                        <td class="remove_print">
+                            <button class="@AppCss.Save btn" form="@formId" id="saveBtn_@formId" disabled onclick="startSpin('@formId')"><i class="fa fa-spin fa-spinner" id="spin_save_@formId" style="display:none"></i></button>
+
+                        </td>
+                        <td class="remove_print">
+
+                            <a href="@Url.Action("Delete", new { id = club.ClubId })" class="@AppCss.Delete"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#clubs-tab"
+                               data-ajax="true"></a>
+
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    <tr>
+                        <td>
+                            @club.ClubId
+                        </td>
+                        <td>
+                            @club.Name
+                        </td>
+                        <td class="remove_print">
+                            @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                            {
+                                <a class="btn btn-primary club-details"
+                                   href="@Url.Action("Edit", "Clubs",
+                                    new { id = club.ClubId, sectionId = club.SectionId, unionId = club.UnionId, seasonId = club.SeasonId })">
+                                    @Messages.Details
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+        @if (Model.isEditorOrUnionManager)
+        {
+            <tfoot class="remove_print">
+                <tr>
+                    <td colspan="@(Model.UnionId != null ? 4 : 3)"></td>
+                    <td>
+                        @using (Ajax.BeginForm("Save", "Clubs", new AjaxOptions { UpdateTargetId = "clubs-tab" }, new { id = "clubsform" }))
+                        {
+                            <span class="form-group">
+                                @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = Messages.AddNew, form = "clubsform", maxlength = 50 })
+                                @Html.ValidationMessageFor(m => m.Name)
+                            </span>
+                            @Html.HiddenFor(m => m.SectionId, new { form = "clubsform" })
+                            @Html.HiddenFor(m => m.UnionId, new { form = "clubsform" })
+                            @Html.HiddenFor(m => m.SeasonId, new { form = "clubsform" })
+                            @Html.HiddenFor(m => m.IsFlowerOfSport, new { form = "clubsform" })
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" form="clubsform">@Messages.Save</button>
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        }
+    </table>
+</div>
+
+<div class="modal fade" id="playerimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="importtotoform" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="importtotoform_pl">
+            <div class="modal-body">
+                <p style="text-align:center;"> <span class="fa fa-spin fa-spinner"></span>@Messages.Loading</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="playerexportimagesform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportimagesform_pl"></div>
+    </div>
+</div>
+
+<script>
+    $('#clubsform').validateBootstrap(true);
+    function startSpin(formId) {
+        $("#saveBtn_" + formId).removeClass('glyphicon-saved');
+        $("#spin_save_" + formId).show();
+    }
+    function disableSaveBtn(formId) {
+        $('#saveBtn_' + formId).attr('disabled', true);
+        $("#spin_save_" + formId).hide();
+        $("#saveBtn_" + formId).addClass('glyphicon-saved');
+    }
+    function enableSaveBtn(formId) {
+        $('#saveBtn_' + formId).attr('disabled', false);
+    }
+    function updateApprovedCheckbox(value, formId) {
+        $("input[type=hidden][name='Approved'][form=" + formId + "]").val(value);
+        $('#saveBtn_' + formId).attr('disabled', false);
+    }
+    function stepByStepUnionPlayerStatistics() {
+        $("#main_logo").hide();
+        $("#main_spinner").show();
+        var tds = $(".ids");
+        for (let i = 0; i < tds.length; i++) {
+            getClubPlayersInformation(tds[i].innerText);
+        }
+        $("#main_spinner").hide();
+        $("#main_logo").show();
+    }
+    function getUnionPlayersStatistics() {
+            $.ajax({
+                url: '/Clubs/GetUnionClubsPlayersInformation',
+                data: { "id": "@Model.UnionId", "seasonId": "@Model.SeasonId" },
+                type: "Post",
+                beforeSend: function () {
+                    $("#main_logo").hide();
+                    $("#main_spinner").show();
+                },
+                success: function (result) {
+                    $("#main_logo").show();
+                    var items = JSON.parse(result);
+                    for (index in items) {
+                        var clubId = index;
+                        $("#waiting_" + clubId).empty();
+                        $("#approved_" + clubId).empty();
+                        $("#activeplayers_" + clubId).empty();
+                        $("#itennis_" + clubId).empty();
+
+                        $("#waiting_" + clubId).append(items[index][0]);
+                        $("#approved_" + clubId).append(items[index][1]);
+                        $("#activeplayers" + clubId).append(items[index][2]);
+                        $("#itennis_" + clubId).append(items[index][3]);
+                        console.log('finished for club id' + index);
+                    }
+                    $("#main_spinner").hide();
+
+                },
+                error: function (exception) {
+                    console.log('error');
+                }
+            });
+    }
+
+    function getClubPlayersInformation(clubId) {
+            $.ajax({
+                url: '/Clubs/GetClubPlayersInfo',
+                data: { "id": clubId, "seasonId": "@Model.SeasonId" },
+                type: "Post",
+                beforeSend: function () {
+                    $("#inf_span_" + clubId).hide();
+                    $("#spin_span_" + clubId).show();
+                },
+                success: function (result) {
+                    var item = result.split(',');
+                    $("#waiting_" + clubId).empty();
+                    $("#approved_" + clubId).empty();
+                    $("#activeplayers_" + clubId).empty();
+                    $("#itennis_" + clubId).empty();
+
+                    $("#waiting_" + clubId).append(item[0]);
+                    $("#approved_" + clubId).append(item[1]);
+                    $("#activeplayers_" + clubId).append(item[2]);
+                    $("#itennis_" + clubId).append(item[3]);
+                    $("#inf_span_" + clubId).show();
+                    $("#spin_span_" + clubId).hide();
+                },
+                error: function (exception) {
+                    console.log('error');
+                }
+            });
+        }
+
+    $('#printclubsinfo').click(function () {
+        var tbl = $("#print_clubsind_table");
+        if (tbl.length > 0) {
+            printClubs(tbl);
+        }
+    });
+    function make_el(el) {
+        var el = $(el);
+
+        var new_value = el.val();
+
+        el.parent().html(new_value);
+        el.remove();
+    }
+
+    function printClubs(el) {
+        var wnd = window.open('', '@Messages.ClubList', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.ClubList</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" /></head>');
+        wnd.document.write('<body>');
+        wnd.document.write(('<style>.table-borderless > tbody > tr > td,.table-borderless > tbody > tr > th,.table-borderless > tfoot > tr > td,.table-borderless > tfoot > tr > th,.table-borderless > thead > tr > td,.table-borderless > thead > tr > th {border: none;direction: rtl;}'));
+        wnd.document.write(('.table-borderless { direction: rtl;}'));
+        wnd.document.write(('.table-borderless caption, .table-borderless th, .table-borderless td { direction: rtl; }</style>'));
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find("#print_clubsind_table").attr("class", "table table-borderless");
+        $(wnd.document).find("#print_clubsind_table").css("fontSize", "12px");
+        $(wnd.document).find('.remove_print').remove();
+        $(wnd.document).find("input[name='Name']").each(function (index, value) {
+            make_el($(value));
+        });
+
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 1000);
+    }
+
+    function exportPlayersImages() {
+
+        $.ajax({
+            type: "POST",
+            url: "/Players/ImgsServerCheck",
+            data: {
+                unionId: @(Model.UnionId?.ToString() ?? "undefined"),
+                seasonId: @Model.SeasonId,
+                pageType: "@PageType.UnionClubs"
+            },
+            beforeSend: function() {
+                $("#spinner").show();
+            }
+        }).done(function (data) {
+            $("#playerexportimagesform_pl").html(data);
+            $("#playerexportimagesform").modal('show');
+            $("#spinner").hide();
+        });
+
+    };
+
+    function sortBy(columnName) {
+        $.ajax({
+            type: "POST",
+            url: "/Clubs/ListByUnion",
+            data: {
+                id: @(Model.UnionId?.ToString() ?? "undefined"),
+                seasonId: @Model.SeasonId,
+                sortingOrder: columnName
+            },
+            beforeSend: function() {
+
+            }
+        }).done(function (data) {
+            $('#clubs-tab').html(data);
+        });
+    };
+</script>
+

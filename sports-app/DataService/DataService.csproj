@@ -1,0 +1,330 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
+  <Import Project="..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props" Condition="Exists('..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{3AC2C1E0-E9FD-44B2-9AEF-B78AA145C6E5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DataService</RootNamespace>
+    <AssemblyName>DataService</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AutoMapper, Version=6.0.2.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoMapper.6.0.2\lib\net45\AutoMapper.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="ClosedXML, Version=0.93.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ClosedXML.0.93.1\lib\net40\ClosedXML.dll</HintPath>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml, Version=2.7.2.0, Culture=neutral, PublicKeyToken=8fb06cb64d019a17, processorArchitecture=MSIL">
+      <HintPath>..\packages\DocumentFormat.OpenXml.2.7.2\lib\net40\DocumentFormat.OpenXml.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net40\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net40\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="ExcelNumberFormat, Version=1.0.3.0, Culture=neutral, PublicKeyToken=23c6f5d73be07eca, processorArchitecture=MSIL">
+      <HintPath>..\packages\ExcelNumberFormat.1.0.3\lib\net20\ExcelNumberFormat.dll</HintPath>
+    </Reference>
+    <Reference Include="FastMember.Signed, Version=1.3.0.0, Culture=neutral, PublicKeyToken=9e8f22703bef9a29, processorArchitecture=MSIL">
+      <HintPath>..\packages\FastMember.Signed.1.3.0\lib\net45\FastMember.Signed.dll</HintPath>
+    </Reference>
+    <Reference Include="FluentScheduler, Version=5.1.4.0, Culture=neutral, PublicKeyToken=b76503528a14ebd1, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentScheduler.5.1.4\lib\net40\FluentScheduler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>..\packages\HtmlAgilityPack.1.4.9.5\lib\Net45\HtmlAgilityPack.dll</HintPath>
+    </Reference>
+    <Reference Include="LinqKit.EntityFramework, Version=1.1.9.0, Culture=neutral, PublicKeyToken=b6c8cfc71f7a6a80, processorArchitecture=MSIL">
+      <HintPath>..\packages\LinqKit.EntityFramework.1.1.9.0\lib\net45\LinqKit.EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="log4net, Version=2.0.7.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.7\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=1.0.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WebDriver, Version=3.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Selenium.WebDriver.3.3.0\lib\net40\WebDriver.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="WebDriver.Support, Version=3.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Selenium.Support.3.3.0\lib\net40\WebDriver.Support.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Actions\RowingCompetitionDisciplineAction.cs" />
+    <Compile Include="ActivityFormsRepo.cs" />
+    <Compile Include="ActivityRepo.cs" />
+    <Compile Include="AgesRepo.cs" />
+    <Compile Include="AuditoriumsRepo.cs" />
+    <Compile Include="AuthorizationEntitiesService.cs" />
+    <Compile Include="BaseRepo.cs" />
+    <Compile Include="BracketsRepo.cs" />
+    <Compile Include="ClubsRepo.cs" />
+    <Compile Include="ClubTeamTrainingsRepo.cs" />
+    <Compile Include="CommentsRepo.cs" />
+    <Compile Include="Competitor.cs" />
+    <Compile Include="ConnectionHelper.cs" />
+    <Compile Include="ContactsRepo.cs" />
+    <Compile Include="DepartmentRepo.cs" />
+    <Compile Include="DisciplinesRepo.cs" />
+    <Compile Include="DTO\CompetitionClubCorrectionDTO.cs" />
+    <Compile Include="DTO\MedicalInstitutesDto.cs" />
+    <Compile Include="DTO\PlayerToClubModalDataDTO.cs" />
+    <Compile Include="DTO\AgeDto.cs" />
+    <Compile Include="DTO\AthleteCompetitionAchievementViewItem.cs" />
+    <Compile Include="DTO\AthleticRegDto.cs" />
+    <Compile Include="DTO\AuditoriumShort.cs" />
+    <Compile Include="DTO\BlockadeHistoryDTO.cs" />
+    <Compile Include="DTO\ChangeSwimmerDto.cs" />
+    <Compile Include="DTO\ClubActivityDto.cs" />
+    <Compile Include="DTO\ClubBalanceDto.cs" />
+    <Compile Include="DTO\ClubShort.cs" />
+    <Compile Include="DTO\ClubsPlayersInfoDto.cs" />
+    <Compile Include="DTO\ClubTeamsDTO.cs" />
+    <Compile Include="DTO\CombinedPlayerRankDto.cs" />
+    <Compile Include="DTO\CompetitionDisciplineCSVDto.cs" />
+    <Compile Include="DTO\CompetitionDisciplineDto.cs" />
+    <Compile Include="DTO\CompetitionRegistrationForm.cs" />
+    <Compile Include="DTO\CompetitionRouteDto.cs" />
+    <Compile Include="DTO\DaysForHostingDto.cs" />
+    <Compile Include="DTO\DepartmentDTO.cs" />
+    <Compile Include="DTO\DisciplineDTO.cs" />
+    <Compile Include="DTO\DisciplineStatistics.cs" />
+    <Compile Include="DTO\DistanceTableDto.cs" />
+    <Compile Include="DTO\EventDTO.cs" />
+    <Compile Include="DTO\ExcelPlayerDto.cs" />
+    <Compile Include="DTO\FullStatisticReportBindingModel.cs" />
+    <Compile Include="DTO\GameDto.cs" />
+    <Compile Include="DTO\GameReferee.cs" />
+    <Compile Include="DTO\GymnasticDto.cs" />
+    <Compile Include="DTO\GymnasticTotoValue.cs" />
+    <Compile Include="DTO\HeatDto.cs" />
+    <Compile Include="DTO\InstrumentDto.cs" />
+    <Compile Include="DTO\KarateUnionPaymentForm.cs" />
+    <Compile Include="DTO\LaneDto.cs" />
+    <Compile Include="DTO\LeagueShort.cs" />
+    <Compile Include="DTO\LeagueTeamsDto.cs" />
+    <Compile Include="DTO\LevelDateSettingDto.cs" />
+    <Compile Include="DTO\MartialArtsCompetitionDto.cs" />
+    <Compile Include="DTO\NationalTeamInvitementDTO.cs" />
+    <Compile Include="DTO\PenaltyDto.cs" />
+    <Compile Include="DTO\PlayerShortDTO.cs" />
+    <Compile Include="DTO\PlayerStatisticDTO.cs" />
+    <Compile Include="DTO\PlayerTeamDto.cs" />
+    <Compile Include="DTO\PlayerViewModel.cs" />
+    <Compile Include="DTO\PlayerWaterpoloStatisticDTO.cs" />
+    <Compile Include="DTO\TennisGameCycleDto.cs" />
+    <Compile Include="DTO\TennisPlayoffRank.cs" />
+    <Compile Include="DTO\PlayoffRank.cs" />
+    <Compile Include="DTO\Point.cs" />
+    <Compile Include="DTO\TennisPositionSettingsDto.cs" />
+    <Compile Include="DTO\PositionSettingsDto.cs" />
+    <Compile Include="DTO\RetirementRequestDto.cs" />
+    <Compile Include="DTO\SchedulerDTO.cs" />
+    <Compile Include="DTO\SelectedRoutesDto.cs" />
+    <Compile Include="DTO\StandingDTO.cs" />
+    <Compile Include="DTO\StatisticBindingModel.cs" />
+    <Compile Include="DTO\TeamDetailsDto.cs" />
+    <Compile Include="DTO\TeamDto.cs" />
+    <Compile Include="DTO\TeamInformationDto.cs" />
+    <Compile Include="DTO\TeamManagerDto.cs" />
+    <Compile Include="DTO\TeamManagerTeamInformationDto.cs" />
+    <Compile Include="DTO\TeamShortDTO.cs" />
+    <Compile Include="DTO\TeamTrainingPublishDto.cs" />
+    <Compile Include="DTO\TennisPlayerRegistrationDto.cs" />
+    <Compile Include="DTO\TennisRankForm.cs" />
+    <Compile Include="DTO\TennisSchedules.cs" />
+    <Compile Include="DTO\TennisStageShort.cs" />
+    <Compile Include="DTO\Titled.cs" />
+    <Compile Include="DTO\UnionTennisRankDto.cs" />
+    <Compile Include="DTO\UsersApprovalDateDto.cs" />
+    <Compile Include="DTO\WorkerReportDTO.cs" />
+    <Compile Include="DTO\WorkerShortDto.cs" />
+    <Compile Include="BenefitsRepo.cs" />
+    <Compile Include="EventsRepo.cs" />
+    <Compile Include="ExcelGameDto.cs" />
+    <Compile Include="ExcelGameService.cs" />
+    <Compile Include="PricesRepo.cs" />
+    <Compile Include="FriendshipTypesRepo.cs" />
+    <Compile Include="GamesCycleDto.cs" />
+    <Compile Include="GamesNotificationsService.cs" />
+    <Compile Include="GamesRepo.cs" />
+    <Compile Include="GroupsRepo.cs" />
+    <Compile Include="JobsRepo.cs" />
+    <Compile Include="Jobs\GameScrapperJob.cs" />
+    <Compile Include="Jobs\Registry\GamesRegistry.cs" />
+    <Compile Include="LeagueRankedStanding.cs" />
+    <Compile Include="LeagueRank\CategoryRankModels.cs" />
+    <Compile Include="LeagueRank\LeagueRankModels.cs" />
+    <Compile Include="LeagueRank\CategoryRankService.cs" />
+    <Compile Include="LeagueRank\LeagueRankService.cs" />
+    <Compile Include="LeagueRank\LeagueSortDescriptors.cs" />
+    <Compile Include="LeagueRepo.cs" />
+    <Compile Include="LogService.cs" />
+    <Compile Include="NotesMessagesRepo.cs" />
+    <Compile Include="PlayerAchievementsRepo.cs" />
+    <Compile Include="PlayersRepo.cs" />
+    <Compile Include="PlayoffModels.cs" />
+    <Compile Include="SchoolRepo.cs" />
+    <Compile Include="Services\ClubBalanceService.cs" />
+    <Compile Include="Services\GoldenSpikeData.cs" />
+    <Compile Include="Services\GoogleMapsApiService.cs" />
+    <Compile Include="Services\IAAFScoringPointsService.cs" />
+    <Compile Include="Services\UnionGamesService.cs" />
+    <Compile Include="SportRanksRepo.cs" />
+    <Compile Include="SportsRepo.cs" />
+    <Compile Include="TeamTrainingsRepo.cs" />
+    <Compile Include="TrainingSettingsRepo.cs" />
+    <Compile Include="RegionalsRepo.cs" />
+    <Compile Include="Utils\BicycleFriendshipPriceHelper.cs" />
+    <Compile Include="Utils\ConvertHelper.cs" />
+    <Compile Include="Utils\ExpressionExtension.cs" />
+    <Compile Include="Utils\GenerateTeamNumbers.cs" />
+    <Compile Include="Utils\ListExtensions.cs" />
+    <Compile Include="Utils\AverageAgeException.cs" />
+    <Compile Include="Utils\MaxParticipationAllowedForSportsmanReachedException.cs" />
+    <Compile Include="Utils\CoxwainAlsoPartOfTeamException.cs" />
+    <Compile Include="Utils\MixedCategoryException.cs" />
+    <Compile Include="Utils\MultiKeyDictionary.cs" />
+    <Compile Include="Utils\PlayerAlreadyRegisteredException.cs" />
+    <Compile Include="Utils\MaximumRequiredPerClubException.cs" />
+    <Compile Include="Utils\MaximumRequiredException.cs" />
+    <Compile Include="Utils\PlayerDiscountTypes.cs" />
+    <Compile Include="Utils\ProcessHelper.cs" />
+    <Compile Include="Utils\ScrapperHelper.cs" />
+    <Compile Include="Utils\UnRegisteredPlayersException.cs" />
+    <Compile Include="VehicleRepo.cs" />
+    <Content Include="log4net.config" />
+    <None Include="Assets\Data\golden.xlsx" />
+    <None Include="PlayoffSchedulingService.cs" />
+    <Compile Include="PositionsRepo.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="SchedulingService.cs" />
+    <Compile Include="SearchService.cs" />
+    <Compile Include="SeasonsRepo.cs" />
+    <Compile Include="SectionsRepo.cs" />
+    <Compile Include="Services\GamesService.cs" />
+    <Compile Include="Services\ScrapperService.cs" />
+    <Compile Include="SettingsRepo.cs" />
+    <Compile Include="StagesRepo.cs" />
+    <Compile Include="TeamSearchResult.cs" />
+    <Compile Include="TeamsRepo.cs" />
+    <Compile Include="UnionsRepo.cs" />
+    <Compile Include="UsersRepo.cs" />
+    <Compile Include="Utils\Globals.cs" />
+    <Compile Include="Utils\Protector.cs" />
+    <Compile Include="Utils\RoundRobin.cs" />
+    <None Include="Resources\TeamPlayerImportTemplate.csv" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AppData\AppModel.csproj">
+      <Project>{d4520ce6-76d8-4d61-bd7e-814460f8fa3f}</Project>
+      <Name>AppModel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PushServiceLib\PushServiceLib.csproj">
+      <Project>{4a86a3c6-e144-495b-bcd0-84c16559e2fd}</Project>
+      <Name>PushServiceLib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="phantomjs.exe" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Net.Compilers.2.1.0\build\Microsoft.Net.Compilers.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.3\build\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

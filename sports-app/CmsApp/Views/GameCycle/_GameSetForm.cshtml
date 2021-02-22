@@ -1,0 +1,71 @@
+﻿@model CmsApp.Models.GameSetForm
+@{
+    var needPenalties = (bool)ViewBag.NeedPenalties;
+}
+@using (Ajax.BeginForm("AddGameSet", null, new AjaxOptions
+{
+    UpdateTargetId = "gamesetstable",
+    InsertionMode = InsertionMode.Replace
+},
+                                        new
+                                        {
+                                            id = "gamesetform"
+                                        }))
+{
+    @Html.HiddenFor(m => m.GameCycleId)
+    <div class="row" id="backgroundgrey">
+        <div class="col-sm-11">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="col-sm-2">@(!Model.IsIndividualGroup ? Messages.HomeTeamPoints : $"{Messages.HomeCompetitor} {Messages.Points.ToLower()}")</th>
+                        <th class="col-sm-2">@(!Model.IsIndividualGroup ? Messages.GuesTeamPoints : $"{Messages.GuestCompetitor} {Messages.Points.ToLower()}")</th>
+                        <th class="col-sm-2">@(needPenalties ? Messages.Penalties : Messages.GoldenSet)</th>
+                        <th class="col-sm-4"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            @Html.TextBoxFor(model => model.HomeTeamScore, new { @class = "form-control", onkeypress = "return numbersonly(event)" })
+                            @Html.ValidationMessageFor(model => model.HomeTeamScore, "", new { @class = "text-danger" })
+                        </td>
+                        <td>
+                            @Html.TextBoxFor(model => model.GuestTeamScore, new { @class = "form-control", onkeypress = "return numbersonly(event)" })
+                            @Html.ValidationMessageFor(model => model.GuestTeamScore, "", new { @class = "text-danger" })
+                        </td>
+                        <td>
+                            @Html.CheckBoxFor(model => model.IsPenalties, new { onkeypress = "return numbersonly(event)" })
+                            @Html.ValidationMessageFor(model => model.IsPenalties, "", new { @class = "text-danger" })
+                        </td>
+                        <td>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="glyphicon glyphicon-plus"></i>
+                                <span>@Messages.AddAct</span>
+                            </button>
+                            <a class="btn btn-sm btn-primary" onclick="updateGame()">
+                                <i href="#" class="glyphicon glyphicon-refresh"></i>@Messages.UpdateGameResults
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+<script>
+       function updateGame() {
+            $.ajax({
+                url: "/GameCycle/UpdateGameResults",
+                type: "GET",
+                data: {
+                    id: "@Model.GameCycleId",
+                    isWaterpoloOrBasketball: false,
+                    departmentId: "@Model.DepartmentId"
+                },
+                success: function (data) {
+                    $("#edit_game_modal_body").html(data);
+                }
+            })
+       }
+</script>

@@ -1,0 +1,70 @@
+﻿@model ActivityFormControlTemplateModel
+
+@if (!Model.IsPublish)
+{
+    <div class="custom-field-options">
+        @if (Model.CanBeRemoved)
+        {
+            <span class="remove-custom-control glyphicon glyphicon-remove"></span>
+        }
+        
+        @*@if (Model.HasOptions)
+        {
+            <span class="edit-custom-control glyphicon glyphicon-cog"></span>
+        }*@
+        <span class="edit-custom-control glyphicon glyphicon-cog"></span>
+
+        <div class="modal fade" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">@Messages.Activity_BuildForm_CustomFieldProperties</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="field-property">
+                            <label>@Messages.Activity_BuildForm_CustomFieldProperties_LabelEn:</label>
+                            <input type="text" id="label-en" name="en-@Model.PropertyName" class="form-control" value="@Model.LabelTextEn" data-val-required="@Messages.PropertyValueRequired" data-val="true"/>
+                            <span class="field-validation-valid" data-valmsg-for="en-@Model.PropertyName" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="field-property">
+                            <label>@Messages.Activity_BuildForm_CustomFieldProperties_LabelHe:</label>
+                            <input type="text" id="label-he" class="form-control" name="heb-@Model.PropertyName" value="@Model.LabelTextHeb" data-val-required="@Messages.PropertyValueRequired" data-val="true"/>
+                            <span class="field-validation-valid" data-valmsg-for="heb-@Model.PropertyName" data-valmsg-replace="true"></span>
+                        </div>
+                        @*@if (ViewBag.IsUkrainianUnion == true)*@
+                        @*{*@
+                            <div class="field-property">
+                                <label>@Messages.Activity_BuildForm_CustomFieldProperties_LabelUk:</label>
+                                <input type="text" id="label-uk" class="form-control" name="uk-@Model.PropertyName" value="@Model.LabelTextUk" data-val-required="@Messages.PropertyValueRequired" data-val="true"/>
+                                <span class="field-validation-valid" data-valmsg-for="uk-@Model.PropertyName" data-valmsg-replace="true"></span>
+                            </div>
+                        @*}*@
+                        
+                        @if (Model.ControlType == ActivityFormControlType.CustomDropdown ||
+                             Model.ControlType == ActivityFormControlType.CustomDropdownMultiselect)
+                        {
+                            <div class="field-property">
+                                <label>
+                                    @Messages.Activity_BuildForm_CustomField_DropDownAllowedValues:
+                                    <small class="property-description-small">@Messages.Activity_BuildForm_CustomField_DropDownAllowedValues_Description</small>
+                                </label>
+                                @if (Model.CustomDropdownValues != null)
+                                {
+                                    <textarea class="form-control" id="customDropdown-allowedValues">@string.Join(Environment.NewLine, Model.CustomDropdownValues)</textarea>
+                                }
+                                else
+                                {
+                                    <textarea class="form-control" id="customDropdown-allowedValues"></textarea>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" id="close-modal">@Messages.Close</button>
+                        <button type="button" data-field="@Model.PropertyName" data-culture="@Model.Culture" class="save-custom-field-options btn btn-primary">@Messages.Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

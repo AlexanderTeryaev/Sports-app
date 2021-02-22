@@ -1,0 +1,152 @@
+﻿@using Resources
+@model DataService.LeagueRank.RankCategory
+@{
+    var categoryRankTable = ViewBag.PlayoffTable != null
+        ? (IEnumerable<DataService.DTO.TennisPlayoffRank>)ViewBag.PlayoffTable
+        : Enumerable.Empty<DataService.DTO.TennisPlayoffRank>();
+}
+<h3 class="main-title">
+    @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+    {
+        <img src="@ViewBag.Logo" class="img-circle logo" alt="" />
+    }
+    @ViewBag.ResTitle - @Messages.CompetitionTable
+</h3>
+
+@if (ViewBag.PlayerRankGroupList != null)
+{
+        foreach (var ranksGroup in ViewBag.PlayerRankGroupList) {
+            <div class="row">
+            <div class="row col-sm-6">
+                <div class="rank">
+                    <div class="playOff">
+                        <h4>@ranksGroup.GroupName</h4>
+                        <table class="table table-bordered tableRank">
+                            <thead>
+                                <tr>
+                                    <th class="col-sm-1">@Messages.Rank</th>
+                                    <th class="col-sm-3">@Messages.Player</th>
+                                    <th class="col-sm-1">@Messages.Competition @Messages.Rank</th>
+                                    <th class="col-sm-1">@Messages.Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int index = 0;
+                                    bool isTesting = false;
+                                }
+                                @foreach (var player in ranksGroup.PlayersRanks)
+                                {
+
+                                    if (isTesting || !string.IsNullOrWhiteSpace(player.PlayerName))
+                                    {
+                                        index += 1;
+                                        <tr>
+                                            <td>@index</td>
+                                            <td>@player.PlayerName</td>
+                                            <td>@(player.RealMinPos == player.RealMaxPos ? $"{player.RealMaxPos}" : $"{player.RealMinPos} - {player.RealMaxPos}")</td>
+                                            <td>@player.Points</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            </div>
+        }
+}
+else if (ViewBag.PlayoffTable == null)
+{
+
+    if (Model.Players.Count > 0)
+    {
+        <div class="row col-sm-8">
+            <div class="rank">
+                <div class="playOff">
+                    <table class="table table-bordered tableRank">
+                        <thead>
+                            <tr>
+                                <th class="col-sm-1">@Messages.Rank</th>
+                                <th class="col-sm-3">@Messages.FullName</th>
+                                <th class="col-sm-1">@Messages.Competition @Messages.Rank.ToLower()</th>
+                                <th class="col-sm-1">@Messages.Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var player in Model.Players)
+                            {
+                                <tr>
+                                    <td>-</td>
+                                    <td>@player.User.FullName</td>
+                                    <td>0</td>
+                                    <td>0</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else if (Model.Stages.All(m => !m.Playoff))
+    {
+        <div class="row col-sm-8">
+            <div class="rank">
+                @foreach (var stage in @Model.Stages)
+                {
+                    var groups = stage.Groups;
+                    <div class="playOff">
+                        @foreach (var group in stage.Groups)
+                        {
+                            if (!group.IsAdvanced)
+                            {
+                                <h4>@group.Title</h4>
+                            }
+                            <table class="table table-bordered tableRank">
+                                <thead>
+                                    <tr>
+                                        <th class="col-sm-1">@Messages.Rank</th>
+                                        <th class="col-sm-3">@Messages.FullName</th>
+                                        @if (!group.IsAdvanced)
+                                        {
+                                            <th class="col-sm-1">@Messages.Competition @Messages.Rank.ToLower()</th>
+                                            <th class="col-sm-1">@Messages.Points</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (var i = 0; i < group.Players.Count(); i++)
+                                    {
+                                        <tr>
+                                            <td>-</td>
+                                            <td>@group.Players[i].Title</td>
+                                            @if (!group.IsAdvanced)
+                                            {
+
+                                                if (i != 0 && group.Players[i].PositionNumber == group.Players[i - 1].PositionNumber)
+                                                {
+                                                    <td>-</td>
+                                                }
+                                                else
+                                                {
+                                                    <td>@(i + 1)</td>
+                                                }
+                                                <td>@group.Players[i].CategoryPoints</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    Html.RenderPartial("Tennis/_TennisPlayoffRankTable", categoryRankTable);
+}

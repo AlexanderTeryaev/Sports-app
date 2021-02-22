@@ -1,0 +1,114 @@
+﻿@model SeasonViewModel
+
+<div id="season-list">
+    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <a class="btn btn-primary btn-edit"
+           href="@Url.Action("Create", "Seasons", new
+            {
+                logicalName = Model.LogicalName,
+                entityId = Model.EntityId,
+                seasonId = Model.SeasonId
+            })"
+           data-target="#season_modal_view"
+           data-toggle="modal">
+            <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+        </a>
+    }
+    <table class="table table-bordered offset-3">
+        <thead>
+            <tr>
+                <th>@Messages.Name</th>
+                <th>@Messages.StartDate</th>
+                <th>@Messages.EndDate</th>
+                <th>@Messages.SeasonForAge</th>
+                @if (User.IsInAnyRole(AppRole.Admins))
+                {
+                    <th>@Messages.Active</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var season in Model.Seasons)
+        {
+            <tr>
+                <td>@season.Name</td>
+                <td>@season.StartDate.ToString("dd-MM-yyyy")</td>
+                <td>@season.EndDate.ToString("dd-MM-yyyy")</td>
+                <td>@(season.SeasonForAge)</td>
+                @if (User.IsInAnyRole(AppRole.Admins))
+                {
+                    <td>
+                        <input type="checkbox" class="season-active" @(Model.Seasons.Count(x => x.IsActive) == 1 || ViewBag.JobRole == JobRole.RefereeAssignment ? "disabled" : "") data-id="@season.Id" @(season.IsActive ? "checked" : "") />
+                    </td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="season_modal_view" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="season_modal_form"></div>
+    </div>
+</div>
+
+<script>
+    $(document).on('click', '#create-season', function () {
+        var startDate = new Date($('#StartDate').val());
+        var endDate = new Date($('#EndDate').val());
+        var isDuplicate = $('#rb-create-existed').prop('checked');
+        var leagues = $('#ddlExistedSeasons').val();
+
+        $('#IsDuplicate').val(isDuplicate);
+        $('#Leagues').val(leagues);
+
+        if (endDate <= startDate) {
+            alert('End date should be more than start date.');
+            return false;
+        }
+
+        if ($('#rb-create-existed').is(':checked')) {
+            if (!confirm('@Messages.NewSeason_ConfirmationAlert')) {
+                return false;
+            }
+        }
+    });
+
+    $(document).on('change', '#season-form :radio', function() {
+        var radio = $(this);
+
+        if (radio.attr('id') == 'rb-create-existed') {
+            $('#existed-seasons-row').show();
+        } else {
+            $('#existed-seasons-row').hide();
+            $('#StartDate').val('');
+            $('#EndDate').val('');
+            $('#Description').val('');
+            $('#existed-seasons-row select').find('option:first').attr('selected', 'selected');
+        }
+    });
+    function parseDate(value) {
+        var date = new Date((parseInt(value.substr(6))));
+        return GetFormattedDate(date);
+    }
+
+    function GetFormattedDate(inputFormat) {
+        function pad(s) { return (s < 10) ? '0' + s : s; }
+
+        var d = new Date(inputFormat);
+        @*if ('@Messages.Lang' == 'he') {
+            return [pad(d.getDate()), pad(d.getMonth() + 1), d.getFullYear()].join('-');
+        } else {
+            return [pad(d.getMonth() + 1), pad(d.getDate()), d.getFullYear()].join('-');
+        }*@
+        return [pad(d.getMonth() + 1), pad(d.getDate()), d.getFullYear()].join('-');
+    }
+
+    $(".season-active").change(function() {
+        var seasonId = $(this).data("id");
+
+        $.post("/Seasons/SetActive/" + seasonId, { value: $(this).prop("checked") });
+    });
+</script>

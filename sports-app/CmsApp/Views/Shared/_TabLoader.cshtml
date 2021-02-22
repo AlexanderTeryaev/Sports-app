@@ -1,0 +1,126 @@
+﻿@model TabLoaderParams
+
+<div id="tabloader-@Model.DataElementId" class="loader loader-small" style="display: none">
+    <svg class="circular" viewBox="25 25 50 50">
+        <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"/>
+    </svg>
+    <span class="message">@Messages.TabLoader_LoadingMessage</span>
+</div>
+
+<script>
+    
+
+    if (!window.tab_loader_queue_busy_ids) {
+        window.tab_lazyloader_queue = [];
+        window.tab_loader_queue_busy_ids = [];
+
+        window.loadTabDataPassive = function (elementId, url) {
+            var element = $("#" + elementId);
+            $.get(url)
+                .done(function (data) {
+                    element.html(data);
+                    setTimeout(function () {
+                        if (typeof $.fn.checkRestriction == "function") {
+                            $.fn.checkRestriction();
+                        }
+                    }, 1000);
+                    window.tab_loader_queue_busy_ids = window.tab_loader_queue_busy_ids.filter(x => x !== elementId);
+                })
+                .fail(function (data) {
+                    console.error(
+                        "Unable to get data from '" + url + " '. Element '" + elementId + "'");
+                    element.html("<i>@Messages.TabLoader_UnableToLoadData</i>");
+                    window.tab_loader_queue_busy_ids = window.tab_loader_queue_busy_ids.filter(x => x !== elementId);
+                });
+        };
+
+        window.lazy_tabloader_queue_handle = function () {
+                    var tabLoaderQueueInterval = setInterval(function() {
+                        if ($.active === 0 && window.tab_loader_queue_busy_ids.length === 0 && window.tab_lazyloader_queue.length > 0) {
+                            var itemToLoad = window.tab_lazyloader_queue[0];
+                            window.tab_lazyloader_queue.shift();
+                            console.log("lazy loading: #" + itemToLoad.element_id);                           
+                            clearInterval(itemToLoad.interval);
+                            window.tab_loader_queue_busy_ids.push(itemToLoad.element_id);
+                            $("#tabloader-" + itemToLoad.element_id).show();
+                            window.loadTabDataPassive(itemToLoad.element_id, itemToLoad.url);
+                        }else
+                        if ($.active === 0 && window.tab_loader_queue_busy_ids.length === 0 && window.tab_lazyloader_queue.length === 0) {
+                            clearInterval(tabLoaderQueueInterval);
+                        }
+                    },
+                    200);
+        };
+
+        $(document).ready(function () {
+            console.log("lazy loading: busy ids onready: ", window.tab_loader_queue_busy_ids);
+            console.log("lazy loading:lazy_queue data onready: ", window.tab_lazyloader_queue);   
+            window.lazy_tabloader_queue_handle();
+        });
+    }
+
+    $(function() {
+        function loadTabData(fade) {
+            var element = $("#@Model.DataElementId");
+            $.get("@(Html.Raw(Model.ActionUrl))")
+                .done(function (data) {
+                    if (fade) {
+                        element.fadeOut("slow",
+                            function () {
+                                $(this).html(data);
+                                element.fadeIn("slow");
+                            });
+                    } else {
+                        element.html(data);
+                    }
+                    setTimeout(function () {
+                        if (typeof $.fn.checkRestriction == "function") {
+                            $.fn.checkRestriction();
+                        }
+                        if (typeof $.fn.checkTeamViewerRestriction == "function") {
+                            $.fn.checkTeamViewerRestriction();
+                        }
+                    }, 1000);
+                    window.tab_loader_queue_busy_ids =
+                        window.tab_loader_queue_busy_ids.filter(x => x !== "@Model.DataElementId");
+                })
+                .fail(function(data) {
+                    console.error(
+                        "Unable to get data from '@(Html.Raw(Model.ActionUrl))'. Element '@Model.DataElementId'");
+                    element.html("<i>@Messages.TabLoader_UnableToLoadData</i>");
+                    window.tab_loader_queue_busy_ids =
+                        window.tab_loader_queue_busy_ids.filter(x => x !== "@Model.DataElementId");
+                });
+        }
+
+        @if (Model.LoadImmediately)
+        {
+            <text>
+                $("#tabloader-@Model.DataElementId").show();
+                loadTabData(@(Model.UseFadeEffect ? "true":"false"));
+                window.tab_loader_queue_busy_ids.push("@Model.DataElementId");
+            </text>
+        }
+        else
+        {
+            <text>
+                var interval = setInterval(function() {
+                    var element = $("#@Model.DataElementId");
+                    var visible = element.is(":visible");
+                        if (visible) {
+                            window.tab_loader_queue_busy_ids.push("@Model.DataElementId");
+                            window.tab_lazyloader_queue = window.tab_lazyloader_queue.filter(x => x.element_id !== "@Model.DataElementId");
+                            $("#tabloader-@Model.DataElementId").show();
+                            loadTabData(@(Model.UseFadeEffect ? "true":"false"));
+                            clearInterval(interval);
+                            return;
+                        }
+                    },
+                    200);
+                if ("@Model.LoadByVisibilityOnly" !== "True") {
+                    window.tab_lazyloader_queue.push({ "interval": interval, url: "@(Html.Raw(Model.ActionUrl))", "element_id": "@Model.DataElementId" });
+                }
+            </text>
+        }
+    });
+</script>

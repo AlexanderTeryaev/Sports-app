@@ -1,0 +1,38 @@
+﻿@model VehicleModel
+
+<div class="row">
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.EngineNo:</label>
+        @Html.TextBoxFor(m => m.EngineNo, new { @class = "form-control", form = "createvehicleform"})
+        @Html.ValidationMessageFor(m => m.EngineNo, $"\"{Messages.EngineNo}\" {Messages.FieldIsRequired}")
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.EngineVolume:</label>
+        @Html.TextBoxFor(m => m.EngineVolume, new { @class = "form-control", form = "createvehicleform" })
+        @Html.ValidationMessageFor(m => m.EngineVolume, $"\"{Messages.EngineVolume}\" {Messages.FieldIsRequired}")
+    </div>
+</div>
+<div class="row">
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.EngineProduct:</label>
+        @Html.TextBoxFor(m => m.EngineProduct, new { @class = "form-control", form = "createvehicleform" })
+        @Html.ValidationMessageFor(m => m.EngineProduct, $"\"{Messages.EngineProduct}\" {Messages.FieldIsRequired}")
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.MaxHorsePower:</label>
+        @Html.TextBoxFor(m => m.MaxHorsePower, new { @class = "form-control", form = "createvehicleform", type = "number", min = "0" })
+        @Html.ValidationMessageFor(m => m.MaxHorsePower, $"\"{Messages.MaxHorsePower}\" {Messages.FieldIsRequired}")
+    </div>
+</div>
+<div class="row">
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.TermsAndConditions:</label>
+        @Html.TextBoxFor(m => m.TermsAndConditions, new { @class = "form-control", form = "createvehicleform" })
+        @Html.ValidationMessageFor(m => m.TermsAndConditions, $"\"{Messages.TermsAndConditions}\" {Messages.FieldIsRequired}")
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.NumberOfImport:</label>
+        @Html.TextBoxFor(m => m.NumberOfImportEntry, new { @class = "form-control", form = "createvehicleform", type = "number", min = "0" })
+        @Html.ValidationMessageFor(m => m.NumberOfImportEntry, $"\"{Messages.NumberOfImport}\" {Messages.FieldIsRequired}")
+    </div>
+</div>

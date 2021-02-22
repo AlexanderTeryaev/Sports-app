@@ -1,0 +1,111 @@
+﻿@model GameCycleFormFull
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.AddGameToStage @Model.StageNum @Messages.Cycle @(Model.CycleNum + 1)</h4>
+</div>
+
+@using (Ajax.BeginForm("AddNew", null,
+                new AjaxOptions { UpdateTargetId = "schedules", OnComplete = "$('#addsycle').modal('hide')" },
+                new { id = "newgameform" }))
+{
+<div class="modal-body">
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.Date:</label>
+            <input type='text' name='@nameof(Model.StartDate)' 
+                   value='@Model.StartDate.ToString("dd/MM/yyyy HH:mm")' 
+                   class="form-control frm-date required" />
+            @*@Html.TextBoxFor(m => m.StartDate, new { @class = "form-control frm-date" })*@
+            @Html.ValidationMessageFor(m => m.StartDate)
+        </div>
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.Group:</label>
+            @Html.DropDownListFor(m => m.GroupId, Model.Groups, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.GroupId)
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@UIHelpers.GetAuditoriumCaption(ViewBag.Section):</label>
+            @Html.DropDownListFor(m => m.AuditoriumId, Model.Auditoriums, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.AuditoriumId)
+        </div>
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.Referee:</label>
+            @Html.DropDownListFor(m => m.RefereeIds, Model.Referees,Messages.Select, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.RefereeIds)
+        </div>
+    </div>
+    <div class="row" id="groupteams_pl">
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+    <button id="savebtn" class="btn btn-primary">@Messages.Save</button>
+</div>
+    @Html.HiddenFor(m => m.StageId)
+    @Html.HiddenFor(m => m.CycleNum)
+    @Html.HiddenFor(m => m.LeagueId)
+    @Html.HiddenFor(m => m.RoundNum)
+}
+
+<script>
+    $(function () {
+        $('#newgameform').validateBootstrap(true);
+
+        var frm = $('#newgameform');
+
+        function setTeamsDDL() {
+            var groupId = $("#GroupId", frm).val();
+            $('#groupteams_pl', frm).load('@Url.Action("GoupTeams")' + '/' + groupId, function (responseTxt, statusTxt, xhr) {
+                if (statusTxt == "success")
+                    var nextVal = $('#HomeTeamId', frm).find(":selected").next().val();
+                    var firstVal = $('#HomeTeamId', frm).find(":selected").val();
+                    $("#HomeTeamId", frm).find("[value='" + nextVal + "']").attr("disabled", "disabled");
+                    $("#GuestTeamId", frm).find("[value='" + firstVal + "']").attr("disabled", "disabled");
+                    $("#GuestTeamId", frm).val(nextVal);
+
+                    $('#HomeTeamId', frm).on('change', function () {
+                        var homeIdSelectedVal = $(this).find(":selected").val();
+                        var optionSelected = $('#GuestTeamId', frm).find("[value='" + homeIdSelectedVal + "']").attr("disabled", "disabled")
+                            .siblings().removeAttr("disabled");
+                    });
+                    $('#GuestTeamId', frm).on('change', function () {
+                        var guestIdSelectedVal = $(this).find(":selected").val();
+                        var optionSelected = $('#HomeTeamId', frm).find("[value='" + guestIdSelectedVal + "']").attr("disabled", "disabled")
+                            .siblings().removeAttr("disabled");
+                    });
+            });
+        }
+
+        $('#GroupId', frm).change(function () {
+            setTeamsDDL();
+        });
+
+        $('#savebtn', frm).click(function () {
+
+            $('#teamerr', frm).hide();
+
+            var homeTeamId = $("#HomeTeamId", frm).val();
+            var guestTeamId = $("#GuestTeamId", frm).val();
+            var homeAthleteId = $("#HomeAthleteId", frm).val();
+            var guestAthleteId = $("#GuestAthleteId", frm).val();
+            if (guestAthleteId == undefined && homeAthleteId == undefined) {
+                if (homeTeamId == guestTeamId) {
+                    $('#teamerr', frm).show();
+                    return false;
+                }
+            }
+            else {
+                if (guestAthleteId == homeAthleteId) {
+                    $('#teamerr', frm).show();
+                    return false;
+                }   
+            }
+        });
+        setTeamsDDL();
+        cmn.initDateTimePickers();
+    });
+</script>
+

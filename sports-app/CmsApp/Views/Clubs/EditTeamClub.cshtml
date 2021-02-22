@@ -1,0 +1,36 @@
+﻿@model TeamNavView
+<h3 class="sub-header">
+   
+   @{
+       if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+       {
+           <a href="@Url.Action("Edit", "Clubs", new {id = ViewBag.ClubId, sectionId = Model.SectionId})">Teams</a>
+       }
+       else
+       {
+           <span>Team</span>
+       }
+   }
+    &raquo; @Model.TeamName
+</h3>
+<ul class="nav nav-tabs" id="league_tabs" role="tablist">
+    <li class="active"><a href="#details" data-toggle="tab">@Messages.Info</a></li>
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        <li><a href="#players" data-toggle="tab">@UIHelpers.GetPlayerCaption(Model.Section)</a></li>
+        <li><a href="#userstab" data-toggle="tab">@Messages.Workers</a></li>
+        <li><a href="#halls" data-toggle="tab">@UIHelpers.GetAuditoriumCaption(Model.Section)</a></li>
+    }
+    <li><a href="#schedules" data-toggle="tab">@Messages.GamesTable</a></li>
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        <li><a href="#notifications" data-toggle="tab">@Messages.Notifications</a></li>
+    }
+</ul>
+
+
+<div class="tab-content row offset-3">
+    <div class="tab-pane fade in active col-sm-10" id="details">
+        @*@Html.Action("Details", new { id = Model.TeamId, seasonId = Model.SeasonId, leagueId = Model.CurrentLeagueId })*@
+    </div>
+</div>

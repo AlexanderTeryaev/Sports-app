@@ -1,0 +1,561 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Acts" xml:space="preserve">
+    <value>Налаштування</value>
+  </data>
+  <data name="ActsRatio" xml:space="preserve">
+    <value>Параметри налаштування</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Адреса</value>
+  </data>
+  <data name="Ages" xml:space="preserve">
+    <value>Вік</value>
+  </data>
+  <data name="AveragePoints" xml:space="preserve">
+    <value>Середні бали</value>
+  </data>
+  <data name="BasketRatio" xml:space="preserve">
+    <value>Pf-Pa</value>
+  </data>
+  <data name="Birthday" xml:space="preserve">
+    <value>День народження</value>
+  </data>
+  <data name="ClubName" xml:space="preserve">
+    <value>Назва клубу</value>
+  </data>
+  <data name="Competition" xml:space="preserve">
+    <value>Змагання</value>
+  </data>
+  <data name="Cycle" xml:space="preserve">
+    <value>Цикл</value>
+  </data>
+  <data name="DateOfInsuranceValidity" xml:space="preserve">
+    <value>Термін дії страхування</value>
+  </data>
+  <data name="Draw" xml:space="preserve">
+    <value>Жеребкування </value>
+  </data>
+  <data name="ExtendedTable" xml:space="preserve">
+    <value>Розширена таблиця</value>
+  </data>
+  <data name="Field" xml:space="preserve">
+    <value>Поле</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>Повне ім’я</value>
+  </data>
+  <data name="FullRankingAlert" xml:space="preserve">
+    <value>Повний рейтинг буде показаний після закінчення всіх ігор</value>
+  </data>
+  <data name="Games" xml:space="preserve">
+    <value>Ігри</value>
+  </data>
+  <data name="GamesNum" xml:space="preserve">
+    <value>Ігри</value>
+  </data>
+  <data name="Gaming" xml:space="preserve">
+    <value>Ігровий</value>
+  </data>
+  <data name="GoalRatio" xml:space="preserve">
+    <value>голів</value>
+  </data>
+  <data name="GuestPlayer" xml:space="preserve">
+    <value>Гравець гостьової команди</value>
+  </data>
+  <data name="HasTechLost" xml:space="preserve">
+    <value>має технічну поразку </value>
+  </data>
+  <data name="HasTechWin" xml:space="preserve">
+    <value>Команда має технічних переможців</value>
+  </data>
+  <data name="HomePlayer" xml:space="preserve">
+    <value>Гравець домашньої команди</value>
+  </data>
+  <data name="IdentNum" xml:space="preserve">
+    <value>Ідентифікаційний номер</value>
+  </data>
+  <data name="LeagueStructure" xml:space="preserve">
+    <value>Про лігу</value>
+  </data>
+  <data name="League_RankedStandings" xml:space="preserve">
+    <value>Місця в турнірній таблиці</value>
+  </data>
+  <data name="League_RankedStanding_NoFinishedGamesInStage" xml:space="preserve">
+    <value>Немає етапів з завершеними іграми</value>
+  </data>
+  <data name="LossNum" xml:space="preserve">
+    <value>Поразки</value>
+  </data>
+  <data name="Matches" xml:space="preserve">
+    <value>Матчі</value>
+  </data>
+  <data name="Penalty" xml:space="preserve">
+    <value>Штраф</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>Телефон</value>
+  </data>
+  <data name="Points" xml:space="preserve">
+    <value>Очки </value>
+  </data>
+  <data name="PointsRatio" xml:space="preserve">
+    <value>Співвідношення очок</value>
+  </data>
+  <data name="PointsToAverage" xml:space="preserve">
+    <value>Середня кількість очок</value>
+  </data>
+  <data name="Print" xml:space="preserve">
+    <value>Надрукувати</value>
+  </data>
+  <data name="Rank" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="Scores" xml:space="preserve">
+    <value>рахунок</value>
+  </data>
+  <data name="Sets" xml:space="preserve">
+    <value>композиція</value>
+  </data>
+  <data name="Team" xml:space="preserve">
+    <value>Команда</value>
+  </data>
+  <data name="TeamManager" xml:space="preserve">
+    <value>Менеджер команди</value>
+  </data>
+  <data name="TeamName" xml:space="preserve">
+    <value>Назва команди</value>
+  </data>
+  <data name="TechLossesNum" xml:space="preserve">
+    <value>технічна</value>
+  </data>
+  <data name="TechWin" xml:space="preserve">
+    <value>Технічний переможець</value>
+  </data>
+  <data name="TenicardValidity" xml:space="preserve">
+    <value>Строк дії Tenicard</value>
+  </data>
+  <data name="Tie" xml:space="preserve">
+    <value>Звязок</value>
+  </data>
+  <data name="ValidityOfMedicalExamination" xml:space="preserve">
+    <value>Дійсність медичного огляду</value>
+  </data>
+  <data name="WinsNum" xml:space="preserve">
+    <value>Виграє</value>
+  </data>
+  <data name="RankMustBeInt" xml:space="preserve">
+    <value>Ранг повинен бути вступним.</value>
+  </data>
+  <data name="Men" xml:space="preserve">
+    <value>Чоловіки</value>
+  </data>
+  <data name="Women" xml:space="preserve">
+    <value>Жінки</value>
+  </data>
+  <data name="Runs" xml:space="preserve">
+    <value>Круги</value>
+  </data>
+  <data name="League_LeagueRankedStandings" xml:space="preserve">
+    <value>турнірної таблиці</value>
+  </data>
+  <data name="KadeteLeague" xml:space="preserve">
+    <value>Ліга Kadete</value>
+  </data>
+  <data name="MultiBattle" xml:space="preserve">
+    <value>MultiBattle</value>
+  </data>
+  <data name="YearOfBirth" xml:space="preserve">
+    <value>Рік народження</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>Результати</value>
+  </data>
+  <data name="ResultsByHeat" xml:space="preserve">
+    <value>Результати за теплом</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Інформація</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>Немає</value>
+  </data>
+  <data name="InfoSchedule" xml:space="preserve">
+    <value>Розклад</value>
+  </data>
+  <data name="GoldenSpikesU14" xml:space="preserve">
+    <value>Golden Spikes U-14</value>
+  </data>
+  <data name="GoldenSpikesU16" xml:space="preserve">
+    <value>Golden Spikes U-16</value>
+  </data>
+  <data name="GoldenSpikes" xml:space="preserve">
+    <value>Golden Spikes</value>
+  </data>
+  <data name="Registrations" xml:space="preserve">
+    <value>Реєстрації</value>
+  </data>
+  <data name="CategoryResults" xml:space="preserve">
+    <value>Результати категорії</value>
+  </data>
+  <data name="ResultsByClub" xml:space="preserve">
+    <value>Результати за клубом</value>
+  </data>
+  <data name="Place" xml:space="preserve">
+    <value>Місце</value>
+  </data>
+  <data name="Wind" xml:space="preserve">
+    <value>Вітер</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Категорія</value>
+  </data>
+  <data name="Gender" xml:space="preserve">
+    <value>Стать</value>
+  </data>
+  <data name="Weight" xml:space="preserve">
+    <value>Вага</value>
+  </data>
+  <data name="Lifting" xml:space="preserve">
+    <value>Підйом</value>
+  </data>
+  <data name="Pushing" xml:space="preserve">
+    <value>Pushing</value>
+  </data>
+  <data name="BattleOfTwo" xml:space="preserve">
+    <value>Battle of Two</value>
+  </data>
+  <data name="ResultOf" xml:space="preserve">
+    <value>Результат</value>
+  </data>
+  <data name="SportsmenNumber" xml:space="preserve">
+    <value>Номер спортсменів</value>
+  </data>
+  <data name="FinalResult" xml:space="preserve">
+    <value>Остаточний результат</value>
+  </data>
+  <data name="BasicInfo" xml:space="preserve">
+    <value>Основна інформація</value>
+  </data>
+  <data name="SeasonalBests" xml:space="preserve">
+    <value>Сезонні звіри</value>
+  </data>
+  <data name="CompetitionName" xml:space="preserve">
+    <value>Назва конкурсу</value>
+  </data>
+  <data name="Discipline" xml:space="preserve">
+    <value>Дисципліна</value>
+  </data>
+  <data name="NoActiveCompetitions" xml:space="preserve">
+    <value>Ніяких активних змагань</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>Результат</value>
+  </data>
+  <data name="StartDate" xml:space="preserve">
+    <value>Дата початку</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>Дата</value>
+  </data>
+  <data name="RankRaw" xml:space="preserve">
+    <value>Ранг</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>ltr</value>
+  </data>
+  <data name="Lang" xml:space="preserve">
+    <value>uk</value>
+  </data>
+  <data name="ToGame" xml:space="preserve">
+    <value>Оцінка поля</value>
+  </data>
+  <data name="Ended" xml:space="preserve">
+    <value>Закінчився</value>
+  </data>
+  <data name="Waiting" xml:space="preserve">
+    <value>Очікування</value>
+  </data>
+  <data name="Started" xml:space="preserve">
+    <value>Почав</value>
+  </data>
+  <data name="LeagueAbout" xml:space="preserve">
+    <value>Про лігу</value>
+  </data>
+  <data name="Game" xml:space="preserve">
+    <value>G</value>
+  </data>
+  <data name="Win" xml:space="preserve">
+    <value>W</value>
+  </data>
+  <data name="Lost" xml:space="preserve">
+    <value>L</value>
+  </data>
+  <data name="Set" xml:space="preserve">
+    <value>Набори</value>
+  </data>
+  <data name="PointsShort" xml:space="preserve">
+    <value>Очки</value>
+  </data>
+  <data name="CompetitionTable" xml:space="preserve">
+    <value>Турнірна таблиця</value>
+  </data>
+  <data name="ScheduleResults" xml:space="preserve">
+    <value>Графік гри та результати</value>
+  </data>
+  <data name="ToCompetition" xml:space="preserve">
+    <value>Конкуренція</value>
+  </data>
+  <data name="CompetitionSchedule" xml:space="preserve">
+    <value>Розклад змагань</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Закрити</value>
+  </data>
+  <data name="Disciplines" xml:space="preserve">
+    <value>Дисципліни</value>
+  </data>
+  <data name="StartHour" xml:space="preserve">
+    <value>Початок години</value>
+  </data>
+  <data name="TotalParticipants" xml:space="preserve">
+    <value>Всього учасників</value>
+  </data>
+  <data name="TotalRegistrations" xml:space="preserve">
+    <value>Всього реєстрацій</value>
+  </data>
+  <data name="Records" xml:space="preserve">
+    <value>Записи</value>
+  </data>
+  <data name="OrderRaw" xml:space="preserve">
+    <value>Замовлення</value>
+  </data>
+  <data name="IntentionalIsraeliRecord" xml:space="preserve">
+    <value>Intentional Israeli Record</value>
+  </data>
+  <data name="IsraeliRecord" xml:space="preserve">
+    <value>Israeli Record</value>
+  </data>
+  <data name="SeasonRecord" xml:space="preserve">
+    <value>Рекорд сезону</value>
+  </data>
+  <data name="Record" xml:space="preserve">
+    <value>Запишіть</value>
+  </data>
+  <data name="CompetitionRecord" xml:space="preserve">
+    <value>Рекорд змагань</value>
+  </data>
+  <data name="Sportsmans" xml:space="preserve">
+    <value>Спортсмени</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Статус</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>Всього</value>
+  </data>
+  <data name="DateTime" xml:space="preserve">
+    <value>Дата/ Час</value>
+  </data>
+  <data name="FromHour" xml:space="preserve">
+    <value>Від години</value>
+  </data>
+  <data name="HeatsList" xml:space="preserve">
+    <value>Список тепла</value>
+  </data>
+  <data name="ToHour" xml:space="preserve">
+    <value>До години</value>
+  </data>
+  <data name="WeightIn" xml:space="preserve">
+    <value>Вага-В</value>
+  </data>
+  <data name="Club" xml:space="preserve">
+    <value>Назва клубу</value>
+  </data>
+  <data name="Heat" xml:space="preserve">
+    <value>Призначає</value>
+  </data>
+  <data name="RegistrationToAllHeats" xml:space="preserve">
+    <value>Реєстрація на всі опалення</value>
+  </data>
+  <data name="RegistrationToHeat" xml:space="preserve">
+    <value>Реєстрація в тепло</value>
+  </data>
+  <data name="WeightTime" xml:space="preserve">
+    <value>Час ваги</value>
+  </data>
+  <data name="Entry" xml:space="preserve">
+    <value>Вхід</value>
+  </data>
+  <data name="StartListHeb" xml:space="preserve">
+    <value>Стартовий список</value>
+  </data>
+  <data name="WeightDeclaration" xml:space="preserve">
+    <value>Декларація ваги</value>
+  </data>
+  <data name="FieldCompetition" xml:space="preserve">
+    <value>Польові перегони</value>
+  </data>
+  <data name="RoadCompetition" xml:space="preserve">
+    <value>Дорожні перегони</value>
+  </data>
+  <data name="StadiumCompetition" xml:space="preserve">
+    <value>Змагання на стадіоні</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Наступний</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>Попередній</value>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>День</value>
+  </data>
+  <data name="Month" xml:space="preserve">
+    <value>Місяць</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>Сьогодні</value>
+  </data>
+  <data name="Week" xml:space="preserve">
+    <value>Тиждень</value>
+  </data>
+  <data name="Event" xml:space="preserve">
+    <value>Подія</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Опис</value>
+  </data>
+  <data name="GuestTeam" xml:space="preserve">
+    <value>Гостьова команда</value>
+  </data>
+  <data name="HomeTeam" xml:space="preserve">
+    <value>Команда господарів</value>
+  </data>
+  <data name="At" xml:space="preserve">
+    <value>на</value>
+  </data>
+  <data name="In" xml:space="preserve">
+    <value>в</value>
+  </data>
+  <data name="GameSchedules" xml:space="preserve">
+    <value>Графіки гри</value>
+  </data>
+</root>

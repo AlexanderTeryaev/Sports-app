@@ -1,0 +1,56 @@
+﻿@model IList<AppModel.TennisStage>
+
+<table class="table table-bordered">
+    <tbody>
+        @{ int i = 1; foreach (var s in Model)
+         {
+            <tr>
+                <td>@Messages.Stage @s.Number</td>
+                <td width="165">
+                    @if (ViewBag.IsDepartmentLeague == true)
+                    {
+                        <a href="@Url.Action("CreateTennisGroup", "Groups", new { leagueId = ViewBag.LeagueId, categoryId = ViewBag.CategoryId, id = s.StageId, seasonId = ViewBag.SeasonId, departmentId = ViewBag.DepartmentId })"
+                           data-target="#groupsedit"
+                           data-toggle="modal"
+                           class="btn btn-primary">@Messages.AddGroup</a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("CreateTennisGroup", "Groups", new { leagueId = ViewBag.LeagueId, categoryId = ViewBag.CategoryId, id = s.StageId, seasonId = ViewBag.SeasonId })"
+                           data-target="#groupsedit"
+                           data-toggle="modal"
+                           class="btn btn-primary">@Messages.AddGroup</a>
+                    }
+
+
+                    @if (i++ == Model.Count)
+                    {
+                        if (ViewBag.IsDepartmentLeague == true)
+                        {
+                        <a href="@Url.Action("DeleteTennis", new { id = s.StageId, seasonId = ViewBag.SeasonId, departmentId = ViewBag.DepartmentId })" class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#stages"
+                           data-ajax-success="deleteSuccess()"
+                           data-ajax="true"></a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("DeleteTennis", new { id = s.StageId, seasonId = ViewBag.SeasonId })" class="@AppCss.Delete"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-success="deleteSuccess()"
+                               data-ajax-update="#stages"
+                               data-ajax="true"></a>
+                        }
+                    }
+                    </td>
+                </tr>
+         } }
+    </tbody>
+</table>
+
+<script>
+    function deleteSuccess() {
+        var groupsRefreshUrl = '@HttpUtility.UrlDecode(Url.Action("TennisGroups", "Schedules", new { leagueId = ViewBag.LeagueId, categoryId = ViewBag.CategoryId, seasonId = ViewBag.SeasonId }, this.Request.Url.Scheme))';
+        $("#groups").loadWith(groupsRefreshUrl);
+    }
+</script>

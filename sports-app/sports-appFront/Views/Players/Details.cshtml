@@ -1,0 +1,249 @@
+﻿@model ExternalPlayerModel
+@using Resources
+@using DataService.DTO
+@using System.Configuration
+@using LogLigFront.Helpers
+@{
+    string[] alternativeResultArray = new string[] { "DNF", "DQ", "DNS", "NM" };
+    var isHebrew = Request.IsHebrew();
+}
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.1/css/theme.bootstrap_3.min.css" integrity="sha256-vgjicWNWkVklkfuqKnQth9ww987V7wCOzh6A0qkJ2Lw=" crossorigin="anonymous" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.1/js/jquery.tablesorter.min.js" integrity="sha256-uC1JMW5e1U5D28+mXFxzTz4SSMCywqhxQIodqLECnfU=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.1/js/jquery.tablesorter.widgets.min.js" integrity="sha256-Xx4HRK+CKijuO3GX6Wx7XOV2IVmv904m0HKsjgzvZiY=" crossorigin="anonymous"></script>
+<style>
+    td,th {
+        text-align:center;
+    }
+    .table-bordered tr:first-child {
+        font-weight: unset !important;
+    }
+
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+
+                <div class="card-body">
+                    <div class="row">
+                        <div class="card-title col-md-3">
+                            <div class="d-flex justify-content-start" style="text-align:center;">
+                                <div class="image-container">
+                                    @ShowImage(Model.ProfileImage)
+                                </div>
+                                <div class="userData ml-3">
+                                    <h2 class="d-block" style="font-size: 2.7rem; font-weight: bold; text-align:center;">@Model.FullName</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="row" style="margin-top:10px;">
+                                <div class="col-sm-4 col-md-3 col-6">
+                                    <label style="font-weight:bold;">@Messages.Birthday</label>
+                                </div>
+                                <div class="col-md-7 col-5">
+                                    @(Model.BirthDate.HasValue ? Model.BirthDate.Value.ToShortDateString() : string.Empty)
+                                </div>
+                            </div>
+                            <hr />
+
+                            <div class="row">
+                                <div class="col-sm-4 col-md-3 col-6">
+                                    <label style="font-weight:bold;">@Messages.Gender</label>
+                                </div>
+                                <div class="col-md-8 col-6">
+                                    @UIHelper.GetGenderTitles(Model.Gender)
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="row">
+                                <div class="col-sm-4 col-md-3 col-6">
+                                    <label style="font-weight:bold;">@Messages.Club</label>
+                                </div>
+                                <div class="col-md-8 col-6">
+                                    @Model.ClubName
+                                </div>
+                            </div>
+                            <hr />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+                                @if (ViewBag.Tab == "results")
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="seasonalbests-tab" data-toggle="tab" href="#seasonalbests" role="tab" aria-controls="seasonalbests" aria-selected="true">@Messages.SeasonalBests</a>
+                                    </li>
+                                    <li class="nav-item active">
+                                        <a class="nav-link active" id="results-tab" data-toggle="tab" href="#results" role="tab" aria-controls="results" aria-selected="false">@Messages.Results</a>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="nav-item active">
+                                        <a class="nav-link active" id="seasonalbests-tab" data-toggle="tab" href="#seasonalbests" role="tab" aria-controls="seasonalbests" aria-selected="true">@Messages.SeasonalBests</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="results-tab" data-toggle="tab" href="#results" role="tab" aria-controls="results" aria-selected="false">@Messages.Results</a>
+                                    </li>
+                                }
+                                
+                                @if (isHebrew)
+                                {
+                                    <li class="nav-item pull-left">
+                                        @Html.DropDownList("SeasonId", new SelectList(ViewBag.Seasons, "Id", "Name", ViewBag.SeasonId), new {@class = "form-control", @id = "ddlSeasons", style = "width: 150px;", title = "Season"})
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="nav-item pull-right">
+                                        @Html.DropDownList("SeasonId", new SelectList(ViewBag.Seasons, "Id", "Name", ViewBag.SeasonId), new {@class = "form-control", @id = "ddlSeasons", style = "width: 150px;", title = "Season"})
+                                    </li>
+                                }
+
+                            </ul>
+                            <div class="tab-content ml-1" id="myTabContent" style="margin-top: 20px;">
+                                <div class="tab-pane fade in active" id="seasonalbests" role="tabpanel" aria-labelledby="seasonalbests-tab">
+                                    @if (Model.SectionAlias == GamesAlias.Athletics)
+                                    {
+                                        if (ViewBag.AthleteSeasonalBests.Count > 0)
+                                        {
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <table class="table table-bordered white_arrow">
+                                                        <thead>
+                                                            <tr style="background:royalblue;">
+
+                                                                <th>@Messages.Discipline</th>
+                                                                <th>@Messages.RankRaw</th>
+                                                                <th>@Messages.Result</th>
+                                                                <th>@Messages.Wind</th>
+                                                                <th>@Messages.Points</th>
+                                                                <th class="sorter-shortDate dateFormat-ddmmyyyy" >@Messages.Date</th>
+                                                                <th>@Messages.CompetitionName</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var registration in ViewBag.AthleteSeasonalBests)
+                                                            {
+                                                            <tr>
+                                                                <td>@registration.DisciplineName</td>
+                                                                <td>@registration.Rank</td>
+                                                                <td>@(registration.AlternativeResult == 0 ? UIHelper.GetCompetitionDisciplineResultString(registration.Result, registration.Format) : alternativeResultArray[registration.AlternativeResult - 1])</td>
+                                                                <td style="direction:ltr;">@(registration.Wind != null ? Decimal.Round((decimal)registration.Wind, 2).ToString() : "")</td>
+                                                                <td>@registration.Points</td>
+                                                                <td>@(registration.CompetitionStartDate?.ToShortDateString() ?? "")</td>
+                                                                <td>@registration.CompetitionName</td>
+                                                            </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="alert alert-danger">@Messages.NoActiveCompetitions</div>
+                                        }
+                                    }
+                                </div>
+                                <div class="tab-pane fade" id="results" role="tabpanel" aria-labelledby="results-tab">
+                                    @if (Model.SectionAlias == GamesAlias.Athletics && ViewBag.AthleteAchievements != null)
+                                    {
+                                        if (ViewBag.AthleteAchievements.Count > 0)
+                                        {
+                                            foreach (var group in (List<IGrouping<string,AthleteCompetitionAchievementViewItem>>)ViewBag.AthleteAchievements)
+                                            {
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <table class="table table-bordered black_arrow">
+                                                        <thead>
+                                                            <tr>
+                                                                <th colspan="6" style="background:royalblue;">@(group.Key)</th>
+                                                            </tr>
+                                                            <tr>
+                                                                <th class="sorter-shortDate dateFormat-ddmmyyyy">@Messages.Date</th>
+                                                                <th>@Messages.CompetitionName</th>
+                                                                <th>@Messages.RankRaw</th>
+                                                                <th>@Messages.Result</th>
+                                                                <th>@Messages.Wind</th>
+                                                                <th>@Messages.Points</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var registration in group)
+                                                            {
+                                                            <tr>
+                                                                <td>@(registration.CompetitionStartDate?.ToShortDateString() ?? "")</td>
+                                                                <td>@registration.CompetitionName</td>
+                                                                <td>@registration.Rank</td>
+                                                                <td>@(registration.AlternativeResult == 0 ? UIHelper.GetCompetitionDisciplineResultString(registration.Result, registration.Format) : alternativeResultArray[registration.AlternativeResult - 1])</td>
+                                                                <td style="direction:ltr;">@(registration.Wind != null ? Decimal.Round((decimal)registration.Wind, 2).ToString() : "")</td>
+                                                                <td>@registration.Points</td>
+                                                            </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            }
+                                        }
+                                         else
+                                        {
+                                            <div class="alert alert-danger">@Messages.NoActiveCompetitions</div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('.table').tablesorter({
+        usNumberFormat : false,
+        sortReset      : true,
+        sortRestart    : true
+    });
+        $('#ddlSeasons').change(function () {
+            var seasonId = $(this).val();
+            var tabName = null;
+            var tabs = $('li.active a');
+            if (tabs) {
+                var tab = tabs[0];
+                if (tab) {
+                    var href = tab.href;
+                    tabName = href.substring(href.indexOf('#') + 1);
+                }
+            }
+            var link = "/Players/Details/@ViewBag.PlayerId" + "?seasonId=" + seasonId;
+            if (tabName) {
+                link = link + "&tab=" + tabName;
+            }
+            window.location.href = link;
+        });
+</script>
+<br />
+<br />
+
+@helper ShowImage(string imgName)
+{
+    string imgSrc = "";
+    if (!string.IsNullOrEmpty(imgName))
+    {
+        imgSrc = String.Concat(ConfigurationManager.AppSettings["SiteUrl"], "/assets/players/" + imgName);
+    }
+    else
+    {
+        imgSrc = Url.Content("~/content/img/fan-default.jpg");
+    }
+    <img src="@imgSrc" id="imgProfile" style="width: 150px; height: 150px" class="img-thumbnail" />
+}

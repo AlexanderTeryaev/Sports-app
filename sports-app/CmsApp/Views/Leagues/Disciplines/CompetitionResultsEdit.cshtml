@@ -1,0 +1,195 @@
+﻿@model CompetitionDisciplineViewModel
+<div class="modal-header">
+    <style>
+        .multiselect {
+            display: block;
+            width: 100%;
+            padding: 6px 12px;
+            font-size: 14px;
+            line-height: 1.42857143;
+            color: #555;
+            background-color: #fff;
+            background-image: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .selectBox {
+            position: relative;
+        }
+
+            .selectBox select {
+                width: 100%;
+                font-weight: bold;
+            }
+
+        .overSelect {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+        #checkboxes {
+            display: none;
+        }
+
+            #checkboxes label {
+                display: block;
+            }
+
+                #checkboxes label:hover {
+                    background-color: #1e90ff;
+                }
+    </style>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+    <h4 class="modal-title">@(ViewBag.IsUpdate == true ? Messages.Update : Messages.AddNew) @Messages.Discipline.ToLower()</h4>
+</div>
+@using (Ajax.BeginForm(ViewBag.IsUpdate == true ? "UpdateDiscipline" : "CreateDiscipline", "Leagues",
+    new AjaxOptions { HttpMethod = "POST", OnSuccess = "updateData(data)" }))
+{
+    @Html.HiddenFor(m => m.Id)
+    @Html.HiddenFor(m => m.CompetitionId)
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <label class="control-label">@Messages.ChooseDiscipline</label>
+                    @Html.DropDownListFor(m => m.DisciplineId, (SelectList)ViewBag.DisciplineList, Messages.Select, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.DisciplineId, $"\"{Messages.Discipline}\" {Messages.FieldIsRequired.ToLower()}")
+                </div>
+                <div class="form-group">
+                    <label class="control-label">@Messages.Category</label>
+                    <div class="multiselect">
+                        <div class="selectBox" onclick="showCheckboxes()">
+
+                            <text id="category_choose">@Messages.Expand</text>
+
+                            <div class="overSelect"></div>
+                        </div>
+                        <div id="checkboxes">
+                            <label for="select_all">
+                                <text id="select_all">@Messages.SelectAllPlayers</text>
+                            </label>
+                            @foreach (var value in (SelectList)ViewBag.CategoryList)
+                            {
+                                <label for="@value.Value">
+                                    <input type="checkbox" class="category_options" id="@value.Value" />@value.Text
+                                </label>
+                            }
+                        </div>
+                    </div>
+                    @Html.HiddenFor(x => x.CategoryId, "")
+                    @Html.ValidationMessageFor(m => m.CategoryId, $"\"{Messages.Category}\" {Messages.FieldIsRequired.ToLower()}")
+                </div>
+                <div class="form-group">
+                    <label class="control-label">@Messages.MaxSportsmen</label>
+                    @Html.TextBoxFor(m => m.MaxSportsmen, new { @class = "form-control", type = "number", min = "1" })
+                </div>
+                <div class="form-group">
+                    <label class="control-label">@Messages.MinResult</label>
+                    @Html.TextBoxFor(m => m.MinResult, new { @class = "form-control", type = "number", min = "1.0", step = "0.1" })
+                </div>
+                <div class="form-group">
+                    <label class="control-label">@Messages.StartTime</label>
+                    @{ var StartTime = Model.StartTime.HasValue ? Model.StartTime : null; }
+                    @Html.TextBoxFor(m => StartTime, new { @class = "form-control frm-date", @name = "StartTime", @id = "StartTime" })
+                    @Html.ValidationMessageFor(m => m.StartTime)
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">@Messages.Save <i id="spinner" class="@AppCss.Loading hidden"></i></button>
+        <a class="btn btn-danger" data-dismiss="modal">@Messages.Close</a>
+    </div>
+}
+
+<script>
+
+    @if (ViewBag.IsUpdate == true)
+    {
+        @:$('document').ready(function () { $('#CategoryId').val('@Model.CategoryId'); $("input.category_options#@Model.CategoryId").prop("checked", true); });
+    }
+
+    $(".frm-date").datetimepicker({
+        format: 'd/m/Y H:i',
+        formatTime: 'H:i',
+        formatDate: 'd/m/Y',
+
+        step: 15,
+        closeOnDateSelect: false,
+        closeOnTimeSelect: true,
+        onChangeDateTime: function () {
+            $(this).data("input").trigger("changedatetime.xdsoft");
+        }
+    });
+    var selected_categories = [];
+
+    $.validator.setDefaults({ ignore: '' });
+
+    function updateCategorySelection() {
+        selected_categories = [];
+        $(".category_options:checked").each(function (index, ele) {
+            selected_categories.push(ele.id);
+        });
+        $("input[name=CategoryId]").attr('value', selected_categories);
+    }
+
+    $(".category_options").click(function (event) {
+        updateCategorySelection();
+    });
+
+    $("#select_all").click(function (event) {
+        $(".category_options").prop("checked", true);
+        updateCategorySelection();
+    });
+
+    var expanded = false;
+
+    function showCheckboxes() {
+        var checkboxes = document.getElementById("checkboxes");
+        if (!expanded) {
+            checkboxes.style.display = "block";
+            $("#category_choose").text("@Messages.Collapse");
+            expanded = true;
+        } else {
+            checkboxes.style.display = "none";
+            $("#category_choose").text("@Messages.Expand");
+            expanded = false;
+        }
+    }
+
+
+
+
+
+    function updateData(data) {
+        if (data.Success == true) {
+            $("#create_competition_discipline_content").empty();
+
+            $.ajax({
+                url: "@Url.Action("Disciplines", "Leagues", new { leagueId = ViewBag.CompetitionId })",
+                type: "GET",
+                beforeSend: function () {
+                    $("#spinner").show();
+                },
+                success: function (data) {
+                    $("#disciplines").html(data);
+                    $("#spinner").hide();
+                    $("#create_competition_discipline_content").modal("hide");
+                },
+                error: function (xhr, status, error) {
+                    console.log("fail");
+                }
+            });
+
+        }
+        else {
+            $("#spinner").show();
+            $("#create_competition_discipline_content").html(data);
+            $("#spinner").hide();
+        }
+    }
+</script>

@@ -1,0 +1,112 @@
+﻿@{
+    var homeGames = (IEnumerable<DataService.DTO.PlayersStatisticsDTO>)ViewBag.HomeGameStatistic;
+    var guestGames = (IEnumerable<DataService.DTO.PlayersStatisticsDTO>)ViewBag.GuestGamesStatistic;
+}
+@if ((homeGames != null && homeGames.Any()) || (guestGames != null && guestGames.Any()))
+{
+    if (homeGames != null && homeGames.Any())
+    {
+        <div class="text-center"><h4>@Messages.HomeTeam @Messages.Statistics.ToLower()</h4></div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <td>OVERALL</td>
+                    <td style="min-width:25px;">MIN</td>
+                    <td>FT</td>
+                    <td>FTA</td>
+                    <td>2PT</td>
+                    <td>2PA</td>
+                    <td>3PT</td>
+                    <td>3PA</td>
+                    <td>FG</td>
+                    <td>FGA</td>
+                    <td>OR</td>
+                    <td>DR</td>
+                    <td>REB</td>
+                    <td>AST</td>
+                    <td>ST</td>
+                    <td>TO</td>
+                    <td>BS</td>
+                    <td>PF</td>
+                    <td>PTS</td>
+                    <td>EFF</td>
+                    <td>+/-</td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var playerStat in homeGames)
+                {
+                    <tr id="tr_@playerStat.StatId">
+                        @{
+                            Html.RenderPartial("_PlayersStatisticsRow", playerStat);
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    if (guestGames != null && guestGames.Any())
+    {
+        <div class="text-center"><h4>@Messages.GuestTeam @Messages.Statistics.ToLower()</h4></div>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <td>OVERALL</td>
+                    <td>MIN</td>
+                    <td>FT</td>
+                    <td>FTA</td>
+                    <td>2PT</td>
+                    <td>2PA</td>
+                    <td>3PT</td>
+                    <td>3PA</td>
+                    <td>FG</td>
+                    <td>FGA</td>
+                    <td>OR</td>
+                    <td>DR</td>
+                    <td>REB</td>
+                    <td>AST</td>
+                    <td>ST</td>
+                    <td>TO</td>
+                    <td>BS</td>
+                    <td>PF</td>
+                    <td>PTS</td>
+                    <td>EFF</td>
+                    <td>+/-</td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var playerStat in guestGames)
+                {
+                    <tr id="tr_@playerStat.StatId">
+                        @{
+                            Html.RenderPartial("_PlayersStatisticsRow", playerStat);
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+}
+else
+{
+    <div class="text-center"><h4>@Messages.NoGamesStatisticsForGame</h4></div>
+}
+<script>
+
+    $(document).ready(function () {
+        $(".onlynum").keydown(function (e) {
+            if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
+                (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+                (e.keyCode >= 35 && e.keyCode <= 40)) {
+                return;
+            }
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+

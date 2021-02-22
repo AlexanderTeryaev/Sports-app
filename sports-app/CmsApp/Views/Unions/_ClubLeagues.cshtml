@@ -1,0 +1,16 @@
+﻿
+
+<form id="detailsform" method="post" data-targetid="Leagues" action="@Url.Action("Leagues")" autocomplete="off" enctype="multipart/form-data">
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        <a href="@Url.Action("Create", "Leagues")"
+           class="btn btn-primary"
+           data-target="#newleague"
+           data-toggle="modal">@Messages.CreateLeague</a>
+
+
+        <a class="btn btn-info" href="@Url.Action("ExportReferees")">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportReferees
+        </a>
+    }
+</form>

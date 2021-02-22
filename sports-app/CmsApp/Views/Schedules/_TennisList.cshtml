@@ -1,0 +1,952 @@
+﻿@using DataService.DTO
+@using AppModel
+@using CmsApp.Helpers
+@using System.Data.SqlTypes
+@model TennisSchedules
+@{
+    var gameIds = Session["GameIds"] != null ? (int[])Session["GameIds"] : new int[] { };
+
+    TempData["IsChrono"] = false;
+
+    bool userIsEditor = User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers);
+    string publishVisible = userIsEditor ? "visible" : "hidden";
+    var categoryId = Model.CategoryId;
+    var desOrder = (bool)Session["desOrder"];
+    var timeInitialValues = new List<SelectListItem>
+                    {
+                            new SelectListItem{Value = "St", Text = @"St"}, //Start
+                            new SelectListItem{Value = "AR", Text = @"AR"}, //After rest
+                            new SelectListItem{Value = "NB", Text = @"NB"}, //Not before
+                            new SelectListItem{Value = "FB", Text = @"FB"}, //Follow by
+                            };
+    var defaultRefereeService = new RefereeService(0, 0);
+}
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+<input id="categoryId" type="text" value="@categoryId" hidden />
+<input id="isChronological" type="text" value="false" hidden />
+<div class="row">
+    <a href="javascript:gcList.SubmitTennisScheduleCond(@categoryId, false)"
+       class="btn btn-primary btn-edit">
+        <i class="glyphicon glyphicon-refresh"></i> @Messages.Refresh
+    </a>
+
+    <a href='javascript:gcList.SubmitTennisScheduleCond(@categoryId, true, @(desOrder.ToString().ToLowerInvariant()))'
+       class="btn btn-primary space-1">
+        @Messages.ShowGamesChronological
+    </a>
+
+    <a href='javascript:gcList.SubmitScheduleCond(@categoryId, false, @((!desOrder).ToString().ToLowerInvariant()))'
+       class="btn btn-primary">
+        @Messages.ChangeOrderStages
+    </a>
+
+
+    @if (userIsEditor)
+    {
+        <a href="@GlobVars.SiteUrl/LeagueTable/SchedulesForTennisCompetition/@categoryId?seasonId=@Model.SeasonId" target="_blank" class="btn btn-info view" style="float: left; margin-left: 5px;">@Messages.ExternalLink</a>
+
+        <a href="#" id="publishAll" class="btn btn-primary"
+           data-toggle="tooltip" title="@Messages.TooltipPublishApp"
+           onclick="javascript:gcList.publishAllCategoryGamesCycles(@Model.SeasonId, @Model.CategoryId, $('input.gamePublish').not(':checked').length > 0)">
+            @Messages.SelectAll
+        </a>
+        <span id="export-row" style="float:left; margin-left:5px;">
+            <select id="export-columns" name="Columns" form="exportExcelForm" multiple="multiple">
+                <option value="1">@Messages.GameId</option>
+                <option value="2">@Messages.LeagueId</option>
+                <option value="3">@Messages.League</option>
+                <option value="4">@Messages.Stage</option>
+                <option value="5">@Messages.Round</option>
+                <option value="6">@Messages.Date</option>
+                <option value="7">@Messages.Time</option>
+                <option value="8">@Messages.Day</option>
+                <option value="9">@Messages.HomeTeam @Messages.Id</option>
+                <option value="10">@Messages.HomeTeam</option>
+                <option value="11">@Messages.HomeTeam @Messages.Score.ToLowerInvariant()</option>
+                <option value="12">@Messages.GuestTeam @Messages.Id</option>
+                <option value="13">@Messages.GuestTeam</option>
+                <option value="14">@Messages.GuestTeam @Messages.Score.ToLowerInvariant()</option>
+                <option value="15">@UIHelpers.GetAuditoriumCaption(Model.Section) @Messages.Id</option>
+                <option value="16">@UIHelpers.GetAuditoriumCaption(Model.Section)</option>
+                <option value="17">@Messages.RefereesIds</option>
+                <option value="21">@Messages.Cycle @Messages.Number.ToLowerInvariant()</option>
+                <option value="22">@Messages.Group</option>
+                <option value="23">@Messages.QSets</option>
+            </select>
+        </span>
+        <a class="btn btn-info export" href="#" onclick="$('#exportExcelForm').submit();" data-toggle="tooltip" title="@Messages.TooltipExportToExcel" style="float:left; margin-left:5px;">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+            @using (Html.BeginForm("ExportToExcel", "Schedules", new { leagueId = categoryId, seasonId = Model.SeasonId }, FormMethod.Post, new { id = "exportExcelForm" }))
+            {
+                @Html.Hidden("gameIds")
+            }
+        </a>
+        <a href="#" class="btn btn-info" onclick="$('#uploadFileBtn').click()" data-toggle="tooltip" title="@Messages.TooltipImportFromExcel" style="float:left; margin-left:5px;">
+            <i href="#" class="glyphicon glyphicon-open" style="transform: rotate(180deg)"></i> @Messages.ImportFromExcel
+        </a>
+
+        <div>
+            @using (Ajax.BeginForm("TennisCompetitionTeamPlayerSwap", "Schedules", new { categoryId = categoryId, seasonId = Model.SeasonId }, new AjaxOptions { HttpMethod = "POST", InsertionMode = InsertionMode.Replace, LoadingElementId = "swap_loading", OnComplete = "refreshPage" }, new { @class = "row" }))
+            {
+                <div class="col-sm-8"></div>
+                <div class="col-sm-4">
+                    <h4 style="text-align:center;">@Messages.Swap @Messages.Players</h4>
+                    @{
+                        var playersInGame = new SelectList(ViewBag.PlayersInGames, nameof(PlayerViewModel.Id), nameof(PlayerViewModel.FullName), null);
+                        var playersNotInGame = new SelectList(ViewBag.PlayersNotInGames, nameof(PlayerViewModel.Id), nameof(PlayerViewModel.FullName), null);
+                        @Html.DropDownList("swap1", playersInGame, Messages.Select, new { @class = "form-control col-sm-4" })
+                        <div class="col-sm-4" style="text-align:center;">
+                            <button type="submit" class="btn btn-primary fa fa-exchange" style="width:50%;padding:9px 0px;"> <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate fa-spin" id="swap_loading" style="display:none;"></span></button>
+                        </div>
+                        @Html.DropDownList("swap2", playersNotInGame, Messages.Select, new { @class = "form-control col-sm-4" })
+                    }
+                </div>
+                if (ViewBag.SwapError != null)
+                {
+                    <div class="col-sm-8"></div>
+                    <div class="col-sm-4">
+                        <div class="alert alert-danger" role="alert">
+                            @ViewBag.SwapError
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
+
+@if (userIsEditor)
+{
+    using (Html.BeginForm("ImportFromExcel", "Schedules", FormMethod.Post, new { id = "importExcelForm", enctype = "multipart/form-data" }))
+    {
+        <input type="file" id="uploadFileBtn" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" name="importedExcel" style="display: none" />
+    }
+}
+
+@foreach (var group in Model.Groups)
+{
+    if (Model.Groups.Count() > 1 && (group.GameTypeId == GameTypeId.Playoff || group.GameTypeId == GameTypeId.Knockout || group.GameTypeId == GameTypeId.Knockout34) || group.GameTypeId == GameTypeId.Knockout34Consolences1Round || group.GameTypeId == GameTypeId.Knockout34ConsolencesQuarterRound)
+    {
+        <h4>@group.GroupName</h4>
+    }
+
+    int StageIndex = desOrder ? group.Stages.Count() + 1 : 0;
+    foreach (var stage in group.Stages)
+    {
+        if (desOrder)
+        {
+            StageIndex--;
+        }
+        else
+        {
+            StageIndex++;
+        }
+        var stageElemId = $"{group.GroupName.Replace(' ', '_')}_{stage.StageNumber}";
+        var idOpen = $"{stageElemId}open";
+        var idClose = $"{stageElemId}close";
+        bool stagePublished = stage.Items.All(gc => gc.IsPublished);
+        string isStageChecked = stagePublished ? "checked" : "";
+        <table>
+            <tr>
+                <td>
+                    <a href="javascript:gcList.stageOpen('@stageElemId')" id=@idOpen style="display: none">
+                        <i class="glyphicon glyphicon-plus"></i>
+                    </a>
+                    <a href="javascript:gcList.stageClose('@stageElemId')" id=@idClose>
+                        <i class="glyphicon glyphicon-minus"></i>
+                    </a>
+                </td>
+                <td>
+                    <h3>
+                        <input type="checkbox"
+                               id="stageItemsChbx_@stageElemId"
+                               class="stageItemsChbx"
+                               value="@(stageElemId)" @isStageChecked
+                               onclick="javascript:gcList.publishTennisGameCyclesByStage(@Model.SeasonId, @Model.CategoryId, @stage.StageId, this.checked, '@stageElemId')" />
+                        @UIHelpers.GetStageName(group.GameTypeId, group.BracketsCount, StageIndex, null, group.Rounds ?? 1)
+                    </h3>
+                </td>
+            </tr>
+        </table>
+
+        <div id=@stageElemId>
+
+            @foreach (var gamesInRound in stage.Items.GroupBy(t => t.RoundNum))
+            {
+                var cycleNum = 0;
+                var differences = new Dictionary<int?, int>();
+                if (Model.RoundStartCycle == RoundStartCycle.StartEachRoundFromCycleOne)
+                {
+                    var min = gamesInRound.First().CycleNum;
+                    foreach (var game in gamesInRound)
+                    {
+                        if (!differences.ContainsKey(game.GroupId))
+                        {
+                            differences.Add(game.GroupId, game.CycleNum - min);
+                        }
+
+                        game.CycleNum -= differences[game.GroupId];
+                    }
+                }
+
+                foreach (var games in gamesInRound.GroupBy(t => t.CycleNum))
+                {
+                    cycleNum++;
+                    <div class="row">
+                        <div class="col-lg-5" style="display: inline-block; vertical-align: middle; float: none">
+                            @using (Ajax.BeginForm("MoveTennisDate", null, new AjaxOptions { UpdateTargetId = "schedules_pl" }, null))
+                            {
+                                <table class="cyclemoveform">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <h4>
+                                                    @if (!(Model.Groups.Count() > 0 && Model.Groups.All(g => g.GameTypeId == GameTypeId.Playoff || g.GameTypeId == GameTypeId.Knockout || g.GameTypeId == GameTypeId.Knockout34 || g.GameTypeId == GameTypeId.Knockout34Consolences1Round || g.GameTypeId == GameTypeId.Knockout34ConsolencesQuarterRound)))
+                                                    {
+                                                        if (Model.RoundStartCycle == RoundStartCycle.StartEachRoundFromCycleOne)
+                                                        {
+                                                            <text>@Messages.Cycle @cycleNum</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>@Messages.Cycle @(games.Key + 1)</text>
+                                                        }
+                                                    }
+                                                </h4>
+                                            </td>
+                                            @if (userIsEditor)
+                                            {
+                                                if (group.GameTypeId == GameTypeId.Division)
+                                                {
+                                                    <td>
+                                                        <a class="btn btn-primary"
+                                                           href="@Url.Action("AddNew", new { stageId = stage.StageId, num = games.Key })"
+                                                           data-target="#addsycle"
+                                                           data-toggle="modal">@Messages.AddGame</a>
+                                                    </td>
+                                                    <td>
+                                                        <div class="space-3"></div>
+                                                    </td>
+                                                }
+                                                <td>
+                                                    <div style="position: relative">
+                                                        <input type="text" name="StartDate" value="@(games.First().StartDate.Ticks == SqlDateTime.MinValue.Value.Ticks ? "" : games.First().StartDate.ToString("dd/MM/yyyy HH:mm"))" class="form-control frm-date required" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="space-2"></div>
+                                                </td>
+                                                <td>
+                                                    <input type="checkbox" name="IsAll" value="True" /> @Messages.AllCycles
+                                                </td>
+                                                <td>
+                                                    <div class="space-2"></div>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-primary" disabled>@Messages.MoveCycle</button>
+                                                    <input type="hidden" name="StageId" value="@stage.StageId" />
+                                                    <input type="hidden" name="CycleNum" value="@games.Key" />
+                                                </td>
+                                                if (group.GameTypeId == GameTypeId.Division)
+                                                {
+                                                    <td>
+                                                        &nbsp;
+                                                        <a onclick="deleteCycle('@stage.StageId','@games.Key','@categoryId')" class="@AppCss.Delete"></a>
+                                                        &nbsp;
+                                                        @{ var spinnerName = $"spinner_{stage.StageId}_{games.Key}_{categoryId}";}
+                                                        <span id="@spinnerName" style="display:none" class="fa fa-spin fa-spinner"></span>
+                                                    </td>
+                                                }
+                                            }
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-3" style="display: inline-block; vertical-align: middle; float: none">
+                            <div class="pull-right" style="visibility: @publishVisible">
+                                @Messages.IsPublished
+                                @{
+                                    string gameCylesGroupNumAndStage = "publish_" + stage.StageId + '_' + games.Key;
+                                    bool published = games.All(g => g.IsPublished);
+                                    string isChecked = published ? "checked" : "";
+                                }
+                                <input id=@gameCylesGroupNumAndStage type="checkbox"
+                                       class="gamePublish" @isChecked
+                                       onclick="gcList.publishTennisGamesCyclesByCycleNumber(@Model.SeasonId, @categoryId, @stage.StageId, @games.Key)" />
+                            </div>
+                        </div>
+                        <button type="button" @(games.Where(g => g.GameStatus != GameStatus.Ended && ((g.FirstPlayerId.HasValue || g.FirstPlayerPairId.HasValue) && (g.SecondPlayerId.HasValue || g.SecondPlayerPairId.HasValue))).Count() > 0 ? "" : "disabled") class="btn btn-primary" style="float:left;margin-left: 30px;" data-stageid="@stage.StageId" onclick="setTennisRound(this);">@Messages.EndAllGames <span style="display:none" class="fa fa-spin fa-spinner"></span></button>
+                    </div>
+
+                    <div class="prt_div">
+                        <table id="res_tbl" class="table table-bordered offset-2 @gameCylesGroupNumAndStage stage_@stage.StageId">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2"></th>
+                                    <th rowspan="2">@Messages.Status</th>
+                                    <th rowspan="2">@Messages.Group</th>
+                                    @if (group.GameTypeId == GameTypeId.Playoff || group.GameTypeId == GameTypeId.Knockout || group.GameTypeId == GameTypeId.Knockout34 || group.GameTypeId == GameTypeId.Knockout34Consolences1Round || group.GameTypeId == GameTypeId.Knockout34ConsolencesQuarterRound)
+                                    {
+                                        <th rowspan="2" style="min-width: 52px;">@Messages.Ranked</th>
+                                    }
+                                    @if (Model.Games?.Any(t => t.RoundNum.HasValue && t.RoundNum > 1) == true)
+                                    {
+                                        <th>@Messages.Round</th>
+                                    }
+                                    <th rowspan="2" style="min-width: 180px;">@Messages.StartDate</th>
+                                    <th rowspan="2" style="min-width: 90px;">
+                                        @{
+                                            var distinctedTimeInitials = games.Select(x => x.TimeInitial)?.Distinct()?.ToList();
+                                            var selectedTimeInitialsId = distinctedTimeInitials.Count == 1 ? distinctedTimeInitials.FirstOrDefault() : null;
+                                            var timeInitialAllMain = new SelectList(timeInitialValues, "Value", "Text", selectedTimeInitialsId);
+                                        }
+                                        @Html.DropDownList("AuditoriumId", timeInitialAllMain, Messages.Select,
+                                                                                                   new
+                                                                                                   {
+                                                                                                       id = $"all_timeinitials_{stage.StageId}_{games.Key}",
+                                                                                                       @class = "form-control timeInitialsList",
+                                                                                                       style = "height:30px;margin: -4px 4px;",
+                                                                                                       onchange = $"setAllTennisTimeInitials('{stage.StageId}','{games.Key}')"
+                                                                                                   })
+                                    </th>
+                                    <th rowspan="2">@Messages.Day</th>
+                                    <th rowspan="3">
+                                        <div class="col-sm-3">@UIHelpers.GetAuditoriumCaption(Model.Section)</div>
+                                        <div class="col-sm-9">
+                                            @{
+                                                var distinctedAuditoriums = games.Select(x => x.FieldId)?.Distinct()?.ToList();
+                                                var selectedAuditoriumId = distinctedAuditoriums.Count == 1 ? distinctedAuditoriums.FirstOrDefault() : null;
+                                                var auditoriumsValue = Model.Auditoriums ?? new List<AuditoriumShort>();
+                                                var auditoriumMain = new SelectList(auditoriumsValue, nameof(AuditoriumShort.Id), nameof(AuditoriumShort.Name), selectedAuditoriumId);
+                                            }
+                                            @Html.DropDownList("AuditoriumId", auditoriumMain, Messages.Select,
+                                                                                                       new
+                                                                                                       {
+                                                                                                           id = $"all_auditorium_{stage.StageId}_{games.Key}",
+                                                                                                           @class = "form-control auditoriumsSearchList",
+                                                                                                           style = "height:30px;margin: -4px 4px;",
+                                                                                                           onchange = $"setAllTennisAuditouriums('{stage.StageId}','{games.Key}')"
+                                                                                                       })
+                                        </div>
+                                    </th>
+                                    <th rowspan="2">@Messages.Referee</th>
+                                    <th rowspan="2" class="text-center">@Messages.Player</th>
+                                    <th colspan="5" rowspan="1" style="text-align:center">@Messages.Set</th>
+                                    <th rowspan="2">@Messages.Score</th>
+                                    @if (userIsEditor)
+                                    {
+                                        <th rowspan="2"></th>
+                                        if (group.GameTypeId == GameTypeId.Division)
+                                        {
+                                            <th rowspan="2"></th>
+                                        }
+                                        <th rowspan="2" class="remove_print" style="min-width:140px;"></th>
+                                        <th rowspan="2"></th>
+                                    }
+                                </tr>
+                                <tr>
+                                    <th colspan="1" style="text-align:center">1</th>
+                                    <th colspan="1" style="text-align:center">2</th>
+                                    <th colspan="1" style="text-align:center">3</th>
+                                    <th colspan="1" style="text-align:center">4</th>
+                                    <th colspan="1" style="text-align:center">5</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    List<TennisGameCycle> gamesInProperOrder;
+                                    if (group.GameTypeId == GameTypeId.Playoff || group.GameTypeId == GameTypeId.Knockout || group.GameTypeId == GameTypeId.Knockout34 || group.GameTypeId == GameTypeId.Knockout34Consolences1Round || group.GameTypeId == GameTypeId.Knockout34ConsolencesQuarterRound)
+                                    {
+                                        var thirdPlace = games.FirstOrDefault(g => g.MaxPlayoffPos == 3);
+                                        var gamesOrdered = games.Where(g => g.MaxPlayoffPos != 3).OrderBy(gm => gm.GroupId).ThenBy(gm => gm.MaxPlayoffPos).ToList();
+                                        var gamesGrouped = gamesOrdered.GroupBy(g => g.MinPlayoffPos);
+                                        gamesInProperOrder = new List<TennisGameCycle>();
+                                        foreach (var gameGroup in gamesGrouped)
+                                        {
+                                            int topLastAdded = -1;
+                                            int bottomLastAdded = -1;
+                                            bool isReverse = false;
+                                            bool switchOrder = true;
+                                            List<TennisGameCycle> topOrder = new List<TennisGameCycle>();
+                                            List<TennisGameCycle> bottomOrder = new List<TennisGameCycle>();
+                                            if (gameGroup.Count() == 16)
+                                            {
+                                                var order = new int[] { 1, 16, 9, 8, 5, 12, 13, 4, 3, 14, 11, 6, 7, 10, 15, 2 };
+                                                for (int i = 0; i < gameGroup.Count(); i++)
+                                                {
+                                                    var at = Array.IndexOf(order, i + 1);
+                                                    gamesInProperOrder.Add(gameGroup.ElementAt(at));
+                                                }
+                                            }
+                                            else
+                                            {
+                                                for (int i = 0; i < gameGroup.Count(); i++)
+                                                {
+                                                    if (i % 4 == 0)
+                                                    {
+                                                        switchOrder = !switchOrder;
+                                                    }
+                                                    if (i % 2 == 0)
+                                                    {
+                                                        if (isReverse)
+                                                        {
+                                                            if (!switchOrder)
+                                                            {
+                                                                bottomLastAdded += 1;
+                                                                bottomOrder.Insert(bottomLastAdded, gameGroup.ElementAt(i));
+                                                            }
+                                                            else
+                                                            {
+                                                                bottomOrder.Insert(bottomLastAdded + 1, gameGroup.ElementAt(i));
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (!switchOrder)
+                                                            {
+                                                                topLastAdded += 1;
+                                                                topOrder.Insert(topLastAdded, gameGroup.ElementAt(i));
+                                                            }
+                                                            else
+                                                            {
+                                                                topOrder.Insert(topLastAdded + 1, gameGroup.ElementAt(i));
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (isReverse)
+                                                        {
+                                                            if (!switchOrder)
+                                                            {
+                                                                topOrder.Insert(topLastAdded + 1, gameGroup.ElementAt(i));
+                                                            }
+                                                            else
+                                                            {
+                                                                topLastAdded += 1;
+                                                                topOrder.Insert(topLastAdded, gameGroup.ElementAt(i));
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (!switchOrder)
+                                                            {
+                                                                bottomOrder.Insert(bottomLastAdded + 1, gameGroup.ElementAt(i));
+                                                            }
+                                                            else
+                                                            {
+                                                                bottomLastAdded += 1;
+                                                                bottomOrder.Insert(bottomLastAdded, gameGroup.ElementAt(i));
+                                                            }
+                                                        }
+                                                        isReverse = !isReverse;
+                                                    }
+                                                }
+                                                gamesInProperOrder.AddRange(topOrder);
+                                                gamesInProperOrder.AddRange(bottomOrder);
+                                            }
+
+
+                                        }
+
+                                        if (thirdPlace != null)
+                                        {
+                                            gamesInProperOrder.Insert(0, thirdPlace);
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        gamesInProperOrder = games.OrderBy(gm => gm.GroupId).ThenBy(gm => gm.StartDate).ToList();
+                                    }
+
+                                }
+                                @foreach (var m in gamesInProperOrder)
+                                {
+                                    defaultRefereeService.UseSameInstanceForNewData(m.CycleId, m.CategoryId);
+                                    var refereeService = defaultRefereeService;
+                                    var auditoriumsModel = Model.Auditoriums == null ? new List<AuditoriumShort>() : Model.Auditoriums;
+                                    var auditoriums = new SelectList(auditoriumsModel, nameof(AuditoriumShort.Id), nameof(AuditoriumShort.Name), m.FieldId);
+                                    var spectatorsModel = Model.Spectators?.Values == null ? new List<AppModel.User>() : Model.Spectators.Values;
+                                    var spectators = new MultiSelectList(spectatorsModel, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), m.SpectatorIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
+                                    var isWaitingDivision = m.GameStatus != GameStatus.Started && m.GameStatus != GameStatus.Ended && m.TennisGroup.TypeId == GameTypeId.Division;
+                                    var _checked = m.IsPublished ? "checked" : string.Empty;
+                                    var dayOfWeek = LangHelper.GetDayOfWeek(m.StartDate);
+                                    var timeInitialSelectList = new SelectList(timeInitialValues, "Value", "Text", m.TimeInitial);
+
+                                    <tr id="row@(m.CycleId)" class="cycle_tr" data-cycleId="@m.CycleId">
+
+                                        <td class="remove_print">
+                                            @if (m.IsDateUpdated)
+                                            {
+                                                <span class="fa fa-circle" style="color:darkorange" data-toggle="tooltip" title="@Messages.TooltipDataIsChanged"></span>
+                                            }
+                                            <input type="checkbox" id="gameCycleItemChbx_@m.CycleId"
+                                                   class="gameCycleItemChbx" name="gameCycleItemsChbx" value="@(m.CycleId)" @(_checked)
+                                                   onclick="gcList.publishTennisGamesCycle(@stage.StageId, @games.Key, @m.CycleId)" />
+                                        </td>
+                                        @using (Ajax.BeginForm("UpdateTennis", null,
+                                    new AjaxOptions
+                                    {
+                                        OnSuccess = "updateSuccess()",
+                                        OnFailure = "updateFailed(data)"
+                                    },
+                                    new { id = "gamefrm" + m.CycleId }))
+                                        {
+                                            @Html.Hidden("FirstPlayerId", m.FirstPlayerId)
+                                            @Html.Hidden("SecondPlayerId", m.SecondPlayerId)
+                                            <td>
+                                                @if (m.GameStatus == GameStatus.Started)
+                                                {
+                                                    <span class="label label-success">@Messages.Started</span>
+                                                }
+                                                else if (m.GameStatus == GameStatus.Ended)
+                                                {
+                                                    <span class="label label-danger">@Messages.Ended</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="label label-default">@Messages.Waiting</span>
+                                                }
+
+                                            </td>
+                                            if (m.TennisGroup != null)
+                                            {
+                                                <td>@m.TennisGroup.Name</td>
+                                            }
+                                            else
+                                            {
+                                                <td class="text-center"></td>
+                                            }
+                                            if (group.GameTypeId == GameTypeId.Playoff || group.GameTypeId == GameTypeId.Knockout || group.GameTypeId == GameTypeId.Knockout34 || group.GameTypeId == GameTypeId.Knockout34Consolences1Round || group.GameTypeId == GameTypeId.Knockout34ConsolencesQuarterRound)
+                                            {
+                                                <td>
+                                                    @m.Rank <br />
+                                                </td>
+                                            }
+                                            if (Model.Games?.Any(t => t.RoundNum.HasValue && t.RoundNum > 1) == true)
+                                            {
+                                                <td>@m.RoundNum</td>
+                                            }
+                                            if (userIsEditor)
+                                            {
+                                                <td style="position: relative">
+                                                    <div class="row">
+                                                        <div class="col-sm-3">@Html.CheckBox("IsNotSetYet", m.IsNotSetYet, new { form = "gamefrm" + m.CycleId, @class = "isSetYet", title = Messages.MarkNotSet })</div>
+                                                        <input name="StartDate" class="form-control frm-date col-sm-9" type="text" value="@(m.StartDate.Ticks == SqlDateTime.MinValue.Value.Ticks ? "" : m.StartDate.ToString("dd/MM/yyyy HH:mm"))" form="gamefrm@(m.CycleId)" />
+                                                    </div>
+                                                </td>
+                                                <td>@Html.DropDownList(nameof(m.TimeInitial), timeInitialSelectList, Messages.Select, new { @class = "form-control timeinitial", form = "gamefrm" + m.CycleId, style = "width: 88px;" })</td>
+                                                <td>@dayOfWeek</td>
+                                                <td>@Html.DropDownList("AuditoriumId", auditoriums, Messages.Select, new { @class = "form-control auditoriums auditoriumsSearchList", form = "gamefrm" + m.CycleId })</td>
+
+                                                {
+                                                    var selecedRefereeId = m.RefereeIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)?.FirstOrDefault();
+                                                    var referee = new SelectList(Model.Referees?.Values == null ? new List<AppModel.User>()
+                                                                                    : Model.Referees.Values, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), selecedRefereeId).AsEnumerable();
+                                                    <td>
+                                                        @Html.DropDownList("RefereeIds", referee, Messages.Select, new { @class = $"form-control", form = "gamefrm" + m.CycleId })
+                                                    </td>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <td style="position: relative">
+                                                    @m.StartDate
+                                                </td>
+                                                <td>@m.TimeInitial</td>
+                                                <td>@(m.FieldId.HasValue ? m.Auditorium.Name : "")</td>
+
+                                                <td>
+                                                    @(string.Join(",", Model.Referees.Where(r => !string.IsNullOrEmpty(m.RefereeIds) && m.RefereeIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Contains(r.Key.ToString())).Select(r => r.Value.FullName)))
+                                                </td>
+                                            }
+                                            var atModel = new TennisGamePartialModel(m)
+                                            {
+                                                SeasonId = Model.SeasonId,
+                                                isWaitingDivision = isWaitingDivision,
+                                                athletesByGroups = Model.athletesByGroup
+                                            };
+                                            var gpModel = new TennisGamePartialModel(m)
+                                            {
+                                                SeasonId = Model.SeasonId,
+                                                isWaitingDivision = isWaitingDivision,
+                                                teamsByGroups = Model.teamsByGroups
+                                            };
+                                            <td>
+                                                <table style="height:68px;width:100%">
+                                                    <tr>
+                                                        <td>
+                                                            <label class="home-team-label">
+                                                                @if (m.TeamsPlayer != null)
+                                                                {
+                                                                    @m.TeamsPlayer.User.FullName @(m.FirstPairPlayer != null ? $" / {m.FirstPairPlayer?.User?.FullName}" : string.Empty)
+                                                                }
+                                                            </label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label class="home-team-label">
+                                                                @if (m.TeamsPlayer1 != null)
+                                                                {
+                                                                    @m.TeamsPlayer1.User.FullName @(m.SecondPairPlayer != null ? $" / {m.SecondPairPlayer?.User?.FullName}" : string.Empty)
+                                                                }
+                                                            </label>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+
+                                            <td>
+                                                <table style="height:68px; width:100%; min-width:40px;">
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="FirstScoreOne" id="FirstScoreOne" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 1).FirstPlayerScore" /></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="FirstScoreTwo" id="FirstScoreTwo" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 1).SecondPlayerScore" /></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td>
+                                                <table style="height:68px; width:100%; min-width:40px;">
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="SecondScoreOne" id="SecondScoreOne" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 2).FirstPlayerScore" /></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="SecondScoreTwo" id="SecondScoreTwo" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 2).SecondPlayerScore" /></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td>
+                                                <table style="height:68px; width:100%; min-width:40px;">
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="ThirdScoreOne" id="ThirdScoreOne" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 3).FirstPlayerScore" /></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="ThirdScoreTwo" id="ThirdScoreTwo" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 3).SecondPlayerScore" /></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td>
+                                                <table style="height:68px; width:100%; min-width:40px;">
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="ForthScoreOne" id="ForthScoreOne" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 4).FirstPlayerScore" /></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="ForthScoreTwo" id="ForthScoreTwo" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 4).SecondPlayerScore" /></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            <td>
+                                                <table style="height:68px; width:100%; min-width:40px;">
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="FifthScoreOne" id="FifthScoreOne" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 5).FirstPlayerScore" /></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><input type="text" class="form-control setscore" form="@("gamefrm" + m.CycleId)" name="FifthScoreTwo" id="FifthScoreTwo" value="@m.TennisGameSets.FirstOrDefault(s => s.SetNumber == 5).SecondPlayerScore" /></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+
+                                            <td style="text-align:center">
+                                                <table style="height:68px;width:100%">
+                                                    <tr>
+                                                        <td style="text-align:center">
+                                                            @m.FirstPlayerScore
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="text-align:center">
+                                                            @m.SecondPlayerScore
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                            if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+                                            {
+                                                if (group.GameTypeId == GameTypeId.Division)
+                                                {
+                                                    <td class="remove_print">
+                                                        <a class="btn btn-sm btn-danger"
+                                                           href="@Url.Action("DeleteTennis", new { id = m.CycleId })"
+                                                           data-ajax-confirm="@Messages.DeleteConfirm"
+                                                           data-ajax-update="#schedules"
+                                                           data-ajax="true"
+                                                           title="@Messages.Delete">
+                                                            <i class="glyphicon glyphicon-trash"></i>
+                                                        </a>
+                                                    </td>
+                                                }
+                                                <td>
+                                                    <input name="CycleId" type="hidden" value="@m.CycleId" form="gamefrm@(m.CycleId)" />
+                                                    <a class="btn btn-sm btn-success"
+                                                       name="savebtn"
+                                                       disabled="disabled"
+                                                       onclick="gcList.SubmitTennisGameForm(this,@m.CycleId)"
+                                                       title="@Messages.Save">
+                                                        <i class="glyphicon glyphicon-saved"></i>
+                                                        <i class="fa fa-spin fa-spinner" style="display: none;"></i>
+                                                    </a>
+
+
+
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        string isDisabled = "";
+                                                        if (m.TeamsPlayer == null || m.TeamsPlayer1 == null)
+                                                        {
+                                                            isDisabled = " disabled ";
+                                                        }
+                                                    }
+                                                    <a class="btn @(m.GameStatus == GameStatus.Ended ? "btn-danger" : "btn-primary")" @isDisabled
+                                                       onclick="setTennis(@m.CycleId, '@m.GameStatus',this)">
+                                                        @if (m.GameStatus == GameStatus.Ended)
+                                                        {
+                                                            @Messages.ResetGame
+                                                        }
+                                                        else
+                                                        {
+                                                            @Messages.EndGame
+                                                        }
+                                                        <i class="fa fa-spin fa-spinner" style="display: none;"></i>
+                                                    </a>
+                                                </td>
+                                            }
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+                    </div>
+                }
+            }
+        </div>
+    }
+}
+
+
+<script type="text/javascript" src="~/Scripts/pages/gameCycleList.js?ver=4"></script>
+<script src="~/Scripts/pages/officialsFeature.js"></script>
+
+<script>
+    $(document).ready(function() {
+        gcList.documentReady();
+        $('#choice-submit').click(function() {
+            gcList.SubmitScheduleCond(@categoryId, true);
+        });
+
+        $("#export-columns").multiselect({
+            includeSelectAllOption: true,
+            buttonText: function(options, select) {
+                return '@Messages.ChooseColumns';
+            },
+            selectAllText: "@Messages.SelectAllPlayers",
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+
+    });
+
+
+    function refreshPage() {
+        window.location.reload();
+    }
+
+
+
+    var cntrlIsPressed = false;
+    $(document).keydown(function (event) {
+        if (event.which == "17")
+            cntrlIsPressed = true;
+    });
+
+    function setAllTennisAuditouriums(stageId, cycleNum) {
+            let auditoriums = $(".publish_" + stageId + "_" + cycleNum).find(".auditoriums");
+            let selectedAuditoriumId = $("#all_auditorium_" + stageId + "_" + cycleNum).val();
+            if (auditoriums.length > 0) {
+                $.ajax({
+                    url: "/Games/SetAllTennisAuditouriums",
+                    type: "POST",
+                    data: {
+                        stageId: stageId,
+                        cycleNum: cycleNum,
+                        auditoriumId: selectedAuditoriumId
+                    },
+                    success: function() {
+                        auditoriums.each(function(index, elem) {
+                            $('option[value="' + selectedAuditoriumId + '"]', elem).prop('selected', true);
+                            $(elem).multiselect('refresh');
+                        });
+                    }
+                });
+            }
+    }
+
+
+    function setAllTennisTimeInitials(stageId, cycleNum) {
+            let timeInitials = $(".publish_" + stageId + "_" + cycleNum).find(".timeinitial");
+            let selectedTimeInitialId = $("#all_timeinitials_" + stageId + "_" + cycleNum).val();
+            if (timeInitials.length > 0) {
+                $.ajax({
+                    url: "/Games/SetAllTennisTimeInitials",
+                    type: "POST",
+                    data: {
+                        stageId: stageId,
+                        cycleNum: cycleNum,
+                        timeInitial: selectedTimeInitialId
+                    },
+                    success: function() {
+                        timeInitials.each(function(index, elem) {
+                            $('option[value="' + selectedTimeInitialId + '"]', elem).prop('selected', true);
+                            $(elem).multiselect('refresh');
+                        });
+                    }
+                });
+            }
+    }
+
+    async function setTennisRound(elem) {
+        if (confirm("@Messages.ConfirmEndAllGames")) {
+            $(".fa-spinner",elem).show();
+            var stageId = $(elem).data("stageid");
+            var cycleIdsArr = [];
+            $(".stage_" + stageId).find(".cycle_tr").each(function (index, element) {
+                var cycleId = $(element).data("cycleid");
+                cycleIdsArr.push(cycleId);
+            });
+
+            for (var i = 0; i < cycleIdsArr.length; i++) {
+                var load = false;
+                if (i + 1 == cycleIdsArr.length) {
+                    load = true;
+                }
+                await setTennisForBulk(cycleIdsArr[i], load);
+            }
+
+        }
+    }
+
+
+    function setTennisForBulk(cycleId, isLoad) {
+       var gamefrm = $("#gamefrm" + cycleId);
+       $.ajax({
+            url: "/Schedules/EndTennisGame",
+            type: "POST",
+            dataType: "json",
+            data: gamefrm.serialize(),
+            success: function (response) {
+                if (isLoad) {
+                   setTimeout(function() {
+                        $("#schedules_pl").loadWith('@Url.Action("TennisList", "Schedules", new { categoryId = Model.CategoryId, @desOrder = desOrder, seasonId = Model.SeasonId }, this.Request.Url.Scheme)');
+                    }, 1000);
+               }
+            },
+            error: function () {
+
+            }
+       });
+    }
+
+
+    function setTennis(cycleId, gameStatus, element) {
+        var isCtrlPressed = cntrlIsPressed;
+        var message = "";
+        var tr = $(element).parent().parent();
+        var dateVal = $('.frm-date', tr).val();
+        if (dateVal == "" && gameStatus != '@GameStatus.Ended') {
+            alert(window.Resources.Messages.MustAddDateBeforeEndGame);
+            return;
+        }
+        if (gameStatus == '@GameStatus.Ended') {
+            message = "@Messages.ResetGame?";
+        } else {
+            message = "@Messages.EndGame?";
+        }
+        if (isCtrlPressed || confirm(message)) {
+            var gamefrm = $("#gamefrm" + cycleId);
+            $(".fa-spinner",element).show();
+            $.ajax({
+                url: "/Schedules/SetTennis",
+                type: "POST",
+                dataType: "json",
+                data: gamefrm.serialize(),
+                success: $(function (response) {
+
+                }),
+                error: function () {
+                    alert("error");
+                },
+                complete: function () {
+                    //TODO update result +reset scores
+                    //update only on success
+                    //update Ended Status for next click
+                    if (isCtrlPressed) {
+                        $(".fa-spinner", element).hide();
+                        $(element).parent().prev().children().first().next().attr("disabled", "disabled");
+                        if (gameStatus == '@GameStatus.Ended') {
+                            $(element).html('@Messages.EndGame<i class="fa fa-spin fa-spinner" style="display: none; "></i>');
+                        } else {
+                            $(element).html('@Messages.ResetGame<i class="fa fa-spin fa-spinner" style="display: none; "></i>');
+                        }
+                    } else {
+                        $("#schedules_pl").loadWith('@Url.Action("TennisList", "Schedules", new { categoryId = Model.CategoryId, @desOrder = desOrder, seasonId = Model.SeasonId }, this.Request.Url.Scheme)');
+                    }
+                }
+            });
+        }
+    }
+
+    function updateSuccess() {
+        console.log("updateSuccess");
+        $("#schedules_pl").loadWith('@Url.Action("TennisList", "Schedules", new { categoryId = Model.CategoryId, @desOrder = desOrder, seasonId = Model.SeasonId }, this.Request.Url.Scheme)');
+    }
+
+    function deleteCycle(stageId, cycleNum, leagueId) {
+        var spinner = $("#spinner_" + stageId + "_" + cycleNum + "_" + leagueId);
+        var needDelete = confirm('@Messages.DeleteConfirm');
+        if (needDelete) {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("DeleteCycle", "Schedules")',
+                data: {
+                    stageId: stageId,
+                    cycleNum: cycleNum,
+                    leagueId: leagueId
+                },
+                beforeSend: function() {
+                    $(spinner).show();
+                },
+                complete: function() {
+                    $(spinner).hide();
+                },
+                success: function(data) {
+                    $(spinner).hide();
+                    $("#schedules").html(data);
+                }
+            });
+        }
+    }
+</script>
+<div class="modal fade" id="barcket-potential-teams" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>

@@ -1,0 +1,684 @@
+﻿@using AppModel
+@using CmsApp.Controllers
+@model CompetitionDiscipline
+
+@{
+
+    bool refereePermission = User.GetSessionWorkerValueOrTopLevelLeagueJob((int)ViewBag.LeagueId) == JobRole.Referee;
+    var disabledAttribute = refereePermission ? "" : "disabled";
+
+    var SuccessList = new List<SelectListItem>
+{
+        new SelectListItem {Text = "", Value = "0"},
+        new SelectListItem {Text = "-", Value = "1" },
+        new SelectListItem {Text = "X", Value = "2" }
+    };
+
+    var AlternativeResultList = new List<SelectListItem>
+    {
+            new SelectListItem {Text = "", Value = "0"},
+            new SelectListItem {Text = "DNF", Value = "1" },
+            new SelectListItem {Text = "DQ", Value = "2" },
+            new SelectListItem {Text = "DNS", Value = "3" },
+            new SelectListItem {Text = "NM", Value = "4" }
+    };
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9"><h4 class="modal-title">@Model.League.Name -  @ViewBag.DisciplineName - @Messages.CompetitionResults</h4></div><div class="pull-right" style="line-height:25px;margin-left: 20px;">
+            <strong>@Messages.Count.ToLower(): <text id="athletics_count">@(Model?.CompetitionDisciplineRegistrations.Count() ?? 0)</text></strong>
+        </div>
+        <a id="excelBtnExp" class="btn btn-info" style="display:none;" href="#" onclick="$('#exportregistrations').submit()">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+            @using (Html.BeginForm("ExportDisciplineRegistrationsToExcel", "Clubs", new { clubId = ViewBag.ClubId, disciplineId = ViewBag.DisciplineId, seasonId = ViewBag.SeasonId, leagueId = ViewBag.LeagueId },
+FormMethod.Post, new { id = "exportregistrations" })) { }
+        </a>
+        <a href="@GlobVars.SiteUrl/LeagueTable/AthleticsDisciplineResults/@Model.Id" target="_blank" class="btn btn-primary pull-left">@Messages.ExternalLink</a>
+    </div>
+    <div>
+        @if (@Model.League.LeagueStartDate != null)
+        {
+            @Model.League.LeagueStartDate.Value.ToString("dd/MM/yyyy")
+        }
+    </div>
+
+
+
+</div>
+<style>
+    .resultFieldR {
+        display: unset !important;
+        width: 60px !important;
+    }
+
+    .fill-results-table > thead > tr > th, .fill-results-table > tbody > tr > td {
+        text-align: center;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+<div class="modal-body">
+    <div class="row" style="margin:0px 10px;">
+        @using (Ajax.BeginForm("UpdateNumberOfPassesToNextStageForLiveResult", "Leagues", new AjaxOptions { HttpMethod = "Post", UpdateTargetId = "athleticsliveresultlist_pl" }, new { }))
+        {
+            <input type="hidden" name="CompetitionDisciplineId" value="@Model.Id" />
+            <label>@Messages.NumberOfWhomPassesToNextStage: </label><input type="number" onlypossitiveornull class="form-control" name="NumPassNextStage" style="width:60px;direction:ltr;display:unset;margin-left:4px;margin-right:4px;" value="@Model.NumberOfWhoPassesToNextStage" />
+            <button type="submit" class="btn btn-primary">@Messages.Save</button>
+        }
+    </div>
+    <div class="row" style="margin-top:20px;">
+        <div class="col-sm-12">
+            <div class="table-responsive">
+                <table id="print_table" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.AthleteNumber</th>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.ClubName</th>
+                            <th style="width: 160px;">@Messages.Result 1 @(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.Wind : string.Empty)</th>
+                            <th style="width: 160px;">@Messages.Result 2 @(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.Wind : string.Empty)</th>
+                            <th style="width: 160px;">@Messages.Result 3 @(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.Wind : string.Empty)</th>
+                            <th style="width: 160px;">@Messages.Result 4 @(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.Wind : string.Empty)</th>
+                            <th style="width: 160px;">@Messages.Result 5 @(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.Wind : string.Empty)</th>
+                            <th style="width: 160px;">@Messages.Result 6 @(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.Wind : string.Empty)</th>
+                            <th>@Messages.Records</th>
+                            <th></th>
+                            <th>@Messages.FinalResult</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <style>
+                            .resultField {
+                                width: 40px;
+                                text-align: center;
+                            }
+                        </style>
+                        @{ 
+                            var liveIndex = 0;
+                            var itemsCount = Model.CompetitionDisciplineRegistrations.Count();
+                            var extraWind = ViewBag.Format == 10 || ViewBag.Format == 11 ? 1 : 0;
+                            var column2index = itemsCount*(2+extraWind);
+                            var column3index = itemsCount*(2+extraWind)*2;
+                            var column4index = itemsCount*(2+extraWind)*3;
+                            var column5index = itemsCount*(2+extraWind)*4;
+                            var column6index = itemsCount*(2+extraWind)*5;
+                            var rowIndex = ViewBag.Format == 10 || ViewBag.Format == 11 ? 3 : 2;
+                        }
+                        @foreach (var reg in Model.CompetitionDisciplineRegistrations)
+                        {
+                            liveIndex++;
+                            CompetitionResult result = null;
+                            if (reg.CompetitionResult.Count() > 0)
+                            {
+                                result = reg.CompetitionResult.FirstOrDefault();
+                            }
+                            var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                    <tr id="result_row_@reg.Id" data-athleticid="@athleteNumber">
+                        <td>@athleteNumber</td>
+                        <td>@reg.User.FullName</td>
+                        <td>@reg.Club.Name</td>
+                        <td>
+                            @if (result != null)
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(liveIndex*rowIndex)" name="Result1" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:60px;direction:ltr;" @(ViewBag.Format == 10 ? "format10" : "format7") value="@result.Attempt1" onchange="updateExistingLiveResult(1,@reg.Id)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(liveIndex*rowIndex)" name="Result1" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:60px;direction:ltr;" @(ViewBag.Format == 10 ? "format10" : "format7") value="" onchange="updateExistingLiveResult(1,@reg.Id)" />
+                            }
+
+                            @if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                            {
+
+                                if (result != null)
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(liveIndex*rowIndex+1)" name="Result1Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="@(result.Attempt1Wind.HasValue ? Math.Round(result.Attempt1Wind.Value, 2).ToString() : "")" onchange="updateExistingLiveResultWind(1,@reg.Id)" />
+                                }
+                                else
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(liveIndex*rowIndex+1)" name="Result1Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="" onchange="updateExistingLiveResultWind(1,@reg.Id)" />
+                                }
+
+                            }
+
+                            @{
+                                var multiSelect = new List<SelectListItem>();
+                                foreach (var altResList in SuccessList)
+                                {
+                                    int value;
+                                    bool isBool = int.TryParse(altResList.Value, out value);
+
+                                    var s = new SelectListItem
+                                    {
+                                        Text = altResList.Text,
+                                        Value = altResList.Value,
+                                        Selected = altResList.Value == result?.Alternative1.ToString(),
+                                        Disabled = liveIndex > ViewBag.NumberPasses
+                                    };
+                                    multiSelect.Add(s);
+                                };
+                            }
+                            @Html.DropDownList("Alternative1", multiSelect, new { @class = "form-control resultFieldR", style = "width:60px;", onchange = $"updateExistingLiveResult(1,{reg.Id})", tabindex=liveIndex*rowIndex+1+extraWind })
+                        </td>
+                        <td>
+                            @if (result != null)
+                            {
+                                <input type="text" class="resultFieldR form-control" name="Result2" tabindex="@(column2index+liveIndex*rowIndex)" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="@result.Attempt2" onchange="updateExistingLiveResult(2,@reg.Id)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="resultFieldR form-control" name="Result2" tabindex="@(column2index+liveIndex*rowIndex)" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="" onchange="updateExistingLiveResult(2,@reg.Id)" />
+                            }
+                            @if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                            {
+
+                                if (result != null)
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column2index+liveIndex*rowIndex+1)" name="Result2Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="@(result.Attempt2Wind.HasValue ? Math.Round(result.Attempt2Wind.Value, 2).ToString() : "")" onchange="updateExistingLiveResultWind(2,@reg.Id)" />
+                                }
+                                else
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column2index+liveIndex*rowIndex+1)" name="Result2Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="" onchange="updateExistingLiveResultWind(2,@reg.Id)" />
+                                }
+
+                            }
+                            @{
+                                var multiSelect2 = new List<SelectListItem>();
+                                foreach (var altResList in SuccessList)
+                                {
+                                    int value;
+                                    bool isBool = int.TryParse(altResList.Value, out value);
+
+                                    var s = new SelectListItem
+                                    {
+                                        Text = altResList.Text,
+                                        Value = altResList.Value,
+                                        Selected = altResList.Value == result?.Alternative2.ToString(),
+                                        Disabled = liveIndex > ViewBag.NumberPasses
+                                    };
+                                    multiSelect2.Add(s);
+                                };
+                            }
+                            @Html.DropDownList("Alternative2", multiSelect2, new { @class = "form-control resultFieldR", style = "width:60px;", onchange = $"updateExistingLiveResult(2,{reg.Id})", tabindex=column2index+liveIndex*rowIndex+1+extraWind })
+                        </td>
+                        <td>
+                            @if (result != null)
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(column3index+liveIndex*rowIndex)" name="Result3" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="@result.Attempt3" onchange="updateExistingLiveResult(3,@reg.Id)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(column3index+liveIndex*rowIndex)" name="Result3" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="" onchange="updateExistingLiveResult(3,@reg.Id)" />
+                            }
+                            @if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                            {
+
+                                if (result != null)
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column3index+liveIndex*rowIndex+1)" name="Result3Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="@(result.Attempt3Wind.HasValue ? Math.Round(result.Attempt3Wind.Value, 2).ToString() : "")" onchange="updateExistingLiveResultWind(3,@reg.Id)" />
+                                }
+                                else
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column3index+liveIndex*rowIndex+1)" name="Result3Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="" onchange="updateExistingLiveResultWind(3,@reg.Id)" />
+                                }
+
+                            }
+                            @{
+                                var multiSelect3 = new List<SelectListItem>();
+                                foreach (var altResList in SuccessList)
+                                {
+                                    int value;
+                                    bool isBool = int.TryParse(altResList.Value, out value);
+
+                                    var s = new SelectListItem
+                                    {
+                                        Text = altResList.Text,
+                                        Value = altResList.Value,
+                                        Selected = altResList.Value == result?.Alternative3.ToString(),
+                                        Disabled = liveIndex > ViewBag.NumberPasses
+                                    };
+                                    multiSelect3.Add(s);
+                                };
+                            }
+                            @Html.DropDownList("Alternative3", multiSelect3, new { @class = "form-control resultFieldR", style = "width:60px;", onchange = $"updateExistingLiveResult(3,{reg.Id})", tabindex=column3index+liveIndex*rowIndex+1+extraWind })
+                        </td>
+                        <td>
+                            @if (result != null)
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(column4index+liveIndex*rowIndex)" name="Result4" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="@result.Attempt4" onchange="updateExistingLiveResult(4,@reg.Id)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(column4index+liveIndex*rowIndex)" name="Result4" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="" onchange="updateExistingLiveResult(4,@reg.Id)" />
+                            }
+                            @if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                            {
+
+                                if (result != null)
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column4index+liveIndex*rowIndex+1)" name="Result4Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="@(result.Attempt4Wind.HasValue ? Math.Round(result.Attempt4Wind.Value, 2).ToString() : "")" onchange="updateExistingLiveResultWind(4,@reg.Id)" />
+                                }
+                                else
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column4index+liveIndex*rowIndex+1)" name="Result4Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="" onchange="updateExistingLiveResultWind(4,@reg.Id)" />
+                                }
+
+                            }
+                            @{
+                                var multiSelect4 = new List<SelectListItem>();
+                                foreach (var altResList in SuccessList)
+                                {
+                                    int value;
+                                    bool isBool = int.TryParse(altResList.Value, out value);
+
+                                    var s = new SelectListItem
+                                    {
+                                        Text = altResList.Text,
+                                        Value = altResList.Value,
+                                        Selected = altResList.Value == result?.Alternative4.ToString(),
+                                        Disabled = liveIndex > ViewBag.NumberPasses
+                                    };
+                                    multiSelect4.Add(s);
+                                };
+                            }
+                            @Html.DropDownList("Alternative4", multiSelect4, new { @class = "form-control resultFieldR", style = "width:60px;", onchange = $"updateExistingLiveResult(4,{reg.Id})", tabindex=column4index+liveIndex*rowIndex+1+extraWind })
+                        </td>
+                        <td>
+                            @if (result != null)
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(column5index+liveIndex*rowIndex)" name="Result5" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="@result.Attempt5" onchange="updateExistingLiveResult(5,@reg.Id)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(column5index+liveIndex*rowIndex)" name="Result5" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="" onchange="updateExistingLiveResult(5,@reg.Id)" />
+                            }
+                            @if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                            {
+
+                                if (result != null)
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column5index+liveIndex*rowIndex+1)" name="Result5Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="@(result.Attempt5Wind.HasValue ? Math.Round(result.Attempt5Wind.Value, 2).ToString() : "")" onchange="updateExistingLiveResultWind(5,@reg.Id)" />
+                                }
+                                else
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column5index+liveIndex*rowIndex+1)" name="Result5Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="" onchange="updateExistingLiveResultWind(5,@reg.Id)" />
+                                }
+
+                            }
+                            @{
+                                var multiSelect5 = new List<SelectListItem>();
+                                foreach (var altResList in SuccessList)
+                                {
+                                    int value;
+                                    bool isBool = int.TryParse(altResList.Value, out value);
+
+                                    var s = new SelectListItem
+                                    {
+                                        Text = altResList.Text,
+                                        Value = altResList.Value,
+                                        Selected = altResList.Value == result?.Alternative5.ToString(),
+                                        Disabled = liveIndex > ViewBag.NumberPasses
+                                    };
+                                    multiSelect5.Add(s);
+                                };
+                            }
+                            @Html.DropDownList("Alternative5", multiSelect5, new { @class = "form-control resultFieldR", style = "width:60px;", onchange = $"updateExistingLiveResult(5,{reg.Id})", tabindex=column5index+liveIndex*rowIndex+1+extraWind })
+                        </td>
+                        <td>
+                            @if (result != null)
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(column6index+liveIndex*rowIndex)" name="Result6" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="@result.Attempt6" onchange="updateExistingLiveResult(6,@reg.Id)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="resultFieldR form-control" tabindex="@(column6index+liveIndex*rowIndex)" name="Result6" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") @(ViewBag.Format == 10 ? "format10" : "format7") value="" onchange="updateExistingLiveResult(6,@reg.Id)" />
+                            }
+                            @if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                            {
+
+                                if (result != null)
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column6index+liveIndex*rowIndex+1)" name="Result6Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="@(result.Attempt6Wind.HasValue ? Math.Round(result.Attempt6Wind.Value, 2).ToString() : "")" onchange="updateExistingLiveResultWind(6,@reg.Id)" />
+                                }
+                                else
+                                {
+                                    <input type="number" class="resultFieldR form-control" tabindex="@(column6index+liveIndex*rowIndex+1)" name="Result6Wind" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") style="width:75px !important;direction:ltr;" value="" onchange="updateExistingLiveResultWind(6,@reg.Id)" />
+                                }
+
+                            }
+                            @{
+                                var multiSelect6 = new List<SelectListItem>();
+                                foreach (var altResList in SuccessList)
+                                {
+                                    int value;
+                                    bool isBool = int.TryParse(altResList.Value, out value);
+
+                                    var s = new SelectListItem
+                                    {
+                                        Text = altResList.Text,
+                                        Value = altResList.Value,
+                                        Selected = altResList.Value == result?.Alternative6.ToString(),
+                                        Disabled = liveIndex > ViewBag.NumberPasses
+                                    };
+                                    multiSelect6.Add(s);
+                                };
+                            }
+                            @Html.DropDownList("Alternative6", multiSelect6, new { @class = "form-control resultFieldR", style = "width:60px;", onchange = $"updateExistingLiveResult(6,{reg.Id})", tabindex=column6index+liveIndex*rowIndex+1+extraWind })
+                        </td>
+                        <td>
+                            @if (result != null)
+                            {
+                                <input type="text" class="resultRecordField form-control" name="Records" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") value="@result.Records" onchange="updateRecord(@reg.Id)" />
+                            }
+                            else
+                            {
+                                <input type="text" class="resultRecordField form-control" name="Records" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") value="" onchange="updateRecord(@reg.Id)" />
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var alternative = new List<SelectListItem>();
+                                foreach (var altResList in AlternativeResultList)
+                                {
+                                    int value;
+                                    bool isBool = int.TryParse(altResList.Value, out value);
+
+                                    var s = new SelectListItem
+                                    {
+                                        Text = altResList.Text,
+                                        Value = altResList.Value,
+                                        Selected = altResList.Value == result?.AlternativeResult.ToString(),
+                                        Disabled = liveIndex > ViewBag.NumberPasses
+                                    };
+                                    alternative.Add(s);
+                                };
+                                var alternativeText = alternative.FirstOrDefault(s => s.Selected && s.Value != "0")?.Text ?? string.Empty;
+                            }
+                            @Html.DropDownList("Alternative", alternative, new { @class = "form-control resultFieldR", style = "width: 76px !important;", onchange = $"updateLiveResultAlternative({reg.Id})" })
+                        </td>
+                        <td class="finalTd" style="text-align:center;direction:ltr;">
+                            @if (!string.IsNullOrWhiteSpace(alternativeText))
+                            {
+                                @alternativeText
+                            }
+                            else
+                            {
+                                @(result?.Result)
+                                if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                                {
+                                <div style='direction: ltr;text-align: center;'>
+                                    @(result != null && result.Wind.HasValue ? Math.Round(result.Wind.Value, 2).ToString() : "")
+                                </div>
+                                }
+                            }
+                        </td>
+                    </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function updateDone(data) {
+        if (data.isError)
+        {
+            alert("@Messages.FieldMustBeNumeric");
+        }
+        else
+        {
+            $("#submit_result_" + data.compIdUpdated).removeClass("btn btn-primary btn-save glyphicon glyphicon-saved")
+                .addClass("btn btn-success btn-save glyphicon glyphicon-saved");
+        }
+    }
+
+    $(document).ready(function () {
+
+
+
+
+    });
+
+    function isBlank(str) {
+        return (!str || /^\s*$/.test(str));
+    }
+
+    function validateWind() {
+        var val = $("#wind_input_box").val();
+        var isNotFloat = isNaN(parseFloat(val));
+        if (isNotFloat && !isBlank(val)) {
+            addError("@Messages.WindMustBeFloat");
+        }
+    }
+
+    function updateExistingLiveResult(number, regId) {
+        var $resultInput = $("#result_row_" + regId + " .resultFieldR[name='Result" + number + "']");
+        var result = $resultInput.val();
+        var alternativeRes = $("#result_row_" + regId + " .resultFieldR[name='Alternative" + number + "']").val();
+
+        var n = result.indexOf(".");
+        if (result.length == 0) {
+
+        } else if (n == -1) {
+            result = result + ".00";
+            $resultInput.val(result);
+        } else {
+            var afterDot = result.substr(n + 1);
+            if (afterDot.length == 0) {
+                result = result + "00";
+                $resultInput.val(result);
+            }
+            else if (afterDot.length == 1) {
+                result = result + "0";
+                $resultInput.val(result);
+            }
+        }
+
+        var dataToSend = {
+            "Result": result,
+            "Alternative": alternativeRes,
+            "Number": number,
+            "RegId": regId,
+            "CompetitionDisciplineId": @ViewBag.CompetitionDisciplineId
+        }
+
+
+        $.ajax({
+               type: "POST",
+               url: "/Leagues/UpdateRegisteredAthleteCompetitionLiveResult",
+               data: dataToSend,
+               success: function (data) {
+                   var $finalColumn = $("#result_row_" + data.regId + " .finalTd");
+                   $finalColumn.html(data.finalResult+ "<div style='direction: ltr;text-align: center;'>" + data.wind + "</div>");
+               }
+        });
+
+    }
+
+
+    function updateExistingLiveResultWind(number, regId) {
+        var $resultInput = $("#result_row_" + regId + " .resultFieldR[name='Result" + number + "Wind']");
+        var result = $resultInput.val();
+        var dataToSend = {
+            "ResultWind": result,
+            "Number": number,
+            "RegId": regId,
+            "CompetitionDisciplineId": @ViewBag.CompetitionDisciplineId
+        }
+
+        $.ajax({
+               type: "POST",
+               url: "/Leagues/UpdateRegisteredAthleteCompetitionLiveResultWind",
+               data: dataToSend,
+            success: function (data) {
+                   var $finalColumn = $("#result_row_" + data.regId + " .finalTd");
+                   $finalColumn.html(data.finalResult+ "<div style='direction: ltr;text-align: center;'>" + data.wind + "</div>");
+               }
+        });
+
+    }
+    
+
+    function updateLiveResultAlternative(regId) {
+        var $resultInput = $("#result_row_" + regId + " .resultFieldR[name='Alternative']");
+        var result = $resultInput.val();
+        var dataToSend = {
+            "AlternativeResult": result,
+            "RegId": regId,
+            "CompetitionDisciplineId": @ViewBag.CompetitionDisciplineId
+        }
+
+        $.ajax({
+               type: "POST",
+               url: "/Leagues/UpdateRegisteredAthleteCompetitionLiveAlternativeResult",
+               data: dataToSend,
+               success: function (data) {
+                   var $finalColumn = $("#result_row_" + data.regId + " .finalTd");
+                   $finalColumn.html(data.finalResult+ "<div style='direction: ltr;text-align: center;'>" + data.wind + "</div>");
+               }
+        });
+    }
+
+
+    function updateNumberOfWhoPassesToNextStage() {
+        var $input = $("#pass_next_stage_input");
+        var value = $input.val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/UpdateNumberOfPassesToNextStageForLiveResult",
+            data: {
+                numPassNextStage: value,
+                CompetitionDisciplineId: @Model.Id
+            },
+            success: function (data) {
+
+            }
+        });
+    }
+
+    function updateRecord(regId) {
+        var $resultInput = $("#result_row_" + regId + " .resultRecordField[name='Records']");
+        var result = $resultInput.val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/UpdateRegisteredAthleteRecordLiveResult",
+            data: {
+                record: result,
+                id: regId
+            },
+            success: function (data) {
+            }
+        });
+    }
+
+
+    function addError(errorStr) {
+        var statusElement = $("#status");
+        if (!(statusElement.hasClass('alert-danger'))) {
+            statusElement.html("").addClass("alert-danger").removeClass("alert-info").removeClass("alert-success");
+            statusElement.append(errorStr);
+        } else {
+            statusElement.append("</br> " + errorStr);
+        }
+    }
+
+    function removeError() {
+        var statusElement = $("#status");
+        statusElement.html("");
+    }
+
+    function isThereError() {
+        return $("#status").hasClass("alert-danger");
+    }
+
+    $(document).on('keydown', 'input[format7]', function(e){
+      var input = $(this);
+      var oldVal = input.val();
+      var pattern = /^\d{0,2}(\.\d{0,2})?$/g;
+      var regex = new RegExp(pattern);
+
+      setTimeout(function(){
+        var newVal = input.val();
+          if (!regex.test(newVal)) {
+              input.val(oldVal);
+          } else {
+
+              var n = newVal.indexOf(".");
+              if (n == 0) {
+                  newVal = "00" + newVal;
+                  input.val(newVal);
+              }
+              else if (n == 1) {
+                  newVal = "0" + newVal;
+                  input.val(newVal);
+              }
+              if (n == -1 && newVal.length == 2) {
+                  newVal = newVal + ".";
+                  input.val(newVal);
+              }
+          }
+      }, 0);
+    });
+
+    
+    $(document).on('keydown', 'input[format10]', function(e){
+      var input = $(this);
+      var oldVal = input.val();
+      var pattern = /^\d{0,1}(\.\d{0,2})?$/g;
+      var regex = new RegExp(pattern);
+
+      setTimeout(function(){
+        var newVal = input.val();
+          if (!regex.test(newVal)) {
+              input.val(oldVal);
+          } else {
+              var n = newVal.indexOf(".");
+              if (n == 0) {
+                  newVal = "0" + newVal;
+                  input.val(newVal);
+              }
+              if (n == -1 && newVal.length == 1) {
+                  newVal = newVal + ".";
+                  input.val(newVal);
+              }
+          }
+      }, 0);
+    });
+
+    $(document).on('change', 'input[onlypossitiveornull]', function(e){
+      var input = $(this);
+      var pattern = /^(\s*|\d+)$/g;
+      var regex = new RegExp(pattern);
+
+      setTimeout(function(){
+        var newVal = input.val();
+          if (!regex.test(newVal)) {
+              input.val("");
+          }
+      }, 0);
+    });
+
+    $(document).on('keydown', 'input[onlypossitiveornull]', function(e){
+      var input = $(this);
+      var pattern = /^(\s*|\d+)$/g;
+      var regex = new RegExp(pattern);
+
+      setTimeout(function(){
+        var newVal = input.val();
+          if (!regex.test(newVal)) {
+              input.val("");
+          }
+      }, 0);
+    });    
+
+</script>
+

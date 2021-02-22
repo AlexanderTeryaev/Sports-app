@@ -1,0 +1,164 @@
+﻿@model EventModel
+
+@{
+    bool userIsEditor = User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers);
+}
+
+@if (Model.isCollapsable)
+{
+    <table>
+        <tr>
+            <td>
+                <a href="javascript:evList.eventsOpen()" id="eventsOpen" style="display:none">
+                    <i class="glyphicon glyphicon-plus"></i>
+                </a>
+                <a href="javascript:evList.eventsClose()" id="eventsClose">
+                    <i class="glyphicon glyphicon-minus"></i>
+                </a>
+            </td>
+            <td>
+                <h3>
+                    @Messages.Events
+                </h3>
+            </td>
+        </tr>
+    </table>
+}
+
+<table id="events_tbl" class="table table-bordered offset-2">
+    <thead>
+        <tr>
+            <th>@Messages.Publish</th>
+            <th>@Messages.PlaceOfEvent</th>
+            <th>@Messages.TitleOfEvent</th>
+            <th>@Messages.DateTime</th>
+            @if (Model.UnionId.HasValue)
+            {
+                <th>@Messages.Description</th>
+                <th>@Messages.Image (<span>@Messages.Max2MB</span>)</th>
+            }
+            @if (userIsEditor)
+            {
+                <th></th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            if (Model.EventList?.Count() > 0)
+            {
+                foreach (var ev in Model.EventList)
+                {
+        <tr id="event_@ev.EventId">
+            <td class="remove_print">
+                <input type="checkbox" id="EventChbx_@ev.EventId"
+                       name="IsPublished" class="EventChbx"
+                       value="@ev.EventId)" @(ev.IsPublished ? "checked" : string.Empty)
+                       onclick="evList.publishEvent(@ev.EventId)" />
+            </td>
+            @if (!userIsEditor || ViewBag.IsUnionViewer)
+            {
+                <td>@ev.Place</td>
+                <td>@ev.Title</td>
+                <td style="position:relative">@ev.EventTime</td>
+            }
+            else
+            {
+                <td>
+                    @Html.AntiForgeryToken()
+                    <input name="EventId" type="hidden" value="@ev.EventId">
+                    <input name="LeagueId" type="hidden" value="@ev.LeagueId" />
+                    <input name="ClubId" type="hidden" value="@ev.ClubId" />
+                    <input name="UnionId" type="hidden" value="@ev.UnionId" />
+                    <input name="CreateDate" type="hidden" value="@ev.CreateDate.ToString("yyyy-MM-dd HH:mm:ss")" />
+                    <input type="text" name="Place" value="@ev.Place" class="form-control required" form="eventfrm@ev.EventId" />
+                </td>
+                <td>
+                    <input type="text" name="Title" value="@ev.Title" class="form-control required" form="eventfrm@ev.EventId" />
+                </td>
+                <td>
+                    <div style="position: relative">
+                        <input type="text" name="EventTime" value="@ev.EventTime.ToString("dd/MM/yyyy HH:mm")" class="form-control frm-date required" form="eventfrm@ev.EventId" />
+                    </div>
+                </td>
+                if (Model.UnionId.HasValue)
+                {
+                    <td>
+                        @Html.TextArea("EventDescription", ev.EventDescription, new { @class = "form-control required", @form = "eventfrm" + ev.EventId })
+                        @*<textarea name="EventDescription" value="@ev.EventDescription" class="form-control required" form="eventfrm@ev.EventId"></textarea>*@
+                    </td>
+                    <td>
+                        <div class="row">
+                            <div class="col-sm-10">
+                                @Html.Editor("ImageFile", "ImageUpload", new { css = "validfile", htmlAttributes = new { @class = "form-control" } })
+                            </div>
+                            @{                            
+                                    var styleVis = "";
+                                    if (string.IsNullOrEmpty(ev.EventImage))
+                                    {
+                                        styleVis = "visibility:hidden";
+                                    }
+
+                                <div class="col-sm-2 btn" name="remove-photo" style="@styleVis">
+                                    <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                    <input type="hidden" value="false" name="RemoveImage" />
+                                </div>
+                             }
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                @Html.ValidationMessage("ImageFile")
+                                @{
+                                    if (!string.IsNullOrEmpty(ev.EventImage))
+                                    {
+                                        string src = GlobVars.ContentPath + "/Events/" + ev.EventImage;
+                                        <img name="event-img" style="max-width:200px" class="img-responsive img-thumbnail" src="@src" alt="" />
+                                    }
+                                    else
+                                    {
+                                        <img name="event-img" style="max-width:200px;visibility:hidden" class="img-responsive img-thumbnail" src="" alt="" />
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </td>
+                }
+                <td style="min-width:90px;">
+                    <a class="btn btn-sm btn-danger"
+                       href="@Url.Action("DeleteEvent", "Events",
+                                            new { eventId = ev.EventId, leagueId = ev.LeagueId, clubId = ev.ClubId, unionID = ev.UnionId})"
+                       data-ajax-confirm="@Messages.DeleteConfirm"
+                       data-ajax-update="#event_list"
+                       data-ajax="true"
+                       title="@Messages.Delete">
+                        <i class="glyphicon glyphicon-trash"></i>
+                    </a>
+                    <a class="btn btn-sm btn-success"
+                       name="savebtn"
+                       disabled="disabled"
+                       onclick="evList.UpdateEvent(@ev.EventId)"
+                       title="@Messages.Save">
+                        <i class="glyphicon glyphicon-saved"></i>
+                    </a>
+                </td>
+            }
+        </tr>
+                }
+            }
+        }
+    </tbody>
+</table>
+
+<div class="modal fade" id="addevent" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="addeventform_pl"></div>
+    </div>
+</div>
+
+<script src="~/Scripts/pages/eventsList.js"></script>
+<script>
+    $(document).ready(function () {
+        evList.documentReady();
+    });
+    
+</script>

@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[CompetitionDisciplines] Add IsResultsManualyRanked bit not null default(0)

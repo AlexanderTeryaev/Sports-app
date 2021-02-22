@@ -1,0 +1,521 @@
+﻿@using AppModel
+@using CmsApp.Controllers
+@model CompetitionDiscipline
+
+@{
+    var SuccessList = new List<SelectListItem>
+{
+        new SelectListItem {Text = "", Value = ""},
+        new SelectListItem {Text = "O", Value = "O"},
+        new SelectListItem {Text = "-", Value = "-" },
+        new SelectListItem {Text = "X", Value = "X" }
+    };
+    var AlternativeResultList = new List<SelectListItem>
+{
+            new SelectListItem {Text = "", Value = "0"},
+            new SelectListItem {Text = "DNF", Value = "1" },
+            new SelectListItem {Text = "DQ", Value = "2" },
+            new SelectListItem {Text = "DNS", Value = "3" },
+            new SelectListItem {Text = "NM", Value = "4" }
+    };
+    var coloumnFields = Model.GetFormat6CustomFields();
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9"><h4 class="modal-title" style="margin: 0px 16px;" >@Model.League.Name - @ViewBag.DisciplineName - @Messages.CompetitionResults</h4></div><div class="pull-right" style="line-height:25px;margin-left: 20px;">
+            <strong>@Messages.Count.ToLower(): <text id="athletics_count">@(Model?.CompetitionDisciplineRegistrations.Count() ?? 0)</text></strong>
+        </div>
+        <a id="excelBtnExp" class="btn btn-info" style="display:none;" href="#" onclick="$('#exportregistrations').submit()">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+            @using (Html.BeginForm("ExportDisciplineRegistrationsToExcel", "Clubs", new { clubId = ViewBag.ClubId, disciplineId = ViewBag.DisciplineId, seasonId = ViewBag.SeasonId, leagueId = ViewBag.LeagueId },
+FormMethod.Post, new { id = "exportregistrations" })) { }
+        </a>
+        <a href="@GlobVars.SiteUrl/LeagueTable/AthleticsDisciplineResults/@Model.Id" target="_blank" class="btn btn-primary pull-left">@Messages.ExternalLink</a>
+    </div>
+    <div>
+        @if (@Model.League.LeagueStartDate != null)
+        {
+            @Model.League.LeagueStartDate.Value.ToString("dd/MM/yyyy")
+        }
+    </div>
+
+
+
+</div>
+<style>
+
+    .fill-results-table > thead > tr > th, .fill-results-table > tbody > tr > td {
+        text-align: center;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .resultField {
+        width: 40px;
+        text-align: center;
+    }
+
+    .fixed_table > thead > tr > th {
+        height: 57px;
+    }
+
+    .fixed_table > tbody > tr > td {
+        height: 120px;
+    }
+
+    .fixed_table > thead > tr > th:first-child {
+        background: #dddddd;
+        position: absolute;
+        width: 6em;
+        @(Messages.Lang != "he" ? "left" : "right"): 14px;
+    }
+
+    .fixed_table > thead > tr > th:nth-child(2) {
+        background: #dddddd;
+        @(Messages.Lang != "he" ? "left" : "right"): 7em;
+        position: absolute;
+        width: 6em;
+    }
+
+    .fixed_table > tbody > tr > td:first-child {
+        background: #dddddd;
+        position: absolute;
+        width: 6em;
+        padding: 4% 1%;
+        @(Messages.Lang != "he" ? "left" : "right"): 14px;
+    }
+
+    .fixed_table > tbody > tr > td:nth-child(2) {
+        background: #dddddd;
+        @(Messages.Lang != "he" ? "left" : "right"): 7em;
+        position: absolute;
+        width: 6em;
+        padding: 3% 1%;
+    }
+
+    .fixed_table > thead > tr > th:nth-child(3),
+    .fixed_table > tbody > tr > td:nth-child(3) {
+        padding-@(Messages.Lang != "he" ? "left" : "right"): 14em;
+    }
+</style>
+
+<div class="modal-body">
+    <div class="row" style="margin-top:20px;">
+        <div class="col-sm-12">
+            <div class="table-responsive">
+                <table id="print_table" class="table table-bordered fixed_table">
+                    <thead>
+                        <tr>
+                            <th colspan="3" style="border-bottom: 0px solid #979fa7;"></th>
+                            <th style="border-bottom: 0px solid #979fa7;"></th>
+                            @for (int i = 1; i < coloumnFields.Count(); i++)
+                            {
+                                <th></th>
+                            }
+                            <th>
+                                <a href="@Url.Action("RemoveNewFormat6CustomFieldColumn", "Leagues", new { id = Model.Id })"
+                                   data-toggle="modal" data-target="#athleticsliveresultlist"
+                                   data-ajax-update="#athleticsliveresultlist_pl"
+                                   data-ajax="true"
+                                   data-ajax-begin="resetThisModal"
+                                   class="glyphicon glyphicon-minus-sign" style="color:#f45c0e;"></a>
+                                <a href="@Url.Action("AddNewFormat6CustomFieldColumn", "Leagues", new { id = Model.Id })"
+                                   data-toggle="modal" data-target="#athleticsliveresultlist"
+                                   data-ajax-update="#athleticsliveresultlist_pl"
+                                   data-ajax="true"
+                                   data-ajax-begin="resetThisModal"
+                                   class="glyphicon glyphicon-plus-sign" style="color:#f45c0e;"></a>
+                            </th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th>@Messages.AthleteNumber</th>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.ClubName</th>
+                            @for (int i = 0; i < coloumnFields.Count(); i++)
+                            {
+                                var field = coloumnFields[i];
+                                <th style="width: 160px;">
+                                    <input type="number" class="custom-input form-control" step="0.01" format6ls name="@($"Custom{i}")" style="min-width:70px;direction:ltr;" value="@(field.ToString())"  />
+                                </th>
+                            }
+                            <th>@Messages.Records</th>
+                            <th></th>
+                            <th>@Messages.FinalResult</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var liveIndex = 0;
+                            var itemsCount = Model.CompetitionDisciplineRegistrations.Count();
+                            var column2index = itemsCount * (3);
+                            var column3index = itemsCount * (3) * 2;
+                            var column4index = itemsCount * (3) * 3;
+                            var column5index = itemsCount * (3) * 4;
+                            var column6index = itemsCount * (3) * 5;
+                            var columnIndex = -1;
+                            
+                        }
+                        @foreach (var reg in Model.CompetitionDisciplineRegistrations)
+                        {
+                            liveIndex++;
+                            columnIndex = -1;
+                            CompetitionResult result = null;
+                            var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                            if (reg.CompetitionResult.Count() > 0)
+                            {
+                                result = reg.CompetitionResult.FirstOrDefault();
+                            }
+                            <tr id="result_row_@reg.Id" data-athleticid="@athleteNumber">
+                                <td style="text-align: center;">@athleteNumber</td>
+                                <td style="text-align: center;">@reg.User.FullName</td>
+                                <td style="text-align: center;">@reg.Club.Name</td>
+
+                                @{
+                                    var multiSelect = new List<SelectListItem>();
+                                    var multiSelect2 = new List<SelectListItem>();
+                                    var multiSelect3 = new List<SelectListItem>();
+                                    var blockedNext = false;
+                                }
+
+                                @for (int i = 0; i < coloumnFields.Count(); i++)
+                                {
+                                    columnIndex++;
+                                    float _;
+                                    var attempt = 0;
+                                    var isFailedAll = true;
+                                    var isBlockColumn = coloumnFields.ElementAtOrDefault(i) == null || string.IsNullOrWhiteSpace(coloumnFields.ElementAtOrDefault(i)) || !float.TryParse(coloumnFields.ElementAtOrDefault(i), out _);
+                                    <td style="text-align: center;">
+                                        @{
+                                            multiSelect = new List<SelectListItem>();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Selected = altResList.Value == result?.GetFormat6CustomField(i, attempt),
+                                                    Disabled = blockedNext || isBlockColumn
+                                                };
+                                                multiSelect.Add(s);
+                                            };
+                                            if (result?.GetFormat6CustomField(i, attempt) != "X")
+                                            {
+                                                isFailedAll = false;
+                                            }
+                                            attempt++;
+                                        }
+
+                                        @Html.DropDownList($"Alternative{i}_{attempt - 1}", multiSelect, new { @class = "form-control resultFieldR", style = "min-width:60px;", onchange = $"updateCustomFieldResult6({reg.Id},this, {i}, {attempt - 1})", tabindex = columnIndex * 3 * itemsCount + liveIndex * 3 })
+                                        @{
+                                            multiSelect2 = new List<SelectListItem>();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Selected = altResList.Value == result?.GetFormat6CustomField(i, attempt),
+                                                    Disabled = blockedNext || isBlockColumn
+                                                };
+                                                multiSelect2.Add(s);
+                                            };
+                                            if (result?.GetFormat6CustomField(i, attempt) != "X")
+                                            {
+                                                isFailedAll = false;
+                                            }
+                                            attempt++;
+                                        }
+
+                                        @Html.DropDownList($"Alternative{i}_{attempt - 1}", multiSelect2, new { @class = "form-control resultFieldR", style = "min-width:60px;", onchange = $"updateCustomFieldResult6({reg.Id},this, {i}, {attempt - 1})", tabindex = columnIndex * 3 * itemsCount + liveIndex * 3 + 1 })
+                                        @{
+
+                                            multiSelect3 = new List<SelectListItem>();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Selected = altResList.Value == result?.GetFormat6CustomField(i, attempt),
+                                                    Disabled = blockedNext || isBlockColumn
+                                                };
+                                                multiSelect3.Add(s);
+                                            };
+                                            if (result?.GetFormat6CustomField(i, attempt) == "X" && isFailedAll)
+                                            {
+                                                blockedNext = true;
+                                            }
+                                        }
+                                        @Html.DropDownList($"Alternative{i}_{attempt}", multiSelect3, new { @class = "form-control resultFieldR", style = "min-width:60px;", onchange = $"updateCustomFieldResult6({reg.Id},this, {i}, {attempt})", tabindex = columnIndex * 3 * itemsCount + liveIndex * 3 + 2 })
+                                    </td>
+
+                                }
+
+                                <td style="text-align: center;">
+                                    @if (result != null)
+                                    {
+                                        <input type="text" class="resultRecordField form-control" name="Records" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") value="@result.Records" onchange="updateRecord(@reg.Id)" />
+                                    }
+                                    else
+                                    {
+                                        <input type="text" class="resultRecordField form-control" name="Records" style="width:60px;direction:ltr;" @(liveIndex > ViewBag.NumberPasses ? "disabled" : "") value="" onchange="updateRecord(@reg.Id)" />
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var alternative = new List<SelectListItem>();
+                                        foreach (var altResList in AlternativeResultList)
+                                        {
+                                            int value;
+                                            bool isBool = int.TryParse(altResList.Value, out value);
+
+                                            var s = new SelectListItem
+                                            {
+                                                Text = altResList.Text,
+                                                Value = altResList.Value,
+                                                Selected = altResList.Value == result?.AlternativeResult.ToString()
+                                            };
+                                            alternative.Add(s);
+                                        };
+                                        var alternativeText = alternative.FirstOrDefault(s => s.Selected && s.Value != "0")?.Text ?? string.Empty;
+                                    }
+                                    @Html.DropDownList("Alternative", alternative, new { @class = "form-control resultFieldR", style = "width: 76px !important;", onchange = $"updateLiveResultAlternative({reg.Id})" })
+                                </td>
+                                <td class="finalTd" style="text-align: center;">@(result?.Result)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function isBlank(str) {
+        return (!str || /^\s*$/.test(str));
+    }
+
+    function updateExistingLiveResult(number, regId) {
+        var $resultInput = $("#result_row_" + regId + " .resultFieldR[name='Result" + number + "']");
+        var result = $resultInput.val();
+        var alternativeRes = $("#result_row_" + regId + " .resultFieldR[name='Alternative" + number + "']").val();
+
+        var n = result.indexOf(".");
+
+        if (n == -1) {
+            result = result + ".00";
+            $resultInput.val(result);
+        } else {
+            var afterDot = result.substr(n + 1);
+            if (afterDot.length == 0) {
+                result = result + "00";
+                $resultInput.val(result);
+            }
+            else if (afterDot.length == 1) {
+                result = result + "0";
+                $resultInput.val(result);
+            }
+        }
+
+        var dataToSend = {
+            "Result": result,
+            "Alternative": alternativeRes,
+            "Number": number,
+            "RegId": regId,
+            "CompetitionDisciplineId": @ViewBag.CompetitionDisciplineId
+        }
+
+
+        $.ajax({
+               type: "POST",
+               url: "/Leagues/UpdateRegisteredAthleteCompetitionLiveResult",
+               data: dataToSend,
+               success: function (data) {
+                   var $finalColumn = $("#result_row_" + data.regId + " .finalTd");
+                   $finalColumn.html(data.finalResult);
+               }
+        });
+
+    }
+
+
+    function updateNumberOfWhoPassesToNextStage() {
+        var $input = $("#pass_next_stage_input");
+        var value = $input.val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/UpdateNumberOfPassesToNextStageForLiveResult",
+            data: {
+                numPassNextStage: value,
+                CompetitionDisciplineId: @Model.Id
+            },
+            success: function (data) {
+
+            }
+        });
+    }
+
+    function updateRecord(regId) {
+        var $resultInput = $("#result_row_" + regId + " .resultRecordField[name='Records']");
+        var result = $resultInput.val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/UpdateRegisteredAthleteRecordLiveResult",
+            data: {
+                record: result,
+                id: regId
+            },
+            success: function (data) {
+            }
+        });
+    }
+
+    var handlerId = null;
+
+function updateCustomFields() {
+        // need this because we need to remove disable selection once the column have proper result.
+        var fields = "";
+        for (var i = 0; i < @coloumnFields.Count; i++) {
+            fields = fields + $(".custom-input[name='Custom" + i + "']").val() + ",";
+        }
+        fields = fields.slice(0, -1);
+        clearTimeout(handlerId);
+        handlerId = setTimeout(function () {
+            $.ajax({
+                type: "POST",
+                url: "/Leagues/UpdateCompetitionDisciplineCustomFields6",
+                data: {
+                    'fields': fields,
+                    'id': @Model.Id
+                },
+                success: function (data) {
+                    $("#athleticsliveresultlist_pl").html(data);
+                }
+            });
+        }, 2000);
+    }
+
+    function updateCustomFieldResult6(regId, element, column, attempt) {
+        var value = element.value;
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/UpdateCompetitionRegistrationCustomFields6",
+            data: {
+                'value': value,
+                'regId': regId,
+                'column': column,
+                'attempt': attempt
+            },
+            success: function (data) {
+                var allNotFail = false;
+                var maxColumns = @coloumnFields.Count;
+                    for (var j = 0; j < 3; j++) {
+                        allNotFail = allNotFail || $("tr#result_row_" + regId + " #Alternative" + data.column + "_" + j + " option:selected").val() != "X";
+                    }
+                    for (var i = data.column+1; i < maxColumns; i++) {
+                        for (var j = 0; j < 3; j++) {
+                            if (!allNotFail) {
+                                $("tr#result_row_" + regId + " #Alternative" + i + "_" + j).find("option").attr("disabled","disabled");
+                            }else
+                                $("tr#result_row_" + regId + " #Alternative" + i + "_" + j).find("option").removeAttr("disabled");
+                        }
+                    }
+                   var $finalColumn = $("#result_row_" + data.regId + " .finalTd");
+                   $finalColumn.html(data.finalResult);
+            }
+        });
+    }
+
+    function updateLiveResultAlternative(regId) {
+        var $resultInput = $("#result_row_" + regId + " .resultFieldR[name='Alternative']");
+        var result = $resultInput.val();
+        var dataToSend = {
+            "AlternativeResult": result,
+            "RegId": regId,
+            "CompetitionDisciplineId": @ViewBag.CompetitionDisciplineId
+        }
+
+        $.ajax({
+               type: "POST",
+               url: "/Leagues/UpdateRegisteredAthleteCompetitionLiveAlternativeResult",
+               data: dataToSend,
+               success: function (data) {
+                   var $finalColumn = $("#result_row_" + data.regId + " .finalTd");
+                   $finalColumn.html(data.finalResult);
+               }
+        });
+    }
+
+
+    function addError(errorStr) {
+        var statusElement = $("#status");
+        if (!(statusElement.hasClass('alert-danger'))) {
+            statusElement.html("").addClass("alert-danger").removeClass("alert-info").removeClass("alert-success");
+            statusElement.append(errorStr);
+        } else {
+            statusElement.append("</br> " + errorStr);
+        }
+    }
+
+    function removeError() {
+        var statusElement = $("#status");
+        statusElement.html("");
+    }
+
+    function isThereError() {
+        return $("#status").hasClass("alert-danger");
+    }
+
+    function resetThisModal() {
+        var modalData = $("#athleticsliveresultlist").data('bs.modal');
+        if (modalData && modalData.options.remote) {
+            var modalContent = $("#athleticsliveresultlist").find(".modal-content");
+            modalContent.empty();
+            $("#athleticsliveresultlist").removeData('bs.modal');
+            $("#athleticsliveresultlist").find(".modal-backdrop").remove();              
+        }
+    }
+
+    $(document).on('keyup', 'input[format6ls]', function(e){
+      var input = $(this);
+      var newVal = input.val();
+      var n = newVal.indexOf(".");
+      if (n == -1 && newVal.length >= 2) {
+        newVal = newVal.substr(0, 1) + "." + newVal.substr(1, newVal.length - 1);
+        input.val(newVal);
+      }
+      updateCustomFields();
+    });
+
+    $(document).on('change', 'input[format6ls]', function(e){
+      var input = $(this);
+      var newVal = input.val();
+      var n = newVal.indexOf(".");
+      if (n == -1 && newVal.length >= 2) {
+        newVal = newVal.substr(0, 1) + "." + newVal.substr(1, newVal.length - 1);
+        input.val(newVal);
+      }
+      updateCustomFields();
+    });
+
+</script>
+

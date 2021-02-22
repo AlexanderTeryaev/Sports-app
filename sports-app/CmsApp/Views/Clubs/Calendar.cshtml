@@ -1,0 +1,121 @@
+﻿<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" media="print" rel="stylesheet" />
+<div class="container" id="calendar"></div>
+@{
+    int? seasonId = ViewBag.SeasonId ?? null;
+    int? clubId = ViewBag.ClubId ?? null;
+}
+<script src="~/Scripts/moment.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.js"></script>
+<script>
+    $(document).ready(function (e) {
+        setTimeout(function () {
+            $("#calendar").fullCalendar({
+                eventLimit: 3,
+                eventSources: {
+                    url: '@Url.Action("NewCalendarObject", "Clubs")',
+                    type: 'POST',
+                    data: {
+                        clubId: @clubId,
+                        seasonId: @seasonId
+                    }
+                },
+                eventRender: function (event, element) {
+                    element.find('.fc-title').append("<br/>" + event.teamName);
+                },
+                eventAfterRender: function (event, element, view) {
+                    $(element).attr("id", "event_id_" + event._id);
+                },
+                eventClick: function (event) {
+                    $("#eventTitle").html("<b>@Messages.Training</b>" + ": " + event.title);
+                    
+                    $("#eventId").html(event.id);
+                    $("#teamName").html(event.teamName);
+                    $("#eventDate").html("<b>@Messages.Date</b>" + ": " + event.start.format('DD.MM.YYYY HH:mm'));
+                    if (event.auditorium) {
+                        $("#eventPlace").html("<b>@Messages.Place</b>" + ": " + event.auditorium);
+                    }
+                    if (event.attendanceList) {
+                        var attendanceHtml = "<select class='form-control'>";
+                        var i;
+                        for (i = 0; i < event.attendanceList.length; i++) {
+                            attendanceHtml += "<option value='dummyValue'>" + event.attendanceList[i] + "</option>";
+                        }
+                        attendanceHtml += "</select>";
+                        $("#eventAttendanceList").html("<b>@Messages.Attendance</b>" + ": " + attendanceHtml);
+                    }
+                    if (event.description) {
+                        $("#eventDesc").html("<b>@Messages.Description</b>" + ": " + event.description);
+                        $('#eventDesc').show();
+                    } else {
+                        $('#eventDesc').hide();
+                    }
+
+                    if (!event.hasImage) {
+                        $('#imageEye').hide();
+                    } else {
+                        $('#imageEye').show();
+                    }
+                    $("#eventdetails").modal('show');
+                },
+                buttonText: {
+                    prev: '@Messages.Previous',
+                    next: '@Messages.Next',
+                    today: '@Messages.Today',
+                    month: '@Messages.Month',
+                    agendaWeek: '@Messages.Week',
+                    agendaDay: '@Messages.Day'
+                },
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month, agendaWeek, agendaDay'
+                }
+            });
+
+            $('#calendar').fullCalendar('render');
+        }, 1000);
+    })
+</script>
+<div class="modal fade" id="eventdetails" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+                <h4 class="modal-title" id="teamName"></h4>
+            </div>
+            <div class="modal-body">
+                <h3 id="eventTitle"></h3>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <p style="display: none;" id="eventId"></p>
+                        <p id="eventDesc"></p>
+                        <p id="eventDate"></p>
+                        <p id="eventPlace"></p>
+                        <p id="eventAttendanceList"></p>
+                        <span class="glyphicon glyphicon-eye-open glyph-btn" id="imageEye" onclick="showImage()"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function showImage() {
+        var eventId = $('#eventId')[0].innerHTML;
+        $.ajax({
+            url: "/Clubs/GetTrainingReport",
+            type: "GET",
+            traditional: true,
+            data: {
+                trainingId: eventId
+            },
+            success: function (data) {
+                window.open(data);
+            }
+        });
+    }
+</script>

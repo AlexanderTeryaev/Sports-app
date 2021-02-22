@@ -1,0 +1,678 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="840a89b8e2a340649d540a917574732b" Name="CMS" ZoomLevel="28" ShowGrid="false">
+        <EntityTypeShape EntityType="CmsDataModel.Comments" Width="1.5" PointX="5.625" PointY="0.875" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.Contacts" Width="1.5" PointX="10.25" PointY="0.75" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.ContentStates" Width="1.5" PointX="3" PointY="3.375" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.ContentTypes" Width="1.5" PointX="5.625" PointY="5.375" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.Settings" Width="2.375" PointX="7.375" PointY="0.625" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.Contents" Width="1.5" PointX="3" PointY="5.875" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_Contents_ContentStates" />
+        <AssociationConnector Association="CmsDataModel.FK_Contents_ContentTypes" />
+        <EntityTypeShape EntityType="CmsDataModel.EventsLog" Width="1.5" PointX="3.125" PointY="0.875" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersType" Width="1.5" PointX="8.375" PointY="7.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="CmsDataModel.GameSet" Width="1.5" PointX="5.375" PointY="8.75" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.Notification" Width="1.5" PointX="7.125" PointY="15.125" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.UnionsDoc" Width="1.5" PointX="0.75" PointY="9.75" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.sysdiagram" Width="1.5" PointX="7.375" PointY="9.75" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.LeaguesDoc" Width="1.5" PointX="16.125" PointY="16.5" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.LeagueTeams" Width="1.5" PointX="13.125" PointY="17.375" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.PlayerHistory" Width="1.5" PointX="13.125" PointY="13.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamsDetails" Width="1.5" PointX="16.125" PointY="20" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersJob" Width="1.5" PointX="16.125" PointY="12.25" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.Season" Width="1.5" PointX="13.125" PointY="28.5" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerHistory_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsDetails_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_Seasons_UserJobs" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamStanding" Width="1.5" PointX="15.375" PointY="34.875" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamStandingGame" Width="1.5" PointX="11.875" PointY="34.625" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamStandings_TeamStandingGames" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamScheduleScrapper" Width="1.5" PointX="17.625" PointY="1" IsExpanded="true" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamScheduleScrapperGame" Width="1.5" PointX="15.375" PointY="1.25" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamScheduleScrapper_TeamScheduleScrapperGames" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersDvice" Width="1.5" PointX="12.5" PointY="38.625" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.NotesMessage" Width="1.5" PointX="7.625" PointY="21.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="CmsDataModel.SportCenter" Width="1.5" PointX="2.5" PointY="26.5" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.Club" Width="1.5" PointX="4.75" PointY="23.875" IsExpanded="true" />
+        <AssociationConnector Association="CmsDataModel.FK_Seasons_ClubId" />
+        <AssociationConnector Association="CmsDataModel.FK_SPORT_CENTER" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamStandingGames_Clubs" />
+        <EntityTypeShape EntityType="CmsDataModel.Auditorium" Width="1.5" PointX="18.375" PointY="31" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_Auditoriums_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_Auditoriums_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.Event" Width="1.5" PointX="17.625" PointY="26.75" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_Events_Clubs" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersFriend" Width="1.5" PointX="12.875" PointY="9.5" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.User" Width="1.5" PointX="19.875" PointY="5.625" IsExpanded="true" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerHistory_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_Users_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersDvices_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersFriends_Friends" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersFriends_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersJobs_Users" />
+        <AssociationConnector Association="CmsDataModel.UsersNotifications" />
+        <EntityTypeShape EntityType="CmsDataModel.GroupsTeam" Width="1.5" PointX="20.625" PointY="29.375" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_GroupsTeams_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_GamesCycles_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamBenefactor" Width="1.5" PointX="12.125" PointY="42.375" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamBenefactors_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_SentMessages_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.LeaguesPrice" Width="1.5" PointX="17.625" PointY="23.25" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.Sports" Width="1.5" PointX="0.875" PointY="1.625" />
+        <EntityTypeShape EntityType="CmsDataModel.Sport" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_Clubs_Sports" />
+        <EntityTypeShape EntityType="CmsDataModel.PlayerAchievement" Width="1.5" PointX="26.125" PointY="11.5" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerAchievements_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.SportRank" Width="1.5" PointX="3" PointY="19" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerAchievements_SportRanks" />
+        <AssociationConnector Association="CmsDataModel.FK_SportRanks_Sports" />
+        <EntityTypeShape EntityType="CmsDataModel.PlayerFile" Width="1.5" PointX="22.875" PointY="19.375" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerFiles_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerFiles_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.RetirementRequest" Width="1.5" PointX="25.875" PointY="14.125" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_RetirementRequests_ApproveUser" />
+        <AssociationConnector Association="CmsDataModel.FK_RetirementRequests_RequestUser" />
+        <EntityTypeShape EntityType="CmsDataModel.GamesCycle" Width="1.5" PointX="23.625" PointY="28.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="CmsDataModel.Group" Width="1.5" PointX="12.125" PointY="40.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="CmsDataModel.PlayoffBracket" Width="1.5" PointX="20.625" PointY="22.625" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_GamesCycles_Auditoriums" />
+        <AssociationConnector Association="CmsDataModel.FK_GamesCycles_GroupTeams" />
+        <AssociationConnector Association="CmsDataModel.FK_GamesCycles_PlayoffBrackets" />
+        <AssociationConnector Association="CmsDataModel.FK_GameSets_GamesCycles" />
+        <AssociationConnector Association="CmsDataModel.FK_Groups_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_GroupsTeams_Groups" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayoffBrackets_Groups" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayoffBrackets_PlayoffBrackets1" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayoffBrackets_PlayoffBrackets2" />
+        <AssociationConnector Association="CmsDataModel.GamesFans" />
+        <EntityTypeShape EntityType="CmsDataModel.Team" Width="1.5" PointX="9.875" PointY="19.625" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_GamesCycles_GuestTeams" />
+        <AssociationConnector Association="CmsDataModel.FK_GamesCycles_HomeTeams" />
+        <AssociationConnector Association="CmsDataModel.FK_GroupsTeams_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_LeagueTeams_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerHistory_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayoffBrackets_LoserTeams" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayoffBrackets_Teams1" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayoffBrackets_Teams2" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayoffBrackets_WinnerTeams" />
+        <AssociationConnector Association="CmsDataModel.FK_RetirementRequests_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsSeason_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamStandingGames_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersJobs_Teams" />
+        <AssociationConnector Association="CmsDataModel.TeamsMessages" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamsPlayer" Width="1.5" PointX="22.875" PointY="23" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsPlayers_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsPlayers_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsPlayers_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.League" Width="1.5" PointX="14.875" PointY="24.25" IsExpanded="true" />
+        <AssociationConnector Association="CmsDataModel.FK_Leagues_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_Events_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_Leagues_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_LeaguesDocs_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_LeaguesPrices_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_LeagueTeams_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersJobs_Leagues" />
+        <EntityTypeShape EntityType="CmsDataModel.SentMessage" Width="1.5" PointX="26.625" PointY="28" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_SentMessages_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_SentMessages_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_SentMessages_NotesMessages" />
+        <AssociationConnector Association="CmsDataModel.FK_SentMessages_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_SentMessages_Teams" />
+        <EntityTypeShape EntityType="CmsDataModel.ClubTrainingDay" Width="1.5" PointX="21.875" PointY="36" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamTraining" Width="1.5" PointX="26.625" PointY="32.75" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.TrainingAttendance" Width="1.5" PointX="25.125" PointY="20" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.TrainingDaysSetting" Width="1.5" PointX="9.375" PointY="9.75" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.TrainingSetting" Width="1.5" PointX="10.375" PointY="5.75" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_Auditorium_Id" />
+        <AssociationConnector Association="CmsDataModel.TeamTrainings_AuditoriumId_Fk" />
+        <AssociationConnector Association="CmsDataModel.FK_Club_Id" />
+        <AssociationConnector Association="CmsDataModel.TeamTrainings_TeamId_Fk" />
+        <AssociationConnector Association="CmsDataModel.TrainingAttendance_PlayerId_Fk" />
+        <AssociationConnector Association="CmsDataModel.TrainingAttendance_TrainingId_Fk" />
+        <EntityTypeShape EntityType="CmsDataModel.Discipline" Width="1.5" PointX="9.375" PointY="9.75" IsExpanded="true" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersJobs_Disciplines" />
+        <EntityTypeShape EntityType="CmsDataModel.DisciplinesDoc" Width="1.5" PointX="11.625" PointY="6.375" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_DisciplinesDocs_Disciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_Leagues_Disciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_SentMessages_Disciplines" />
+        <EntityTypeShape EntityType="CmsDataModel.PlayersBenefactorPrice" Width="1.5" PointX="30.875" PointY="23.875" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayersBenefactorPrices_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayersBenefactorPrices_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayersBenefactorPrices_TeamBenefactors" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayersBenefactorPrices_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayersBenefactorPrices_Users" />
+        <AssociationConnector Association="CmsDataModel.FK__GamesCycl__Athle__1EC48A19" />
+        <AssociationConnector Association="CmsDataModel.FK__GamesCycl__Guest__1DD065E0" />
+        <AssociationConnector Association="CmsDataModel.FK__GamesCycl__HomeA__1CDC41A7" />
+        <AssociationConnector Association="CmsDataModel.FK__GroupsTea__Athle__0ABD916C" />
+        <AssociationConnector Association="CmsDataModel.FK__PlayoffBr__Athle__1FB8AE52" />
+        <AssociationConnector Association="CmsDataModel.FK__PlayoffBr__Athle__20ACD28B" />
+        <AssociationConnector Association="CmsDataModel.FK__PlayoffBr__Loser__22951AFD" />
+        <AssociationConnector Association="CmsDataModel.FK__PlayoffBr__Winne__21A0F6C4" />
+        <EntityTypeShape EntityType="CmsDataModel.School" Width="1.5" PointX="28.875" PointY="16.5" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.SchoolTeam" Width="1.5" PointX="31.125" PointY="20.5" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_Schools_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_Schools_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_Schools_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_SchoolTeams_Schools" />
+        <AssociationConnector Association="CmsDataModel.FK_SchoolTeams_Teams" />
+        <EntityTypeShape EntityType="CmsDataModel.ClubTeamPrice" Width="1.5" PointX="12.125" PointY="24.5" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubTeamPrices_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubTeamPrices_Teams" />
+        <EntityTypeShape EntityType="CmsDataModel.PlayerDiscount" Width="1.5" PointX="22.875" PointY="14.25" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDiscounts_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDiscounts_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDiscounts_PlayerDiscounts" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDiscounts_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDiscounts_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDiscounts_UpdatedDiscounts" />
+        <AssociationConnector Association="CmsDataModel.FK_LeagueTeams_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.MemberFee" Width="1.5" PointX="17.625" PointY="45.125" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_MemberFees_Leagues" />
+        <EntityTypeShape EntityType="CmsDataModel.NationalTeamInvitement" Width="1.5" PointX="25.625" PointY="36.75" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_PersonOrder" />
+        <AssociationConnector Association="CmsDataModel.FK__NationalT__Seaso__6FD49106" />
+        <EntityTypeShape EntityType="CmsDataModel.UnionForm" Width="1.5" PointX="12.375" PointY="0.75" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonsForForms" />
+        <EntityTypeShape EntityType="CmsDataModel.HandlingFee" Width="1.5" PointX="17.625" PointY="48.25" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_HandlingFees_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK__Clubs__ParentClu__01F34141" />
+        <AssociationConnector Association="CmsDataModel.FK__GamesCycl__Athle__0D99FE17" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsPlayers_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsPlayers_Leagues" />
+        <EntityTypeShape EntityType="CmsDataModel.PlayersBlockade" Width="1.5" PointX="22.875" PointY="7.5" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK__Users__BlockadeI__54EB90A0" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersBlockade" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonBlockade" />
+        <EntityTypeShape EntityType="CmsDataModel.BlockadeNotification" Width="1.5" PointX="29.125" PointY="11.625" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_BlockadeValue" />
+        <AssociationConnector Association="CmsDataModel.FK_ManagerIdValue" />
+        <EntityTypeShape EntityType="CmsDataModel.LeagueOfficialsSetting" Width="1.5" PointX="17.625" PointY="8" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.LeagueOfficialsSettings_Leagues" />
+        <EntityTypeShape EntityType="CmsDataModel.Statistic" Width="1.5" PointX="25.125" PointY="40.375" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.StatisticsTeamPlayers" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersJobs_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerHistory_OldTeams" />
+        <EntityTypeShape EntityType="CmsDataModel.DisciplineRoute" Width="1.5" PointX="11.625" PointY="49.75" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_DisciplineRoutes_Disciplines" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersRank" Width="1.5" PointX="30.125" PointY="21.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersRoute" Width="1.5" PointX="28.875" PointY="33.75" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersRoutes_DisciplineRoutes" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersRanks_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersRoutes_Users" />
+        <AssociationConnector Association="CmsDataModel.FK__UsersRank__Users__4D1564AE" />
+        <EntityTypeShape EntityType="CmsDataModel.DistanceTable" Width="1.5" PointX="7" PointY="28.375" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_DistanceTablesClub" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonIdDistanceTable" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonIdLeagueOfficialsSettings" />
+        <EntityTypeShape EntityType="CmsDataModel.PlayerDiscipline" Width="1.5" PointX="31.875" PointY="16.625" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDisciplines_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDisciplines_Disciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDisciplines_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerDisciplines_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.ClubDiscipline" Width="1.5" PointX="15.375" PointY="9.125" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubDisciplines_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubDisciplines_Disciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubDisciplines_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamDiscipline" Width="1.5" PointX="25.375" PointY="7.875" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamDisciplines_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamDisciplines_Disciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamDisciplines_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamDisciplines_Teams" />
+        <AssociationConnector Association="CmsDataModel.StatisticsGameCycle" />
+        <AssociationConnector Association="CmsDataModel.StatisticsTeam" />
+        <EntityTypeShape EntityType="CmsDataModel.GameStatistic" Width="1.5" PointX="34.875" PointY="29.375" />
+        <AssociationConnector Association="CmsDataModel.GameStatisticsGameCycle" />
+        <AssociationConnector Association="CmsDataModel.GameStatisticsTeamPlayers" />
+        <AssociationConnector Association="CmsDataModel.GameStatisticsTeam" />
+        <EntityTypeShape EntityType="CmsDataModel.Activity" Width="1.5" PointX="21" PointY="40.125" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivitiesLeague" Width="1.5" PointX="18" PointY="35.5" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivitiesPrice" Width="1.5" PointX="23.25" PointY="47" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivitiesUser" Width="1.5" PointX="28.5" PointY="8.125" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityBranch" Width="1.5" PointX="15.75" PointY="45.875" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityCustomPrice" Width="1.5" PointX="23.25" PointY="41" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityForm" Width="1.5" PointX="25.5" PointY="3.25" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityFormsDetail" Width="1.5" PointX="33.75" PointY="21.125" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityFormsFile" Width="1.5" PointX="23.25" PointY="44.25" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityFormsSubmittedData" Width="1.5" PointX="32.5" PointY="6.625" />
+        <AssociationConnector Association="CmsDataModel.FK_Activities_ActivityBranches" />
+        <AssociationConnector Association="CmsDataModel.FK_Activities_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_Activities_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivitiesLeagues_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivitiesPrices_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivitiesUsers_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityCustomPrices_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityForms_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsFiles_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsSubmittedData_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivitiesLeagues_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivitiesUsers_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityBranches_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsDetails_ActivityCustomPrices" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityForms_PublishedByUsers" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityForms_UpdateUsers" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsDetails_ActivityForms" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsSubmittedData_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsSubmittedData_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsSubmittedData_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsSubmittedData_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityStatusColumnsVisibility" Width="1.5" PointX="25.625" PointY="24.875" IsExpanded="false" />
+        <EntityTypeShape EntityType="CmsDataModel.ColumnVisibility" Width="1.5" PointX="0.75" PointY="12.75" IsExpanded="false" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityStatusColumnsVisibility_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityStatusColumnsVisibility_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionRoute" Width="1.5" PointX="18.125" PointY="38.5" />
+        <AssociationConnector Association="CmsDataModel.FK_Discipline_Competition" />
+        <AssociationConnector Association="CmsDataModel.FK_Route_Competition" />
+        <AssociationConnector Association="CmsDataModel.FK_Season_Competition" />
+        <AssociationConnector Association="CmsDataModel.FK_League_Competition" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionRegistration" Width="1.5" PointX="28.125" PointY="20.125" />
+        <AssociationConnector Association="CmsDataModel.FK_Clubs_CompetitionRegistration" />
+        <AssociationConnector Association="CmsDataModel.FK_League_CompetitionRegistration" />
+        <AssociationConnector Association="CmsDataModel.FK_RoutesComp_CompetitionRegistration" />
+        <AssociationConnector Association="CmsDataModel.FK_Season_CompetitionRegistration" />
+        <AssociationConnector Association="CmsDataModel.FK_Users_CompetitionRegistration" />
+        <EntityTypeShape EntityType="CmsDataModel.AdditionalGymnastic" Width="1.5" PointX="3.375" PointY="12.75" />
+        <AssociationConnector Association="CmsDataModel.FK_AdditionalGymnastic_CompetitionRegistration" />
+        <AssociationConnector Association="CmsDataModel.FK_Clubs_AdditionalGymnastic" />
+        <AssociationConnector Association="CmsDataModel.FK_League_AdditionalGymanstic" />
+        <AssociationConnector Association="CmsDataModel.FK_RoutesComp_AdditionalGymnastic" />
+        <AssociationConnector Association="CmsDataModel.FK_Season_AdditionalGymnastic" />
+        <AssociationConnector Association="CmsDataModel.FK_Users_AdditionalGymnastic" />
+        <AssociationConnector Association="CmsDataModel.ClubGamesFans" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersEducation" Width="1.5" PointX="22.125" PointY="3.625" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersEducation_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.KarateRefereesRank" Width="1.5" PointX="18.375" PointY="11.5" />
+        <AssociationConnector Association="CmsDataModel.FK_KarateRefereesRanks_JobsReferee" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersJobs_ConnectedClubId" />
+        <EntityTypeShape EntityType="CmsDataModel.KarateUnionPayment" Width="1.5" PointX="17" PointY="27.375" />
+        <AssociationConnector Association="CmsDataModel.FK_KarateUnionPayment_SeasonId" />
+        <EntityTypeShape EntityType="CmsDataModel.DisplayedPaymentMessage" Width="1.5" PointX="22.125" PointY="15.875" />
+        <AssociationConnector Association="CmsDataModel.FK_DisplayedPaymentMessages_PaymentId" />
+        <AssociationConnector Association="CmsDataModel.FK_DisplayedPaymentMessages_UserId" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamRegistration" Width="1.5" PointX="20.625" PointY="23.875" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamRegistrations_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamRegistrations_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamRegistrations_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamRegistrations_Teams" />
+        <EntityTypeShape EntityType="CmsDataModel.UnionOfficialSetting" Width="1.5" PointX="15.375" PointY="3.625" />
+        <AssociationConnector Association="CmsDataModel.UnionOfficialSettings_Seasons" />
+        <AssociationConnector Association="CmsDataModel.TeamsDetails_Registrations" />
+        <EntityTypeShape EntityType="CmsDataModel.PositionSetting" Width="1.5" PointX="20.625" PointY="30.875" />
+        <AssociationConnector Association="CmsDataModel.FK_PositionSettings_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_PositionSettings_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.RefereeRegistration" Width="1.5" PointX="18.375" PointY="19.125" />
+        <AssociationConnector Association="CmsDataModel.FK_RefereeRegistrations_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_RefereeRegistrations_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_RefereeRegistrations_Referees" />
+        <AssociationConnector Association="CmsDataModel.FK_RefereeRegistrations_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.Instrument" Width="1.5" PointX="15.375" PointY="21.25" />
+        <AssociationConnector Association="CmsDataModel.FK_Instruments_Discipline" />
+        <AssociationConnector Association="CmsDataModel.FK_Instruments_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionRoutes_Instruments" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamPenalty" Width="1.5" PointX="12.125" PointY="30.625" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamPenalties_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_NotesMessages_NotesMessages" />
+        <AssociationConnector Association="CmsDataModel.FK_NotesMessages_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.UnionPrice" Width="1.5" PointX="5.375" PointY="11.75" />
+        <AssociationConnector Association="CmsDataModel.FK_UnionPrices_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.DriverDetail" Width="1.5" PointX="25.125" PointY="16.625" />
+        <EntityTypeShape EntityType="CmsDataModel.DriverLicenseType" Width="1.5" PointX="23.875" PointY="57.375" />
+        <EntityTypeShape EntityType="CmsDataModel.EngineDetail" Width="1.5" PointX="26.125" PointY="42.25" />
+        <EntityTypeShape EntityType="CmsDataModel.VehicleDetail" Width="1.5" PointX="26.125" PointY="55.125" />
+        <EntityTypeShape EntityType="CmsDataModel.VehicleLicens" Width="1.5" PointX="26.125" PointY="0.75" />
+        <EntityTypeShape EntityType="CmsDataModel.VehicleModel" Width="1.5" PointX="23.875" PointY="54.625" />
+        <EntityTypeShape EntityType="CmsDataModel.VehicleProduct" Width="1.5" PointX="21.625" PointY="54.625" />
+        <EntityTypeShape EntityType="CmsDataModel.Vehicle" Width="1.5" PointX="28.375" PointY="13.5" />
+        <AssociationConnector Association="CmsDataModel.FK_DriverDetails_Sportsman" />
+        <AssociationConnector Association="CmsDataModel.FK_Vehicles_DriverDetails" />
+        <AssociationConnector Association="CmsDataModel.FK_VehicleDetails_DriverLicenseTypes" />
+        <AssociationConnector Association="CmsDataModel.FK_Vehicles_EngineDetails" />
+        <AssociationConnector Association="CmsDataModel.FK_VehicleDetails_VehicleModel" />
+        <AssociationConnector Association="CmsDataModel.FK_VehicleDetails_VehicleProduct" />
+        <AssociationConnector Association="CmsDataModel.FK_Vehicles_VehicleDetails" />
+        <AssociationConnector Association="CmsDataModel.FK_Vehicles_VehicleLicense" />
+        <AssociationConnector Association="CmsDataModel.FK_VehicleModel_Product" />
+        <AssociationConnector Association="CmsDataModel.FK_Vehicles_Season" />
+        <AssociationConnector Association="CmsDataModel.FK_VehicleDetails_VehicleModel1" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionRegistrations_Instrument" />
+        <EntityTypeShape EntityType="CmsDataModel.SportsRegistration" Width="1.5" PointX="22.125" PointY="9.75" />
+        <AssociationConnector Association="CmsDataModel.FK_SportsRegistrations_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_SportsRegistrations_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_SportsRegistrations_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_SportsRegistrations_Leagues" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionLevel" Width="1.5" PointX="7.625" PointY="12.375" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisRank" Width="1.5" PointX="5.375" PointY="2.75" />
+        <AssociationConnector Association="CmsDataModel.FK_Competition_Levels" />
+        <EntityTypeShape EntityType="CmsDataModel.PenaltyForExclusion" Width="1.5" PointX="25.125" PointY="51" />
+        <AssociationConnector Association="CmsDataModel.FK_PenaltyForExclusion_PlayerId" />
+        <AssociationConnector Association="CmsDataModel.FK__PenaltyFo__UserI__40CF895A" />
+        <EntityTypeShape EntityType="CmsDataModel.AdvBanner" Width="1.5" PointX="7" PointY="29.75" />
+        <AssociationConnector Association="CmsDataModel.FK_AdvBanner_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionLevel_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisGroup" Width="1.5" PointX="28.375" PointY="3.25" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGroups_Season" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisStage" Width="1.5" PointX="17.375" PointY="32.125" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisStages_Season" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisStages_Category" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGroups_Stage" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisGameCycle" Width="1.5" PointX="10.375" PointY="11.75" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisGameSet" Width="1.5" PointX="10.375" PointY="2.75" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameCycles_Field" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameCycles_FirstPlayer" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameCycles_SecondPlayer" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameCycles_Group" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameCycles_Stage" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPlayoffBrackets_FirstPlayer" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPlayoffBrackets_Loser" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPlayoffBrackets_SecondPlayer" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPlayoffBrackets_Winner" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisGame" Width="1.5" PointX="28.625" PointY="35.625" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGames_Season" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGames_Category" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGames_Stage" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameSets_Cycle" />
+        <EntityTypeShape EntityType="CmsDataModel.InitialApprovalDate" Width="1.5" PointX="22.125" PointY="0.75" />
+        <AssociationConnector Association="CmsDataModel.FK_InitialApprovalDates_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersApprovalDatesHistory" Width="1.5" PointX="22.125" PointY="60.875" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersApprovalDatesHistory_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisPlayoffBracket" Width="1.5" PointX="30.625" PointY="1" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameCycles_Brackets" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPlayoffBrackets_Group" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPlayoffBrackets_TennisPlayoffBrackets1" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPlayoffBrackets_TennisPlayoffBrackets2" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisGroupTeam" Width="1.5" PointX="35.625" PointY="16.375" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGroupTeams_Season" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGroupTeams_Players" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGroupTeams_Group" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityStatusColumnName" Width="1.5" PointX="29.25" PointY="25.875" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityStatusColumnsOrder" Width="1.5" PointX="23.25" PointY="25.125" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityStatusColumnsSorting" Width="1.5" PointX="26.25" PointY="29.125" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityStatusColumnNames_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityStatusColumnsOrder_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityStatusColumnsSorting_Activities" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityStatusColumnNames_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityStatusColumnsOrder_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityStatusColumnsSorting_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.ActivityBranchesState" Width="1.5" PointX="29.125" PointY="29" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityBranchesState_ActivityBranches" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityBranchesState_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.DaysForHosting" Width="1.5" PointX="20.625" PointY="18.75" />
+        <AssociationConnector Association="CmsDataModel.FK_DaysForHosting_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_DaysForHosting_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamHostingDay" Width="1.5" PointX="25.875" PointY="21.125" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamHostingDays_Hosting" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamHostingDays_Teams" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionRegion" Width="1.5" PointX="10.125" PointY="38.5" />
+        <AssociationConnector Association="CmsDataModel.FK_Competition_Regions" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionRegion_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisLeagueGame" Width="1.5" PointX="31.875" PointY="26.875" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisLeagueGameScore" Width="1.5" PointX="34.125" PointY="26.375" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisLeagueGame_GameCycle" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisLeagueGame_GuestPlayer" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisLeagueGame_HomePLayer" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisLeagueGame_TechnicalWinner" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisLeagueGameScores_Game" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisLeagueGame_GuestPairPlayer" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisLeagueGame_HomePairPlayer" />
+        <EntityTypeShape EntityType="CmsDataModel.ClubTeam" Width="1.5" PointX="31.375" PointY="31.75" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubTeams_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_DepartmentId" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubTeams_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubTeams_Teams" />
+        <EntityTypeShape EntityType="CmsDataModel.CategoriesPlaceDate" Width="1.5" PointX="12.125" PointY="19.625" />
+        <AssociationConnector Association="CmsDataModel.FK_CategoriesPlaceDates_TeamId" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisRank_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.LeagueScheduleState" Width="1.5" PointX="33.125" PointY="3.375" />
+        <AssociationConnector Association="CmsDataModel.FK_LeagueScheduleState_LeagueId" />
+        <AssociationConnector Association="CmsDataModel.FK_LeagueScheduleState_UserId" />
+        <EntityTypeShape EntityType="CmsDataModel.MedicalCertApprovement" Width="1.5" PointX="35.125" PointY="13.125" />
+        <AssociationConnector Association="CmsDataModel.FK_MedicalCertApprovements_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_MedicalCertApprovements_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_PenaltyForExclusion_ActionUserId" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayerHistory_ActionUserId" />
+        <AssociationConnector Association="CmsDataModel.FK_PlayersBlockade_ActionUserId" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsPlayers_ActionUserId" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersApprovalDatesHistory_ActionUserId" />
+        <EntityTypeShape EntityType="CmsDataModel.LevelDateSetting" Width="1.5" PointX="35.625" PointY="9.625" />
+        <AssociationConnector Association="CmsDataModel.FK_LevelDateSettings_CompetitionLevelId" />
+        <AssociationConnector Association="CmsDataModel.FK_LevelDateSettings_CompetitionId" />
+        <EntityTypeShape EntityType="CmsDataModel.LeaguesFan" Width="1.5" PointX="35.125" PointY="6.625" />
+        <AssociationConnector Association="CmsDataModel.FK_LeaguesFans_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_LeaguesFans_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.ClubPayment" Width="1.5" PointX="7" PointY="33.125" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubPayments_ClubId" />
+        <EntityTypeShape EntityType="CmsDataModel.NotesAttachedFile" Width="1.5" PointX="9.875" PointY="23.25" />
+        <AssociationConnector Association="CmsDataModel.FK_NotesAttachedFiles_NoteMessageId" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGroupTeams_PairPlayerId" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameCycles_FirstPlayerPairId" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisGameCycles_SecondPlayerPairId" />
+        <EntityTypeShape EntityType="CmsDataModel.ClubBalance" Width="1.5" PointX="33.125" PointY="0.75" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubBalances_ActionUserId" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubBalances_ClubId" />
+        <AssociationConnector Association="CmsDataModel.FK_ClubBalances_SeasonId" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamsRank" Width="1.5" PointX="26.125" PointY="45.75" />
+        <EntityTypeShape EntityType="CmsDataModel.TeamsRoute" Width="1.5" PointX="15.75" PointY="42.25" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsRoutes_DisciplineRoutes" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsRanks_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsRoutes_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK__TeamsRank__Teams__3489AE06" />
+        <EntityTypeShape EntityType="CmsDataModel.DisciplineTeamRoute" Width="1.5" PointX="11.625" PointY="51.875" />
+        <AssociationConnector Association="CmsDataModel.FK_DisciplineTeamRoutes_Disciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsRoutes_DisciplineTeamRoutes" />
+
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionAge" Width="1.5" PointX="15.375" PointY="55.75" />
+        <AssociationConnector Association="CmsDataModel.FK_Competition_Ages" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionAges_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisRank_AgeId" />
+        <AssociationConnector Association="CmsDataModel.FK_Leagues_DuplicatedLeague" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisStage_LeagueId" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsRanks_RouteRanks1" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionDiscipline" Width="1.5" PointX="17.625" PointY="49.875" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionDisciplines_Category" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionDisciplines_CompetitionId" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionDisciplineRegistration" Width="1.5" PointX="31.125" PointY="36" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionDisciplineRegistrations_ClubId" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionDisciplineRegistrations_CompetitionDisciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionDisciplineRegistrations_UserId" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsRanks_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsRoutes_Users" />
+
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionTeamRoute" Width="1.5" PointX="28.625" PointY="42" />
+        <AssociationConnector Association="CmsDataModel.FK_Discipline_CompetitionTeam" />
+        <AssociationConnector Association="CmsDataModel.FK_Route_CompetitionTeam" />
+        <AssociationConnector Association="CmsDataModel.FK_Season_CompetitionTeam" />
+        <AssociationConnector Association="CmsDataModel.FK_League_CompetitionTeam" />
+        <AssociationConnector Association="CmsDataModel.FK_RoutesTeamComp_CompetitionRegistration" />
+        <AssociationConnector Association="CmsDataModel.FK_RoutesTeamComp_AdditionalGymnastic" />
+        <EntityTypeShape EntityType="CmsDataModel.RouteRank" Width="1.5" PointX="13.875" PointY="49.625" />
+        <EntityTypeShape EntityType="CmsDataModel.RouteTeamRank" Width="1.5" PointX="13.875" PointY="53.875" />
+        <AssociationConnector Association="CmsDataModel.FK_Rank_Competition" />
+        <AssociationConnector Association="CmsDataModel.FK_Rank_CompetitionTeam" />
+        <AssociationConnector Association="CmsDataModel.FK_RouteRanks_DisciplineRoutes" />
+        <AssociationConnector Association="CmsDataModel.FK_RouteTeamRanks_DisciplineTeamRoutes" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersRanks_RouteRanks" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsRanks_RouteRanks" />
+        <EntityTypeShape EntityType="CmsDataModel.AdditionalTeamGymnastic" Width="2.875" PointX="36.875" PointY="24.25" />
+        <AssociationConnector Association="CmsDataModel.FK_Clubs_AdditionalTeamGymnastic" />
+        <AssociationConnector Association="CmsDataModel.FK_League_AdditionalTeamGymanstic" />
+        <AssociationConnector Association="CmsDataModel.FK_RoutesTeamComp_AdditionalTeamGymnastic" />
+        <AssociationConnector Association="CmsDataModel.FK_Season_AdditionalTeamGymnastic" />
+        <AssociationConnector Association="CmsDataModel.FK_Users_AdditionalTeamGymnastic" />
+        <EntityTypeShape EntityType="CmsDataModel.OfficialGameReportDetail" Width="1.5" PointX="37.875" PointY="20.75" />
+        <AssociationConnector Association="CmsDataModel.FK_OfficialGameReportDetails_GamesCycles" />
+        <AssociationConnector Association="CmsDataModel.FK_OfficialGameReportDetails_UsersJobs" />
+        <EntityTypeShape EntityType="CmsDataModel.RankedStandingCorrection" Width="1.5" PointX="31.625" PointY="40.625" />
+        <AssociationConnector Association="CmsDataModel.FK_RankedStandingCorrections_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_RankedStandingCorrections_Teams" />
+        <EntityTypeShape EntityType="CmsDataModel.Stage" Width="1.5" PointX="17.625" PointY="54.5" />
+        <AssociationConnector Association="CmsDataModel.FK_GamesCycles_Stages" />
+        <AssociationConnector Association="CmsDataModel.FK_Groups_Stages" />
+        <AssociationConnector Association="CmsDataModel.FK_Stages_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_Stages_Stages" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamPenalties_Stages" />
+        <EntityTypeShape EntityType="CmsDataModel.RefereeCompetitionRegistration" Width="1.5" PointX="37.125" PointY="28.375" />
+        <AssociationConnector Association="CmsDataModel.FKEY_REFEREEREG_LEAGUEID" />
+        <AssociationConnector Association="CmsDataModel.FKEY_REFEREEREG_USERID" />
+        <EntityTypeShape EntityType="CmsDataModel.Regional" Width="1.5" PointX="15.375" PointY="60.625" />
+        <AssociationConnector Association="CmsDataModel.FK_Regionals_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.LiqPayPaymentsNotification" Width="1.5" PointX="12.375" PointY="2.75" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionClubsCorrection" Width="1.5" PointX="31.125" PointY="44.375" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionClubsCorrections_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionClubsCorrections_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionClubsCorrections_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_Competition_Auditoriums" />
+        <AssociationConnector Association="CmsDataModel.FK_Clubs_Regionals" />
+        <EntityTypeShape EntityType="CmsDataModel.AthleticLeague" Width="1.5" PointX="15.375" PointY="13.75" />
+        <AssociationConnector Association="CmsDataModel.FK_AthleticLeagues_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_Leagues_AthleticLeagues" />
+        <EntityTypeShape EntityType="CmsDataModel.TennisCategoryPlayoffRank" Width="1.5" PointX="34.125" PointY="37.125" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisCategoryPlayoffRanks_Leagues" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisCategoryPlayoffRanks_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisCategoryPlayoffRanks_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisCategoryPlayoffRanks_TeamsPlayers" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisCategoryPlayoffRanks_TeamsPlayers1" />
+        <EntityTypeShape EntityType="CmsDataModel.RefereeSalaryReport" Width="1.5" PointX="36.125" PointY="3.125" />
+        <AssociationConnector Association="CmsDataModel.FK_RefereeSalaryReports_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_RefereeSalaryReports_Users" />
+        <AssociationConnector Association="CmsDataModel.FK__Seasons__Previou__748F2482" />
+        <AssociationConnector Association="CmsDataModel.FK__TennisRan__Seaso__758348BB" />
+        <AssociationConnector Association="CmsDataModel.FK_UsersApprovalDatesHistory_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.ResetPasswordRequest" Width="1.5" PointX="22.125" PointY="64.5" />
+        <AssociationConnector Association="CmsDataModel.FK_ResetPasswordRequests_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.RowingDistance" Width="1.5" PointX="15.375" PointY="65.75" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionDisciplines_RowingDistances" />
+        <AssociationConnector Association="CmsDataModel.FK_RowingDistances_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionResult" Width="1.5" PointX="33.375" PointY="44" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionResult_CompetitionRegistration" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamPlayers_Users" />
+        <EntityTypeShape EntityType="CmsDataModel.CardComIndicator" Width="1.5" PointX="0.75" PointY="14.75" />
+        <EntityTypeShape EntityType="CmsDataModel.FriendshipsType" Width="1.5" PointX="15.375" PointY="68.5" />
+        <AssociationConnector Association="CmsDataModel.FK_FriendshipsTypes_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionAges_Disciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionAges_FriendshipsTypes" />
+        <EntityTypeShape EntityType="CmsDataModel.ChipPrice" Width="1.5" PointX="15.375" PointY="72.375" />
+        <EntityTypeShape EntityType="CmsDataModel.FriendshipPrice" Width="1.5" PointX="27.625" PointY="50.125" />
+        <AssociationConnector Association="CmsDataModel.FK_ChipPrices_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_FriendshipPrices_FriendshipsTypes" />
+        <AssociationConnector Association="CmsDataModel.FK_FriendshipPrices_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionDisciplineHeatStartTime" Width="1.5" PointX="19.875" PointY="58.25" />
+        <AssociationConnector Association="CmsDataModel.FK_CompetitionDisciplineHeatStartTimes_CompetitionDisciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_Users_Auditorium" />
+        <EntityTypeShape EntityType="CmsDataModel.DisciplineRecord" Width="1.5" PointX="5.375" PointY="16.75" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionDisciplineTeam" Width="1.5" PointX="29.875" PointY="48.5" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPDISCTEAM_CLUBID" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPDISCTEAM_COMPDISC" />
+        <AssociationConnector Association="CmsDataModel.FK_COMPDISCREG_COMPDISCTEAM" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionDisciplineClubsRegistration" Width="1.5" PointX="29.875" PointY="51.875" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPDISCCLUBREG_CLUBID" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPDISCCLUBREG_COMPDISC" />
+        <AssociationConnector Association="CmsDataModel.FKEY_AUDI_DISCID" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsSubmittedData_BrothersUsers" />
+        <EntityTypeShape EntityType="CmsDataModel.AthleteNumber" Width="1.5" PointX="37.125" PointY="32.75" />
+        <AssociationConnector Association="CmsDataModel.FK_AthleteNumbers_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_Users_AthleteNumbers" />
+        <EntityTypeShape EntityType="CmsDataModel.SeasonRecord" Width="1.5" PointX="36.375" PointY="37.75" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonRecords_DisciplineRecords" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonRecords_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsSubmittedData_ClubsPrevious" />
+        <AssociationConnector Association="CmsDataModel.FKEY_TPLAYERSMOUNT_FRIEND" />
+        <AssociationConnector Association="CmsDataModel.FKEY_TPLAYERSROAD_FRIEND" />
+        <AssociationConnector Association="CmsDataModel.FKEY_TPLAYERS_FRIEND" />
+        <EntityTypeShape EntityType="CmsDataModel.LevelPointsSetting" Width="1.5" PointX="28.375" PointY="0.75" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPointsSettings_Level" />
+        <AssociationConnector Association="CmsDataModel.FK_TennisPointsSettings_Season" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonId_TeamScheduleScrapperGames" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonId_TeamStandingGames" />
+        <AssociationConnector Association="CmsDataModel.FK_SeasonId_TeamTrainings" />
+        <EntityTypeShape EntityType="CmsDataModel.BicycleCompetitionDiscipline" Width="1.5" PointX="15.375" PointY="76.625" />
+        <AssociationConnector Association="CmsDataModel.FKEY_BICYCOMPDISC_SEASON" />
+        <EntityTypeShape EntityType="CmsDataModel.BicycleCompetitionHeat" Width="1.5" PointX="15.375" PointY="79.625" />
+        <AssociationConnector Association="CmsDataModel.FKEY_BICYCOMPHEAT_SEASON" />
+        <EntityTypeShape EntityType="CmsDataModel.DisciplineExpertise" Width="1.5" PointX="17.625" PointY="76.875" />
+        <AssociationConnector Association="CmsDataModel.FKEY_DISCEXP_BICYCOMPDISC" />
+        <AssociationConnector Association="CmsDataModel.FKEY_LEAGUE_BICYCOMPDISC" />
+        <AssociationConnector Association="CmsDataModel.FKEY_LEAGUE_LEVEL" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionExperty" Width="1.5" PointX="26.875" PointY="59.5" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXP_DISCEXP" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXP_LEAGUE" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionExpertiesHeat" Width="1.5" PointX="36.125" PointY="48.75" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXPHEAT_BICYCOMPHEAT" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXPHEAT_COMPEXP" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXPHEAT_DISC" />
+        <EntityTypeShape EntityType="CmsDataModel.Benefit" Width="1.5" PointX="0.75" PointY="20.75" />
+        <EntityTypeShape EntityType="CmsDataModel.MedicalInstitute" Width="1.5" PointX="15.375" PointY="83.5" />
+        <AssociationConnector Association="CmsDataModel.FK_MedicalInstitutes_Seasons" />
+        <AssociationConnector Association="CmsDataModel.FK_TeamsPlayers_MedicalInstitutes" />
+        <EntityTypeShape EntityType="CmsDataModel.BicycleFriendshipPayment" Width="1.5" PointX="38.125" PointY="14.875" />
+        <AssociationConnector Association="CmsDataModel.FK_BicycleFriendshipPayments_Clubs" />
+        <AssociationConnector Association="CmsDataModel.FK_BicycleFriendshipPayments_Teams" />
+        <AssociationConnector Association="CmsDataModel.FK_BicycleFriendshipPayments_Users" />
+        <AssociationConnector Association="CmsDataModel.FK_BicycleFriendshipPayments_Seasons" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionExpertiesDisciplineHeat" Width="1.5" PointX="39.375" PointY="29.5" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXPDISCHEAT_COMPEXPHEAT" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXPDISCHEAT_DISC" />
+        <EntityTypeShape EntityType="CmsDataModel.BicycleDisciplineRegistration" Width="1.5" PointX="41.375" PointY="26.125" />
+        <AssociationConnector Association="CmsDataModel.FKEY_BICYDISCREG_CLUB" />
+        <AssociationConnector Association="CmsDataModel.FKEY_BICYDISCREG_COMPEXPHEAT" />
+        <AssociationConnector Association="CmsDataModel.FKEY_BICYDISCREG_USER" />
+        <AssociationConnector Association="CmsDataModel.FK_GamesCycles_PenaltyForExclusion" />
+        <AssociationConnector Association="CmsDataModel.FK_PenaltyForExclusion_Leagues" />
+        <EntityTypeShape EntityType="CmsDataModel.CompetitionExpertiesHeatsAge" Width="1.5" PointX="38.375" PointY="54.125" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXPDISCHEAT_COMPAGE" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXPHEAT_COMPLVL" />
+        <AssociationConnector Association="CmsDataModel.FKEY_COMPEXPHEATAGES_COMPEXPHEAT" />
+        <AssociationConnector Association="CmsDataModel.FK_BicycleFriendshipPayments_DiscardUsers" />
+        <EntityTypeShape EntityType="CmsDataModel.InsuranceType" Width="1.5" PointX="0.75" PointY="27.875" />
+        <AssociationConnector Association="CmsDataModel.FKEY_USER_INSTYPE" />
+        <EntityTypeShape EntityType="CmsDataModel.WaterpoloStatistic" Width="1.5" PointX="38.875" PointY="36.25" />
+        <AssociationConnector Association="CmsDataModel.WaterpoloStatisticsGameCycle" />
+        <AssociationConnector Association="CmsDataModel.WaterpoloStatisticsTeamPlayers" />
+        <AssociationConnector Association="CmsDataModel.WaterpoloStatisticsTeam" />
+        <AssociationConnector Association="CmsDataModel.FK_ActivityFormsSubmittedData_CompetitionDisciplines" />
+        <AssociationConnector Association="CmsDataModel.FK_BicycleFriendshipPayments_CreatedByUsers" />
+      </Diagram>
+      <Diagram DiagramId="bcf5e0eecd6a469ab504daaac1d62eea" Name="Leagues" ZoomLevel="97" >
+        <EntityTypeShape EntityType="CmsDataModel.Country" Width="1.5" PointX="1.875" PointY="0.875" />
+        <EntityTypeShape EntityType="CmsDataModel.Gender" Width="1.5" PointX="11.75" PointY="4" />
+        <EntityTypeShape EntityType="CmsDataModel.JobsRole" Width="1.5" PointX="1.75" PointY="5.875" />
+        <EntityTypeShape EntityType="CmsDataModel.Language" Width="1.5" PointX="1.875" PointY="3.125" />
+        <EntityTypeShape EntityType="CmsDataModel.Section" Width="1.5" PointX="4.375" PointY="2.625" />
+        <EntityTypeShape EntityType="CmsDataModel.Union" Width="1.5" PointX="6.875" PointY="2.375" />
+        <AssociationConnector Association="CmsDataModel.FK_Languages_Countries" />
+        <AssociationConnector Association="CmsDataModel.FK_Sections_Languages" />
+        <AssociationConnector Association="CmsDataModel.FK_Organizations_Sections" />
+        <EntityTypeShape EntityType="CmsDataModel.Age" Width="1.5" PointX="9.5" PointY="0.75" />
+        <EntityTypeShape EntityType="CmsDataModel.Job" Width="1.5" PointX="4.375" PointY="6" />
+        <AssociationConnector Association="CmsDataModel.FK_Jobs_Roles" />
+        <AssociationConnector Association="CmsDataModel.FK_Jobs_Sections" />
+      </Diagram>
+      <Diagram DiagramId="bd53900c97b04f6f8a9393262d51bc8d" Name="Teams" ZoomLevel="78" >
+        <EntityTypeShape EntityType="CmsDataModel.TeamsAuditorium" Width="1.5" PointX="3" PointY="4.25" />
+        <EntityTypeShape EntityType="CmsDataModel.GamesType" Width="1.5" PointX="3.375" PointY="9.875" />
+        <EntityTypeShape EntityType="CmsDataModel.Game" Width="1.5" PointX="11" PointY="0.5" />
+        <EntityTypeShape EntityType="CmsDataModel.GameSet" Width="1.5" PointX="13.375" PointY="6" />
+        <EntityTypeShape EntityType="CmsDataModel.Position" Width="1.5" PointX="0.75" PointY="13.25" />
+        </Diagram>
+      <Diagram DiagramId="42b90cecfdb44325873f2b46c26f376a" Name="API" >
+        <EntityTypeShape EntityType="CmsDataModel.TeamsFan" Width="1.5" PointX="5" PointY="0.625" />
+        </Diagram>
+      <Diagram DiagramId="7476879202014e559ae504d5f76d76aa" Name="Friends" ZoomLevel="89" >
+      </Diagram>
+      <Diagram DiagramId="8ae13a6ccbcd408eb010f929efcd607e" Name="Notifications" >
+        <EntityTypeShape EntityType="CmsDataModel.NotesRecipient" Width="1.5" PointX="3" PointY="0.875" />
+        <EntityTypeShape EntityType="CmsDataModel.Notification" Width="1.5" PointX="2.625" PointY="4.75" />
+        <EntityTypeShape EntityType="CmsDataModel.NotesGame" Width="1.5" PointX="0.5" PointY="4.75" />
+        <EntityTypeShape EntityType="CmsDataModel.UsersDvice" Width="1.5" PointX="8.125" PointY="3.875" />
+        </Diagram>
+      <Diagram DiagramId="e42e40a0939d4bd194ffebcf97c3cd33" Name="Wall Messages" >
+        <EntityTypeShape EntityType="CmsDataModel.Message" Width="1.5" PointX="3" PointY="1" />
+        <EntityTypeShape EntityType="CmsDataModel.WallThread" Width="1.5" PointX="0.75" PointY="1.25" />
+        <AssociationConnector Association="CmsDataModel.FK_Messages_WallThreads" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

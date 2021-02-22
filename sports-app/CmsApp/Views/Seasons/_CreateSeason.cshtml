@@ -1,0 +1,135 @@
+﻿@model CreateSeason
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <h4 class="modal-title">@Messages.AddNew</h4>
+</div>
+
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+@using (Html.BeginForm("Create", "Seasons", FormMethod.Post, new { @id = "season-form" }))
+{
+    @Html.HiddenFor(m => m.RelevantEntityLogicalName)
+    @Html.HiddenFor(m => m.EntityId)
+    @Html.HiddenFor(m => m.IsDuplicate)
+
+<div class="modal-body">
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.Name:</label>
+            @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Name)
+        </div>
+        <div class="form-group col-sm-6">
+        </div>
+    </div>
+    @if (ViewBag.Leagues != null)
+    {
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label for="rb-create-new" class="control-label">@Messages.CreateNewSeason</label>
+                <input type="radio" name="create-season" class="form-group" id="rb-create-new" checked />
+            </div>
+            <div class="form-group col-sm-6">
+                <label for="rb-create-existed" class="control-label">@Messages.DuplicateCurrentSeason</label>
+                <input type="radio" name="create-season" class="form-group" id="rb-create-existed" />
+            </div>
+        </div>
+        if (Model.RelevantEntityLogicalName == LogicaName.Union)
+        {
+            <div class="row" id="existed-seasons-row" style="display: none">
+                <div class="form-group col-sm-6">
+                </div>
+                <div class="form-group col-sm-6">
+                    <div class="form-group mid-width">
+                        @Html.DropDownList("Leagues", new SelectList(ViewBag.Leagues, "LeagueId", "Name"), new { @class = "form-control", @id = "ddlExistedSeasons", multiple = "multiple" })
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.StartDate:</label>
+            @Html.TextBoxFor(m => m.StartDate, new { @class = "form-control frm-date" })
+            @Html.ValidationMessageFor(m => m.StartDate)
+        </div>
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.EndDate:</label>
+            @Html.TextBoxFor(m => m.EndDate, new { @class = "form-control frm-date" })
+            @Html.ValidationMessageFor(m => m.EndDate)
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.SeasonForAge:</label>
+            @Html.TextBoxFor(m => m.SeasonForAge, new { @class = "form-control", type = "number" })
+        </div>
+        <div class="form-group col-sm-6">
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-sm-12">
+            <label class="control-label">@Messages.Description:</label>
+            @Html.TextAreaFor(m => m.Description, new { @class = "form-control" })
+        </div>
+    </div>
+</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        <button type="submit" id="create-season" class="btn btn-primary">@Messages.Save</button>
+    </div>
+}
+
+<script>
+    $('#season-form').validateBootstrap(true);
+    $(function () {
+        $('#ddlExistedSeasons').multiselect({
+            includeSelectAllOption: true,
+            maxHeight: 200,
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+        $(".frm-date").datetimepicker({
+            @if (Messages.Lang == "he")
+                             {
+                                 <text>
+            // 30/07/16 10:02
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+            </text>
+                             }
+                         else
+                         {
+                             <text>
+            // 30/07/16 10:02
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+            </text>
+                         }
+            step: 15,
+            closeOnDateSelect: true,
+            onChangeDateTime: function () {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            }
+        });
+    });
+
+    $( "#season-form" ).bind("onSuccessValidation", function( ) {
+        $("#create-season").hide();
+    });
+
+</script>

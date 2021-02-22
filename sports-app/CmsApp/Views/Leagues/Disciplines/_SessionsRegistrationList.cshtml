@@ -1,0 +1,305 @@
+﻿@using DataService.DTO
+@using CmsApp.Controllers
+@model List<CompDiscRegDTO>
+@{
+    bool isHebrew = Request.IsHebrew();
+    string pullRight = isHebrew ? "pull-left" : "pull-right";
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9">
+            <h4 class="modal-title">@Messages.Registrations.ToLowerInvariant() - @Messages.Heat @ViewBag.SessionId - @ViewBag.CompetitionName</h4>
+        </div>
+        <div class="col-sm-3">
+            <span id="sportsmen_cnt">@(Messages.Sportsmans + " " + Messages.Count.ToLower())<strong> @(Model?.Count() ?? 0)</strong></span>
+            @if (ViewBag.CompetitionId != null)
+            {
+                <style>
+                    .input-icon {
+                        position: absolute;
+                        left: 5px;
+                        top: calc(50% - 0.5em);
+                        -webkit-animation: spin 2s infinite linear;
+                        -moz-animation: spin 2s infinite linear;
+                        -o-animation: spin 2s infinite linear;
+                        animation: spin 2s infinite linear;
+                    }
+
+                    .typeahead {
+                        padding-left: 17px;
+                    }
+
+                    .input-wrapper {
+                        position: relative;
+                        margin-top: 10px;
+                    }
+                </style>
+                <br />
+                <br />
+                /*
+                @Messages.SportsManRegister
+                <div class="input-wrapper">
+                    <input type="text" class="typeahead form-control" placeholder="@Messages.SearchByWeightIDName" />
+                    <span style="display:none;" class='glyphicon glyphicon-repeat fast-right-spinner input-icon '></span>
+                </div>
+                <div id="player_chosen_for_comp_register">
+
+                </div>
+                */
+            }
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div style="margin-top:15px;" class="row">
+        <div class="col-sm-12">
+            @if (Model != null && Model.Any())
+            {
+                <table id="print_table_registrationList" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.BirthDay</th>
+                            <th>@Messages.ClubName</th>
+                            <th>@Messages.Gender</th>
+                            <th>@Messages.Category</th>
+                            <th>@Messages.Entry</th>
+                            <th>@Messages.Weight</th>
+                            <th>@Messages.Lifting</th>
+                            <th>@Messages.Push</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="session-registrations-list">
+                        @foreach (var sportsman in Model)
+                        {
+                            <tr>
+                                <td>@sportsman.FullName</td>
+                                <td>
+                                    @{
+                                        var birthDate = sportsman.BirthDate.HasValue
+                                        ? sportsman.BirthDate.Value.ToShortDateString()
+                                        : string.Empty;
+                                    }
+                                    @birthDate
+                                </td>
+                                <td>@sportsman.ClubName</td>
+                                <td>@(LangHelper.GetGenderCharById(sportsman.GenterId ?? 0)) </td>
+                                <td>@sportsman.TeamTitle</td>
+                                @{
+                                    string danger = "";
+                                    if (!sportsman.IsWeightOk)
+                                    {
+                                        danger = "alert-danger";
+                                    }
+                                }
+                                <td>@Html.TextBox("RegistrationWeightDeclaration", sportsman.WeightDeclaration, new { @form = $"session_weight_{sportsman.RegistrationId}", @class = $"form-control {danger} registration-input RegistrationWeightDeclaration", })</td>
+                                <td>@Html.TextBox("RegistrationWeight", sportsman.Weight, new { @form = $"session_weight_{sportsman.RegistrationId}", @class = $"form-control {danger} registration-input RegistrationWeight", })</td>
+                                <td>@Html.TextBox("RegistrationLifting", sportsman.Lifting, new { @form = $"session_weight_{sportsman.RegistrationId}", @class = $"form-control {danger} registration-input RegistrationLifting push-lifting", })</td>
+                                <td>@Html.TextBox("RegistrationPush", sportsman.Push, new { @form = $"session_weight_{sportsman.RegistrationId}", @class = $"form-control {danger} registration-input RegistrationPush push-lifting", })</td>
+                                <td>
+                                    @using (Ajax.BeginForm(nameof(LeaguesController.UpdateWeightInWeightliftSessionRegistration), nameof(LeaguesController).TrimControllerName(), new { RegistrationId = sportsman.RegistrationId , SessionId = ViewBag.SessionId, LeagueId = ViewBag.CompetitionId }, new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "session_registrations_modal_pl" }, new { id = $"session_weight_{sportsman.RegistrationId}" }))
+                                    {
+                                        <button class="btn btn-primary fa fa-save"></button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-danger">
+                    <strong><i class="fa fa-ban"></i></strong>&nbsp; &nbsp; @Messages.NoSportmenRegistered
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+</div>
+
+
+<script>
+
+    $(document).ready(function () {
+        $('input.push-lifting').focusout(function () {
+            var thisObj = $(this);
+            var thisVal = $(thisObj).val();
+
+            var oppoObj = null;
+            var decObj = null;
+            if ($(thisObj).hasClass('RegistrationLifting')) {
+                oppoObj = $(thisObj).closest('td').next('td').children('input.RegistrationPush');
+                decObj = $(thisObj).closest('td').prev('td').prev('td').children('input.RegistrationWeightDeclaration');
+            } else {
+                oppoObj = $(thisObj).closest('td').prev('td').children('input.RegistrationLifting');
+                decObj = $(thisObj).closest('td').prev('td').prev('td').prev('td').children('input.RegistrationWeightDeclaration');
+            }
+
+            var oppoVal = $(oppoObj).val();
+            var decVal = $(decObj).val();
+
+            if (isNaN(parseFloat(thisVal)) && thisVal != '') {
+                alert('This Field must be Number');
+                $(thisObj).val('0');
+                return false;
+            }
+
+            if (!isNaN(parseFloat(decVal)) && parseFloat(decVal) > 0) {
+                var can = parseFloat(decVal) - parseFloat(thisVal) - 20;
+                if (can < 0)
+                    can = 0;
+
+                if (isNaN(parseFloat(oppoVal)) || (can > parseFloat(oppoVal))) {
+                    $(oppoObj).val(can);
+                    return true;
+                }
+            }
+        })
+    })
+
+    $('#printregistrations').click(function () {
+        var tbl = $("#print_table_registrationList");
+        if (tbl.length > 0) {
+            tablePrint(tbl);
+        }
+    });
+
+    function tablePrint(el) {
+        var wnd = window.open('', '@Messages.RegistrationStatus', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.RegistrationStatus</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 1000);
+    };
+
+    var searchForCompRegistrationUrl = '/Leagues/SearchForCompRegistration/?qry=_QUERY_&leagueId=@ViewBag.CompetitionId';
+    var engine = new Bloodhound({
+        datumTokenizer: function (datum) {
+            return Bloodhound.tokenizers.whitespace(datum.Name);
+        },
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: searchForCompRegistrationUrl,
+            wildcard: '_QUERY_',
+            rateLimitWait: 2000,
+            prepare: function (query, settings) {
+                $(".input-icon").show();
+                var trimmedQuery = query.trim();
+                var url = searchForCompRegistrationUrl.replace("_QUERY_", trimmedQuery);
+                settings.url = url;
+                return settings;
+            }
+        }
+    });
+
+    var promise = engine.initialize();
+    promise.done(function () { $(".input-icon").hide(); console.log('Done with no errors!'); })
+        .fail(function () { $(".input-icon").hide(); console.log('Something went wrong!'); });
+
+    $('.typeahead').typeahead({ hint: false, highlight: true, minLength: 2 },
+    {
+        name: 'states',
+        display: 'Name',
+        limit: 200,
+        source: engine,
+        templates: {
+            empty: function () {
+                $(".input-icon").hide();
+                var res_box = $("#player_chosen_for_comp_register");
+                res_box.html('<div style="color:red;">No Player found.<div>');
+            },
+            suggestion: function (data) {
+                $(".input-icon").hide();
+                return '<div>IdentNum: ' + data.IdentNum + '<br />Full Name: ' + data.UserName + '</div>';
+            }
+        }
+    });
+
+    $('.typeahead').bind('typeahead:select',
+        function (ev, data) {
+            var res_box = $("#player_chosen_for_comp_register");
+            var check_id = '#session_weight_' + data.RegistrationId;
+            if ($(check_id).length > 0)
+                res_box.html('<div style="color:red;">@Messages.PlayerAlreadyInTeam<div>');
+            else
+                res_box.html('<div style="color:green;">@Messages.ConfirmRegisterSportsman</div><div>@Messages.UserName: ' + data.UserName + '<br />@Messages.UserID: ' + data.IdentNum + '<br /></div><button class="btn btn-primary btn-save register_player_to_competition" onclick="registerPlayerToCompetition(' + data.IdentNum + ')">@Messages.AddNew</button>');
+        }
+    );
+
+    function registerPlayerToCompetition(IdentNum) {
+        var button = $(".register_player_to_competition")
+        button.attr('disabled', 'disabled');
+        button.html("<span class='glyphicon glyphicon-repeat fast-right-spinner'></span>");
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("UpdateRegistrationToItsSession2", "Leagues",new { competitionId = ViewBag.CompetitionId })",
+            data: {
+                SessionId: @ViewBag.SessionId,
+                IdentNum: IdentNum
+            },
+            success: function (data) {
+                if (data.Success == false)
+                {
+                    var res_box = $("#player_chosen_for_comp_register");
+                    res_box.html('<div style="color:red;">Fail to register player.<div>');
+                    return;
+                }
+
+                var res_box = $("#player_chosen_for_comp_register");
+                res_box.html('');
+                var cnt = parseInt($('#sportsmen_cnt strong').html());
+                $('#sportsmen_cnt strong').html(' ' + (cnt + 1));
+                var html = '<tr>';
+                html += '<td>' + data.fullname + '</td>';
+                html += '<td>' + data.birthdate + '</td>';
+                html += '<td>' + data.clubname + '</td>';
+                html += '<td>' + data.gender + '</td>';
+                html += '<td>' + data.teamtitle + '</td>';
+                html += '<td>' + data.declare + '</td>';
+                html += '<td><input class="form-control registration-input ' + data.danger + '" form="session_weight_' + data.regId + '" id="RegistrationWeight" name="RegistrationWeight" type="text" value="' + data.weight + '" autocomplete="off"></td>';
+                html += '<td><input class="form-control registration-input ' + data.danger + '" form="session_weight_' + data.regId + '" id="RegistrationWeight" name="RegistrationWeight" type="text" value="' + data.weight + '" autocomplete="off"></td>';
+                html += '<td><input class="form-control registration-input ' + data.danger + '" form="session_weight_' + data.regId + '" id="RegistrationWeight" name="RegistrationWeight" type="text" value="' + data.weight + '" autocomplete="off"></td>';
+                html += '<td><form action="/Leagues/UpdateWeightInWeightliftSessionRegistration?RegistrationId=' + data.regId + '&SessionId=' + data.sessionId + '&LeagueId=' + data.leagueId + '" data-ajax="true" data-ajax-method="POST" data-ajax-mode="replace" data-ajax-update="#session_registrations_modal_pl" id="session_weight_' + data.regId + '" method="post"><button class="btn btn-primary fa fa-save" autocomplete="off"></button></form></td>';
+                html += '</tr>';
+                $('#session-registrations-list').prepend(html);
+
+                var obj = '#RegisterSelectorId_' + data.sessionId + '+div li a label.checkbox input[value="' + data.regId + '"]';
+                if ($(obj).length && !$(obj).parents('li').hasClass('active'))
+                {
+                    $(obj).click();
+                }
+                else if ($(obj).length === 0)
+                {
+                    $('select#RegisterSelectorId_' + data.sessionId).append('<option value="' + data.regId + '">' + data.name + ' - ' + data.clubname + ' - ' + data.weight + ' - ' + data.gender + '</option>');
+
+                    var el = $('<li class="active"><a><label class="checkbox"><input type="checkbox" checked="checked" value="' + data.regId + '">' + data.name + ' - ' + data.clubname + ' - ' + data.weight + ' - ' + data.gender + '</label></a></li>');
+                    $(el).children('input').prop('checked', true);
+                    $('select#RegisterSelectorId_' + data.sessionId + '+div ul').append(el);
+                }
+                    
+
+            },
+            error: function () {
+                var res_box = $("#player_chosen_for_comp_register");
+                res_box.html('<div style="color:red;">Fail to register player.<div>');
+            }
+        });
+    }
+</script>

@@ -1,0 +1,210 @@
+@model MovePlayerForm
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.MoveCopy</h4>
+</div>
+<style>
+
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+@using (Ajax.BeginForm("MovePlayerToTeam", "TeamPlayers", null, new AjaxOptions
+{
+    UpdateTargetId = "playersedit",
+    OnSuccess = "successEdit"
+},
+                                                                new { id = "moveplayerform", autocomplete = "off" }))
+{
+    @Html.HiddenFor(x => x.CurrentTeamId)
+    @Html.HiddenFor(x => x.CurrentLeagueId)
+    @Html.HiddenFor(x => x.SeasonId);
+    @Html.HiddenFor(x => x.ClubId);
+    @Html.HiddenFor(x => x.UnionId);
+    @Html.HiddenFor(x => x.IsExeptional)
+    @Html.HiddenFor(x => x.IgnoreDifferentClubs)
+    <div id="playersToPost"></div>
+    <div id="moveplayerformbody">
+        <div class="modal-body">
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label for="rb-create-newTeam" class="control-label">@Messages.CreateNewTeam</label>
+                    <input type="radio" name="move-player" class="form-group" id="rb-create-newTeam" />
+                </div>
+                <div class="form-group col-sm-6">
+                    <label for="rb-show-existed" class="control-label">@Messages.SelectTeam</label>
+                    <input type="radio" name="move-player" class="form-group" id="rb-show-existed" checked />
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <div id="newTeam-row" style="display: none">
+                        <input type="text" value="" placeholder="NewTeam" id="newTeam" class="form-control" />
+                        <br />
+                        <button type="button" data-url="@Url.Action("CreateTeam", new {leagueId = Model.CurrentLeagueId, seasonId = Model.SeasonId, clubId = Model.ClubId})" id="createTeam" class="btn btn-primary">@Messages.AddTeam</button>
+                    </div>
+                </div>
+                <div class="form-group col-sm-6">
+                    <div id="existed-team-row">
+                        @*@Html.DropDownListFor(x => x.TeamId, new SelectList(Model.Teams, "TeamId", "Title"), Messages.Select, new {@class = "form-control"})*@
+
+                        <select class="form-control" data-val="true" data-val-number="Field must be numeric" data-val-required="Value required" id="TeamLeagueClub" name="TeamLeagueClub" autocomplete="off">
+                            <option value="">- select -</option>
+
+                            @foreach (var team in Model.Teams)
+                            {
+                                string team_title = string.Empty;
+                                if (Model.IsIndividual == true)
+                                {
+                                    team_title = string.IsNullOrWhiteSpace(team.ClubName) ? team.Title : team.Title + " - " + team.ClubName;
+                                }
+                                else
+                                {
+                                    team_title = string.IsNullOrWhiteSpace(team.SchoolName) ? team.Title : team.Title + " - " + team.SchoolName;
+                                }
+                                <option value="@team.TeamId-@team.LeagueId-@team.ClubId">@(string.IsNullOrWhiteSpace(team.LeagueName) ? team_title : $"{team_title} - {team.LeagueName}")</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            @if (Model.HasAccess)
+            {
+                <div class="row">
+                    <div class="col-sm-6">
+                        <label>@Messages.BlockadePlayer:</label>
+                        @Html.CheckBoxFor(m => m.IsBlockade, new { @id = "isBlockade" })
+                    </div>
+                    <div class="col-sm-6" id="blockadeplayers" style="display:none">
+                        <label class="control-label">@Messages.BlockadeEndDate:</label>
+                        @Html.TextBoxFor(m => m.BlockadeEndDate, new { @class = "form-control frm-date" })
+                    </div>
+                </div>
+            }
+            <div class="row well well-sm">
+                <label>@Messages.CopyPlayersInsteadOfMoving:</label>
+                @Html.CheckBoxFor(x => x.CopyPlayers)
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Cancel</button>
+        <button type="submit" id="save_move_player" class="btn btn-primary">@Messages.Save</button>
+    </div>
+}
+<script>
+    $(document).on('change', '#moveplayerform :radio', function () {
+        var radio = $(this);
+        if (radio.attr('id') == 'rb-create-newTeam') {
+            $('#newTeam-row').show();
+            $('#existed-team-row').hide();
+        } else {
+            $('#newTeam-row').hide();
+            $('#newTeam').val('');
+            $('#existed-team-row').show();
+
+        }
+    });
+
+    $(document).on('click', '#createTeam', function () {
+        createTeam();
+    });
+
+    function successEdit() {
+        $('#playermoveform').modal('hide');
+    }
+
+    $("#moveplayerform").submit(function (e) {
+        var selection = $("#TeamLeagueClub").val();
+
+        if (!selection) {
+            alert(window.Resources.Messages.MoveToTeam_PleaseSelectTeam);
+            e.preventDefault();
+            return false;
+        }
+
+        return true;
+    });
+
+    function onFailure(message) {
+        $.ajax({
+            url: "/TeamPlayers/DisplayErrorMessage",
+            type: "POST",
+            data: { message: message },
+            success: function (data) {
+                $("#playermoveform_pl").html(data);
+                setTimeout(function () {
+                    $('#playermoveform').modal("show");
+                }, 500);
+            }
+        });
+    }
+
+    function onConfirmAdmin(message) {
+        var isConfirmed = confirm(message);
+        if (isConfirmed) {
+            $("#IsExeptional").val(true);
+            $("#save_move_player").submit();
+        }
+    }
+    function ConfirmMovingToDifferentClub(message) {
+        if (confirm(message)) {
+            $("#IgnoreDifferentClubs").val(true);
+            $("#save_move_player").submit();
+        }
+    }
+
+    function createTeam() {
+        var teamModel = {
+            Title: $('#newTeam').val()
+        }
+        var url = $('#createTeam').data('url');
+        $.post(url, { model: teamModel }, function (result) {
+            $('select#TeamId').append($('<option value="' + result.TeamId + '"> ' + result.Title + ' </option>'));
+            $('select#TeamId').val(result.TeamId);
+            $('#rb-show-existed').click();
+        });
+    }
+
+    $("#isBlockade").change(function () {
+        if (this.checked) {
+            $("#blockadeplayers").show();
+        }
+        else {
+            $("#blockadeplayers").hide();
+        }
+    });
+
+    $(function() {
+        $(".frm-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+
+            step: 15,
+            closeOnDateSelect: false,
+            onChangeDateTime: function() {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            },
+
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+    });
+
+    $("#TeamLeagueClub").multiselect({
+        enableFiltering: true,
+        onDropdownHide: function(element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+        });
+
+</script>

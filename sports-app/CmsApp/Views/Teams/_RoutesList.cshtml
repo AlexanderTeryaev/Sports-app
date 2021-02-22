@@ -1,0 +1,570 @@
+﻿@model RoutesControlForm
+<style>
+    #registrationlist > .modal-dialog {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #registrationlist > .modal-content {
+        height: auto;
+        min-height: 100%;
+        border-radius: 0;
+    }
+</style>
+
+<div id="teams_view">
+    <div class="row">
+        <div class="col-sm-12">
+            @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+            {
+                <a href="@Url.Action("AllRoutesPlayersRegistrationList","Clubs", new
+                                        {
+                                            seasonId = Model.SeasonId,
+                                            leagueId = Model.LeagueId,
+                                        })" class="btn btn-primary"
+               data-ajax-update="#registrationlist_pl"
+               data-ajax="true"
+               data-toggle="modal"
+               data-target="#registrationlist">
+                @Messages.Status
+            </a>
+            <a class="btn btn-primary btn-edit" href="@Url.Action("DuplicateRoutes", "Teams",
+                new { disciplineId = Model.DisciplineId, leagueId = Model.LeagueId, seasonId = Model.SeasonId})"
+               data-target="#gymnasticmaxforclub"
+               data-toggle="modal">
+                <i class="glyphicon glyphicon-plus-sign"></i>&nbsp;&nbsp;@Messages.DuplicateRoutes
+            </a>
+                if (ViewBag.JobRole == JobRole.UnionManager || User.IsInRole(AppRole.Admins))
+                {
+            <a href="@Url.Action("DownloadGymnasticsExcel","Clubs")" class="btn btn-info export">
+                <i class="glyphicon glyphicon-open"></i> @Messages.DownloadImportForm
+            </a>
+            <a class="btn btn-primary btn-edit" href="@Url.Action("ImportGymnasticsRegistrations", "Clubs",
+                new { leagueId = Model.LeagueId, seasonId = Model.SeasonId})"
+                   data-target="#gymnasticsimportform"
+                   data-toggle="modal">
+                    <i class="glyphicon glyphicon-save"></i>@Messages.ImportGymnastics
+                </a>
+                }
+            }
+
+        </div>
+    </div>
+    
+    <div style="margin-top:20px" class="row">
+        <div class="col-sm-12">
+            <h4>@Messages.Individual</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th width="10"></th>
+                            <th>#</th>
+                            <th>@Messages.Route</th>
+                            <th>@Messages.PlayerInfoRank</th>
+                            <th>@Messages.Instruments</th>
+                            <th align="center">@Messages.Composition</th>
+                            <th align="center">@Messages.Composition 2</th>
+                            <th align="center">@Messages.Composition 3</th>
+                            <th align="center">@Messages.Composition 4</th>
+                            <th align="center">@Messages.Composition 5</th>
+                            <th align="center">@Messages.Composition 6</th>
+                            <th align="center">@Messages.Composition 7</th>
+                            <th align="center">@Messages.Composition 8</th>
+                            <th align="center">@Messages.Composition 9</th>
+                            <th align="center">@Messages.Composition 10</th>
+                            <th>@Messages.GymnasticsCount</th>
+                            <th>@Messages.MaxForClub</th>
+                            <th>@Messages.CompetitiveEnabled</th>
+                            <th>
+                                @Messages.SelectAllPlayers
+                                @Html.CheckBox("select_all_individuals", false, new { id = "select_all_individuals" })
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Routes != null && Model.Routes.Any())
+                        {
+                            foreach (var route in Model.Routes)
+                            {
+                        <tr>
+                            <td>
+                                <a href="@Url.Action("EditRoute", "Teams",
+                                                     new
+                                                     {
+                                                         competitionRouteId = route.CompetitionRouteId,
+                                                     })"
+                                   class="btn btn-primary"
+                                   data-ajax-update="#rotesmodal_pl"
+                                   data-toggle="modal"
+                                   data-target="#rotesmodal"
+                                   data-ajax="true">
+                                    <span class="fa fa-edit"></span>
+                                </a>
+                            </td>
+                            <td>
+                                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                {
+                                    <a class="btn btn-primary" href="@Url.Action("PlayersRegistrationList", "Clubs", new
+                                                                         {
+                                                                             seasonId = Model.SeasonId,
+                                                                             leagueId = Model.LeagueId,
+                                                                             competitionRouteId = route.CompetitionRouteId
+                                                                         })"
+                                       data-toggle="modal"
+                                       data-target="#registrationlist"
+                                       data-ajax-update="#registrationlist_pl"
+                                       data-ajax="true">
+                                        @Messages.Status
+                                    </a>
+                                }
+
+                            </td>
+                            <td>@route.CompetitionRouteId</td>
+                            <td>@route.RouteName</td>
+                            <td>@route.RankName</td>
+                            <td>@route.InstrumentName</td>
+                            <td>@route.Composition</td>
+                            <td>@route.SecondComposition</td>
+                            <td>@route.ThirdComposition</td>
+                            <td>@route.FourthComposition</td>
+                            <td>@route.FifthComposition</td>
+                            <td>@route.SixthComposition</td>
+                            <td>@route.SeventhComposition</td>
+                            <td>@route.EighthComposition</td>
+                            <td>@route.NinthComposition</td>
+                            <td>@route.TenthComposition</td>
+                            <td>@route.GymnasticsCount</td>
+                            <td>
+                                <a href="@Url.Action("MaxForClubForRouteDetails", "Teams",
+                                                     new
+                                                     {
+                                                         id = route.CompetitionRouteId,
+                                                         disciplineId = Model.DisciplineId,
+                                                         seasonId = Model.SeasonId,
+                                                         leagueId = Model.LeagueId
+                                                     })"
+                                   class="btn btn-primary"
+                                   data-ajax-update="#gymnasticmaxforclub_pl"
+                                   data-toggle="modal"
+                                   data-target="#gymnasticmaxforclub"
+                                   data-ajax="true">
+                                    <span class="fa fa-edit"></span>
+                                </a>
+                            </td>
+                            <td>
+                                @Html.CheckBoxFor(m => route.IsCompetitiveEnabled, new
+                            {
+                                @class = "competitive-checkbox",
+                                data_id = $"{route.CompetitionRouteId}"
+                            })
+                            </td>
+                            <td>
+                                @Html.CheckBox("select_individual", new { @class = "select_individual", data_id = route.CompetitionRouteId })
+                            </td>
+                            <td>
+                                @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                                {
+                                    <a href="@Url.Action("DeleteRoute", "Teams",
+                                                     new
+                                                     {
+                                                         id = route.CompetitionRouteId,
+                                                         disciplineId = Model.DisciplineId,
+                                                         seasonId = Model.SeasonId,
+                                                         leagueId = Model.LeagueId
+                                                     })" class="btn btn-danger"
+                                       data-ajax-update="#routesDiv"
+                                       data-ajax-mode="replace"
+                                       data-ajax-confirm="@Messages.DeleteConfirm"
+                                       data-ajax="true">
+                                        <span class="fa fa-trash"></span>
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                        }
+                    }
+                    </tbody>
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <a class="btn btn-primary btn-edit" id="addNewRoute">@Messages.AddNew <i name="loading" style="display: none" class="fa fa-spin fa-spinner"></i></a>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td style="padding: 15px 8px">
+                                    <a class="btn btn-danger" id="deleteAllSelectedIndividual">@Messages.DeleteAllSelected <i name="loading" style="display: none" class="fa fa-spin fa-spinner"></i></a>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top:20px" class="row">
+        <div class="col-sm-12">
+            <h4>@Messages.Activity_Type_Group</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th width="10"></th>
+                            <th>#</th>
+                            <th>@Messages.Route</th>
+                            <th>@Messages.PlayerInfoRank</th>
+                            <th>@Messages.Instruments</th>
+                            <th align="center">@Messages.Composition</th>
+                            <th align="center">@Messages.Composition 2</th>
+                            <th align="center">@Messages.Composition 3</th>
+                            <th align="center">@Messages.Composition 4</th>
+                            <th align="center">@Messages.Composition 5</th>
+                            <th align="center">@Messages.Composition 6</th>
+                            <th align="center">@Messages.Composition 7</th>
+                            <th align="center">@Messages.Composition 8</th>
+                            <th align="center">@Messages.Composition 9</th>
+                            <th align="center">@Messages.Composition 10</th>
+                            <th>@Messages.GymnasticsCount </th>
+                            <th>@Messages.MaxForClub</th>
+                            <th>@Messages.CompetitiveEnabled</th>
+                            <th>
+                                @Messages.SelectAllPlayers
+                                @Html.CheckBox("select_all_groups", false, new { id = "select_all_groups" })
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.TeamsRoutes != null && Model.TeamsRoutes.Any())
+                        {
+                            foreach (var route in Model.TeamsRoutes)
+                            {
+                        <tr>
+                            <td>
+                                <a href="@Url.Action("EditTeamRoute", "Teams",
+                                                     new
+                                                     {
+                                                         competitionRouteId = route.CompetitionRouteId,
+                                                     })"
+                                   class="btn btn-primary"
+                                   data-ajax-update="#rotesmodal_pl"
+                                   data-toggle="modal"
+                                   data-target="#rotesmodal"
+                                   data-ajax="true">
+                                    <span class="fa fa-edit"></span>
+                                </a>
+                            </td>
+                            <td>
+                                <a class="btn btn-primary" href="@Url.Action("PlayersTeamRegistrationList", "Clubs", new
+                                                                         {
+                                                                             seasonId = Model.SeasonId,
+                                                                             leagueId = Model.LeagueId,
+                                                                             competitionRouteId = route.CompetitionRouteId
+                                                                         })"
+                                   data-toggle="modal"
+                                   data-target="#registrationlist"
+                                   data-ajax-update="#registrationlist_pl"
+                                   data-ajax="true">
+                                    @Messages.Status
+                                </a>
+                            </td>
+                            <td>@route.CompetitionRouteId</td>
+                            <td>@route.RouteName</td>
+                            <td>@route.RankName</td>
+                            <td>@route.InstrumentName</td>
+                            <td>@route.Composition</td>
+                            <td>@route.SecondComposition</td>
+                            <td>@route.ThirdComposition</td>
+                            <td>@route.FourthComposition</td>
+                            <td>@route.FifthComposition</td>
+                            <td>@route.SixthComposition</td>
+                            <td>@route.SeventhComposition</td>
+                            <td>@route.EighthComposition</td>
+                            <td>@route.NinthComposition</td>
+                            <td>@route.TenthComposition</td>
+                            <td>@route.GymnasticsCount</td>
+                            <td>
+                                <a href="@Url.Action("MaxForClubForTeamRouteDetails", "Teams",
+                                                     new
+                                                     {
+                                                         id = route.CompetitionRouteId,
+                                                         disciplineId = Model.DisciplineId,
+                                                         seasonId = Model.SeasonId,
+                                                         leagueId = Model.LeagueId
+                                                     })"
+                                   class="btn btn-primary"
+                                   data-ajax-update="#gymnasticmaxforclub_pl"
+                                   data-toggle="modal"
+                                   data-target="#gymnasticmaxforclub"
+                                   data-ajax="true">
+                                    <span class="fa fa-edit"></span>
+                                </a>
+                            </td>
+                            <td>
+                                @Html.CheckBoxFor(m => route.IsCompetitiveEnabled, new
+                            {
+                                @class = "competitive-team-checkbox",
+                                data_id = $"{route.CompetitionRouteId}"
+                            })
+                            </td>
+                            <td>
+                                @Html.CheckBox("select_group", new { @class = "select_group", data_id = route.CompetitionRouteId })
+                            </td>
+                            <td>
+                                <a href="@Url.Action("DeleteTeamRoute", "Teams",
+                                                     new
+                                                     {
+                                                         id = route.CompetitionRouteId,
+                                                         disciplineId = Model.DisciplineId,
+                                                         seasonId = Model.SeasonId,
+                                                         leagueId = Model.LeagueId
+                                                     })" class="btn btn-danger"
+                                   data-ajax-update="#routesDiv"
+                                   data-ajax-mode="replace"
+                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                   data-ajax="true">
+                                    <span class="fa fa-trash"></span>
+                                </a>
+                            </td>
+                        </tr>
+                            }
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>
+                                <a class="btn btn-primary btn-edit" id="addNewTeamRoute">@Messages.AddNew <i name="loading" style="display: none" class="fa fa-spin fa-spinner"></i></a>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td style="padding: 15px 8px">
+                                <a class="btn btn-danger" id="deleteAllSelectedGroup">@Messages.DeleteAllSelected <i name="loading" style="display: none" class="fa fa-spin fa-spinner"></i></a>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rotesmodal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="rotesmodal_pl">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="registrationlist" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="registrationlist_pl">
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="gymnasticsimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="gymnasticsimportform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="gymnasticmaxforclub" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="gymnasticmaxforclub_pl"></div>
+    </div>
+</div>
+
+<script>
+    $('#select_all_individuals').change(function () {
+        $('.select_individual').prop('checked', $(this).prop('checked'));
+    });
+
+    $('#select_all_groups').change(function () {
+        $('.select_group').prop('checked', $(this).prop('checked'));
+    });
+
+    $('#deleteAllSelectedIndividual').click(function () {
+        if ($('.select_individual:checked').length == 0) {
+            alert('@Messages.NothingSeleted');
+            return;
+        }
+
+        var route_ids = [];
+        $('.select_individual:checked').each(function () {
+            route_ids.push($(this).attr('data-id'));
+        });
+
+        var trElement = $(this).closest("tr");
+        var c = confirm('@Messages.ConfirmDeleteAll');
+        if (c) {
+            $.ajax({
+                url: '/Teams/RemoveCompetitionRoutes/',
+                type: 'POST',
+                data: {
+                    ids: route_ids.join(',')
+                },
+                beforeSend: function () {
+                    trElement.find("i[name='loading']").show();
+                },
+                success: function () {
+                    $('.select_individual:checked').closest('tr').remove();
+                    trElement.find("i[name='loading']").hide();
+                }
+            })
+        }
+    })
+
+    $('#deleteAllSelectedGroup').click(function () {
+        if ($('.select_group:checked').length == 0) {
+            alert('@Messages.NothingSeleted');
+            return;
+        }
+
+        var route_ids = [];
+        $('.select_group:checked').each(function () {
+            route_ids.push($(this).attr('data-id'));
+        });
+
+        var trElement = $(this).closest("tr");
+        var c = confirm('@Messages.ConfirmDeleteAll');
+        if (c) {
+            $.ajax({
+                url: '/Teams/RemoveCompetitionTeamRoutes/',
+                type: 'POST',
+                data: {
+                    ids: route_ids.join(',')
+                },
+                beforeSend: function () {
+                    trElement.find("i[name='loading']").show();
+                },
+                success: function () {
+                    $('.select_group:checked').closest('tr').remove();
+                    trElement.find("i[name='loading']").hide();
+                }
+            })
+        }
+    })
+
+    $(".competitive-checkbox").click(function () {
+        var competitionRouteId = $(this).attr("data-id");
+        var isChecked = $(this).is(":checked");
+        $.ajax({
+            url: "/Teams/ChangeCompetitionRouteStatus/",
+            type: "Post",
+            data: {
+                competitionRouteId: competitionRouteId,
+                isEnabled: isChecked
+            }
+        })
+    });
+
+    $(".competitive-team-checkbox").click(function () {
+        var competitionRouteId = $(this).attr("data-id");
+        var isChecked = $(this).is(":checked");
+        $.ajax({
+            url: "/Teams/ChangeCompetitionTeamRouteStatus/",
+            type: "Post",
+            data: {
+                competitionRouteId: competitionRouteId,
+                isEnabled: isChecked
+            }
+        })
+    });
+
+    $("#addNewRoute").click(function () {
+        var trElement = $(this).closest("tr");
+        $.ajax({
+            type: "GET",
+            url: "/Teams/CreateRoute/",
+            data: {
+                disciplineId: "@Model.DisciplineId",
+                seasonId: "@Model.SeasonId",
+                leagueId: "@Model.LeagueId"
+            },
+            beforeSend: function () {
+                trElement.find("i[name='loading']").show();
+            },
+            success: function (data) {
+                $("#rotesmodal_pl").html(data);
+                trElement.find("i[name='loading']").hide();
+                $("#rotesmodal").modal("show");
+            }
+        });
+    });
+
+    $("#editRoute").click(function () {
+        $.ajax({
+            type: "GET",
+            url: "/Teams/EditRoute/",
+            data: {
+                disciplineId: "@Model.DisciplineId",
+                seasonId: "@Model.SeasonId",
+                leagueId: "@Model.LeagueId"
+            },
+            beforeSend: function () {
+            },
+            success: function (data) {
+                $("#rotesmodal_pl").html(data);
+                $("#rotesmodal").modal("show");
+            }
+        });
+    });
+
+
+
+    $("#addNewTeamRoute").click(function () {
+        var trElement = $(this).closest("tr");
+        $.ajax({
+            type: "GET",
+            url: "/Teams/CreateTeamRoute/",
+            data: {
+                disciplineId: "@Model.DisciplineId",
+                seasonId: "@Model.SeasonId",
+                leagueId: "@Model.LeagueId"
+            },
+            beforeSend: function () {
+                trElement.find("i[name='loading']").show();
+            },
+            success: function (data) {
+                $("#rotesmodal_pl").html(data);
+                trElement.find("i[name='loading']").hide();
+                $("#rotesmodal").modal("show");
+            }
+        });
+    });
+</script>

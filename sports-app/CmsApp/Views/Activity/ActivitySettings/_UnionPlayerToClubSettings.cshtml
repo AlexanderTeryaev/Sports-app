@@ -1,0 +1,39 @@
+﻿@model ActivityModel
+
+<div id="union-player-to-club-settings" style="display: @(Model.ActivityFormType == ActivityFormType.UnionPlayerToClub && Model.UnionId != null && Model.ClubId == null ? "block" : "none");">
+    
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.RegistrationPrice) @Messages.Activity_EnableRegistrationPrice
+        </label>
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.InsurancePrice) @Messages.Activity_EnableInsurancePrice
+        </label>
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.OnlyApprovedClubs) @Messages.Activity_RegistrationOnlyToApprovedClubs
+        </label>
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.RegisterToTrainingTeamsOnly) @Messages.Activity_RegisterToTrainingTeam
+        </label>
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.AllowCompetitiveMembers) @Messages.Activity_AllowCompetitiveMembers
+        </label>
+    </div>
+</div>
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.MultiTeamRegistration) @Messages.Activity_EnableMultiTeamRegistration
+    </label>
+</div>

@@ -1,0 +1,47 @@
+﻿@model LoginForgotPasswordModel
+
+@using (Html.BeginForm("ForgotPassword", "Login", FormMethod.Post, new {@class = "login", style = "margin: 30px auto 0 auto;"}))
+{
+    <fieldset>
+        <legend class="legend">@Messages.Login_RestorePassword_Title</legend>
+
+        @if (Model.RestoreEmailSent)
+        {
+            <div class="text-primary">
+                <i class="fa fa-check-circle fa-3x"></i>
+                <p>
+                    @Messages.Login_RestorePassword_EmailSent
+                </p>
+                <p>
+                    @(Model.Culture == CultEnum.En_US 
+                          ? Html.ActionLink(Messages.Login_RestorePassword_GetBack, "Index", "Logineng", null, new {@class = "btn btn-primary btn-xs"}) 
+                          : Html.ActionLink(Messages.Login_RestorePassword_GetBack, "Index", "Login", null, new {@class = "btn btn-primary btn-xs"}))
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="input">
+                @Html.TextBoxFor(m => m.RestoreIdentNum, new {@placeholder = "ID"})
+                <span>&nbsp;</span>
+                <span><i class="fa fa-user"></i></span>
+            </div>
+            <p class="text-primary">
+                @Html.ValidationMessageFor(x => x.RestoreIdentNum)
+            </p>
+
+            <div class="input">
+                @Html.TextBoxFor(m => m.RestoreEmail, new {@placeholder = "E-mail"})
+                <span>&nbsp;</span>
+                <span><i class="fa fa-mail-forward"></i></span>
+            </div>
+            <p class="text-primary">
+                @Html.ValidationMessageFor(x => x.RestoreEmail)
+            </p>
+
+            <button type="submit" class="submit">
+                <i class="fa fa-long-arrow-right"></i>
+            </button>
+        }
+    </fieldset>
+}

@@ -1,0 +1,22 @@
+﻿@model ActivityModel
+
+<div id="union-personal-settings" style="display: @(Model.ActivityFormType == ActivityFormType.PlayerRegistration && Model.UnionId != null && Model.ClubId == null ? "block" : "none");">
+    
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(x => x.ForbidToChangeNameForExistingPlayers) @Messages.Activity_ForbidToChangeNameForExistingPlayers
+        </label>
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.RegistrationPrice) @Messages.Activity_EnableRegistrationPrice
+        </label>
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.InsurancePrice) @Messages.Activity_EnableInsurancePrice
+        </label>
+    </div>
+</div>

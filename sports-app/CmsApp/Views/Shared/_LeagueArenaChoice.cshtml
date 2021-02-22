@@ -1,0 +1,112 @@
+﻿@model CmsApp.Models.Schedules
+
+<div class="row" id="only-published-games" style="display: flex; vertical-align: bottom; float: none; margin-top:10px; margin-bottom:10px;">
+    <div class="col-sm-4">
+        <label for="OnlyPublished">@Messages.OnlyPublishedGames:</label>&nbsp;&nbsp;
+        @Html.CheckBoxFor(c => c.OnlyPublished)
+    </div>
+</div>
+<div class="row" id="only-unpublished-games" style="display: flex; vertical-align: bottom; float: none; margin-top:10px; margin-bottom:10px;">
+    <div class="col-sm-4">
+        <label for="OnlyUnpublished">@Messages.ShowOnlyUnpublished:</label>&nbsp;&nbsp;
+        @Html.CheckBoxFor(c => c.OnlyUnpublished)
+    </div>
+</div>
+<div class="row">
+    <div style="display: inline-block; vertical-align: middle; float: none">
+        <!-- Choose leagues -->
+        <div class="col-md-6">
+            <div>
+                <a href="javascript:leaguesOpen()" id="lgOpen">
+                    <i class="glyphicon glyphicon-plus">&nbsp;@(Model.Section == GamesAlias.WaveSurfing ? Messages.Competitions : Messages.Leagues)</i>
+                </a>
+                <a href="javascript:leaguesClose()" id="lgClose" style="display: none">
+                    <i class="glyphicon glyphicon-minus">&nbsp;@(Model.Section == GamesAlias.WaveSurfing ? Messages.Competitions : Messages.Leagues)</i>
+                </a>
+            </div>
+            <div id="leaguesList" class="details-list" style="display: none">
+                @if (Model.Leagues?.Length > 0)
+                {
+                    Model.Leagues = Model.Leagues.OrderBy(a => a.Name).ToArray();
+                    var allSelection = Model.Leagues.FirstOrDefault(l => l.Id == -1);
+                    var orderedLeagues = Model.Leagues.Where(l => l.Id != -1).ToList();
+                    orderedLeagues.Insert(0,allSelection);
+                    Model.Leagues = orderedLeagues.ToArray();
+                    var half = Model.Leagues.Length - Model.Leagues.Length / 2;
+                    for (var j = 0; j < Model.Leagues.Length; j++)
+                    {
+                        var i = j % 2 == 0 ? j / 2 : half + (j + 1) / 2 - 1;
+                        <div class="col-md-6">
+                            @Html.HiddenFor(model => model.Leagues[i].Name)
+                            @Html.HiddenFor(model => model.Leagues[i].Id)
+
+                            <div class="col-md-1">
+                                @if (i == 0)
+                                {
+                                    @Html.CheckBoxFor(m => m.Leagues[i].Check,
+                                                new { id = "all_leagues", @onchange = "gcList.allLeaguesCheck()" })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.Leagues[i].Check,
+                                                new { @class = "league-checkbox", @onchange = "gcList.leagueCheck()" })
+                                }
+                            </div>
+                            <div class="col-md-10">
+                                @Model.Leagues[i].Name
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        <!-- Choose auditoiums -->
+        <div class="col-md-6">
+            <div>
+                <a href="javascript:auditoriumsOpen()" id="audOpen">
+                    <i class="glyphicon glyphicon-plus">&nbsp;@UIHelpers.GetAuditoriumCaption(Model.Section)</i>
+                </a>
+                <a href="javascript:auditoriumsClose()" id="audClose" style="display: none">
+                    <i class="glyphicon glyphicon-minus">&nbsp;@UIHelpers.GetAuditoriumCaption(Model.Section)</i>
+                </a>
+            </div>
+            <div id="auditoriumsList" class="details-list" style="display: none">
+                @if (Model.Auditoriums?.Count > 0)
+                {
+                    Model.Auditoriums = Model.Auditoriums.OrderBy(a => a.Name).ToList();
+                    var allSelection = Model.Auditoriums.FirstOrDefault(l => l.Id == -1);
+                    var orderedAuditoriums = Model.Auditoriums.Where(l => l.Id != -1).ToList();
+                    orderedAuditoriums.Insert(0, allSelection);
+                    Model.Auditoriums = orderedAuditoriums;
+
+                    var half = Model.Auditoriums.Count - Model.Auditoriums.Count / 2;
+                    for (int j = 0; j < Model.Auditoriums.Count; j++)
+                    {
+                        var i = j % 2 == 0 ? j / 2 : half + (j + 1) / 2 - 1;
+                        <div class="col-sm-6">
+                            @Html.HiddenFor(model => model.Auditoriums[i].Name)
+                            @Html.HiddenFor(model => model.Auditoriums[i].Id)
+
+                            <div class="col-md-1">
+                                @if (i == 0)
+                                {
+                                    @Html.CheckBoxFor(m => m.Auditoriums[i].Check,
+                                                    new { id = "all_auditoriums", @onchange = "gcList.allAuditoriumsCheck()" })
+
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.Auditoriums[i].Check,
+                                                    new { @class = "auditorium-checkbox", @onchange = "gcList.auditoriumCheck()" })
+                                }
+                            </div>
+                            <div class="col-md-10">
+                                @Model.Auditoriums[i].Name
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

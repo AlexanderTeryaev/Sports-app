@@ -1,0 +1,64 @@
+﻿@using Newtonsoft.Json;
+@model ExportImageModel
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.ExportPlayersImg</h4>
+</div>
+
+<div id="editplayerformbody">
+    <div class="row">
+        <div class="col-md-12">
+
+            @if (Model.HasPictures)
+            {
+                <div class="alert alert-success">
+                    @Messages.PlayerExport_SuccessResult - 
+                    <a class="btn btn-link" onclick="exportImg()" >@Messages.Download</a>
+                    @*<p><b>@Messages.ImportPlayers_SuccessCount</b> - @Model.Count</p>*@
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-danger">@Model.ErrorMessage</div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+</div>
+
+<script>
+    function exportImg() {
+        var unionId = @JsonConvert.SerializeObject(Model.UnionId);
+        var seasonId = @JsonConvert.SerializeObject(Model.SeasonId);
+        var leagueId = @JsonConvert.SerializeObject(Model.LeagueId);
+        var clubId = @JsonConvert.SerializeObject(Model.ClubId);
+        var teamId = @JsonConvert.SerializeObject(Model.TeamId);
+        var leagueIds = @JsonConvert.SerializeObject(Model.LeaguesIds);
+        var pageType = '@Model.Page';
+        var href = "";
+        switch (pageType) {
+            case 'Union':
+                href = "/Players/ExportPlayersImages?unionId=" + unionId + "&seasonId=" + seasonId + "&pageType=" + pageType + "&leaguesIds=" + leagueIds;
+                break;
+            case 'League':
+                href = "/Players/ExportPlayersImages?leagueId=" + leagueId + "&seasonId=" + seasonId + "&pageType=" + pageType;
+                break;
+            case 'Club':
+                href = "/Players/ExportPlayersImages?clubId=" + clubId + "&seasonId=" + seasonId + "&pageType=" + pageType;
+                break;
+            case 'UnionClubs':
+                href = "/Players/ExportPlayersImages?unionId=" + unionId + "&seasonId=" + seasonId + "&pageType=" + pageType;
+                break;
+            case 'Team':
+                href = "/Players/ExportPlayersImages?teamId=" + teamId + "&seasonId=" + seasonId + "&pageType=" + pageType + "&clubId=" + clubId + "&leagueId=" + leagueId;
+                break;
+        }
+        window.location.href = href;
+    }
+
+</script>

@@ -1,0 +1,11 @@
+﻿@model Tuple<IEnumerable<ActivityRegistrationItem>, ActivityRegistrationItem>
+
+@if (Model.Item1.Any(x => x.CardComInvoiceNumber != null))
+{
+    <td>@Model.Item2.CardComInvoiceNumber</td>
+}
+
+@if (Model.Item1.Any(x => x.CardComNumberOfPayments != null))
+{
+    <td>@Model.Item2.CardComNumberOfPayments</td>
+}

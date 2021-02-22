@@ -1,0 +1,213 @@
+﻿
+@using AppModel
+@model DisciplineTabViewModel
+@{
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+    int errId = TempData["ErrId"] != null ? (int)TempData["ErrId"] : 0;
+    var IsAthletics = ViewBag.SectionAlias == GamesAlias.Athletics;
+
+    var classList = new List<SelectListItem>
+    {
+
+        new SelectListItem {Text = "Class S", Value = "1" },
+        new SelectListItem {Text = "Class SB", Value = "2" },
+        new SelectListItem {Text = "Class SM", Value = "3" }
+    };
+
+    var disciplineTypeList = new List<string>() { "",
+    "50m","60m","80m","100m","200m","300m","400m","600m","800m","1000m","1500m","1mile","2000m","3000m","2miles","5000m","10000m",
+    "50mh","60mh","80mh","100mh","110mh","250mh","400mh","2000mSt","3000mSt",
+    "4x60m","4x60m","4x100m","4x200m","4x400m",
+    "10km","15km","10miles","20km","half_marathon","25km","30km","marathon","100km",
+    "3kmW","5kmW","10kmW","20kmW","30kmW","35kmW","50kmW",
+    "high_jump","pole_vault","long_jump","triple_jump","shot_put","discus_throw","hammer_throw","javelin_throw","hockey_ball","decathlon","heptathlon",
+    "1900m_13_field","1100m_field","2500m_field","1900m_15_field","4500m_field","3100m_field",
+    "GoldenSpikesU14","GoldenSpikesU16"
+    };
+
+
+
+}
+@if (!IsAthletics && ViewBag.SectionAlias != GamesAlias.Rowing)
+{ 
+<div class="row" style="margin:10px;">
+    <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportdisciplineslist').submit()">
+        <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+        @using (Html.BeginForm("ExportDisciplinesToExcel", "Disciplines", new { id = ViewBag.UnionId },
+                FormMethod.Post, new { id = "exportdisciplineslist" })) { }
+    </a>
+</div>
+}
+<!--<h4>@Messages.Disciplines</h4>-->
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>@Messages.Details</th>
+        <th>@(ViewBag.SectionAlias == GamesAlias.Rowing ? Messages.Boat : ViewBag.SectionAlias == GamesAlias.Bicycle ? Messages.Heat : Messages.DisciplineName)</th>
+        @if (ViewBag.SectionAlias == GamesAlias.Bicycle)
+        {
+            <th>@Messages.FCard_Road</th>
+            <th>@Messages.FCard_Mountain</th>
+        }
+        @if (IsAthletics)
+        {
+            <th>@Messages.Format</th>
+            <th>@Messages.Discipline @Messages.Type</th>
+        }
+        @if (ViewBag.SectionAlias == GamesAlias.Swimming)
+        {
+            <th>@Messages.RankGym</th>
+        }
+        @if (ViewBag.SectionAlias == GamesAlias.Rowing)
+        {
+            <th>@Messages.NumberOfSportmen</th>
+            <th>@Messages.Coxwain</th>
+        }
+        <th colspan="2"></th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        foreach (DisciplineViewModel disciplineViewModel in Model.DisciplineViewModelsList)
+        {
+            string frmid = "disciplinesform" + disciplineViewModel.DisciplineId;
+
+            <tr>
+                <td>
+                    @disciplineViewModel.DisciplineId
+                </td>
+                <td>
+                    <a class="@AppCss.Edit"
+                       href="@Url.Action("Edit", "Disciplines",
+                                 new { id = disciplineViewModel.DisciplineId })">
+                    </a>
+                </td>
+                @{
+                    var btnId = "update_" + frmid;
+                }
+                @using (Ajax.BeginForm("Update", "Disciplines", new AjaxOptions { UpdateTargetId = "disciplines-tab", OnSuccess = "addClassRowforDisciplineTab" }, new { id = frmid }))
+                {
+                    
+                    <td>
+                        <span class="form-group">
+                            <input type="text" name="Name" value="@disciplineViewModel.Name" form="@frmid" class="form-control required detectDiscChange" maxlength="50" />
+                            @Html.ValidationMessage("Name")
+                        </span>
+                        <input type="hidden" name="DisciplineId" form="@frmid" value="@disciplineViewModel.DisciplineId" />
+                        <input type="hidden" name="UnionId" form="@frmid" value="@ViewBag.UnionId" />
+                        <input type="hidden" name="SeasonId" form="@frmid" value="@ViewBag.SectionId" />
+                    </td>
+                    if (IsAthletics)
+                    {
+                        <td>
+                            <input type="text" name="Format" value="@disciplineViewModel.Format" form="@frmid" class="form-control detectDiscChange" style="width:80px;" maxlength="5" />
+                        </td>
+                        <td>
+                            @{
+                                var selection = new SelectList(disciplineTypeList, disciplineViewModel.DisciplineType);
+                            }
+                            @Html.DropDownList("DisciplineType", selection, new { @class = "form-control detectDiscChange", form = frmid })
+                        </td>
+                    }
+                    if (ViewBag.SectionAlias == GamesAlias.Swimming)
+                    {
+                        <td>
+                            @{
+                                var currentClass = new List<SelectListItem>();
+                                foreach (var _class in classList)
+                                {
+                                    var newItem = new SelectListItem { Text = _class.Text, Value = _class.Value };
+                                    if (_class.Value == disciplineViewModel.Class.ToString())
+                                    {
+                                        newItem.Selected = true;
+                                    }
+                                    currentClass.Add(newItem);
+                                }
+                            }
+                            @Html.DropDownList("Class", currentClass, Messages.Select, new { form = frmid, @class = "form-control detectDiscChange" })
+                        </td>
+                    }
+                    if (ViewBag.SectionAlias == GamesAlias.Bicycle)
+                    {
+                        <td>@Html.CheckBox("RoadHeat", disciplineViewModel.RoadHeat, new { form = frmid, @class= "detectDiscChange" })</td>
+                        <td>@Html.CheckBox("MountainHeat", disciplineViewModel.MountainHeat, new { form = frmid, @class = "detectDiscChange" })</td>
+                    }
+                    if (ViewBag.SectionAlias == GamesAlias.Rowing)
+                    {
+                        <td>@Html.TextBox("NumberOfSportsmen", disciplineViewModel.NumberOfSportsmen, new { form = frmid, @class = "form-control detectDiscChange" })</td>
+                        <td>@Html.CheckBox("Coxwain", disciplineViewModel.Coxwain, new { form = frmid, @class = "detectDiscChange" })</td>
+                    }
+
+                }
+                
+                <td>
+                    <button id="@btnId" class="@AppCss.Save @(savedId == disciplineViewModel.DisciplineId ? "btn-success" : null) btn" form="@frmid" disabled="disabled"></button>
+                </td>
+                <td>
+                    <a href="@Url.Action("Delete", new { id = disciplineViewModel.DisciplineId })" class="@AppCss.Delete"
+                       data-ajax-confirm="@Messages.DeleteConfirm"
+                       data-ajax-update="#disciplines-tab"
+                       data-ajax="true"></a>
+                </td>
+            </tr>
+
+        }
+    }
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="2"></td>
+            <td>
+                @using (Ajax.BeginForm("Save", "Discipines", new AjaxOptions { UpdateTargetId = "disciplines-tab", OnSuccess = "addClassRowforDisciplineTab" }, new { id = "disciplinesform" }))
+                {
+                    <span class="form-group">
+                        @Html.TextBox("Name", null, new { @class = "form-control", placeholder = Messages.AddNew, form = "disciplinesform", maxlength = 50 })
+                        @Html.ValidationMessage("Name")
+                    </span>
+                    @Html.Hidden("SectionId", (int)ViewBag.SectionId)
+                    @Html.Hidden("UnionId", (int)ViewBag.UnionId)
+                }
+            </td>
+            @if (ViewBag.SectionAlias == GamesAlias.Swimming)
+            {
+                <td>
+                    @Html.DropDownList("_class", classList, Messages.Select, new { form = "disciplinesform", @class = "form-control" })
+                </td>
+            }
+            @if (ViewBag.SectionAlias == GamesAlias.Rowing)
+            {
+                <td>@Html.TextBox("NumberOfSportsmen", "", new { form = "disciplinesform", @class = "form-control", type = "number" })</td>
+                <td>@Html.CheckBox("Coxwain", new { form = "disciplinesform" })</td>
+            }
+            @if (ViewBag.SectionAlias == GamesAlias.Bicycle)
+            {
+
+                <td>
+                    @Html.CheckBox("RoadHeat", false, new { form = "disciplinesform" })
+                </td>
+                <td>
+                    @Html.CheckBox("MountainHeat", false, new { form = "disciplinesform" })
+                </td>
+            }
+            <td>
+                <button class="btn btn-primary" form="disciplinesform">@Messages.Save</button>
+            </td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    function addClassRowforDisciplineTab() {
+        $("#disciplines-tab").addClass("col-sm-6");
+    }
+
+    $('#disciplinesform').validateBootstrap(true);
+
+    $(".detectDiscChange").on("change", function () {
+        var frm = $(this).attr("form");
+        $("#update_" + frm).removeAttr("disabled");
+    })
+</script>

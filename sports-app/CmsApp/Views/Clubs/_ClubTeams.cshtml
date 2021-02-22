@@ -1,0 +1,394 @@
+﻿@model ClubTeamsForm
+@{
+    string msg = "";
+    if (TempData["ErrExists"] != null)
+    {
+        msg = TempData["ErrExists"] as string;
+    }
+    var addValue = Model.IsGymnastic ? Messages.AddDiscipline : Messages.AddTeam;
+    var addNew = Model.IsGymnastic ? Messages.AddNewDiscipline : Messages.AddNewTeam;
+    bool isClubManagerUnderGymnastic = ViewBag.IsClubManagerUnderGymnastics;
+
+    string downloadForm = string.Empty;
+    string import = string.Empty;
+    string importPic = string.Empty;
+    string exportImgs = string.Empty;
+    string move = string.Empty;
+    string tooltip = string.Empty;
+    string playersCaption = UIHelpers.GetPlayerCaption(Model.Section, true);
+
+    UIHelpers.GetButtonCaption(Model.Section ?? ViewBag.Section, out downloadForm, out import, out importPic, out exportImgs, out move, out tooltip);
+}
+
+@using (Html.BeginForm("ExportTeamsList", "Clubs",
+                new
+                {
+                    clubId = Model.ClubId,
+                    seasonId = Model.SeasonId
+                },
+                FormMethod.Post,
+                new
+                {
+                    id = "export_club_teams"
+                })) { }
+
+@if (((User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager)) && (Model.Section == SectionAliases.Bicycle || Model.Section == SectionAliases.Athletics)) || (Model.Section != SectionAliases.Bicycle && Model.Section != SectionAliases.Athletics))
+{
+<a class="btn btn-info export" href="@Url.Action("DownloadExcel", "Unions", new { clubId = Model.ClubId })"
+   data-toggle="tooltip" title="@tooltip" style="float:left;">
+    <i href="#" class="glyphicon glyphicon-open"></i> @downloadForm
+</a>
+}
+<a class="btn btn-info export" href="@Url.Action("ExportList", "TeamPlayers", new {
+                seasonId = Model.SeasonId, clubId = Model.ClubId, check = false, tab = "club" })" style="float:left; margin-left:5px;"
+   data-target="#playerexportform"
+   data-toggle="modal">
+    <i class="glyphicon glyphicon-export"></i>
+    @Messages.ExportToExcel
+</a>
+<a href="#" role="button" class="btn btn-info export" id="export_teams" style="float:left; margin-left:5px;" onclick="$('#export_club_teams').submit()">
+    @Messages.ExportTeamsToExcel
+</a>
+
+@if (((User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager)) && (Model.Section == SectionAliases.Bicycle || Model.Section == SectionAliases.Athletics)) || (Model.Section != SectionAliases.Bicycle && Model.Section != SectionAliases.Athletics))
+{
+    <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayers", "Players", new { formName = "club", teamId = Model.TeamId, clubId = Model.ClubId, seasonId = Model.SeasonId })"
+       data-target="#playerimportform"
+       data-toggle="modal">
+        <i class="glyphicon glyphicon-save"></i>@import
+    </a>
+}
+@if (Model.Section.Equals(GamesAlias.Tennis) && (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager)))
+{
+    <a class="btn btn-primary btn-edit" href="@Url.Action("GeneratePaymentReport", "Players", new { clubId = Model.ClubId, seasonId = Model.SeasonId})"><i href="#" class="glyphicon glyphicon-open"></i> @Messages.RawPaymentReport</a>
+}
+<a class="btn btn-info btn-edit export" onclick="exportClubPlayersImages()" style="float:left; margin-left:5px;">
+    <i class="glyphicon glyphicon-save"></i> @exportImgs
+    <i class="fa fa-spin fa-spinner" id="spinner" style="display:none"></i>
+</a>
+<a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayersImage", "Players", new {seasonId = Model.SeasonId})"
+   data-target="#playerimportimageform"
+   data-toggle="modal">
+    <i class="glyphicon glyphicon-save"></i> @importPic
+</a>
+
+@if (Model.Section.Equals(GamesAlias.Tennis) && (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager)))
+{
+    <a class="btn btn-primary btn-edit" data-ajax-method="post" data-ajax="true" data-ajax-complete="onProducedPdf" href="@Url.Action("ProducePaymentReport", "Players", new { clubId = Model.ClubId, seasonId = Model.SeasonId})"><i href="#" class="glyphicon glyphicon-open"></i> @Messages.ProduceReport</a>
+}
+
+
+<div id="club-teams-view" class="offset-3">
+    @using (Ajax.BeginForm("CreateClubTeam", null, new AjaxOptions { UpdateTargetId = "teams" }, new { id = "club-teams-form", autocomplete = "off" }))
+    {
+        @Html.HiddenFor(x => x.ClubId)
+        @Html.HiddenFor(x => x.CurrentSeasonId)
+        @Html.HiddenFor(m => m.TeamId)
+        @Html.HiddenFor(x => x.SectionId)
+        @Html.HiddenFor(x => x.IsDepartment)
+        @Html.HiddenFor(x => x.TeamSeasonId)
+        @Html.HiddenFor(x => x.SportId)
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th width="10%"></th>
+                    <th width="10%">#</th>
+                    <th width="10%">@Messages.Active</th>
+                    <th>@Messages.Team</th>
+                    <th>@(Model.Section == GamesAlias.WaveSurfing ? Messages.Competition + " " + Messages.Name.ToLower() : Messages.LeagueName)</th>
+                    @if (Model.Section.Equals(GamesAlias.Tennis))
+                    {
+                        <!--
+                        <th>@Messages.UnionInsurance</th>
+                        <th>@Messages.ClubInsurance</th>
+                        -->
+                    }
+                    <th>
+                        @playersCaption
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Teams)
+                {
+                    var leaguesNames = String.IsNullOrEmpty(item.LeagueNames) ? Messages.NoRelatedLeagues : item.LeagueNames;
+                    <tr>
+                        <td>
+                            <a href="@Url.Action("Edit", "Teams", new
+                                {
+                                    id = item.Id,
+                                    clubId = item?.DepartmentId ?? Model.ClubId,
+                                    seasonId = item?.DepartmentSeasonId ?? Model.SeasonId,
+                                    departmentId = Model.IsDepartment ? Model?.ClubId : null,
+                                    departmentSeasonId = Model.IsDepartment ? Model?.SeasonId : null,
+                                    departmentSportId = Model.IsDepartment ? Model.SportId : null
+                                })" class="@AppCss.Edit edit-team"></a>
+                            @*<a class="btn btn-primary" href="@Url.Action("Edit", "Teams", new {id = m.TeamId, currentLeagueId = Model.LeagueId, seasonId = Model.SeasonId})">@Messages.Details</a>*@
+                        </td>
+                        <td>@item.Id</td>
+                        <td>@Html.CheckBoxFor(c => item.IsActive, new { disabled = "disabled" })</td>
+                        <td>@item.Title</td>
+                        <td>@leaguesNames</td>
+                        @if (Model.Section.Equals(GamesAlias.Tennis))
+                        {
+                            <!--
+                            <td>
+                                @if (item.IsClubInsurance == true)
+                                {
+                                    @Html.CheckBox("IsUnionInsurance", item.IsUnionInsurance ?? false,
+                                                  new
+                                                  {
+                                                      @class = "union_insurance",
+                                                      id = $"union_insurance_{item.Id}",
+                                                      data_type = "union",
+                                                      data_teamid = $"{item.Id}",
+                                                      disabled = "disabled"
+                                                  })
+                                }
+                                else
+                                {
+                                    @Html.CheckBox("IsUnionInsurance", item.IsUnionInsurance ?? false,
+                                                  new
+                                                  {
+                                                      @class = "union_insurance",
+                                                      id = $"union_insurance_{item.Id}",
+                                                      data_type = "union",
+                                                      data_teamid = $"{item.Id}",
+                                                  })
+                                }
+
+                            </td>
+                            <td>
+                                @if (item.IsUnionInsurance == true)
+                                {
+                                    @Html.CheckBox("IsClubInsurance", item.IsClubInsurance ?? false,
+                                          new
+                                          {
+                                              @class = "club_insurance",
+                                              id = $"club_insurance_{item.Id}",
+                                              data_type = "club",
+                                              data_teamid = $"{item.Id}",
+                                              disabled = "disabled"
+                                          })
+                                }
+                                else
+                                {
+                                    @Html.CheckBox("IsClubInsurance", item.IsClubInsurance ?? false,
+                                                            new
+                                                            {
+                                                                @class = "club_insurance",
+                                                                id = $"club_insurance_{item.Id}",
+                                                                data_type = "club",
+                                                                data_teamid = $"{item.Id}"
+                                                            })
+                                }
+
+                            </td>
+                            -->
+                        }
+                        <td>
+                            @item.PlayersCount
+                        </td>
+                        <td>
+                            @{
+                                bool allowAthletics = true;
+                                if (Model.IsAthletic && !User.IsInAnyRole(AppRole.Admins) && !User.HasTopLevelJob(JobRole.UnionManager))
+                                {
+                                    allowAthletics = false;
+                                }
+                                bool allowTennis = true;
+                                if (!item.IsTeamPossibleToDelete && Model.Section == GamesAlias.Tennis && !User.IsInAnyRole(AppRole.Admins) && !User.HasTopLevelJob(JobRole.UnionManager))
+                                {
+                                    allowTennis = false;
+                                }
+                            }
+                            @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && allowTennis && allowAthletics && !isClubManagerUnderGymnastic)
+                            {
+                                <a href="@Url.Action("DeleteTemClub", "Clubs", new {clubId = Model.ClubId, teamId = item.Id, seasonId = Model.SeasonId, sectionId = Model.SectionId})" class="@AppCss.Delete"
+                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                   data-ajax-update="#teams"
+                                   data-ajax="true">
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && !isClubManagerUnderGymnastic && !ViewBag.IsClubManagerUnderWaterpolo)
+            {
+                <tfoot>
+                    <tr>
+                        <td>
+                            <div class="form-group no-marging">
+                                @Html.CheckBoxFor(t => t.IsNew)
+                                @Html.Label(Model.Section == GamesAlias.WaveSurfing ? addNew.Replace(Messages.Team.ToLower(), Messages.Category.ToLower()) : Model.ClubId == 3610 ? Messages.AddTeamAsNew : addNew)
+                            </div>
+                        </td>
+                        <td colspan="2">
+                            <div class="form-group no-marging">
+                                @Html.TextBoxFor(m => m.TeamName, new
+                           {
+                               @class = "form-control auto-search",
+                               @id = "team-auto-search",
+                               placeholder = Model.Section == GamesAlias.WaveSurfing ? Messages.AddTeam.Replace(Messages.Team.ToLower(), Messages.Category.ToLower()) : Model.ClubId == 3610 ? Messages.AddTeam : addValue,
+                               maxlength = 50,
+                               data_remote = Url.Action("FindTeam", "Search", new { sectionId = Model.SportId ?? Model.SectionId, seasonId = Model.SeasonId, clubId = Model.ClubId })
+                           })
+                            </div>
+                            @if (!string.IsNullOrEmpty(msg))
+                            {
+                                <div class="text-danger">@msg</div>
+                            }
+                        </td>
+                        <td>
+                            <button class="btn btn-primary">@Messages.Save</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    }
+</div>
+
+<div class="modal fade" id="playerimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playerimportimageform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportimageform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playerexportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="teamsexportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="teamsexportform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playerexportimagesform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportimagesform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="clubinsurancealertmessage" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="alert alert-warning">
+                        <span class="glyphicon glyphicon-warning-sign"></span>&nbsp;@Messages.ClubInsuranceAlert
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        setAutoSearch();
+
+        $('#team-auto-search').bind('typeahead:select', function (ev, data) {
+            $('[name="TeamId"]').val(data.Id);
+            $('[name="TeamSeasonId"]').val(data.TeamSeasonId)
+        });
+
+        $("#team-auto-search").keypress(function (e) {
+            if (e.which != 13 || e.which != 32) {
+                $('[name="TeamId"]').val(0);
+            }
+        });
+    });
+    $(".union_insurance, .club_insurance").click(function () {
+        var type = $(this).attr('data-type');
+        var teamId = $(this).attr("data-teamId");
+        var isChecked = $(this).is(":checked");
+        changeInsuranceType(type, teamId, isChecked);
+    });
+
+    function changeInsuranceType(type, teamId, isChecked) {
+        if (isChecked) {
+            if (type == "union") {
+                $("#club_insurance_" + teamId).attr('disabled', true);
+                updateInsurance(type, teamId, isChecked);
+            }
+            else if (type == "club") {
+                $("#union_insurance_" + teamId).attr('disabled', true);
+                updateInsurance(type, teamId, isChecked);
+            }
+        }
+        else {
+            $("#union_insurance_" + teamId).attr('disabled', false);
+            $("#club_insurance_" + teamId).attr('disabled', false);
+            updateInsurance("", teamId, false);
+        }
+    }
+
+    function updateInsurance(type, teamId, isChecked) {
+        $.ajax({
+            url: "/Clubs/ChangeInsuranceStatus",
+            type: "POST",
+            data: {
+                teamId: teamId,
+                type: type,
+                isChecked: isChecked,
+                clubId: "@Model.ClubId"
+            },
+            success: function (data) {
+                if (data.NeedAlert == true) {
+                    $("#clubinsurancealertmessage").modal('show');
+                }
+            }
+        })
+    }
+
+</script>
+<script>
+    function exportClubPlayersImages() {
+                $.ajax({
+                    type: "POST",
+                    url: "/Players/ImgsServerCheck",
+                    data: {
+                        clubId: @Model.ClubId,
+                        seasonId: @Model.SeasonId,
+                        pageType: "@PageType.Club"
+                    },
+                    beforeSend: function() {
+                        $("#spinner").show();
+                    }
+                }).done(function (data) {
+                    $("#playerexportimagesform_pl").html(data);
+                    $("#playerexportimagesform").modal('show');
+                    $("#spinner").hide();
+                });
+    }
+
+    function showToClubManager() {
+        var isChecked = $("#ShowToClubManager").is(':checked');
+        $.ajax({
+            type: "POST",
+            url: "/Clubs/ShowPaymentReportToClubManager",
+            data: {
+                clubId: @Model.ClubId,
+                seasonId: @Model.SeasonId,
+                isShow: isChecked
+            }
+        });
+    }
+
+    function onProducedPdf(data) {
+        var res = JSON.parse(data.responseText);
+        if (res.Success == false) {
+            alert("Nothing missing payment.");
+        }
+    }
+</script>

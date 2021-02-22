@@ -1,0 +1,159 @@
+﻿@model IEnumerable<DataService.DTO.TennisPlayerRegistrationDto>
+@{
+    var teamManager = ViewBag.TeamManager != null ? (DataService.DTO.TeamManagerDto)ViewBag.TeamManager : null;
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex"><div class="col-sm-9"><h4 class="modal-title">@Messages.RegistrationStatus</h4></div><div class="pull-right" style="line-height:25px;">@Messages.Count.ToLower(): <strong>@(Model?.Count() ?? 0)</strong></div></div>
+</div>
+<div class="modal-body">
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            <div class="col-sm-2" style="display:flex">
+
+                <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportregistrationsexp').submit()">
+                    <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                    @using (Html.BeginForm("ExportTennisRegistrationsToExcel", "Clubs", 
+                        new { seasonId = ViewBag.SeasonId, leagueId = ViewBag.LeagueId, teamIdsString = ViewBag.TeamId },
+                        FormMethod.Post, new { id = "exportregistrationsexp" })) { }
+                </a>
+
+            </div>
+            <div class="col-sm-2" style="display:flex">
+                <a id="printregistrations" class="btn btn-info remove_print">
+                    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+                </a>
+            </div>
+        }
+    </div>
+    <div style="margin-top:15px;" class="row">
+        <div class="col-sm-12">
+            @if (Model != null && Model.Any())
+            {
+                <table id="print_table" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.ClubName</th>
+                            <th>@Messages.TeamName</th>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.IdentNum</th>
+                            <th>@Messages.BirthDay</th>
+                            <th>@Messages.TenicardValidity</th>
+                            <th>@Messages.DateOfInsuranceValidity</th>
+                            <th>@Messages.ValidityOfMedicalExamination</th>
+                            <th class="remove_print"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var player in Model)
+                        {
+                            <tr id="row_@player.TeamPlayerId">
+                                <td>@player.ClubName</td>
+                                <td>@player.TeamName</td>
+                                <td>@player.FullName</td>
+                                <td>@player.IdentNum</td>
+                                <td>
+                                    @(player.BirthDay?.ToShortDateString() ?? string.Empty)
+                                </td>
+                                <td>
+                                    @(player.TennicardValidity?.ToShortDateString() ?? string.Empty)
+                                </td>
+                                <td>
+                                    @(player.InsuranceValidity?.ToShortDateString() ?? string.Empty)
+                                </td>
+                                <td>
+                                    @(player.MedicalValidity?.ToShortDateString() ?? string.Empty)
+                                </td>
+                                <td class="remove_print">
+                                    <a data-id="@player.TeamPlayerId" class="btn btn-danger deletereg"><span class="glyphicon glyphicon-trash"></span></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    @if (teamManager != null)
+                    {
+                        <tfoot>
+                            <tr>
+                                <td colspan="9">
+                                    @if (!string.IsNullOrEmpty(teamManager.Name))
+                                    {
+                                        <text>@Messages.TeamManager: @teamManager.Name;</text>
+                                    }
+                                    @if (!string.IsNullOrEmpty(teamManager.Phone))
+                                    {
+                                        <text>@Messages.Phone: @teamManager.Phone;</text>
+                                    }
+                                    <br />
+                                    @if (!string.IsNullOrEmpty(teamManager.FieldName))
+                                    {
+                                        <text>@Messages.Field: @teamManager.FieldName;</text>
+                                    }
+                                    @if (!string.IsNullOrEmpty(teamManager.FieldAddress))
+                                    {
+                                        <text>@Messages.Address: @teamManager.FieldAddress;</text>
+                                    }
+                                </td>
+                            </tr>
+                        </tfoot>
+                    }
+
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-danger">
+                    <strong><i class="fa fa-ban"></i></strong>&nbsp; &nbsp; @Messages.NoPlayersRegistered
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+</div>
+
+
+<script>
+    $('#printregistrations').click(function () {
+        var tbl = $("#print_table");
+        if (tbl.length > 0) {
+            tablePrint(tbl);
+        }
+    });
+
+    function tablePrint(el) {
+        var wnd = window.open('', '@Messages.RegistrationStatus', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.RegistrationStatus. @Messages.League: @ViewBag.LeagueName</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 200);
+    }
+
+    $(".deletereg").on("click",function() {
+        var value = confirm('@Messages.ConfirmDeleteReg');
+        if (value) {
+            $.ajax({
+                url: "/Clubs/DeleteTennisRegistration",
+                type: "POST",
+                data: {
+                    teamPlayerId: $(this).attr("data-id")
+                }
+            });
+            $("#row_" + $(this).attr("data-id")).remove();
+        }
+    });
+
+</script>

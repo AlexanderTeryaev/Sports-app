@@ -1,0 +1,18 @@
+﻿@model Tuple<ActivityRegistrationItem, int?>
+
+@{
+    var teamUrl = Url.Action("Edit", "Leagues",
+        new
+        {
+            id = Model.Item1.CompetitionId,
+            seasonId = Model.Item2,
+        });
+}
+
+<td data-search="@(Model.Item1.CompetitionName?.Replace("\"", "{QUOTE}")?.Trim())" style="font-weight: bold;">
+    <span>@Model.Item1.CompetitionName</span>
+    <a class="glyphicon glyphicon-new-window action-link"
+       href="@teamUrl"
+       target="_blank">
+    </a>
+</td>

@@ -1,0 +1,192 @@
+﻿@model IEnumerable<AppModel.TennisStage>
+
+@foreach (var s in Model)
+{
+    @*<h4>@Messages.Stage @s.Number</h4>*@
+
+    var seasonId = ViewBag.SeasonId;
+
+    var idStageKey = "#stage" + s.StageId;
+    var idSettingeKey = "#setting" + s.StageId;
+    var idStage = "stage" + s.StageId;
+    var idSettinge = "setting" + s.StageId;
+    <ul class="nav nav-tabs" id="stage_tabs" role="tablist">
+        <li class="active"><a href=@idStageKey data-toggle="tab">@Messages.Stage @s.Number</a></li>
+        <li><a href=@idSettingeKey data-toggle="tab">@Messages.GameSettings</a></li>
+    </ul>
+
+    <div class="tab-content row offset-3">
+        <div class="tab-pane fade col-xs-12" id=@idSettinge>
+            @if (ViewBag.IsDepartmentLeague == true)
+            {
+                @Html.Action("EditTennis", "Games", new { categoryId = s.CategoryId, idStage = s.StageId, departmentId = ViewBag.DepartmentId })
+            }
+            else
+            {
+                @Html.Action("EditTennis", "Games", new { categoryId = s.CategoryId, idStage = s.StageId })
+            }
+        </div>
+        <div class="tab-pane fade in active col-sm-12" id=@idStage>
+            @{
+                var groups = s.TennisGroups.Where(t => t.IsArchive == false);
+            }
+            @foreach (var g in groups)
+            {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>@Messages.GroupName</th>
+                        <th>@Messages.GameType</th>
+                        @if (g.IsIndividual)
+                        {
+                            <th>@Messages.CompetitorNum</th>
+                        }
+                        else
+                        {
+                            <th>@Messages.TeamsNum</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@g.Name</td>
+                        <td>@LangHelper.GetGameTypeById(g.TypeId)</td>
+
+                        <td>@(g.NumberOfPlayers.HasValue && g.NumberOfPlayers != 0 ? g.NumberOfPlayers : g.TennisGroupTeams.Count)</td>
+
+                        @if (!g.IsAdvanced || g.PointEditType != null)
+                        {
+                            <td width="75">
+                                @if (ViewBag.IsDepartmentLeague)
+                                {
+                                    <a href="@Url.Action("EditTennis", "Groups", new { id = g.GroupId, departmentId = ViewBag.DepartmentId, seasonId})"
+                                       data-target="#groupsedit"
+                                       data-toggle="modal"
+                                       class="btn btn-primary">@Messages.Edit</a>
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("EditTennis", "Groups", new { id = g.GroupId, seasonId})"
+                                       data-target="#groupsedit"
+                                       data-toggle="modal"
+                                       class="btn btn-primary">@Messages.Edit</a>
+                                }
+
+                            </td>
+                        }
+                        <td width="75">
+                            @if (ViewBag.IsDepartmentLeague)
+                            {
+                                <a href="@Url.Action("DeleteTennis", "Groups", new { id = g.GroupId, seasonId = @seasonId, departmentId = ViewBag.DepartmentId })" class="@AppCss.Delete"
+                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                   data-ajax-update="#groupslist"
+                                   data-ajax-success="deleteSuccess()"
+                                   data-ajax="true"></a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("DeleteTennis", "Groups", new { id = g.GroupId, seasonId = @seasonId })" class="@AppCss.Delete"
+                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                   data-ajax-update="#groupslist"
+                                   data-ajax-success="deleteSuccess()"
+                                   data-ajax="true"></a>
+                            }
+                        </td>
+                    </tr>
+
+                    @foreach (var gt in g.TennisGroupTeams.OrderBy(gt => gt.Pos))
+                    {
+                        if (g.NumberOfPlayers.HasValue && g.NumberOfPlayers != 0 && g.NumberOfPlayers != g.TennisGroupTeams.Count)
+                        {
+                            if (gt.PlayerId.HasValue)
+                            {
+                                var athlete = gt.TeamsPlayer;
+                                var pairPlayer = gt.TeamsPlayer1;
+                                if (athlete != null)
+                                {
+                                <tr><td colspan="5">@athlete.User.FullName @(pairPlayer != null ? " / " + pairPlayer?.User?.FullName : string.Empty)</td></tr>
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            <tr>
+                                @if (gt.PlayerId.HasValue)
+                                {
+                                    var athlete = gt.TeamsPlayer;
+                                    var pairPlayer = gt.TeamsPlayer1;
+                                    if (athlete != null)
+                                    {
+                                        <td colspan="5">@athlete.User.FullName @(pairPlayer != null ? " / " + pairPlayer?.User?.FullName : string.Empty)</td>
+                                    }
+                                }
+                                else if (!gt.PlayerId.HasValue && g.IsIndividual)
+                                {
+                                    <td colspan="5">@UIHelpers.GetAthletePosition(gt.Pos)</td>
+                                }
+                                else
+                                {
+                                    <td colspan="5">@UIHelpers.GetTeamPosition(gt.Pos)</td>
+                                }
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+                <div>&nbsp;</div>
+                if (g == groups.LastOrDefault() && s == Model.LastOrDefault() && s != null && s.TennisGroups != null && s.TennisGroups.Count > 0 && g != null)
+                {
+                    var confirmMsg = string.Format(@Messages.ConfirmNewGamesTable, s.Number.ToString());
+                    <div class="row offset-2">
+                        <div class="col-sm-6">
+                            @if (ViewBag.IsDepartmentLeague)
+                            {
+                                <a href="@Url.Action("CreateTennisSchedule", "Schedules", new { categoryId = s.CategoryId, seasonId = s.SeasonId, departmentId = ViewBag.DepartmentId })" id="createschdulelink"
+                                   class="btn btn-info"
+                                   data-ajax-confirm="@confirmMsg"
+                                   data-ajax-begin="this.style.visibility='hidden'"
+                                   data-ajax-method="post"
+                                   data-ajax-complete="onCompleteScheduleCreation"
+                                   data-ajax-success="this.style.visibility='visible'"
+                                   data-ajax-failure="alert('@Messages.CheckDays');this.style.visibility='visible'"
+                                   data-ajax-update="#schedules"
+                                   data-ajax="true">@Messages.CreateTennisSchedule</a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("CreateTennisSchedule", "Schedules", new { categoryId = s.CategoryId, seasonId = s.SeasonId })" id="createschdulelink"
+                                   class="btn btn-info"
+                                   data-ajax-confirm="@confirmMsg"
+                                   data-ajax-begin="this.style.visibility='hidden'"
+                                   data-ajax-method="post"
+                                   data-ajax-complete="onCompleteScheduleCreation"
+                                   data-ajax-success="this.style.visibility='visible';"
+                                   data-ajax-failure="alert('@Messages.CheckDays');this.style.visibility='visible'"
+                                   data-ajax-update="#schedules"
+                                   data-ajax="true">@Messages.CreateTennisSchedule</a>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        cmn.initDateTimePickers();
+    });
+
+    function onCompleteScheduleCreation(data) {
+        if (data.responseJSON.HadSettingsAvailable) {
+            activateTab('schedules');
+        } else {
+            alert('@Messages.CheckDays');
+        }
+    }
+    function deleteSuccess() {
+        window.location.reload();
+    }
+</script>

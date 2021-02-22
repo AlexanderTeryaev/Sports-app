@@ -1,0 +1,37 @@
+﻿@model CmsApp.Models.SearchViewModel
+
+@{
+    ViewBag.Title = @Messages.Search;
+}
+
+<h3 class="sub-header">@Messages.Search</h3>
+
+@if (Model.IsSearchLeagueVisible)
+{
+    <div class="row">
+        <div class="form-group col-sm-4">
+            <label>@Messages.Search @Messages.League</label>
+            <input class="auto-search form-control" data-remote="@Url.Action("FindLeague")" data-link="@Url.Action("Edit", "Leagues")" />
+        </div>
+    </div>
+}
+
+@if (Model.IsSearchTeamVisible)
+{
+    <div class="row">
+        <div class="form-group col-sm-4">
+            <label>@Messages.Search @Messages.Team</label>
+            <input class="auto-search form-control" data-remote="@Url.Action("FindTeam")" data-link="@Url.Action("Edit", "Teams")" />
+        </div>
+    </div>
+}
+
+@if (Model.IsSearchPlayerVisible)
+{
+    <div class="row">
+        <div class="form-group col-sm-4">
+            <label>@Messages.Search @Messages.Player</label>
+            <input class="auto-search-players form-control" data-remote="@Url.Action("FindPlayer")" data-link="@Url.Action("Edit", "Players")" />
+        </div>
+    </div>
+}

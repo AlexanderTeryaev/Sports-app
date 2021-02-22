@@ -1,0 +1,178 @@
+﻿@model IEnumerable<DataService.DTO.PlayerRegistrationDto>
+<div class="row">
+    <div class="col-sm-9">
+        <a id="excelBtnExpRegs" class="btn btn-info" href="#" onclick="$('#exportsportsmenregistrations').submit()">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+            @using (Html.BeginForm("ExportSportsmenRegistrationsToExcel", "Players", new { leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId, onlyHeaders = false },
+        FormMethod.Post, new { id = "exportsportsmenregistrations" })) { }
+        </a>
+        @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+        {
+            <a id="printsportsmenregs" class="btn btn-info">
+                <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+            </a>
+            <a id="excelBtnExpRegsHeader" class="btn btn-info" href="#" onclick="$('#exportregistrationsheader').submit()">
+                @Messages.DownloadImportForm
+                @using (Html.BeginForm("ExportSportsmenRegistrationsToExcel", "Players", new { leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId, onlyHeaders = true },
+             FormMethod.Post, new { id = "exportregistrationsheader" })) { }
+            </a>
+            <a class="btn btn-primary btn-edit" href="@Url.Action("ImportSportsmenRegistrations", "Players",
+                new { leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId })"
+                   data-target="#sportsmenimportform"
+                   data-toggle="modal"
+                   data-keyboard="false"
+                   data-backdrop="static">
+                <i class="glyphicon glyphicon-save"></i>@Messages.ImportGymnastics.Replace(Messages.Gymnastics.ToLower(), Messages.Sportsmans.ToLower())
+            </a>
+        }
+    </div>
+    <div class="col-sm-3"><b>@Messages.Registered @Messages.Sportsmans.ToLower() @Messages.Count.ToLower(): </b>@Model.Count()</div>
+</div>
+<div class="row" style="margin-top:15px;">
+    @if (Model.Any())
+    {
+        <table class="table table-bordered" id="print_regs_table">
+            <thead>
+                <tr>
+                    <th>@Messages.ClubNumber</th>
+                    <th>@Messages.ClubName</th>
+                    <th>@Messages.FullName</th>
+                    <th>@Messages.IdentNum</th>
+                    <th>@Messages.BirthDay</th>
+                    <th>@Messages.Points_MartialArts</th>
+                    <th>@Messages.Rank</th>
+                    <th class="remove_print">@Messages.Approve<input type="checkbox" id="selectAllRegs_checkbox"/></th>
+                    <th class="remove_print"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var registration in Model)
+                {
+                    <tr>
+                        <td>@registration.ClubNumber</td>
+                        <td>@registration.ClubName</td>
+                        <td>@registration.FullName</td>
+                        <td>@registration.IdentNum</td>
+                        <td>@(registration.Birthday?.ToShortDateString())</td>
+                        <td>@registration.FinalScore</td>
+                        <td>@registration.Rank</td>
+                        <td class="remove_print">
+                            @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                            {
+                                @Html.CheckBoxFor(m => registration.IsApproved, new { @class = "approvereg", data_id = $"{registration.RegistrationId}" })
+                            }
+                        </td>
+                        <td class="remove_print">
+                            @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                            {
+                                <a href="@Url.Action("DeleteSportsmenRegistration", new { id = registration.RegistrationId, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId })" 
+                                   class="@AppCss.Delete"
+                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                   data-ajax-update="#registeredPlayersDiv"
+                                   data-ajax="true"></a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-danger">@Messages.NoPlayersRegistered</div>
+    }
+
+</div>
+
+<div class="modal fade" id="sportsmenimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="sportsmenimportform_pl"></div>
+    </div>
+</div>
+
+<script>
+
+    $(".approvereg").on("click", function () {
+        var registrationId = $(this).attr("data-id");
+        var isChecked = $(this).is(":checked");
+        if (registrationId) {
+            $.ajax({
+                url: "/Players/ChangeRegistrationStatus",
+                type: "POST",
+                data: {
+                    id: registrationId,
+                    isApproved: isChecked
+                },
+            })
+        }
+    })
+
+    $('#printsportsmenregs').click(function () {
+        var tbl = $("#print_regs_table");
+        if (tbl.length > 0) {
+            tablePrintRegistrations(tbl);
+        }
+    });
+
+    $(document).ready(function () {
+        $('#selectAllRegs_checkbox').click(function () {
+        var isChecked = $('#selectAllRegs_checkbox').is(':checked');
+        var confirmed = confirm(isChecked ? "Are you sure You want to Select all?" : "Are you sure You want to Unselect all?");
+        if (confirmed) {
+            if (isChecked) {
+                $.ajax({
+                    url: "/Players/ChangeRegistrationStatusForAllPlayers",
+                    type: "POST",
+                    data: {
+                        leagueId: '@ViewBag.LeagueId',
+                        seasonId: '@ViewBag.SeasonId',
+                        isApproved: true
+                    },
+                });
+                $(".approvereg").prop("checked", true);
+            } else {
+                $.ajax({
+                    url: "/Players/ChangeRegistrationStatusForAllPlayers",
+                    type: "POST",
+                    data: {
+                        leagueId: '@ViewBag.LeagueId',
+                        seasonId: '@ViewBag.SeasonId',
+                        isApproved: false
+                    },
+                });
+                $(".approvereg").prop("checked", false);
+            }
+            }
+        });
+
+        var allChecked = true;
+        $(".approvereg").each(function (index, value) {
+            var regbox = $(value); 
+            if (!regbox.is(':checked')) {
+                allChecked = false;
+            }
+        });
+
+        if (allChecked) {
+            $('#selectAllRegs_checkbox').prop("checked",true);
+        }
+    });
+    
+    function tablePrintRegistrations(el) {
+        var wnd = window.open('', '@Messages.RegistrationStatus', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.RegistrationStatus. @Messages.League: @ViewBag.LeagueName</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 1500);
+    }
+</script>

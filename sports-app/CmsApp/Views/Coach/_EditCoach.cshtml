@@ -1,0 +1,256 @@
+﻿@model CmsApp.Models.CoachForm
+
+
+@helper ShowImage(string imgName)
+{
+    <img class="img-responsive img-thumbnail" src="@( GlobVars.ContentPath + "/coach/" + imgName)" />
+}
+<form id="coachform" method="post" action="@Url.Action("EditCoach")" autocomplete="off" enctype="multipart/form-data">
+
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.SeasonId)
+    @Html.HiddenFor(model => model.UserJobId)
+    <div class="form-horizontal">
+        <hr />
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.FirstName:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.FirstName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.FirstName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.LastName:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.LastName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.LastName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.MiddleName:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.MiddleName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.MiddleName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.IdentNum:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.IdentNum, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.IdentNum, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.Email:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.Password:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Password, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.Phone:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Phone, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Phone, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.WithholdingTax:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.WithholdingTax, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.WithholdingTax, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.BirthDay:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.TextBoxFor(m => m.BirthDate, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                @Html.ValidationMessageFor(model => model.BirthDate, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.City:</label>
+            </div>
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.City, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.City, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.Address:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Address, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.Education:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.TextBoxFor(m => m.Education, new { @class = "form-control" })
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.PlaceOfEducation:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.TextBoxFor(m => m.PlaceOfEducation, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.City)
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.DateOfEdIssue:</label>
+            </div>
+
+            <div class="col-md-10">
+                @Html.TextBoxFor(m => m.DateOfEdIssue, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                @Html.ValidationMessageFor(m => m.BirthDate)
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.EducationCert:</label>
+            </div>
+
+            <div class="col-md-10">
+                <div class="form-group col-sm-4 btn-file-glyph">
+                    <span class="glyphicon glyph-btn glyphicon-upload">
+                        <input type="file" id="EducationCertFile" name="EducationCertFile" data-val="true" data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|PNG|png)$"
+                               data-val-regex="@Messages.SelectValidFile" />
+                    </span>
+                    <div class="row">
+                        @Html.ValidationMessage("EducationCertFile")
+                        <span id="EducationCertFileName"></span>
+                    </div>
+                </div>
+                @{
+                    if (!String.IsNullOrEmpty(Model.EducationCert))
+                    {
+                        <div class="form-group col-sm-4" id="viewEducationCert">
+                            <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                  onclick="window.open('@(GlobVars.ContentPath + "/players/" + Model.EducationCert )')">
+                            </span>
+                        </div>
+                        <div class="form-group col-sm-4" id="removeEducationCertFile">
+                            <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                            <input type="hidden" name="RemoveEducationCert" value="false" />
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2">
+                <label class="control-label">@Messages.CoachCertificate:</label>
+            </div>
+                <div class="col-md-10">
+                    <div class="form-group col-sm-4 btn-file-glyph">
+                        <span class="glyphicon glyph-btn glyphicon-upload">
+                            <input type="file" id="RefereeCertificateFile" name="RefereeCertificateFile" data-val="true" data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|PNG|png)$"
+                                   data-val-regex="@Messages.SelectValidFile" />
+                        </span>
+                        <div class="row">
+                            @Html.ValidationMessage("RefereeCertificateFile")
+                            <span id="RefereeCertificateFileName"></span>
+                        </div>
+                    </div>
+                    @{
+                        if (!String.IsNullOrEmpty(Model.CoachCertificate))
+                        {
+                            <div class="form-group col-sm-4" id="viewRefereeCertFile">
+                                <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                      onclick="window.open('@(GlobVars.ContentPath + "/coach/" + Model.CoachCertificate )')">
+                                </span>
+                            </div>
+                            <div class="form-group col-sm-4" id="RemoveRefereeCertFile">
+                                <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                <input type="hidden" name="RemoveCoachCert" value="false" />
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" value="@Messages.Save" class="btn btn-primary" />
+                </div>
+            </div>
+        </div>
+</form>
+
+<script>
+    $('#coachform').validateBootstrap(true);
+    $(".frm-date").datetimepicker({
+        format: 'd/m/Y',
+        timepicker: false,
+        scrollMonth: false,
+        scrollTime: false,
+        scrollInput: false
+    });
+
+    $("#RemoveRefereeCertFile").on('click',
+        function () {
+            $('input[name="RemoveCoachCert"]').val('true');
+            $('#viewRefereeCertFile').css("visibility", "hidden");
+            $('#RemoveRefereeCertFile').css("visibility", "hidden");
+        });
+
+    $("#removeEducationCertFile").on('click',
+        function () {
+            $('input[name="RemoveEducationCert"]').val('true');
+            $('#viewEducationCert').css("visibility", "hidden");
+            $('#removeEducationCertFile').css("visibility", "hidden");
+        });
+
+</script>

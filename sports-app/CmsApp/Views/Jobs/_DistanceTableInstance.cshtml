@@ -1,0 +1,46 @@
+﻿@model DistanceTableForm
+@{
+    var citiesList = Model.Cities.ToList();
+    var citiesCount = citiesList.Count;
+    var distanceHelper = new DistanceHelper();
+}
+@if (citiesCount > 0 && !string.IsNullOrEmpty(citiesList[0]))
+{
+    <h3 style="text-align: center;margin-bottom:15px;">@Messages.DistanceTable</h3>
+    <table border="1" class="table table-responsive table-striped">
+        <tbody>
+        @for (int row = 0; row <= citiesCount; row++)
+        {
+            <tr style="text-align: center;">
+                @for (int column = 0; column <= citiesCount; column++)
+                {
+                    if (row == 0)
+                    {
+                        if (column == 0)
+                        {
+                            <td><i><b>@Messages.City/@Messages.Distance.ToLowerInvariant()</b></i></td>
+                            continue;
+                        }
+                        <td>@citiesList[column - 1]</td>
+                    }
+                    else
+                    {
+                        if (column == 0)
+                        {
+                            <td>@citiesList[row - 1]</td>
+                        }
+                        else
+                        {
+                            var city1Name = citiesList[column - 1];
+                            var city2Name = citiesList[row - 1];
+                            var distance = distanceHelper.GetDistanceBetweenCities(Model.RelevantId, Model.RelevantLogicalName, Model.SeasonId, city1Name, city2Name);
+                            <td>@distance</td>
+                        }
+                    }
+
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+}

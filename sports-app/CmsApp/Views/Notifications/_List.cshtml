@@ -1,0 +1,93 @@
+﻿@model NotificationsViewModel
+@{
+    bool hasNotifications = Model.Notifications.Any(t => t.NotesAttachedFiles.Any());
+}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>@Messages.Date</th>
+            <th>@Messages.Notifications</th>
+            <th>@Messages.PushWithEmail</th>
+            @if (Model.RelevantEntityLogicalName == LogicaName.Union)
+            {
+                <th>@Messages.ClubManagers</th>
+            }
+            @if (Model.RelevantEntityLogicalName == LogicaName.League)
+            {
+                <th>@Messages.TeamManagers</th>
+            }
+            @if (hasNotifications)
+            {
+                <th></th>
+            }
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in Model.Notifications)
+        {
+        <tr>
+            <td>@m.SendDate</td>
+            <td>@m.Message</td>
+            <td>@Html.CheckBox("SentByEmail", m.SentByEmail, new { @disabled = "disabled", @readonly = "readonly" })</td>
+            @if (Model.RelevantEntityLogicalName == LogicaName.Union && m.SentForClubManagers)
+            {
+                <td>
+                    @(string.Join(", ", m.NotesRecipients.Select(c => c.User.FullName)))
+                </td>
+            }
+            else
+            {
+                if (Model.RelevantEntityLogicalName == LogicaName.League && m.SentForTeamManagers == true)
+                {
+                    var str = "";
+                    var managers = m.NotesRecipients.Select(c => c.User).OrderBy(x => x.FullName);
+                    foreach(var cm in managers)
+                    {
+                        var teamName = "";
+                        if (Model.UserTeamNames.ContainsKey(cm.UserId)) {  Model.UserTeamNames.TryGetValue(cm.UserId, out teamName); }
+
+                        if (string.IsNullOrEmpty(teamName))
+                        {
+                            teamName = cm.FullName;
+                        }
+
+                        if (str == "") { str = teamName; }
+                        else {
+                            str = string.Join(", ", str, teamName);
+                            
+                        }
+                        str += ((char)0x200E);
+                    }
+                    <td>
+                        @str
+                    </td>
+                }
+                else
+                {
+                    <td></td>
+                }
+            }
+            @if (hasNotifications)
+            {
+                <td>
+                    @{
+                        var filePath = m.NotesAttachedFiles.FirstOrDefault()?.FilePath;
+                    }
+                    @if (!string.IsNullOrEmpty(filePath))
+                    {
+                        <span class='glyphicon glyphicon-eye-open glyph-btn' onclick="window.open('/assets/notifications/@filePath')"></span>
+                    }
+                </td>
+            }
+            <td>
+                @Ajax.ActionLink(" ", "Delete", "Notifications",
+                              new { id = m.MsgId, entityId = Model.EntityId, logicalName = Model.RelevantEntityLogicalName, seasonId = Model.SeasonId },
+                              new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "notes_list", Confirm = Messages.DeleteConfirm },
+                              new { @class = AppCss.Delete })
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
+

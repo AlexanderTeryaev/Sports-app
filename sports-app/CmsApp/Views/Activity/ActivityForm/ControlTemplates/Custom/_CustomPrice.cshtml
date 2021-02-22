@@ -1,0 +1,46 @@
+﻿@using System.Globalization
+@using Newtonsoft.Json
+@model ActivityFormControlTemplateModel
+
+@{
+    var controlEnabled = (!Model.IsPublish || !Model.IsDisabled) && !Model.IsDisabledBySettings;
+}
+
+<div class="control custom-control @(controlEnabled ? "" : "hidden")" data-type="@ActivityFormControlType.CustomPrice" data-custompriceid="@Model.CustomPrice.Id" data-canberemoved="@Model.CanBeRemoved" data-hasoptions="@Model.HasOptions" data-customdropdown-allowedvalues="@JsonConvert.SerializeObject(Model.CustomDropdownValues)" data-fieldnote="@Model.FieldNote" data-isdisabled="@Model.IsDisabled" data-isrequired="@Model.IsRequired" data-canberequired="@Model.CanBeRequired" data-canbedisabled="@Model.CanBeDisabled" @Model.GetDataAttributesForLabels() data-propertyname="@Model.PropertyName">
+    @if (controlEnabled)
+    {
+        <label for="buildForm-body-@Model.PropertyName-price" class="control-label">@Model.GetCustomPriceTitle():</label>
+        <input id="buildForm-body-@Model.PropertyName-price" name="@Model.PropertyName-price" type="text" class="form-control customPrice-price"
+               readonly="readonly"
+               value="@Model.CustomPrice.Price"
+               data-originalprice="@Model.CustomPrice.Price"/>
+
+        <label for="buildForm-body-@Model.PropertyName-quantity">
+            @(Messages.ResourceManager.GetString(nameof(Messages.Activity_CustomPrices_Quantity),
+                    CultureInfo.CreateSpecificCulture(LocaleHelper.GetLocale(Model.Culture)))):
+        </label>
+        <select id="buildForm-body-@Model.PropertyName-quantity" name="@Model.PropertyName-quantity" data-noquantitymessage="@Messages.Activity_CustomPrices_NoQuantitySelected" class="form-control customPrice-quantity">
+            @foreach (var value in Enumerable.Range(0, Model.CustomPrice.MaxQuantity + 1))
+            {
+                <option value="@value" @(value == Model.CustomPrice.DefaultQuantity ? "selected=\"selected\"" : string.Empty)>@value</option>
+            }
+        </select>
+
+        <label for="buildForm-body-@Model.PropertyName-total">
+            @(Messages.ResourceManager.GetString(nameof(Messages.Activity_CustomPrices_Total), 
+                    CultureInfo.CreateSpecificCulture(LocaleHelper.GetLocale(Model.Culture)))):
+        </label>
+        <input id="buildForm-body-@Model.PropertyName-total" name="@Model.PropertyName-total" type="text" class="form-control customPrice-total"
+               readonly="readonly"
+               value="0"/>
+
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_ValidationMessage", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_RequiredSwitch", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_DisabledSwitch", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_FieldNote", Model)
+        //@Html.Partial("ActivityForm/ControlTemplates/Custom/_CustomControlOptions", Model)
+    }
+</div>

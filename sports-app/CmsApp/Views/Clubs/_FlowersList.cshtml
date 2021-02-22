@@ -1,0 +1,277 @@
+﻿@model ClubsForm
+@{
+    int savedId = (int?)TempData["SavedId"] ?? 0;
+    int errId = (int?)TempData["ErrId"] ?? 0;
+    bool fromUnion = ViewBag.FromUnion != null && ViewBag.FromUnion == true;
+}
+
+
+<div class="row">
+    <div class="col-sm-6" style="margin-bottom:20px;">
+        <a href="#" id="printflowersinfo" class="btn btn-info remove_print">
+            <i class="glyphicon glyphicon-print"></i>@Messages.Print
+        </a>
+        <a id="excelBtnExpFlowers" class="btn btn-info" href="#" onclick="$('#exportflowerslist').submit()">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+            @using (Html.BeginForm("ExportClubsList", "Clubs", new { id = Model.UnionId, seasonId = Model.SeasonId, isFlowersOfSport = true },
+FormMethod.Post, new { id = "exportflowerslist" })) { }
+        </a>
+    </div>
+</div>
+
+
+<table class="table table-bordered" id="print_flowersind_table">
+    @if (Model.UnionId.HasValue)
+    {
+        <thead>
+            <tr>
+                <th></th>
+                @if (fromUnion)
+                {
+                    <th width="13%">@Messages.ClubNumber</th>
+                }
+                <th class="remove_print"></th>
+                <th class="remove_print" style="width: 50px">@Messages.ClubApprove</th>
+                <th></th>
+                <th>@Messages.Waiting</th>
+                <th>@Messages.Approved</th>
+                @if (Model.IsIndividualSection)
+                {
+                    <th>@Messages.ActivePlayers</th>
+                    <th>@Messages.ClubManager</th>
+                }
+                <th class="remove_print" data-toggle="tooltip" title="@Messages.ShowAllInformation_tooltip">
+                    <a class="btn btn-primary" onclick="getUnionPlayersStatistics()">
+                        <span class="fa fa-info-circle"></span>
+                        <span class="fa fa-spin fa-spinner" id="main_spinner" style="display:none">&nbsp;</span>
+                    </a>
+                </th>
+            </tr>
+        </thead>
+    }
+    <tbody>
+        @foreach (var m in Model.Clubs)
+        {
+            string frmid = "flowersform" + m.ClubId;
+            if (Model.isEditorOrUnionManager)
+            {
+                <tr>
+                    <td>
+                        @m.ClubId
+                    </td>
+                    @if (fromUnion)
+                    {
+                        <td align="center">@m.ClubNumber</td>
+                    }
+                    <td class="remove_print">
+                        <a class="@AppCss.Edit"
+                           href="@Url.Action("Edit", "Clubs",
+                               new { id = m.ClubId, sectionId = m.SectionId, unionId = m.UnionId, seasonId = m.Seasons.OrderBy(x =>
+                                x.Id).LastOrDefault(x => x.IsActive)?.Id })">
+                        </a>
+                    </td>
+
+                    @if (Model.UnionId != null)
+                    {
+                        <td class="text-center remove_print">
+                            @{
+                                var isRegistrationApproved = Model.ClubsRegistrations?.Any(x => x.ClubId == m.ClubId && x.IsActive) == true;
+                            }
+                            <input type="checkbox" readonly disabled @(isRegistrationApproved ? "checked" : "" ) />
+                        </td>
+                    }
+
+                    <td>
+                        @using (Ajax.BeginForm("Update", "Clubs", new AjaxOptions { UpdateTargetId = "clubs" }, new { id = frmid }))
+                        {
+                            <span class="form-group">
+                                <input type="text" name="Name" value="@m.Name" form="@frmid" class="form-control required" maxlength="50" />
+                                @Html.ValidationMessage("Name")
+                            </span>
+                            <input type="hidden" name="ClubId" form="@frmid" value="@m.ClubId" />
+                        }
+                    </td>
+                    @if (Model.UnionId.HasValue)
+                    {
+                        <td id="waiting_@m.ClubId"><span></span></td>
+                        <td id="approved_@m.ClubId"><span></span></td>
+                        if (Model.IsIndividualSection)
+                        {
+                            <td id="activeplayers_@m.ClubId"><span></span></td>
+                            <td>
+                                @{
+                                    var clubManagersList = m.UsersJobs.Where(j => JobRole.ClubManager.Equals(j.Job.JobsRole.RoleName, StringComparison.OrdinalIgnoreCase))?.Select(uj => uj.User.FullName);
+                                    var clubList = clubManagersList.Any() ? string.Join(",", clubManagersList) : string.Empty;
+                                }
+
+                                @clubList
+                            </td>
+                        }
+                        <td class="remove_print">
+                            <a class="btn btn-primary" onclick="getClubPlayersInformation('@m.ClubId')">
+                                <span class="fa fa-info-circle" id="inf_span_@m.ClubId"></span>
+                                <span class="fa fa-spin fa-spinner" id="spin_span_@m.ClubId" style="display:none"></span>
+                            </a>
+                        </td>
+                    }
+                    <td class="remove_print">
+                        <button class="@AppCss.Save @(savedId == m.ClubId ? " btn-success" : null) btn" form="@frmid"></button>
+                    </td>
+                    <td class="remove_print">
+                        <a href="@Url.Action("Delete", new {id = m.ClubId})" class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#flowers_of_sport"
+                           data-ajax="true"></a>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td>
+                        @m.ClubId
+                    </td>
+                    <td>
+                        @m.Name
+                    </td>
+                    <td class="remove_print">
+                        <a class="btn btn-primary flowers-details"
+                           href="@Url.Action("Edit", "Clubs",
+                                new {id = m.ClubId, sectionId = m.SectionId, unionId = m.UnionId, seasonId = m.SeasonId})">
+                            @Messages.Details
+                        </a>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+    @if (Model.isEditorOrUnionManager)
+    {
+        <tfoot class="remove_print">
+            <tr>
+                <td colspan="@(Model.UnionId != null ? 4 : 3)"></td>
+                <td>
+                    @using (Ajax.BeginForm("Save", "Clubs", new AjaxOptions { UpdateTargetId = "flowers_of_sport" }, new { id = "flowersform" }))
+                    {
+                        <span class="form-group">
+                            @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = Messages.AddNew, form = "flowersform", maxlength = 50 })
+                            @Html.ValidationMessageFor(m => m.Name)
+                        </span>
+                        @Html.HiddenFor(m => m.SectionId, new { form = "flowersform" })
+                        @Html.HiddenFor(m => m.UnionId, new { form = "flowersform" })
+                        @Html.HiddenFor(m => m.SeasonId, new { form = "flowersform" })
+                        @Html.HiddenFor(m => m.IsFlowerOfSport, new { form = "flowersform" })
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-primary" form="flowersform">@Messages.Save</button>
+                </td>
+                <td></td>
+            </tr>
+        </tfoot>
+    }
+</table>
+
+<script>
+    $('#flowersform').validateBootstrap(true);
+        function getUnionPlayersStatistics() {
+            $.ajax({
+                url: '/Clubs/GetUnionClubsPlayersInformation',
+                data: { "id": "@Model.UnionId", "seasonId": "@Model.SeasonId" },
+                type: "Post",
+                beforeSend: function(){
+                    $("#main_spinner").show();
+                },
+                success: function (result) {
+                    var items = JSON.parse(result);
+                    for (index in items) {
+                        var clubId = index;
+                        $("#waiting_" + clubId).empty();
+                        $("#approved_" + clubId).empty();
+                        $("#activeplayers_" + clubId).empty();
+
+                        $("#waiting_" + clubId).append(items[index][0]);
+                        $("#approved_" + clubId).append(items[index][1]);
+                        $("#activeplayers" + clubId).append(items[index][2]);
+                        console.log('finished for flower of sport id' + index);
+                    }
+                    $("#main_spinner").hide();
+
+                },
+                error: function (exception) {
+                    console.log('error');
+                }
+            });
+    }
+
+        @*function getClubPlayersInformation(clubId) {
+            $.ajax({
+                url: '/Clubs/GetClubPlayersInfo',
+                data: { "id": clubId, "seasonId": "@Model.SeasonId" },
+                type: "Post",
+                beforeSend: function () {
+                    $("#inf_span_" + clubId).hide();
+                    $("#spin_span_" + clubId).show();
+                },
+                success: function (result) {
+                    var item = result.split(',');
+                    $("#waiting_" + clubId).empty();
+                    $("#approved_" + clubId).empty();
+                    $("#activeplayers_" + clubId).empty();
+
+                    $("#waiting_" + clubId).append(item[0]);
+                    $("#approved_" + clubId).append(item[1]);
+                    $("#activeplayers_" + clubId).append(item[2]);
+                    $("#inf_span_" + clubId).show();
+                    $("#spin_span_" + clubId).hide();
+                },
+                error: function (exception) {
+                    console.log('error');
+                }
+            });
+        }*@
+
+    $('#printflowersinfo').click(function () {
+        var tbl = $("#print_flowersind_table");
+        if (tbl.length > 0) {
+            printflowers(tbl);
+        }
+    });
+    function make_el(el) {
+        var el = $(el);
+
+        var new_value = el.val();
+
+        el.parent().html(new_value);
+        el.remove();
+    }
+
+    function printflowers(el) {
+        var wnd = window.open('', '@Messages.FlowersOfSport', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.FlowersOfSport</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" /></head>');
+        wnd.document.write('<body>');
+        wnd.document.write(('<style>.table-borderless > tbody > tr > td,.table-borderless > tbody > tr > th,.table-borderless > tfoot > tr > td,.table-borderless > tfoot > tr > th,.table-borderless > thead > tr > td,.table-borderless > thead > tr > th {border: none;direction: rtl;}'));
+        wnd.document.write(('.table-borderless { direction: rtl;}'));
+        wnd.document.write(('.table-borderless caption, .table-borderless th, .table-borderless td { direction: rtl; }</style>'));
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find("#print_clubsind_table").attr("class", "table table-borderless");
+        $(wnd.document).find("#print_clubsind_table").css("fontSize", "12px");
+        $(wnd.document).find('.remove_print').remove();
+        $(wnd.document).find("input[name='Name']").each(function (index, value) {
+            make_el($(value));
+        });
+
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 1000);
+    }
+</script>
+
+

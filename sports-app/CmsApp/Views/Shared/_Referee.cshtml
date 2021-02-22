@@ -1,0 +1,92 @@
+﻿@model Referees
+@{
+    bool userIsEditor = User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers);
+    string name = string.Empty;
+    if (string.IsNullOrWhiteSpace(Model.RefereeMainName))
+    {
+        var service = new RefereeService(Model.CycleId, Model.LeagueId);
+        name = service.GetMainRefereeName(Model.CycleId);
+    }
+    else
+    {
+        name = Model.RefereeMainName;
+    }
+
+    bool isHebrew = Request.IsHebrew();
+}
+
+@if (userIsEditor)
+{
+    <div class="modal-header" id="referee-modal-title">
+        @*<button type="button" class="close close-referee-modal">&times;</button>*@
+        <h4 class="modal-title">@Messages.ChooseReferees:</h4>
+    </div>
+    <div class="modal-body">
+        <div class="alert alert-warning alert-dismissable" id="alert_@Model.CycleId" style="display:none">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">×</a>
+        </div>
+        @if (Model.RefereeIds != null && Model.RefereeIds.Count >= 0)
+        {
+            for (int i = 0; i < Model.RefereeIds.Count; i++)
+            {
+                if (i == 0)
+                {
+                    var refereeId = (Model.RefereeIds != null && Model.RefereeIds.Count >= i + 1) ? Model.RefereeIds[i] : null;
+                    var referee = new SelectList(Model.RefereesItems, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), refereeId).AsEnumerable();
+                    <p id="referee_@(i+1)">
+                        <h3>
+                            @Messages.MainReferee: &nbsp;&nbsp;
+                            @if (i == ((Model.RefereeIds.Count) - 1))
+                            {
+                                <a data-controls-modal="refereeModal_@Model.CycleId" data-backdrop="static" data-keyboard="false" href="#"
+                                   class="btn btn-danger btn-sm" onclick="removeReferee(@(i+1),@Model.CycleId)">
+                                    <i class="glyphicon glyphicon-trash"></i>
+                                </a>
+                            }
+                        </h3>
+                        @Html.DropDownList("RefereeDropdown", referee, Messages.Select, new { @class = $"form-control referee_{Model.CycleId}", id = $"refereeDropdown_{Model.CycleId}_{i + 1}" })
+                    </p>
+                }
+                else
+                {
+                    var refereeId = (Model.RefereeIds != null && Model.RefereeIds.Count >= i + 1) ? Model.RefereeIds[i] : null;
+                    var referee = new SelectList(Model.RefereesItems, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), refereeId).AsEnumerable();
+                    <p id="referee_@(i+1)">
+                        <h3>
+                            @Messages.Referee #@(i + 1):&nbsp;&nbsp;
+                            @if (i == ((Model.RefereeIds.Count) - 1))
+                            {
+                                <a class="btn btn-danger btn-sm" onclick="removeReferee(@(i + 1),@Model.CycleId)">
+                                    <i class="glyphicon glyphicon-trash"></i>
+                                </a>
+                            }
+                        </h3>
+                        @Html.DropDownList("RefereeDropdown", referee, Messages.Select, new { @class = $"form-control referee_{Model.CycleId}", id = $"refereeDropdown_{Model.CycleId}_{i + 1}" })
+                    </p>
+                }
+                <hr />
+            }
+        }
+        <p>
+            <input type="button" class="btn btn-primary btn" onclick="sendReferee(@Model.CycleId,false)"
+                   value="@Messages.AddReferee" />
+        </p>
+    </div>
+    <div class="modal-footer">
+        <a class="btn btn-primary" onclick="sendReferee(@Model.CycleId,true,@Model.ModalWindowId)">@Messages.Save</a>
+        <button type="button" class="btn btn-default" onclick="closeModal(event)">@Messages.Close</button>
+        @if (isHebrew)
+        {
+            <i id="spinner_referee" class="fa fa-spin fa-2x fa-spinner" style="display:none;float:right"></i>
+        }
+        else
+        {
+            <i id="spinner_referee" class="fa fa-spin fa-2x fa-spinner" style="display:none;float:left"></i>
+        }
+    </div>
+}
+
+@Html.HiddenFor(m => m.CycleId)
+@Html.HiddenFor(m => m.LeagueId)
+@Html.Hidden($"MainRefereeHidden_{Model.CycleId}", name)
+@Html.HiddenFor(m => m.ModalWindowId)

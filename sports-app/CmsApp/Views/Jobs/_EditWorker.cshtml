@@ -1,0 +1,490 @@
+﻿@model CreateWorkerForm
+@{
+    var showAll = ViewBag.ShowAll ?? false;
+    var isCurrRegionalManager = ViewBag.IsRegionalManager ?? false;
+
+
+    var licenseTypeList = new List<SelectListItem>
+{
+new SelectListItem {Text = Messages.Select, Value = null},
+new SelectListItem {Text = Messages.Kumite, Value = "Kumite"},
+new SelectListItem {Text = Messages.Kata, Value = "Kata"},
+};
+
+    var paymentRateType = new List<SelectListItem>
+{
+new SelectListItem {Text = Messages.DefaultRate, Value = null},
+new SelectListItem {Text = Messages.RateA, Value = "RateA" },
+new SelectListItem {Text = Messages.RateB, Value = "RateB" },
+new SelectListItem {Text = Messages.RateC, Value = "RateC" },
+};
+    if (ViewBag.IsAthletics) {
+        paymentRateType = new List<SelectListItem>
+{
+    new SelectListItem {Text = Messages.BasicD, Value = null},
+    new SelectListItem {Text = Messages.AdvancedC, Value = "RateA" },
+    new SelectListItem {Text = Messages.ProfissionalB, Value = "RateB" },
+    new SelectListItem {Text = Messages.RefereeA, Value = "RateC" }
+};
+    
+
+    }
+    //IEnumerable<KeyValuePair<int, string>> listTest = new List<KeyValuePair<int, string>>()
+    //{
+    //    new KeyValuePair<int, string>(1, "One"),
+    //    new KeyValuePair<int, string>(2, "Two"),
+    //    new KeyValuePair<int, string>(3, "Three")
+    //};
+
+    var formats = new List<SelectListItem>();
+    for (int i = 1; i <= 11; i++)
+    {
+        formats.Add(new SelectListItem { Text = i.ToString(), Value = i.ToString() });
+    }
+    var test = new MultiSelectList(formats, "Value", "Text", Model.FormatPermissions);
+
+    var isSuccess = TempData["WorkerAddedSuccessfully"] != null && (bool)TempData["WorkerAddedSuccessfully"] == true;
+    var hasPermission = string.Equals(Model.JobRole, JobRole.ClubManager, StringComparison.OrdinalIgnoreCase) && Model.IsRefereeRole;
+    var workers_list = ViewBag.OnlyReferees ? "referee_list" : "workers_list";
+    }
+
+    @helper ShowImage(string imgName)
+    {
+    <img class="img-responsive img-thumbnail" src="@( GlobVars.ContentPath + "/coach/" + imgName)" />
+}
+<style>
+    .pac-container {
+        z-index: 10000 !important;
+    }
+
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <h4 class="modal-title">@Model.FullNameFormatted</h4>
+</div>
+<form id="userform" autocomplete="off" enctype="multipart/form-data">
+    @Html.HiddenFor(m => m.RelevantEntityLogicalName)
+    @Html.HiddenFor(m => m.RelevantEntityId)
+    @Html.HiddenFor(m => m.UserId)
+    @Html.HiddenFor(m => m.UserJobId)
+    @Html.HiddenFor(m => m.IsKarateReferee)
+    @Html.HiddenFor(m => m.IsRefereeCommittee)
+    @Html.HiddenFor(m => m.IsKarate)
+    @if (showAll)
+    {
+        @Html.HiddenFor(m => m.JobId)
+    }
+    @Html.HiddenFor(m => m.SeasonId)
+    @Html.Hidden("ShowAll", showAll != null ? (bool)showAll : false)
+    @Html.Hidden("OnlyReferees", (bool) (ViewBag.OnlyReferees == true))
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.FirstName:</label>
+                @Html.TextBoxFor(m => m.FirstName, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.FirstName)
+            </div>
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.LastName:</label>
+                @Html.TextBoxFor(m => m.LastName, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.LastName)
+            </div>
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.MiddleName:</label>
+                @Html.TextBoxFor(m => m.MiddleName, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.MiddleName)
+            </div>
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.IdentNum:</label>
+                @Html.TextBoxFor(m => m.IdentNum, new { @class = $"form-control {(Model.AlternativeId ? "alternativeid" : "custid")}" })
+                @Html.ValidationMessageFor(m => m.IdentNum)
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.Email:</label>
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control custemail" })
+                @Html.ValidationMessageFor(m => m.Email)
+            </div>
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.Password:</label>
+                <input style="display:none">
+                @Html.PasswordFor(m => m.Password, new { @class = "form-control pass", value = Model.Password, data_val_pass = Messages.IvalidPasswrodPattern })
+                @Html.ValidationMessageFor(m => m.Password)
+            </div>
+        </div>
+        @if (isCurrRegionalManager)
+        {
+            <div class="row">
+
+                <div class="form-group col-sm-6 userrole">
+                    <label class="control-label hiddenrole">@Messages.Role:</label>
+                    @Html.DropDownListFor(m => m.JobId, Model.JobsList, Messages.Select, new { @class = "form-control", id = "createEditJob" })
+                    @Html.ValidationMessageFor(m => m.JobId)
+                </div>
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.Phone:</label>
+                    @Html.TextBoxFor(m => m.Phone, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Phone)
+                </div>             
+
+            </div>
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.Function:</label>
+                    @Html.TextBoxFor(m => m.Function, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Function)
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                @if (!showAll)
+                {
+                    <div class="form-group col-sm-6 userrole">
+                        <label class="control-label hiddenrole">@Messages.Role:</label>
+                        @Html.DropDownListFor(m => m.JobId, Model.JobsList, Messages.Select, new { @class = "form-control", id = "createEditJob" })
+                        @Html.ValidationMessageFor(m => m.JobId)
+                    </div>
+                }
+                <div class="form-group col-sm-6 checkbox">
+                    @if (!showAll)
+                    {<br />}
+                    <label>@Html.CheckBoxFor(m => m.IsActive) <span> @Messages.Active</span></label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.Function:</label>
+                    @Html.TextBoxFor(m => m.Function, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Function)
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.Phone:</label>
+                    @Html.TextBoxFor(m => m.Phone, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Phone)
+                </div>
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.WithholdingTax:</label>
+                    @Html.TextBoxFor(m => m.WithholdingTax, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.WithholdingTax)
+                </div>
+            </div>
+        }
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.BirthDay:</label>
+                @Html.TextBoxFor(m => m.BirthDate, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                @Html.ValidationMessageFor(m => m.BirthDate)
+            </div>
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.City:</label>
+                @Html.TextBoxFor(m => m.City, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.City)
+            </div>
+        </div>
+        @if (!isCurrRegionalManager)
+        {
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.Education:</label>
+                    @Html.TextBoxFor(m => m.Education, new { @class = "form-control" })
+                </div>
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.PlaceOfEducation:</label>
+                    @Html.TextBoxFor(m => m.PlaceOfEducation, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.City)
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.DateOfEdIssue:</label>
+                    @Html.TextBoxFor(m => m.DateOfEdIssue, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                    @Html.ValidationMessageFor(m => m.BirthDate)
+                </div>
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.EducationCert:</label>
+                    <div class="row">
+                        <div class="form-group col-sm-4 btn-file-glyph">
+                            <span class="glyphicon glyph-btn glyphicon-upload">
+                                <input type="file" id="EducationCertFile" name="EducationCertFile" data-val="true" data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|PNG|png)$"
+                                       data-val-regex="@Messages.SelectValidFile" />
+                            </span>
+                            <div class="row">
+                                @Html.ValidationMessage("EducationCertFile")
+                                <span id="EducationCertFileName"></span>
+                            </div>
+                        </div>
+                        @{
+                            if (!String.IsNullOrEmpty(Model.EducationCert))
+                            {
+                                <div class="form-group col-sm-4" id="viewEducationCert">
+                                    <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                          onclick="window.open('@(GlobVars.ContentPath + "/players/" + Model.EducationCert )')">
+                                    </span>
+                                </div>
+                                <div class="form-group col-sm-4" id="removeEducationCertFile">
+                                    <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                    <input type="hidden" name="RemoveEducationCert" value="false" />
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            if (Model.IsReferee || Model.IsRefereeCommittee)
+            {
+                if (Model.RelevantEntityLogicalName == LogicaName.Union)
+                {
+                    if (Model.UnionDisciplines != null && Model.UnionDisciplines.Any() && !ViewBag.IsAthletics)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-12">
+                                <label class="control-label">@Messages.ConnectToDiscipline:</label>
+                                @Html.DropDownListFor(m => m.ConnectedDisciplineIds,
+                                                       new MultiSelectList(Model.UnionDisciplines,
+                                                       nameof(DataService.DTO.DisciplineDTO.DisciplineId),
+                                                       nameof(DataService.DTO.DisciplineDTO.Name),
+                                                       Model.SelectedDisciplinesIds), new { @class = "form-control disciplinesids", @multiple = "multiple" })
+                            </div>
+                        </div>
+                    }
+                    <div class="row">
+                        @if (!ViewBag.IsAthletics)
+                        {
+                            <div class="form-group col-sm-6">
+                                <label class="control-label">@Messages.ConnectToClub:</label>
+                                @if (Model.CanConnectClubs)
+                                {
+                                    @Html.DropDownListFor(m => m.ConnectedClubId, new SelectList(Model.UnionClubs, nameof(DataService.DTO.ClubShort.Id), nameof(DataService.DTO.ClubShort.Name)),
+                          Messages.Select, new { @class = "form-control" })
+                                }
+                                else
+                                {
+                                    @Html.DropDownListFor(m => m.ConnectedClubId, new SelectList(Model.UnionClubs, nameof(DataService.DTO.ClubShort.Id), nameof(DataService.DTO.ClubShort.Name)),
+                                                                     Messages.Select, new { @class = "form-control", disabled = "disabled", @readonly = "readonly" })
+                                }
+
+                            </div>
+                        }
+                        <div class="form-group col-sm-6">
+                            <label class="control-label">@Messages.ChoosePaymentRateType:</label>
+                            @Html.DropDownListFor(m => m.PaymentRateType, paymentRateType, new { @class = "form-control" })
+                        </div>
+                    </div>
+                }
+            }
+            if (Model.IsUnionCoach)
+            {
+                <div class="form-group">
+                    <label class="control-label">@Messages.CoachCertificate:</label>
+                    <div class="row">
+                        <div class="form-group col-sm-4 btn-file-glyph">
+                            <span class="glyphicon glyph-btn glyphicon-upload">
+                                <input type="file" id="RefereeCertificateFile" name="RefereeCertificateFile" data-val="true" data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|PNG|png)$"
+                                       data-val-regex="@Messages.SelectValidFile" />
+                            </span>
+                            <div class="row">
+                                @Html.ValidationMessage("RefereeCertificateFile")
+                                <span id="RefereeCertificateFileName"></span>
+                            </div>
+                        </div>
+                        @{
+                            if (!String.IsNullOrEmpty(Model.CoachCertificate))
+                            {
+                                <div class="form-group col-sm-4" id="viewRefereeCertFile">
+                                    <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                          onclick="window.open('@(GlobVars.ContentPath + "/coach/" + Model.CoachCertificate )')">
+                                    </span>
+                                </div>
+                                <div class="form-group col-sm-4" id="RemoveRefereeCertFile">
+                                    <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                    <input type="hidden" name="RemoveCoachCert" value="false" />
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        }
+        <div class="row">
+            <div class="form-group col-sm-12">
+                <label class="control-label">@Messages.Address:</label>
+                <div id="locationField">
+                    @Html.TextBoxFor(m => m.Address, new { @class = "form-control", id = "workerAddress", placeholder = $"{Messages.AutocompleteAddress}" })
+                    @Html.ValidationMessageFor(m => m.Address)
+                </div>
+            </div>
+        </div>
+        @if (ViewBag.isAthletics && Model.IsReferee)
+        {
+            <div class="row">
+                <div class="form-group col-sm-12 league_competitions">
+                    <label class="control-label">@Messages.FormatPermissions</label>
+                    @Html.ListBox("FormatPermissions", test, new { @class = "form-control competition_league_registration", @multiple = "multiple" })
+                </div>
+            </div>
+        }
+
+        @if (Model.IsKarateReferee || (Model.IsKarate && Model.IsRefereeCommittee))
+        {
+            Html.RenderPartial("_KarateRefereesRanks", Model);
+        }
+
+    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                    <button type="submit" class="btn btn-primary">@Messages.Save</button>
+                </div>
+</form>
+
+
+
+<script>
+    var autocomplete;
+    function initialize() {
+        autocomplete = new google.maps.places.Autocomplete(
+            (document.getElementById('workerAddress')),
+            { types: ['geocode'] });
+        google.maps.event.addListener(autocomplete, 'place_changed', function () {
+        });
+    }
+    $(document).ready(function () {
+        initialize();
+        if ("@hasPermission" === "True") {
+            $("#userform .form-control").attr("disabled", true);
+            $("#userform #IsActive").attr("disabled", true);
+            $("#saveuserformbutton").attr("disabled", true);
+        }
+        $('.disciplinesids').multiselect({
+            includeSelectAllOption: true,
+            maxHeight: 250,
+            selectAllText: '@Messages.SelectAllPlayers',
+            buttonText: function (options, select) {
+                    if (options.length === 0) {
+                        return '@Messages.NoneSelected';
+                    }
+                    else if (options.length > 1) {
+                        return '' + options.length + ' ' + '@Messages.Selected.ToLower()';
+                    }
+                    else {
+                        var labels = [];
+                        options.each(function () {
+                            if ($(this).attr('label') !== undefined) {
+                                labels.push($(this).attr('label'));
+                            }
+                            else {
+                                labels.push($(this).html());
+                            }
+                        });
+                        return labels.join(', ') + '';
+                    }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+    });
+</script>
+<script>
+
+
+            $('#userform').validateBootstrap(true);
+            $(".frm-date").datetimepicker({
+                format: 'd/m/Y',
+                timepicker: false,
+
+                scrollMonth: false,
+                scrollTime: false,
+                scrollInput: false
+            });
+
+    $("#RemoveRefereeCertFile").on('click',
+        function () {
+            $('input[name="RemoveCoachCert"]').val('true');
+            $('#viewRefereeCertFile').css("visibility", "hidden");
+            $('#RemoveRefereeCertFile').css("visibility", "hidden");
+        });
+            
+            $("#removeEducationCertFile").on('click',
+                function () {
+                    $('input[name="RemoveEducationCert"]').val('true');
+                    $('#viewEducationCert').css("visibility", "hidden");
+                    $('#removeEducationCertFile').css("visibility", "hidden");
+                });
+
+            $("#userform").submit(function (e) {
+
+                e.preventDefault();
+                if (window.FormData !== undefined) {
+                    var formData = new FormData(this);
+                    var files = document.getElementById("EducationCertFile");
+                    var filesSecond = document.getElementById("RefereeCertificateFile");
+                    if (files) {
+                        var file = files[0];
+                        formData.append("EducationCertFile", file);
+                    }
+                    if (filesSecond) {
+                        var file = filesSecond[0];
+                        formData.append("RefereeCertificateFile", file);
+                    }
+                    $.ajax({
+                        url: '/Jobs/EditWorker',
+                        type: "POST",
+                        contentType: false, // Not to set any content header
+                        processData: false, // Not to process data
+                        data: formData,
+                        success: function (data) {
+                            if (data.Success == true) {
+                                $('#worker_modal_view').modal('hide');
+                                $.post('@Url.Action("WorkerList", "Jobs")',
+                                    { id: @Model.RelevantEntityId, logicalName: '@Model.RelevantEntityLogicalName', seasonId: '@Model.SeasonId', showAll: '@showAll', onlyReferees: '@ViewBag.OnlyReferees', unionId: '@(Model.RelevantEntityLogicalName == LogicaName.Union ? Model.RelevantEntityId : 0)' },
+                                    function (data) {
+                                        $('#@workers_list').html(data);
+                                    });
+                            }
+                            else {
+                                $("#worker_modal_form").html(data);
+                            }
+                        },
+                        error: function (err) {
+                            alert(err.statusText);
+                        }
+                    });
+                }
+                else {
+                    alert("FormData is not supported.");
+                }
+            });
+
+
+    $(".competition_league_registration").multiselect({
+        enableCaseInsensitiveFiltering: false,
+        buttonText: function (options, select) {
+            return '@Messages.FormatPermissions';
+        },
+        //onInitialized: function (select, container) {
+        //},
+        onDropdownHide: function(element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+</script>

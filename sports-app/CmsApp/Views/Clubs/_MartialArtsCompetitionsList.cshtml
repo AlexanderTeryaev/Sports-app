@@ -1,0 +1,239 @@
+﻿@model UnionCompetitionForm
+@{
+    bool isHebrew = Request.IsHebrew();
+}
+
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+<div class="row" id="sections_pl">
+    <div class="col-sm-12">
+        @if (Model.Competitions != null && Model.Competitions.Any())
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>@Messages.Title</th>
+                        <th>@Messages.Type</th>
+                        <th>@Messages.StartDate</th>
+                        <th>@Messages.EndDate</th>
+                        <th>@Messages.EndRegistrationDate</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var competition in Model.Competitions)
+                    {
+                        <tr class="@(competition.IsEnded ? "isEnded" : string.Empty)">
+                            <td>
+                                <a data-id="@competition.LeagueId" class="btn btn-primary information">
+                                    <i class="glyphicon glyphicon-info-sign" name="info-icon"></i>
+                                    <i class="fa fa-spin fa-spinner" name="spinner" style="display:none"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="@Url.Action("SportsmenRegistrationList", "Clubs", new { clubId = Model.ClubId, seasonId = Model.SeasonId, leagueId = competition.LeagueId  })" style="color:#f45c0e;"
+                                   data-toggle="modal"
+                                   data-target="#registrationlist"
+                                   data-ajax-update="#registrationlist_pl"
+                                   data-ajax="true">
+                                    <b>@competition.CompetitionName</b>
+                                </a>
+                            </td>
+                            <td>@LangHelper.GetLeagueTypeValue(competition.TypeId)</td>
+                            <td>@competition.StartDate</td>
+                            <td>@competition.EndDate</td>
+                            <td>@competition.EndRegistrationDate</td>
+                            <td>
+                                @{
+                                    var selectedRefereesIds = Model.SelectedRefereesIds.ContainsKey(competition.LeagueId) ? Model.SelectedRefereesIds[competition.LeagueId] : Enumerable.Empty<int>();
+                                    var referees = competition.IsEnded
+                                        ? new MultiSelectList(Model.ClubReferees, nameof(DataService.DTO.WorkerMainShortDto.UserJobId), nameof(DataService.DTO.WorkerMainShortDto.UserFullName), selectedRefereesIds, Model.ClubReferees.Select(c => c.UserJobId) ?? Enumerable.Empty<int>())
+                                        : new MultiSelectList(Model.ClubReferees, nameof(DataService.DTO.WorkerMainShortDto.UserJobId), nameof(DataService.DTO.WorkerMainShortDto.UserFullName), selectedRefereesIds);
+                                    var selectedSportsmenIds = Model.SelectedSportsmenIds.ContainsKey(competition.LeagueId) ? Model.SelectedSportsmenIds[competition.LeagueId] : Enumerable.Empty<int>();
+                                    var sportsmen = new MultiSelectList(Model.ClubSportsmen, nameof(DataService.DTO.PlayerViewModel.UserId), nameof(DataService.DTO.PlayerViewModel.FullName), selectedSportsmenIds);
+                                }
+                                @if (competition.IsEnded)
+                                {
+                                    @Html.DropDownList($"SportsmenIds", sportsmen, new
+                                    {
+                                        @class = $"form-control sportsmenIds",
+                                        @multiple = "multiple",
+                                        data_leagueid = competition.LeagueId,
+                                        @id = $"sportsmenIds_{competition.LeagueId}",
+                                        disabled = "disabled"
+                                    })
+
+                                    @Html.DropDownList($"RefereeIds", referees, new
+                                    {
+                                        @class = $"form-control refereesIds",
+                                        @multiple = "multiple",
+                                        data_leagueid = competition.LeagueId,
+                                        @id = $"refereesIds_{competition.LeagueId}",
+                                        disabled = "disabled"
+                                    })
+                                }
+                                else
+                                {
+                                    @Html.DropDownList($"SportsmenIds", sportsmen, new
+                                    {
+                                        @class = $"form-control sportsmenIds",
+                                        @multiple = "multiple",
+                                        data_leagueid = competition.LeagueId,
+                                        @id = $"sportsmenIds_{competition.LeagueId}",
+                                    })
+
+                                    @Html.DropDownList($"RefereeIds", referees, new
+                                    {
+                                        @class = $"form-control refereesIds",
+                                        @multiple = "multiple",
+                                        data_leagueid = competition.LeagueId,
+                                        @id = $"refereesIds_{competition.LeagueId}",
+                                    })
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <h3>@Messages.NoCompetitions</h3>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="competitionmodal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="competitionmodal_pl">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="successfulreg" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div style="display:none" id="succesful-div" class="alert alert-success">
+                    <strong><i class="fa fa-check-square-o"></i></strong> &nbsp;&nbsp; @Messages.SuccessfulRegistration
+                </div>
+                <div style="display:none" id="error-div" class="alert alert-danger">
+                    <strong><i class="fa fa-ban"></i></strong>&nbsp;&nbsp; @Messages.ErrorWhileUpdating
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="registrationlist" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="registrationlist_pl">
+        </div>
+    </div>
+</div>
+
+<script>
+    var needRegistration = false;
+    $(document).ready(function () {
+        $(".refereesIds").multiselect({
+            buttonText: function (options, select) {
+                return '@Messages.RegisterReferee';
+            },
+            onDropdownHidden: function (option, select) {
+                var selectItem = $(this)[0].$select[0];
+                var leagueId = $(selectItem).attr("data-leagueid");
+                $.ajax({
+                    url: "/Clubs/RegisterReferees/",
+                    type: "POST",
+                    data: {
+                        clubId: "@Model.ClubId",
+                        seasonId: "@Model.SeasonId",
+                        leagueId: leagueId,
+                        refereeIds: $("#refereesIds_" + leagueId).val()
+                    }
+                })
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+        $(".sportsmenIds").multiselect({
+            buttonText: function (options, select) {
+                return '@Messages.Register @Messages.Sportsmans.ToLower()';
+            },
+            onChange: function () {
+                needRegistration = true;
+            },
+            onDropdownHidden: function (option, select) {
+                if (needRegistration) {
+                    var selectItem = $(this)[0].$select[0];
+                    var leagueId = $(selectItem).attr("data-leagueid");
+                    $.ajax({
+                        url: "/Clubs/RegisterSportsmen/",
+                        type: "POST",
+                        data: {
+                            clubId: "@Model.ClubId",
+                            seasonId: "@Model.SeasonId",
+                            leagueId: leagueId,
+                            sportsmenIds: $("#sportsmenIds_" + leagueId).val()
+                        },
+                        success: function (data) {
+                            if (data.Success === true) {
+                                $("#succesful-div").hide();
+                                $("#error-div").hide();
+                                $("#succesful-div").show();
+                            }
+                            else {
+                                $("#succesful-div").hide();
+                                $("#error-div").hide();
+                                $("#error-div").show();
+                            }
+                            $("#successfulreg").modal('show');
+                            needRegistration = false;
+                        }
+                    })
+                }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+    });
+
+    $(".information").on("click", function () {
+        var trElement = $(this).closest("tr");
+        var competitionId = $(this).attr("data-id");
+        $.ajax({
+            url: "/Clubs/CompetitionDetails",
+            type: "POST",
+            data: { competitionId: competitionId, clubId: @Model.ClubId, section: "@Sections.MartialArts" },
+            beforeSend: function () {
+                trElement.find("i[name='info-icon']").hide();
+                trElement.find("i[name='spinner']").show();
+            },
+            success: function (data) {
+                trElement.find("i[name='info-icon']").show();
+                trElement.find("i[name='spinner']").hide();
+                $("#competitionmodal_pl").html(data);
+                $("#competitionmodal").modal('show');
+            }
+        })
+    });
+</script>
+

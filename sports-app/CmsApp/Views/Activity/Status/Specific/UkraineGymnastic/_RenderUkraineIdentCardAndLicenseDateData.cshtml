@@ -1,0 +1,7 @@
+﻿@model Tuple<AppModel.Activity, ActivityRegistrationItem>
+    
+@if (Model.Item1.UnionId == GlobVars.UkraineGymnasticUnionId)
+{
+    <td>@Model.Item2.PlayerIdentCard</td>
+    <td>@(Model.Item2.PlayerLicenseDate?.ToString("d"))</td>
+}

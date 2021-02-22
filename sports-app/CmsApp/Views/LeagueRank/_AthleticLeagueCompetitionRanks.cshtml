@@ -1,0 +1,113 @@
+﻿@using AppModel
+@model List<IGrouping<Tuple<int?, int>, CompetitionClubsCorrection>>
+@{
+    var index = 0;
+}
+    <div class="col-sm-12" style="margin:10px;">
+        <div class="row">
+            @if (ViewBag.IsFieldCompetition == true)
+            {
+                <a href="@GlobVars.SiteUrl/LeagueRank/AthleticsLeagueCompetitionRanking/@ViewBag.LeagueId?seasonId=@ViewBag.SeasonId&isField=true" target="_blank" class="btn btn-primary">@Messages.ExternalLink - @Messages.FieldCompetition</a>
+            }
+            <a href="@GlobVars.SiteUrl/LeagueRank/AthleticsLeagueCompetitionRanking/@ViewBag.LeagueId?seasonId=@ViewBag.SeasonId" target="_blank" class="btn btn-primary">@Messages.ExternalLink - @(ViewBag.isGoldenSpike != null && ViewBag.isGoldenSpike == true ? Messages.GoldenSpikes : Messages.League)</a>
+            <a href="@Url.Action("UpdateAthleticLeagueCompetitionRank", "LeagueRank", new {competitionId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId })"
+               data-ajax="true"
+               data-ajax-update="#athleticLeagueCompetitionRanks_pl"
+               data-ajax-loading="#update_ranks_spinner"
+               data-ajax-complete="athletic_competition_ranks_update"
+               class="btn btn-primary btn-edit">
+                <i id="update_ranks_spinner" style="display:none;" class="fa fa-spinner fa-spin"></i> @Messages.Refresh
+            </a>
+        </div>
+        <div class="row">
+            @if (ViewBag.IsFieldCompetition == true)
+            {
+                foreach (var table in ViewBag.FieldRaceTables)
+                {
+                    index = 0;
+                    <h4>@(table.Item1)</h4>
+                    <table class="table table-bordered tableRank">
+                        <thead>
+                            <tr>
+                                <th class="col-sm-1">#</th>
+                                <th class="col-sm-1">@Messages.Club</th>
+                                <th class="col-sm-1">@Messages.Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in table.Item2)
+                            {
+                                index += 1;
+                                <tr>
+                                    <td>@index</td>
+                                    <td>@row.Item1</td>
+                                    <td>@row.Item2</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <br />
+                }
+
+
+            }
+        </div>
+        <div class="row">
+            @foreach (var table in Model)
+            {
+                index = 0;
+                <h4>@(LangHelper.GetAthleticLeagueTypeById(table.Key.Item1)) - @(table.Key.Item2 == 0 ? Messages.Women : Messages.Men)</h4>
+                <table class="table table-bordered tableRank">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-1">#</th>
+                            <th class="col-sm-1">@Messages.Club</th>
+                            <th class="col-sm-1">@Messages.Points</th>
+                            <th class="col-sm-1">@Messages.League_RankedStanding_Correction</th>
+                            <th class="col-sm-1">@Messages.FinalScore</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in table)
+                        {
+                            index += 1;
+                            <tr>
+                                <td>@index</td>
+                                <td>@(row.Club.Name)</td>
+                                <td>@(Decimal.Round(row.Points.HasValue ? row.Points.Value : 0, 0))</td>
+                                <td><input style="direction:ltr;" type="number" value="@row.Correction" class="form-control" onchange="updateClubCompetitionCorrection(this, @row.ClubId,@(table.Key.Item2),@(table.Key.Item1));" /></td>
+                                <td>@(Decimal.Round(row.FinalScore, 0))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <br />
+            }
+
+
+
+        </div>
+    </div>
+    <script>
+    function updateClubCompetitionCorrection(element, clubId, genderId, typeId) {
+        var value = $(element).val();
+        $.ajax({
+            url: '@Url.Action("SetCorrectionForClubCompetition", "Disciplines")',
+            data: {
+                ClubId: clubId,
+                SeasonId: @ViewBag.SeasonId,
+                LeagueId: @ViewBag.LeagueId,
+                TypeId: typeId,
+                Correction: value,
+                GenderId: genderId
+            },
+            type: 'POST',
+            dataType: 'json',
+            success: function () {
+                var prevValue = parseInt($(element).parent().prev().html());
+                var corValue = parseInt(value);
+                $(element).parent().next().html(prevValue + corValue);
+            }
+        });
+    }
+    </script>

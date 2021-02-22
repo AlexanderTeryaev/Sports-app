@@ -1,0 +1,1 @@
+Alter Table dbo.UsersFriends Add [RequestedAt] Datetime NOT NULL Default CURRENT_TIMESTAMP;

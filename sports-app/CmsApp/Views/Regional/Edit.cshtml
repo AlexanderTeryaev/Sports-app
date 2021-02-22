@@ -1,0 +1,115 @@
+﻿@using CmsApp.Controllers
+@model EditRegionalViewModel
+
+@{
+    bool isDepartment = true;
+
+}
+<div class="row">
+    <div class="col-lg-9">
+        <h3 class="sub-header">
+            @{
+                if (Model.CanEdit)
+                {
+                    <a href="@Url.Action(nameof(UnionsController.Edit), "Unions", new { id = Model.UnionId })">@Model.UnionName</a>
+                }
+                else
+                {
+                    <span>Regionals</span>
+                }
+            }
+            &raquo; @Model.Name
+        </h3>
+    </div>
+    <div class="col-lg-3">
+        <div class="form-group" style="margin-top: 20px">
+            @if (Model.SectionId.HasValue)
+            {
+                @Html.DropDownListFor(m => m.CurrentSeasonId, new SelectList(Model.Seasons, "Id", "Name"),
+               new { @class = "form-control", @id = "ddlSeasons" })
+            }
+            else
+            {
+                @Html.DisplayFor(m => m.CurrentSeasonName)
+            }
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" id="section_tabs" role="tablist">   
+        <li @(Model.CanEdit ? "" : "class=\"active\"")>
+            <a href="#info" data-toggle="tab">@Messages.Info</a>
+        </li>
+        <li><a href="#workers_list" data-toggle="tab">@Messages.ClubOfficialsTab</a></li>
+        <li><a href="#regionalclubs" data-toggle="tab">@Messages.ClubsInSection</a></li>
+</ul>
+
+<div id="groupmodal" class="tab-content row offset-3">
+   
+        <div class="tab-pane @(Model.CanEdit ? "" : "active in") fade col-sm-9" id="info">
+            <div class="row" id="info-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("Details", "Regional", new { id = Model.Id, seasonId = Model.CurrentSeasonId }),
+                   DataElementId = "info-tab"
+               })
+            </div>
+        </div>
+
+        <div class="tab-pane fade col-sm-12 offset-2" id="workers_list">
+            <div class="row" id="workers_list_tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("WorkerList", "Jobs", new { id = Model.Id, logicalName = LogicaName.RegionalFederation, seasonId = Model.CurrentSeasonId }),
+               DataElementId = "workers_list_tab"
+           })
+            </div>
+
+            @*@Html.Action("WorkerList", "Jobs", new { id = Model.Id, logicalName = LogicaName.RegionalFederation,
+           seasonId = Model.CurrentSeasonId })*@
+        </div>
+
+        <div class="tab-pane fade col-sm-9 offset-2" id="regionalclubs">                 
+            @Html.Action("ListClubs", "Regional", new { entityId = Model.Id})
+        </div>
+    
+</div>
+
+
+@section scripts
+{
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiwCq-EDCvfhQ786WvFgSQvrSxCgjzsYM&libraries=places"></script>
+   
+        <script>
+            $(document).ready(function () {
+                $("#section_tabs a[href=#info]").tab("show");
+            });
+        </script>
+    
+
+    <script>
+        $('#ddlSeasons').change(function () {
+            var seasonId = $(this).val();
+            var sectionId = '@Model.SectionId';
+            var isDepartment = '@isDepartment';
+            $.ajax({
+                url: '/Admin/SetClubCurrentSeason',
+                type: 'POST',
+                dataType: 'JSON',
+                data: { seasonId: seasonId },
+                success: function () {
+                }
+            });
+            if ('@Model.SectionId.HasValue' == 'True' && '@isDepartment' != 'True') {
+                window.location.href = '@Url.Action("Edit", new { id = Model.Id })?seasonId=' + seasonId + '&sectionId=' + sectionId;
+            }
+            else if ('@isDepartment' == 'True') {
+                window.location.href = '@Url.Action("Edit", new { id = Model.Id })?seasonId=' + seasonId + '&isDepartment=' + isDepartment;
+            }
+            else {
+                window.location.href = '@Url.Action("Edit", new { id = Model.Id })?seasonId=' + seasonId + '';
+            }
+        });
+
+    </script>
+}

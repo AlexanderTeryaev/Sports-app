@@ -1,0 +1,1 @@
+Insert into [LogLig].[dbo].[GamesTypes] values(6,'Knockout_3_4')

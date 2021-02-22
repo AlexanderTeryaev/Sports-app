@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[CompetitionResults] ADD AlternativeResult int not null Default(0)

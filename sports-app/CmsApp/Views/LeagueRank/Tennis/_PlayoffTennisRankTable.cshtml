@@ -1,0 +1,56 @@
+﻿@model IEnumerable<DataService.DTO.PlayoffRank>
+@{
+    string sectionAlias = ViewBag.SectionAlias != null ? ViewBag.SectionAlias : string.Empty;
+}
+@if (Model != null && Model.Any())
+{
+    var groupedPlayoff = Model.GroupBy(c => c.GroupName);
+    foreach (var group in groupedPlayoff)
+    {
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-sm-10 playOff">
+                <table class="table table-bordered offset-3">
+                    <caption>@group.Key</caption>
+                    <thead>
+                        <tr>
+                            <th class="col-sm-1">#</th>
+                            <th>@Messages.TeamName</th>
+                            <th class="col-sm-1">@Messages.Matches</th>
+                            <th class="col-sm-1">@Messages.Points</th>
+                            <th class="col-sm-1">@Messages.WinsNum</th>
+                            <th class="col-sm-1">@Messages.LossNum</th>
+                            <th class="col-sm-1">@Messages.Tie</th>
+                            <th class="col-sm-1">@Messages.Sets+</th>
+                            <th class="col-sm-1">@Messages.Sets-</th>
+                            <th class="col-sm-1">@Messages.Gaming+</th>
+                            <th class="col-sm-1">@Messages.Gaming-</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var ranks = group.Select(c => c)?.OrderBy(c => c.Rank);
+                            var counter = 1;
+                        }
+                        @foreach (var rank in ranks)
+                        {
+                            <tr>
+                                <td>@counter</td>
+                                <td>@rank.TeamName</td>
+                                <td>@rank.TennisInfo.Matches</td>
+                                <td>@rank.TennisInfo.Points</td>
+                                <td>@rank.TennisInfo.Wins</td>
+                                <td>@rank.TennisInfo.Lost</td>
+                                <td>@rank.TennisInfo.Ties</td>
+                                <td>@rank.TennisInfo.PlayersSetsWon</td>
+                                <td>@rank.TennisInfo.PlayersSetsLost</td>
+                                <td>@rank.TennisInfo.PlayersGamingWon</td>
+                                <td>@rank.TennisInfo.PlayersGamingLost</td>
+                            </tr>
+                            counter++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}

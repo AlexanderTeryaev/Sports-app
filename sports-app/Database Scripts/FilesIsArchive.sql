@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[PlayerFiles] ADD [IsArchive] bit DEFAULT 0 NOT NULL

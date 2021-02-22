@@ -1,0 +1,138 @@
+﻿
+@model ClubTeamsInfoWithBoatsList
+@{
+    Layout = "";
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9"><h4 class="modal-title">@Model.Title</h4></div><div class="pull-right" style="line-height:25px;">
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-sm-12">
+            <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportteamregistrations').submit()">
+                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                @using (Html.BeginForm("ExportTeamRegistrationsToExcel", "Clubs", new { competitionId = Model.CompetitionId },
+                    FormMethod.Post, new { id = "exportteamregistrations" }))
+                {
+
+                }
+            </a>
+            <a id="printteamregistrations" class="btn btn-info remove_print">
+                <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+            </a>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom:10px;">
+        <div class="col-sm-12">
+            <table id="teamList" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>
+                            #
+                        </th>
+                        <th>
+                            @Messages.ClubName
+                        </th>
+                        <th>
+                            @Messages.Boat
+                        </th>
+                        <th>
+                            @Messages.Distance
+                        </th>
+                        <th>
+                            @Messages.Category
+                        </th>
+                        <th>
+                            @Messages.NumberOfBoats
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ 
+                        var orderBoat = Model.ClubTeamsWithBoats.OrderBy(x => x.Boat).ThenBy(x => Convert.ToInt32(x.Distance)).ThenBy(x => x.Category).ThenBy(x => x.ClubName);
+                    }
+
+
+                    @foreach (var item in orderBoat)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ClubId)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ClubName)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Boat)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Distance)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Category)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.TeamNumber)
+                            </td>
+                        </tr>
+                    }
+                    
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#teamList').DataTable({
+            "bPaginate": false,
+            "paging": false,
+            "info": false,
+            "searching": false,
+            "order": [[1, "asc"]],
+            "columnDefs": [
+                { "orderable": false, "targets": 0 },
+                { "orderable": true, "targets": 1 },
+                { "orderable": false, "targets": 2 },
+                { "orderable": false, "targets": 3 },
+                { "orderable": false, "targets": 4 },
+                { "orderable": false, "targets": 5 }
+            ]
+        });
+
+        $('#printteamregistrations').click(function () {
+            var tbl = $("#teamList");
+            if (tbl.length > 0) {
+                tablePrint(tbl);
+            }
+        });
+
+        
+    });
+
+        function tablePrint(el) {
+            var wnd = window.open('', "@Model.Title", 'height=600, width=600');
+            wnd.document.write('<html><head><title></title>');
+            wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+            wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+            wnd.document.write('<body>');
+            wnd.document.write('<h3 style="text-align: center;">@Messages.RegistrationStatus</h3>');
+            wnd.document.write($(el).prop('outerHTML'));
+            $(wnd.document).find('.remove_print').remove();
+            wnd.document.write('</body></html>');
+            wnd.document.close();
+            wnd.focus();
+            setTimeout(function () {
+                wnd.print();
+                wnd.close();
+            }, 1000);
+        }
+</script>

@@ -1,0 +1,102 @@
+﻿@model CommentsSearch
+  
+<h3 class="sub-header">תגובות</h3>
+
+<form class="form-inline filters" role="form">
+    <div class="form-group">
+        <label>הצג:</label>
+        @Html.DropDownList("GridNum", null, null, new { @class = "form-control combo" })
+    </div>
+    <div class="form-group">
+        <div class="input-group">
+            @Html.TextBoxFor(m => m.Search, new { @class = "form-control", size = 35, placeholder = "חיפוש" })
+            <div class="input-group-btn">
+                <button type="submit" class="btn btn-primary">
+                    <i class="glyphicon glyphicon-search"></i> חפש
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <a class="btn btn-default" href="@Url.Action("Index")">
+            <i class="glyphicon glyphicon-remove"></i> נקה חיפוש
+        </a>
+    </div>
+    <div class="form-group">
+        <button type="button" class="btn btn-default" id="search_opn_btn">חיפוש מורחב</button>
+    </div>
+
+    <div class="form-group pull-left last">
+        <button class="btn btn-danger btn-act" type="button" data-form="grid_form" data-alert="@Messages.DeleteListConfirm" data-acturl="@Url.Action("DeleteList")">
+            <i class="glyphicon glyphicon-trash"></i> מחק מסומנים
+        </button>
+    </div>
+</form>
+
+<div class="panel panel-default search-panel" style="display:@(Model.FullSearch == 1 ? "block" : "none")">
+    <div class="panel-body">
+        <form class="form" role="form">
+            <input type="hidden" value="1" name="FullSearch" />
+            <div class="row">
+                <div class="form-group col-md-3">
+                    <label class="control-label">כותרת</label>
+                    @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
+                </div>
+                <div class="form-group col-md-3">
+                    <label class="control-label">תחום עניין</label>
+                    @Html.DropDownListFor(m => m.CatId, Model.CatsList, "- הכל -", new { @class = "form-control" })
+                </div>
+                <div class="form-group col-md-3">
+                    <label class="control-label">סוג</label>
+                    @Html.DropDownListFor(m => m.TypeId, Model.TypesList, "- הכל -", new { @class = "form-control" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-3">
+                    <label class="control-label">מתאריך</label>
+                    @Html.TextBoxFor(m => m.DateFrom, new { @class = "form-control frm-date" })
+                </div>
+                <div class="form-group col-md-3">
+                    <label class="control-label">עד תאריך</label>
+                    @Html.TextBoxFor(m => m.DateTo, new { @class = "form-control frm-date" })
+                </div>
+                <div class="col-md-3">
+                    <label class="control-label">&nbsp;</label>
+                    <div class="form-group">
+                        <a role="button" class="btn btn-default" href="@Url.Action("Index")">
+                            <i class="glyphicon glyphicon-remove"></i> נקה חיפוש
+                        </a>
+                        <a class="btn btn-primary submit" id="search_btn">
+                            <i class="glyphicon glyphicon-search"></i> חפש
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<form id="grid_form" method="post">
+    @Html.Grid(Model.CommentsQuery).Columns(c =>
+{
+c.Add().Css("text-center").Encoded(false).Sanitized(false)
+    .SetWidth(60)
+    .Titled("<input type='checkbox' class='check-all' data-group='arrId' />")
+    .RenderValueAs(m => @<input name="arrId" value="@m.CommentId" type="checkbox" />);
+c.Add(m => m.CommentId).Titled("#").SetWidth(80);
+c.Add().Titled("תגובה").Encoded(false).Sanitized(false).RenderValueAs(m => ShowData(m));
+c.Add().Encoded(false)
+    .Sanitized(false)
+    .SetWidth(30)
+    .RenderValueAs(m => @<a href="@Url.Action("Delete", new { id = m.CommentId })" data-form="link" data-alert="@Messages.DeleteConfirm" class="btn btn-danger glyphicon glyphicon-trash btn-delete"></a>);
+
+}).EmptyText("אין נתונים")
+</form>
+
+
+@helper ShowData(AppModel.Comments c)
+{
+    <div>שם: @c.FullName</div>
+    <div>תאריך: @c.AddDate</div>
+    <div>@c.Comment</div>
+}

@@ -1,0 +1,65 @@
+﻿@model TeamStagePenaltiesModel
+    
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">@Messages.TeamPenalties</h3>
+    </div>
+    <div class="panel-body">
+        @if (Model.TeamPenalties.Any(x => x.StageId == Model.Stage.StageId))
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>@Messages.Team</th>
+                        <th>@Messages.Points</th>
+                        <th>@Messages.Date</th>
+                        @if (Model.CanEditPenalties)
+                        {
+                            <th><!--remove btn--></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var penalty in Model.TeamPenalties.Where(x => x.StageId == Model.Stage.StageId).OrderBy(x => Model.Groups.Select(g => g.Teams.FirstOrDefault(t => t.Id == x.TeamId)?.Title).FirstOrDefault()))
+                    {
+                        <tr>
+                            <td>@(Model.Groups.SelectMany(x => x.Teams).FirstOrDefault(x => x.Id == penalty.TeamId)?.Title)</td>
+                            <td>@penalty.Points</td>
+                            <td>@penalty.Date</td>
+                            @if (Model.CanEditPenalties)
+                            {
+                                <td>
+                                    @using (Html.BeginForm("RemovePenalty", "LeagueRank", new {id = penalty.Id, leagueId = Model.LeagueId, seasonId = Model.SeasonId}, FormMethod.Post, new {@style = "display: inline-block;"}))
+                                    {
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('@Messages.DeleteConfirm');">
+                                            <span class="glyphicon glyphicon-trash"></span>
+                                            @Messages.TeamPenalty_Remove
+                                        </button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <i>@Messages.NoDataFound</i>
+        }
+
+        <div>
+            @if (Model.CanEditPenalties)
+            {
+                @Html.Partial("_AddPenalty", new AddTeamPenaltyModel
+                {
+                    LeagueId = Model.LeagueId,
+                    SeasonId = Model.SeasonId,
+                    StageId = Model.Stage.StageId,
+                    TeamsList = Model.Stage.Groups.SelectMany(x => x.Teams).Select(x => new SelectListItem {Value = x.Id?.ToString(), Text = x.Title}).OrderBy(x => x.Text).ToList()
+                })
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,35 @@
+body {
+    font-family:  'Segoe UI', Verdana, Helvetica, sans-serif;
+    font-size:  80%;
+}
+
+#form{
+    width: 600px;
+}
+
+#folderExplorer {
+    float: left;
+    width: 100px;
+}
+
+#fileExplorer {
+    float: left;
+    width: 680px;
+    border-left: 1px solid #dff0ff;
+}
+.thumbnail {
+    float: left;
+    margin: 3px;
+    padding: 3px;
+    border: 1px solid #dff0ff;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+li {
+    padding: 0;
+}

@@ -1,0 +1,74 @@
+﻿@using Resources
+@using LogLigFront.Helpers
+@using DataService.DTO
+@model List<CompDiscRegDTO>
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close pull-left" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+            <h3 class="modal-title" style="text-align:center;">
+                @if (ViewBag.SessionId == 0)
+                {
+                    @: @Messages.RegistrationToAllHeats - @ViewBag.CompetitionName
+                }
+                else
+                {
+                    @: @Messages.RegistrationToHeat @ViewBag.SessionNum - @ViewBag.CompetitionName
+                }
+            </h3>
+            @if (ViewBag.SessionId != 0 && ViewBag.WSession != null)
+            {
+                <h4 class="modal-title" style="white-space : pre-line; text-align:center;">
+                    @($" {Messages.StartHour}: {ViewBag.WSession.StartTime} \n {Messages.WeightTime} {ViewBag.WSession.WeightStartTime} - {ViewBag.WSession.WeightFinishTime}")
+                </h4>
+            }
+        </div>
+        <div class="modal-body">
+            <table class="table res-table">
+                <thead>
+                    <tr>
+                        <th>@Messages.FullName</th>
+                        <th>@Messages.YearOfBirth</th>
+                        <th>@Messages.Club</th>
+                        <th>@Messages.Gender</th>
+                        <th>@Messages.Category</th>
+                        <th>@Messages.Entry</th>
+                        <th>@Messages.Weight</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sportsman in Model)
+                    {
+                    <tr>
+                        <td>@sportsman.FullName</td>
+                        <td>
+                            @{
+                                var birthDate = sportsman.BirthDate.HasValue
+                                ? sportsman.BirthDate.Value.Year.ToString()
+                                : string.Empty;
+                            }
+                            @birthDate
+                        </td>
+                        <td>@sportsman.ClubName</td>
+                        <td>@(UIHelpers.GetGenderCharById(sportsman.GenterId ?? 0)) </td>
+                        <td>@sportsman.TeamTitle</td>
+                        <td>@sportsman.WeightDeclaration</td>
+                        <td class="@(sportsman.IsWeightOk ? "" : "alert-danger")">@sportsman.Weight</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+            @section scripts
+            {
+                <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+            }
+            <div class="modal-footer">
+                @if (ViewBag.IsModal)
+                {
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

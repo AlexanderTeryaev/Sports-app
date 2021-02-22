@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[OfficialGameReportDetails] ALTER COLUMN GameCycleId int null 

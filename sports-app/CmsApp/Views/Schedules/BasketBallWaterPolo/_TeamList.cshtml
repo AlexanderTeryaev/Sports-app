@@ -1,0 +1,187 @@
+﻿@model TeamSchedules
+
+@if (Model.LeaguesWithCycles.Count() > 0)
+{
+    var firstLeagueId = Model.LeaguesWithCycles[0].Key.LeagueId;
+    <div>
+        <a class="btn btn-info export" href="@Url.Action("ExportToExcel", "Schedules", new { teamId = Model.TeamId, currentLeagueId = firstLeagueId})">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+        </a>
+
+        <a href="@GlobVars.SiteUrl/LeagueTable/TeamSchedulesLink/@Model.TeamId?leagueId=@firstLeagueId&seasonId=@Model.SeasonId" target="_blank" class="btn btn-info export">@Messages.ExternalLink</a>
+
+        <a href="#" id="team_print" class="btn btn-info export">
+            <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+        </a>
+        @using (Html.BeginForm("Import", "Teams", FormMethod.Post, new { teamId = Model.TeamId, currentLeagueId = firstLeagueId, enctype = "multipart/form-data" }))
+        {
+            <input type="hidden" value="@Model.TeamId" name="TeamId" />
+            <input type="hidden" value="@firstLeagueId" name="CurrentLeagueId" />
+            <input type="hidden" value="@Model.SeasonId" name="SeasonId" />
+            <input type="file" id="file-import-from-excel" name="ImportFile" style="display: none" />
+        }
+    </div>
+}
+
+@foreach (var club in Model.Clubs)
+{
+    <div>
+        @Html.Label(club.Name);
+        @Html.Action("GamesUrl", "Games", new { clubId = club.ClubId, teamId = Model.TeamId, seasonId = Model.SeasonId })
+    </div>
+}
+
+<div class="team_tables">
+
+    @foreach (var league in Model.LeaguesWithCycles)
+    {
+        <h2>@league.Key.Name</h2>
+        foreach (var stage in league)
+        {
+            <h3>@(stage.Key.Name ?? $"{Messages.Stage} {stage.Key.Number}")</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th width="2%">@Messages.Status</th>
+                        <th width="13%">@Messages.Group</th>
+                        <th width="5%">@Messages.Cycle</th>
+                        <th width="9%">@Messages.StartDate</th>
+                        <th width="13%">@UIHelpers.GetAuditoriumCaption(ViewBag.Section)</th>
+                        @if (Model.IsWaterpolo) 
+                        {
+                        <th width="10%">@Messages.Referee</th>
+                        }
+                        <th width="15%" class="text-center">@Messages.HomeTeam</th>
+                        <th width="5%"></th>
+                        <th width="5%"></th>
+                        <th width="15%" class="text-center">@Messages.GuestTeam</th>
+                        <th width="8%">@Messages.Remark</th>
+                    </tr>
+                </thead>
+                @foreach (var game in stage.OrderBy(g => g.StartDate))
+                {
+                    var lastQuarter = game.GameSets.OrderByDescending(x => x.GameSetId).FirstOrDefault();
+
+                    <tr>
+                        <td class="res-stat remove_print">
+                            @if (game.GameStatus == GameStatus.Started)
+                            {
+                                <span class="label label-success">@Messages.Started</span>
+                            }
+                            else if (game.GameStatus == GameStatus.Ended)
+                            {
+                                <span class="label label-danger">@Messages.Ended</span>
+                            }
+                            else
+                            {
+                                <span class="label label-default">@Messages.Waiting</span>
+                            }
+                        </td>
+                        <td>@(game.Group != null ? game.Group.Name : "")</td>
+                        <td>@Messages.Cycle @(game.CycleNum + 1)</td>
+                        <td>@game.StartDate.ToString(Messages.DateFormat)</td>
+                        <td>@(game.AuditoriumId.HasValue ? game.Auditorium.Name : "")</td>
+                        @if (Model.IsWaterpolo)
+                        {
+                        <td class="remove_print">
+                            @(string.Join(",", Model.RefereesNames
+                                     .Where(r => !string.IsNullOrEmpty(game.RefereeIds) && game.RefereeIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Contains(r.Key.ToString()))
+                                     .Select(r => r.Value)))
+                        </td>
+                        }
+                        <td class="text-center">
+                            @if (game.HomeTeam != null)
+                            {
+                                var homeTeam = game.HomeTeam.TeamsDetails.FirstOrDefault(x => x.SeasonId == Model.SeasonId);
+                                if (homeTeam != null)
+                                {
+                                    <label>@homeTeam.TeamName</label>
+                                }
+                                else
+                                {
+                                    <label>@game.HomeTeam.Title</label>
+                                }
+                            }
+                            else
+                            {
+                                @("--")
+                            }
+                        </td>
+                        @{
+                            var penalty = game.GameSets.FirstOrDefault(c => c.IsPenalties);
+                        }
+                        <td>
+                            @game.GameSets.Where(c => !c.IsPenalties).Sum(x => x.HomeTeamScore)
+                            @if (penalty != null){<font size="2">(@penalty.HomeTeamScore)</font>}
+                        </td>
+                        <td>
+                            @if (penalty != null){<font size="2">(@penalty.GuestTeamScore)</font>}
+                            @game.GameSets.Where(c => !c.IsPenalties).Sum(x => x.GuestTeamScore)
+                        </td>
+                        <td class="text-center">
+                            @if (game.GuestTeam != null)
+                            {
+                                var guestTeam = game.GuestTeam.TeamsDetails.FirstOrDefault(x => x.SeasonId == Model.SeasonId);
+                                if (guestTeam != null)
+                                {
+                                    <label>@guestTeam.TeamName</label>
+                                }
+                                else
+                                {
+                                    <label>@game.GuestTeam.Title</label>
+                                }
+                            }
+                            else
+                            {
+                                @("--")
+                            }
+                        </td>
+                        <td class="text-center">@game.Remark</td>
+                    </tr>
+                }
+            </table>
+        }
+    }
+</div>
+
+<script>
+    $('#team_print').click(function () {
+        var el = $('.team_tables');
+        if (el.length > 0) {
+            teamPrint(el);
+        }
+    });
+
+    function teamPrint(element) {
+        var wnd = window.open('', 'Game schedules', 'height=800, width=800');
+        wnd.document.write('<html><head><title>Game schedules</title>');
+        //if need to add styles
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+
+        wnd.document.write('<body>');
+        $.each($(element), function (k, e) {
+            if (k === 0) {
+                wnd.document.write($(e).html());
+                wnd.document.write('<hr/>');
+            } else {
+                $(e).find('thead').remove();
+                wnd.document.write($(e).html());
+                wnd.document.write('<hr/>');
+            }
+        });
+
+        $(wnd.document).find('.remove_print').remove();
+        $(wnd.document).find('th').remove();
+        $(wnd.document).find('hr').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            //wnd.close();
+        }, 100);
+
+
+    }
+</script>

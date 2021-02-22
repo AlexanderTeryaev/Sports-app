@@ -1,0 +1,920 @@
+﻿@using AppModel
+@model ClubDetailsForm
+@{
+    bool isHebrew = Request.IsHebrew();
+    var unionFormTitle = !String.IsNullOrEmpty(Model.UnionFormTitle) ? Model.UnionFormTitle : $"{Messages.Show} {Messages.UnionForms}";
+    var disciplines = new MultiSelectList(Model.UnionDisciplines ?? new List<Discipline>(), nameof(Discipline.DisciplineId), nameof(Discipline.Name), Model.ClubDisciplinesIds);
+    var isClubManagerUnderGymanstics = ViewBag.IsClubManagerUnderGymnastics != null && ViewBag.IsClubManagerUnderGymnastics == true;
+    var isApproved = (Model.Registration?.IsActive == true || Model.DateOfClubApproval.HasValue) && !isClubManagerUnderGymanstics;
+}
+
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
+    .margin-bottom-5 {
+        margin-bottom: 5px;
+    }
+</style>
+
+<form id="detailsform" method="post" data-targetid="info" action="@Url.Action("Details", new {id = Model.ClubId, seasonId = Model.SeasonId})" autocomplete="off" enctype="multipart/form-data">
+
+    @Html.HiddenFor(x => x.SeasonId)
+
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+
+    <div class="row">
+        @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true || ViewBag.IsDepartMgr == true)
+        {
+            if (User.IsInAnyRole(AppRole.Admins))
+            {
+                <div class="col-sm-2 form-group">
+                    <label class="control-label">@Messages.ReportsEnabled:</label>
+                    @Html.CheckBoxFor(m => m.IsReportsEnabled)
+                </div>
+
+                <div class="col-sm-2 form-group" id="isTrainingEnabledDiv" style="display: flex; flex-direction: row; justify-content: flex-end;">
+                    @Html.CheckBoxFor(model => model.IsTrainingEnabled)
+                    <label class="control-label">@Messages.AddTrainingFeature</label>
+                </div>
+            }
+            if ((User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true) && Model.UnionId.HasValue )
+            {
+                <div class="col-sm-2 form-group" style="display: flex; flex-direction: row; justify-content: flex-end;">
+                    @Html.CheckBoxFor(model => model.IsUnionArchive)
+                    <label class="control-label">@Messages.IsUnionArchive</label>
+                </div>
+            }
+            if (Model.Section?.Alias.Equals(GamesAlias.Swimming) == true)
+            {
+                 <div class="col-sm-2 form-group" style="display: flex; flex-direction: row; justify-content: flex-end;">
+                     @Html.CheckBoxFor(model => model.IsNationalTeam)
+                     <label class="control-label">@Messages.NationalTeam</label>
+                 </div>
+            }
+        }
+    </div>
+        
+        <div class="row">
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.ClubName:</label>
+                @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true || (ViewBag.IsClubManager == true && !Model.UnionId.HasValue))
+                {
+                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Name)
+                }
+                else
+                {
+                    <input type="text" class="form-control" disabled value="@Model.Name" />
+                    @Html.HiddenFor(x => x.Name)
+                }
+            </div>
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.NGO_Number:</label>
+                @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true || (ViewBag.IsClubManager == true && !Model.UnionId.HasValue) || (ViewBag.IsClubManager == true && Model.IsBicycle == true))
+                {
+                    @Html.TextBoxFor(m => m.NGO_Number, new { @class = "form-control", type="number", onKeyDown="if(this.value.length==20 && event.keyCode!=8) return false;" })
+                    @Html.ValidationMessageFor(m => m.NGO_Number)
+                }
+                else
+                {
+                    <input type="text" class="form-control" readonly="readonly" disabled="disabled" value="@Model.NGO_Number" />
+                        @Html.HiddenFor(x => x.NGO_Number)
+                }
+            </div>
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.Address:</label>
+                @Html.TextBoxFor(m => m.Address, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.Address)
+            </div>
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.Phone:</label>
+                @Html.TextBoxFor(m => m.ContactPhone, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.ContactPhone)
+            </div>
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.Email:</label>
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.Email)
+            </div>
+            @if (Model.UnionId != 52)
+            {
+                <div class="col-sm-2 form-group">
+                    <label class="control-label">@Messages.NameSportCenter:</label>
+                    @Html.DropDownListFor(m => m.SportCenterId, new SelectList(Model.SportCenterList, nameof(SportCenter.Id),
+                                                           Model.Culture == CultEnum.He_IL ? nameof(SportCenter.Heb) : nameof(SportCenter.Eng)),
+                                                           Messages.Select, new { @class = "form-control" })
+                </div>
+            }
+        </div>        
+        <div class="row">
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.ClubForeignName:</label>
+                @Html.TextBoxFor(m => m.ForeignName, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.ForeignName)
+            </div>
+            @if (Model.UnionId > 0 && (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true) && Model.UnionId != 52)
+            {
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.AccountingKeyNumber:</label>
+                @Html.TextBoxFor(m => m.AccountingKeyNumber, new { @class = "form-control", @type = "number", min="0" })
+                @Html.ValidationMessageFor(m => m.AccountingKeyNumber)    
+            </div>
+            }
+        </div>
+        
+        <div class="row">
+            <div class="col-sm-2 form-group">
+                <label class="control-label">@Messages.Logo:</label> (<span>2mb</span>)
+                <table>
+                    <tr>
+                        <td width="100px">
+                            @Html.Editor("LogoFile", "ImageUpload", new { css = "validfile" })
+                        </td>
+                        <td width="10px"></td>
+                        <td>
+                            <a class="btn btn-sm btn-danger"
+                               href="@Url.Action("DeleteImage", new {unionId = Model.ClubId, image = "Logo"})"
+                               title="@Messages.Delete">
+                                <i class="glyphicon glyphicon-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+                @Html.ValidationMessage("LogoFile")
+                @if (!string.IsNullOrEmpty(Model.Logo))
+                {
+                    <div class="offset-2"></div>
+                    @ShowImage(Model.Logo)
+                }
+            </div>
+            <div class="col-sm-4 form-group">
+                <label class="control-label">@Messages.Image:</label> (<span>2mb</span>)
+                <table>
+                    <tr>
+                        <td width="100px">
+                            @Html.Editor("ImageFile", "ImageUpload", new { css = "validfile" })
+                        </td>
+                        <td width="10px"></td>
+                        <td>
+                            <a class="btn btn-sm btn-danger"
+                               href="@Url.Action("DeleteImage", new {unionId = Model.ClubId, image = "Image"})"
+                               title="@Messages.Delete">
+                                <i class="glyphicon glyphicon-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+                @Html.ValidationMessage("ImageFile")
+                @if (!string.IsNullOrEmpty(Model.PrimaryImage))
+                {
+                    <div class="offset-2"></div>
+                    @ShowImage(Model.PrimaryImage)
+                }
+            </div>
+
+            <div class="col-sm-4 form-group">
+                <label class="control-label">@Messages.ContentImage:</label> (<span>2mb</span>)
+                <table>
+                    <tr>
+                        <td width="100px">
+                            @Html.Editor("IndexFile", "ImageUpload", new { css = "validfile" })
+                        </td>
+                        <td width="10px"></td>
+                        <td>
+                            <a class="btn btn-sm btn-danger"
+                               href="@Url.Action("DeleteImage", new {unionId = Model.ClubId, image = "IndexImage"})"
+                               title="@Messages.Delete">
+                                <i class="glyphicon glyphicon-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+                @if (!string.IsNullOrEmpty(Model.IndexImage))
+                {
+                    <div class="offset-2"></div>
+                    @ShowImage(Model.IndexImage)
+                }
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="progress progress-striped">
+                    <div class="progress-bar progress-bar-success">0%</div>
+                </div>
+            </div>
+        </div>
+        if (Model.UnionId.HasValue)
+        {
+                <div class="row">
+                    @if (Model.UnionId != 52)
+                    {
+                    <div class="col-sm-2 form-group">
+                        <label class="control-label">@(Model.IsGymnastics ? Messages.ClubNumber_Gymnastics : Messages.ClubNumber):</label>
+                        @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                        {
+                            @Html.TextBoxFor(m => m.ClubNumber, new { @class = "form-control", type = "number", min = "0" })
+                            @Html.ValidationMessageFor(m => m.ClubNumber)
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control" disabled value="@(Model.ClubNumber ?? 0)" />
+                            @Html.HiddenFor(m => m.ClubNumber)
+                        }
+                    </div>
+                    }
+                    @if (!Model.IsGymnastics && !Model.IsAthletics && !Model.IsRowing && !Model.IsBicycle)
+                    {
+                    <div class="row">
+                        <div class="col-sm-2 form-group">
+                            <label class="control-label">@Messages.Club_NumberOfCourts:</label>
+                            @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                            {
+                                @Html.TextBox("NumberOfCourts", Model.NumberOfCourts, new { @type = "number", @class = "form-control", @min = "0" })
+                                @Html.ValidationMessageFor(m => m.NumberOfCourts)
+                            }
+                            else
+                            {
+                                <input type="text" class="form-control" disabled value="@Model.NumberOfCourts" />
+                                @Html.HiddenFor(x => x.NumberOfCourts)
+                            }
+                        </div>
+                    </div>
+                    }
+                    <div class="col-sm-2 form-group">
+                        <label class="control-label">@(Model.IsGymnastics ? Messages.DateOfClubApproval_Gymnastics : Messages.DateOfClubApproval):</label>
+                        @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                    {
+                            @Html.TextBoxFor(m => m.DateOfClubApproval, new { @class = "form-control frm-date" })
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control" disabled value="@Model.DateOfClubApproval" />
+                            @Html.HiddenFor(x => x.DateOfClubApproval)
+                        }
+                    </div>
+                    @if (!Model.IsRowing)
+                    {
+                        <div class="col-sm-2 form-group">
+                            <label class="control-label">@Messages.ClubDisplayName:</label>
+                            @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                            {
+                                if (Model.UnionId == 52)
+                                {
+                                    @Html.TextBoxFor(m => m.ClubDisplayName, new { @class = "form-control", type = "text" })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.ClubDisplayName, new { @class = "form-control", type = "text", maxlength = "4" })
+                                }
+                            }
+                            else
+                            {
+                                <input type="text" class="form-control" disabled value="@(Model.ClubDisplayName ?? string.Empty)" />
+                                @Html.HiddenFor(m => m.ClubDisplayName)
+                            }
+                        </div>
+                    if (ViewBag.IsRegionallevelEnabled == true)
+                    {
+                        <div class="col-sm-2 form-group">
+                            <label class="control-label">@Messages.RegionalApproveDate:</label>
+                            @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                    {
+                                @*@Html.TextBoxFor(m => m.DateOfClubApprovalByRegional, new { @class = "form-control frm-date" })*@
+
+                                <input type="text" class="form-control" disabled value="@Model.DateOfClubApprovalByRegional" />
+                                @Html.HiddenFor(x => x.DateOfClubApprovalByRegional)
+                            }
+                            else
+                            {
+                                <input type="text" class="form-control" disabled value="@Model.DateOfClubApprovalByRegional" />
+                                @Html.HiddenFor(x => x.DateOfClubApprovalByRegional)
+                            }
+                        </div>
+                    }
+                    }
+                    <div class="col-sm-2 form-group">
+                        <label class="control-label">@(Messages.DateOfInitialClubApproval):</label>
+                        @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                    {
+                            @Html.TextBoxFor(m => m.InitialDateOfClubApproval, new { @class = "form-control frm-date" })
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control" disabled value="@Model.InitialDateOfClubApproval" />
+                            @Html.HiddenFor(x => x.InitialDateOfClubApproval)
+                        }
+                    </div>
+                </div>
+        }
+
+        <div class="row">
+            <div class="col-sm-4 form-group">
+                <label class="control-label">@Messages.Documents:</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4 form-group">
+                @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                {
+                    @Html.CheckBoxFor(m => m.IsCertificateApproved)
+                }
+                else
+                {
+                    @Html.CheckBoxFor(m => m.IsCertificateApproved, new { @disabled = "disabled" })
+                }
+                <label class="control-label">
+                    @Messages.CertificateOfIncorporation:
+                </label>
+                <div class="row">
+                    @if ((isApproved && (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true))
+                        || (!isApproved))
+                    {
+                    <div class="form-group col-sm-4 btn-file-glyph">
+                        @*<span class="btn btn-info">
+                            <input type="file" name="CertificateOfIncorporation" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF)$"
+                                   data-val-regex="@Messages.SelectValidFile" accept="image/*, application/pdf">
+                        </span>*@
+                        @Html.Editor("CertificateOfIncorporation", "PdfUpload", new { css = "validfile" })
+                        <div class="row">
+                            @Html.ValidationMessage("CertificateOfIncorporation")
+                            <span id="CertificateOfIncorporationName"></span>
+                        </div>
+                    </div>
+                    }
+                    @{
+                        var incorporationCert = String.IsNullOrEmpty(Model.CertificateOfIncorporation);
+                        if (!incorporationCert)
+                        {
+                            <div class="form-group col-sm-4" id="viewCertificateOfIncorporation">
+                                <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                      onclick="window.open('@(GlobVars.ContentPath + "/Clubs/" + Model.CertificateOfIncorporation)')">
+                                </span>
+                            </div>
+                            if ((isApproved && (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true))
+                                || (!isApproved))
+                            {
+                                <div class="form-group col-sm-4" id="removeCertificateOfIncorporation">
+                                    <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                    <input type="hidden" name="RemoveCertificateOfIncorporation" value="false" />
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+            @if (Model.UnionId != 52 && !Model.IsRowing)
+                {
+                <div class="col-sm-4 form-group">
+                    @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                    {
+                        @Html.CheckBoxFor(m => m.IsInsuranceCoverApproved)
+                    }
+                    else
+                    {
+                        @Html.CheckBoxFor(m => m.IsCertificateApproved, new { @disabled = "disabled" })
+                    }
+                    <label class="control-label">
+                        @Messages.ApprovalOfInsuranceCover:
+                    </label>
+                    <div class="row">
+                        @if ((isApproved && (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true))
+                            || (!isApproved))
+                        {
+                            <div class="form-group col-sm-4 btn-file-glyph">
+                                @*<span class="glyphicon glyph-btn glyphicon-upload">
+                                    <input type="file" name="ApprovalOfInsuranceCover" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF)$"
+                                           data-val-regex="@Messages.SelectValidFile" accept="image/*, application/pdf">
+                                </span>*@
+                                @Html.Editor("ApprovalOfInsuranceCover", "PdfUpload", new { css = "validfile" })
+                                <div class="row">
+                                    @Html.ValidationMessage("ApprovalOfInsuranceCover")
+                                    <span id="ApprovalOfInsuranceCoverName"></span>
+                                </div>
+                            </div>
+                        }
+                        @{
+                            var approvalIns = String.IsNullOrEmpty(Model.ApprovalOfInsuranceCover);
+                            if (!approvalIns)
+                            {
+                                <div class="form-group col-sm-4" id="viewApprovalOfInsuranceCover">
+                                    <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                          onclick="window.open('@(GlobVars.ContentPath + "/Clubs/" + Model.ApprovalOfInsuranceCover)')">
+                                    </span>
+                                </div>
+                                if ((isApproved && (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true))
+                                    || (!isApproved))
+                                {
+                                    <div class="form-group col-sm-4" id="removeApprovalOfInsuranceCover">
+                                        <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                        <input type="hidden" name="RemoveApprovalOfInsuranceCover" value="false" />
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+
+                </div>
+            }
+            @if (!Model.IsRowing)
+            {
+                <div class="col-sm-4 form-group">
+                    @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                    {
+                        @Html.CheckBoxFor(m => m.IsAuthorizedSignatoriesApproved)
+
+                    }
+                    else
+                    {
+                        @Html.CheckBoxFor(m => m.IsCertificateApproved, new { @disabled = "disabled" })
+                    }
+                    <label class="control-label">
+                        @Messages.AuthorizedSignatories:
+                    </label>
+                    @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true || ViewBag.IsClubManager == true)
+                    {
+                        if (Model.UnionId != 52)
+                        { 
+                    <div class="row margin-bottom-5">
+                        <div class="col-sm-6">
+                            <label for="AuthorizedSignPersonName" class="control-label">
+                                @Messages.AuthorizedSignPersonName
+                            </label>
+                            @Html.TextBoxFor(m => m.AuthorizedSignPersonName, new { @class = "form-control" })
+                        </div>
+                    </div>
+                        <div class="row margin-bottom-5">
+                            <div class="col-sm-6">
+                                <label for="SignEachSeparately" class="control-label">
+                                    @Messages.SignEachSeparately
+                                </label>
+                                @Html.CheckBoxFor(m => m.SignEachSeparately)
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="SignTogether" class="control-label">
+                                    @Messages.SignTogether
+                                </label>
+                                @Html.CheckBoxFor(m => m.SignTogether)
+                            </div>
+                        </div>
+                        }
+                    }
+
+                    <div class="row">
+                        @if ((isApproved && (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true))
+                            || (!isApproved))
+                        {
+                            <div class="form-group col-sm-4 btn-file-glyph">
+                                @*<span class="glyphicon glyph-btn glyphicon-upload">
+                                    <input type="file" name="AuthorizedSignatories" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF)$"
+                                           data-val-regex="@Messages.SelectValidFile" accept="image/*, application/pdf">
+                                </span>*@
+                                @Html.Editor("AuthorizedSignatories", "PdfUpload", new { css = "validfile" })
+                                <div class="row">
+                                    @Html.ValidationMessage("AuthorizedSignatories")
+                                    <span id="AuthorizedSignatoriesName"></span>
+                                </div>
+                            </div>
+                        }
+                        @{
+                            var autorSign = String.IsNullOrEmpty(Model.AuthorizedSignatories);
+                            if (!autorSign)
+                            {
+                                <div class="form-group col-sm-4" id="viewAuthorizedSignatories">
+                                    <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                          onclick="window.open('@(GlobVars.ContentPath + "/Clubs/" + Model.AuthorizedSignatories)')">
+                                    </span>
+                                </div>
+                                if ((isApproved && (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true))
+                                    || (!isApproved))
+                                {
+                                    <div class="form-group col-sm-4" id="removeAuthorizedSignatories">
+                                        <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                        <input type="hidden" name="RemoveAuthorizedSignatories" value="false" />
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+
+                </div>
+            }
+        </div>
+
+                if (Model.UnionId == 36)
+                {
+                <div class="row">
+                    <div class="col-sm-3 form-group">
+                        <label class="control-label">@Messages.Disciplines:</label>
+                        @if (string.IsNullOrEmpty(Model.DisciplinesString) && User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true)
+                        {
+                            @Html.DropDownList($"DisciplinesIds", disciplines, new
+                            {
+                                @class = "form-control disciplinesIds"@*, @form = "detailsform"*@,
+                                @multiple = "multiple"
+                                })
+                        }
+                        else
+                        {
+                            @Model.DisciplinesString
+                        }
+                    </div>
+                </div>
+                 }
+
+        if (string.Equals(Model.Section?.Alias, SectionAliases.MartialArts, StringComparison.CurrentCultureIgnoreCase) || ViewBag.IsMartialArts)
+        {
+            <div class="row">
+                <div class="col-sm-3 form-group">
+                    <label class="control-label">@Messages.SportTypeCombobox:</label>
+                    @Html.DropDownListFor(m => m.SportType, Model.AvailableSports, Messages.Select, new { @class = "form-control" })
+                </div>
+            </div>
+        }
+        if (string.Equals(Model.Section?.Alias, SectionAliases.Tennis, StringComparison.CurrentCultureIgnoreCase))
+        {
+            <label class="control-label">
+                @Messages.ClubInsurance:
+            </label>
+            <div class="row">
+                <div class="form-group col-sm-2 btn-file-glyph">
+                    @*<span class="glyphicon glyph-btn glyphicon-upload">
+                        <input type="file" name="ClubInsuranceFile" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF)$"
+                               data-val-regex="@Messages.SelectValidFile" accept="image/*, application/pdf">
+                    </span>*@
+                    @Html.Editor("ClubInsuranceFile", "PdfUpload", new { css = "validfile" })
+                    <div class="row">
+                        @Html.ValidationMessage("ClubInsuranceFile")
+                        <span id="ClubInsuranceFileName"></span>
+                    </div>
+                </div>
+                @{
+                    var approvaClub = String.IsNullOrEmpty(Model.ClubInsurance);
+                    if (!approvaClub)
+                    {
+                        <div class="form-group col-sm-2" id="viewClubInsurance">
+                            <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                  onclick="window.open('@(GlobVars.ContentPath + "/Clubs/" + Model.ClubInsurance)')">
+                            </span>
+                        </div>
+                        <div class="form-group col-sm-2" id="removeClubInsurance">
+                            <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                            <input type="hidden" name="RemoveInsuranceFile" value="false" />
+                        </div>
+                    }
+                }
+            </div>
+        }
+
+
+        if (!Model.IsGymnastics && !Model.IsRowing)
+        {
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@(Model.IsBicycle ? Messages.ClubCoachCertificate : Messages.MedicalCertificate )</label>
+                    <div class="row">
+                        <div class="form-group col-sm-4 btn-file-glyph">
+                            @*<span class="glyphicon glyph-btn glyphicon-upload">
+                                <input type="file" name="MedicalCertificateFile" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF)$"
+                                       data-val-regex="@Messages.SelectValidImage" accept="image/*, application/pdf">
+                            </span>*@
+                            @Html.Editor("MedicalCertificateFile", "PdfUpload", new { css = "validfile" })
+                            <div class="row">
+                                @Html.ValidationMessage("MedicalCertificateFile")
+                                <span id="MedicalCertificateFileName"></span>
+                            </div>
+                        </div>
+                        @{
+                            var medicalCert = String.IsNullOrEmpty(Model.MedicalCertificateFile);
+                            if (!medicalCert)
+                            {
+                                <div class="form-group col-sm-4" id="viewMedicalFile">
+                                    <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                          onclick="window.open('@(GlobVars.ContentPath + "/Clubs/" + Model.MedicalCertificateFile)')">
+                                    </span>
+                                </div>
+                                <div class="form-group col-sm-4" id="removeMedicalFile">
+                                    <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                    <input type="hidden" name="RemoveMedicalCertificateFile" value="false" />
+                                </div>
+                            }
+                    }
+                    </div>
+                </div>
+            </div>
+        }
+
+        if (Model.UnionId.HasValue)
+        {
+    <div class="row">
+      <div class="form-group col-sm-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">@Messages.Club_RegistrationData:</h3>
+            </div>
+            <div class="panel-body">
+                @if (Model.Registration != null || Model.CustomRegistrations?.Any() == true)
+                {
+                    if (Model.Registration != null)
+                    {
+                        @Html.Partial("_ClubRegDataPanel", Model.Registration)
+                    }
+
+                    if (Model.CustomRegistrations?.Any() == true)
+                    {
+                        foreach (var customRegistration in Model.CustomRegistrations)
+                        {
+                            @Html.Partial("_ClubRegDataPanel", customRegistration)
+                        }
+                    }
+                }
+                else
+                {
+                    <i>@Messages.NoDataFound</i>
+                }
+            </div>
+         </div>
+      </div>
+    </div>
+        }
+
+        if (Model.UnionId.HasValue)
+        {
+            <div class="row">
+                <div class="col-sm-3 form-group">
+                    <label class="control-label">@Messages.UnionForms:</label>
+                    @if (Model.UnionId.HasValue && Model.UnionForms.Count() > 0)
+                    {
+                        ViewBag.IsClub = true;
+                        Html.RenderPartial("_ShowUnionForms", Model.UnionForms);
+                    }
+                    else
+                    {
+                        <i>@Messages.NoUnionForms</i>
+                    }
+                </div>
+            </div>
+        }
+        if (!Model.IsRowing)
+        {
+            <div class="row">
+                @if (Model.UnionId != 52)
+                    {
+                <div class="col-sm-4 form-group">
+                    <label class="control-label">@Messages.ClubTermsCondition:</label>
+                    @Html.TextAreaFor(m => m.TermsCondition, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.TermsCondition)
+                </div>
+                }
+                <div class="col-sm-4 form-group">
+                    <label class="control-label">@Messages.ClubDescription:</label>
+                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Description)
+                </div>
+                <div class="col-sm-4 form-group">
+                    <label class="control-label">@Messages.ClubAbout:</label>
+                    @Html.TextAreaFor(m => m.IndexAbout, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.IndexAbout)
+                </div>
+            </div>
+                            }
+                            if (Model.UnionId.HasValue)
+                            {
+                                if (!Model.IsAthletics && !Model.IsRowing)
+                                {
+                @*<input type="hidden" name="UnionId" value="@Model.UnionId.Value"/>*@
+                <div class="row">
+                    <div class="col-sm-4 form-group">
+                        <label class="control-label">@Messages.StatementOfClub:</label>
+                        @Html.TextAreaFor(m => m.Statement, new { @class = "form-control", @disabled = "disabled" })
+                        @Html.HiddenFor(m => m.Statement)
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-4 form-group">
+                        <label class="control-label">@Messages.ApprovedStatement</label>
+                        @((string.IsNullOrEmpty(Model.Statement) || (isApproved && Model.StatementApproved))
+                                 ? Html.CheckBoxFor(m => m.StatementApproved, new { disabled = "disabled" })
+                                 : Html.CheckBoxFor(m => m.StatementApproved))
+
+                        <br />
+                        @Html.ValidationMessageFor(m => m.StatementApproved)
+                    </div>
+                </div>
+            }
+        }
+        if ((User.IsInAnyRole(AppRole.Admins) || ViewBag.IsUnionManager == true || ViewBag.IsClubManager == true) && Model.ShowAppCredentials)
+        {
+            <div class="row">
+                <div class="col-sm-2 form-group" id="isTrainingEnabledDiv">
+                    <label class="control-label">@Messages.AppLogin:</label>
+                    @Html.TextBoxFor(m => m.AppLogin, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.AppLogin)
+                </div>
+                <div class="col-sm-2 form-group" id="isTrainingEnabledDiv">
+                    <label class="control-label">@Messages.AppPassword:</label>
+                    @Html.PasswordFor(m => m.AppPassword, new { @class = "form-control", value = Model.AppPassword })
+                    @Html.ValidationMessageFor(m => m.AppPassword)
+                </div>
+            </div>
+        }
+        <div class="row">
+            <div class="col-sm-4">
+                @if (TempData["Saved"] != null)
+                {
+                    <span class="text-success">@Messages.DataSavedSuccess</span>
+                }
+            </div>
+            <div class="col-sm-8 text-align">
+                <button class="btn btn-primary" id="saveBtn">@Messages.Save</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-sm-6 form-group">
+                <h3>@Html.DisplayFor(m => m.Name)</h3>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6 form-group">
+                @Html.DisplayFor(m => m.Description)
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-3 form-group">
+                @if (!string.IsNullOrEmpty(Model.Logo))
+                {
+                    <div class="offset-2"></div>
+                    @ShowImage(Model.Logo)
+                }
+            </div>
+            <div class="col-sm-3 form-group">
+                @if (!string.IsNullOrEmpty(Model.PrimaryImage))
+                {
+                    <div class="offset-2"></div>
+                    @ShowImage(Model.PrimaryImage)
+                }
+            </div>
+            <div class="col-sm-3 form-group">
+                @if (!string.IsNullOrEmpty(Model.IndexImage))
+                {
+                    <div class="offset-2"></div>
+                    @ShowImage(Model.IndexImage)
+                }
+                @Html.DisplayFor(m => m.IndexAbout)
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-6 form-group">
+                @Html.DisplayFor(m => m.ContactPhone)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 form-group">
+                @Html.DisplayFor(m => m.Email)
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 form-group">
+                @Html.DisplayFor(m => m.Address)
+            </div>
+        </div>
+        if (User.IsInAnyRole(AppRole.Admins))
+        {
+            <div class="row">
+                <div class="col-sm-6 from-group">
+                    <label class="control-label">@Messages.ReportsEnabled:</label>
+                    @Html.CheckBoxFor(m => m.IsReportsEnabled)
+                </div>
+            </div>
+        }
+    }
+    @Html.HiddenFor(m => m.ClubId)
+    @Html.Hidden("reportsHidden", Model.IsReportsEnabled)
+</form>
+
+
+@helper ShowImage(string imgName)
+{
+    <img class="img-responsive img-thumbnail" src="@( GlobVars.ClubContentPath + imgName)" />
+}
+
+<script>
+    function changeReportStatus() {
+        var isChecked = $("#IsReportsEnabled").is(':checked');
+        if (isChecked || $("#reportsHidden").val() == "True") {
+            $(".reportcolumn").show();
+            $("#downloadAllReports").show();
+            $("#paymentReportDiv").show();
+        } else {
+            $(".reportcolumn").hide();
+            $("#downloadAllReports").hide();
+            $("#paymentReportDiv").hide();
+        }
+    }
+
+    $("#IsReportsEnabled").change(function() {
+        changeReportStatus();
+    });
+    $(document).ready(function() {
+        changeReportStatus();
+        if ("@isHebrew" == "True") {
+            $("#isTrainingEnabledDiv").attr('class', 'col-sm-2 form-group');
+        }
+        $("#removeMedicalFile").on('click',
+            function() {
+                $('input[name="RemoveMedicalCertificateFile"]').val('true');
+                $('#viewMedicalFile').css("visibility", "hidden");
+                $('#removeMedicalFile').css("visibility", "hidden");
+            });
+
+        $("#removeClubInsurance").on('click',
+            function () {
+                $('input[name="RemoveInsuranceFile"]').val('true');
+                $('#viewClubInsurance').css("visibility", "hidden");
+                $('#removeClubInsurance').css("visibility", "hidden");
+            });
+
+        $("#removeCertificateOfIncorporation").on('click',
+            function() {
+                $('input[name="RemoveCertificateOfIncorporation"]').val('true');
+                $('#viewCertificateOfIncorporation').css("visibility", "hidden");
+                $('#removeCertificateOfIncorporation').css("visibility", "hidden");
+            });
+        $("#removeApprovalOfInsuranceCover").on('click',
+            function() {
+                $('input[name="RemoveApprovalOfInsuranceCover"]').val('true');
+                $('#viewApprovalOfInsuranceCover').css("visibility", "hidden");
+                $('#removeApprovalOfInsuranceCover').css("visibility", "hidden");
+            });
+        $("#removeAuthorizedSignatories").on('click',
+            function() {
+                $('input[name="RemoveAuthorizedSignatories"]').val('true');
+                $('#viewAuthorizedSignatories').css("visibility", "hidden");
+                $('#removeAuthorizedSignatories').css("visibility", "hidden");
+            });
+        $('.disciplinesIds').multiselect({
+            numberDisplayed: 1,
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+        $(".frm-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+            step: 15,
+            closeOnDateSelect: true,
+            onChangeDateTime: function() {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            }
+        });
+
+        $('#SignTogether').click(function () {
+            if (!$(this).prop('checked')) {
+                return;
+            }
+            if ($('#SignEachSeparately').prop('checked')) {
+                $(this).prop('checked', false);
+                alert("@Messages.CannotSelectBothSignTogetherAndSignEach")
+            }
+        })
+        $('#SignEachSeparately').click(function () {
+            if (!$(this).prop('checked')) {
+                return;
+            }
+            if ($('#SignTogether').prop('checked')) {
+                $(this).prop('checked', false);
+                 alert("@Messages.CannotSelectBothSignTogetherAndSignEach")
+            }
+        })
+    });
+
+    $('#detailsform').validateBootstrap(true);
+    setFileUpload('#detailsform', '#details');
+
+    $("#saveBtn").click(function () {
+        var isTrainingEnabled = $('#IsTrainingEnabled:checked').val();
+        if (isTrainingEnabled == "true") {
+            $('[href="#clubTrainings"]').closest('li').show();
+            $('[href="#clubTeamTrainings"]').closest('li').show();
+            $('[href="#clubCalendar"]').closest('li').show();
+        } else {
+            $('[href="#clubTrainings"]').closest('li').hide();
+            $('[href="#clubTeamTrainings"]').closest('li').hide();
+            $('[href="#clubCalendar"]').closest('li').hide();
+        }
+    });
+</script>

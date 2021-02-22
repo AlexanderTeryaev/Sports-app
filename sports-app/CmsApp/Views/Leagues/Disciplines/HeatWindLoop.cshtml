@@ -1,0 +1,21 @@
+﻿@using AppModel
+@model List<CompetitionHeatWind>
+@foreach (var heatWindRelation in Model)
+{
+    <tr class="heat_wind_row">
+        <td class="heat_column">
+            @heatWindRelation.Heat
+        </td>
+        <td class="wind_column" style="direction:ltr;">
+            @heatWindRelation.Wind
+        </td>
+        <td>
+            <a class="btn btn-danger glyphicon glyphicon-trash" data-ajax="true" data-ajax-method="GET" data-ajax-mode="replace" data-ajax-update="#heat_wind_table" data-ajax-url="@Url.Action("DeleteHeatWindAssociation","Leagues",new { Id = @heatWindRelation.Id})"></a>
+        </td>
+    </tr>
+}
+<tr>
+    <td><input id="heat_wind_heat_box" type="text" class="form-control" /></td>
+    <td><input style="direction:ltr;" id="heat_wind_wind_box" type="text" class="form-control" /></td>
+    <td><button class="btn btn-primary" onclick="addNewHeatWindAssociation()">@Messages.AddNew</button></td>
+</tr>

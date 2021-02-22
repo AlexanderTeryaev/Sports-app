@@ -1,0 +1,46 @@
+﻿@model PositionsForm
+
+@using (Ajax.BeginForm("Save", null,
+    new AjaxOptions { UpdateTargetId = "positions" },
+    new { id = "positionsform" }))
+{
+    <table class="table table-bordered">
+        <tbody>
+            @foreach (var m in Model.Positions)
+            {
+                <tr>
+                    <td>@m.Title</td>
+                    <td>
+                        <a href="@Url.Action("List", new { posId = m.PosId })" class="@AppCss.Edit"
+                           data-ajax-update="#positions"
+                           data-ajax="true"></a>
+                    </td>
+                    <td>
+                        <a href="@Url.Action("Delete", new { id = m.PosId })" class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#positions"
+                           data-ajax="true"></a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td>
+                    <span class="form-group">
+                        @Html.TextBoxFor(m => m.Title, new { @class = "form-control", placeholder = Messages.AddNew, maxlength = 40 })
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-primary">@Messages.Save</button>
+                    @Html.HiddenFor(m => m.SectionId)
+                    @Html.HiddenFor(m => m.PosId)
+                </td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+}
+<script>
+    $('#positionsform').validateBootstrap(true);
+</script>

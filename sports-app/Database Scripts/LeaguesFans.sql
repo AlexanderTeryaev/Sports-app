@@ -1,0 +1,34 @@
+CREATE TABLE dbo.LeaguesFans
+	(
+	Id int NOT NULL IDENTITY (1, 1),
+	LeagueId int NOT NULL,
+	UserId int NOT NULL
+	)  ON [PRIMARY]
+
+ALTER TABLE dbo.LeaguesFans ADD CONSTRAINT
+	PK_LeaguesFans PRIMARY KEY CLUSTERED 
+	(
+	Id
+	) WITH( STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+
+
+ALTER TABLE dbo.LeaguesFans ADD CONSTRAINT
+	FK_LeaguesFans_Leagues FOREIGN KEY
+	(
+	LeagueId
+	) REFERENCES dbo.Leagues
+	(
+	LeagueId
+	) ON UPDATE  NO ACTION 
+	 ON DELETE  NO ACTION 
+	
+
+ALTER TABLE dbo.LeaguesFans ADD CONSTRAINT
+	FK_LeaguesFans_Users FOREIGN KEY
+	(
+	UserId
+	) REFERENCES dbo.Users
+	(
+	UserId
+	) ON UPDATE  NO ACTION 
+	 ON DELETE  NO ACTION 

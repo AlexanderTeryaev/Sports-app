@@ -1,0 +1,30 @@
+﻿@model ActivityFormControlTemplateModel
+
+@{
+    var controlEnabled = (!Model.IsPublish || !Model.IsDisabled) && !Model.IsDisabledBySettings;
+}
+
+<div class="control @(controlEnabled ? "" : "hidden") escort-selector" data-type="@ActivityFormControlType.PlayerEscortSelector" data-fieldnote="@Model.FieldNote" data-hasoptions="@Model.HasOptions" data-isdisabled="@Model.IsDisabled" data-isrequired="@Model.IsRequired" data-canberequired="@Model.CanBeRequired" data-canbedisabled="@Model.CanBeDisabled" @Model.GetDataAttributesForLabels() data-propertyname="@Model.PropertyName" data-isreadonly="@Model.IsReadOnly">
+    @if (controlEnabled)
+    {
+        <label for="buildForm-body-@Model.PropertyName" class="control-label">@Messages.Activity_Player_RegisterAs:</label>
+
+        <p>
+            <input id="buildForm-body-@Model.PropertyName-player" checked="checked" name="@Model.PropertyName" type="radio" value="false" data-val-required="@Messages.PropertyValueRequired" data-val="@(Model.IsRequired ? "true" : "false")" @(Model.IsReadOnly ? "readonly" : "") />
+            @Messages.Activity_Escort_Player
+        </p>
+
+        <p>
+            <input id="buildForm-body-@Model.PropertyName-escort" name="@Model.PropertyName" type="radio" value="true" data-val-required="@Messages.PropertyValueRequired" data-val="@(Model.IsRequired ? "true" : "false")" @(Model.IsReadOnly ? "readonly" : "") />
+            @Messages.Activity_Escort
+        </p>
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_ValidationMessage", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_RequiredSwitch", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_DisabledSwitch", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Custom/_CustomControlOptions", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_FieldNote", Model)
+    }
+</div>

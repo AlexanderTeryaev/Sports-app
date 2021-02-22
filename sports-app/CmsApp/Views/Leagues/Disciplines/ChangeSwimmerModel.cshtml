@@ -1,0 +1,68 @@
+﻿@model DataService.DTO.ChangeSwimmerDto
+@{
+    var players = new SelectList(Model.Swimmers, nameof(DataService.DTO.PlayerShortDTO.UserId), nameof(DataService.DTO.PlayerShortDTO.UserName)).ToList();
+    if (players.Any())
+    {
+        players.Insert(0, new SelectListItem() { Text = Messages.NoneSelected, Value = "" });
+    }
+}
+
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <h2>@Messages.ChangeSwimmers</h2>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="row input-group">
+        <div class="col-sm-6">
+            @Html.DropDownList($"PlayersIds", players, new
+            {
+                data_competition_discipline_id = Model.CompetitionDisciplineId,
+                data_swimmer_id = Model.OriginalSwimmerId,
+                id = "swimmersForChange",
+                @class = "form-control"
+            })
+        </div>
+        <div class="col-sm-6">
+            <button class="btn btn-primary form-control" onclick="changeSwimmers();">@Messages.ChangeSwimmers</button>
+        </div>
+    </div>
+</div>
+<script>
+    function changeSwimmers() {
+        var selectObject = $('#swimmersForChange');
+        var selectedValue = selectObject.val();
+        $.ajax({
+            url: '@Url.Action("ChangeSwimmers", "Leagues")',
+            data: {
+                competitionDisciplineId: @Model.CompetitionDisciplineId,
+                originalSwimmerId: @Model.OriginalSwimmerId,
+                changingSwimmerId: selectedValue,
+                seasonId: @ViewBag.SeasonId
+            },
+            success: function (data) {
+                $("#changeSwimmerModal").modal('hide');
+                $('#heats_lanes_section_' + data.originalHeat).load('/Leagues/GetHeatForCompetitionDiscipline',
+                    {
+                        competitionDisciplineId: data.competitionDisciplineId,
+                        seasonId: data.seasonId,
+                        heatId: data.originalHeat
+                    });
+                if (data.changingHeat != '0') {
+                    $('#heats_lanes_section_' + data.changingHeat).load('/Leagues/GetHeatForCompetitionDiscipline',
+                        {
+                            competitionDisciplineId: data.competitionDisciplineId,
+                            seasonId: data.seasonId,
+                            heatId: data.changingHeat
+                        });
+                }
+            },
+            type: 'POST',
+            dataType: 'json'
+        });
+    }
+</script>

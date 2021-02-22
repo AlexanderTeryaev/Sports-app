@@ -1,0 +1,1049 @@
+﻿@model AthleticRegListModel
+@{
+
+    if (!string.IsNullOrWhiteSpace(ViewBag.DisciplineName))
+    {
+        ViewBag.DisciplineName = " - " + ViewBag.DisciplineName;
+    }
+    if (!string.IsNullOrWhiteSpace(ViewBag.CategoryName))
+    {
+        ViewBag.CategoryName = " - " + ViewBag.CategoryName;
+    }
+    bool isCallRoomManager = User.HasTopLevelJob(JobRole.CallRoomManager);
+
+    bool refereePermission = User.GetSessionWorkerValueOrTopLevelLeagueJob((int)ViewBag.LeagueId) == JobRole.Referee;
+    var disabledAttribute = refereePermission ? "disabled" : "";
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9">
+            @if (Model.SectionName != SectionAliases.Bicycle)
+            {
+                <h4 class="modal-title" style="margin-left: 13px;margin-right: 13px;">@Messages.RegistrationStatus @(string.IsNullOrEmpty(ViewBag.ClubName) ? $" - {ViewBag.DisciplineName} / {ViewBag.CategoryName}" : string.Empty) - @ViewBag.CompetitionName - @ViewBag.CompetitionDate</h4>
+            }
+            else
+            {
+                <h4 class="modal-title" style="margin-left: 13px;margin-right: 13px;">@Messages.RegistrationStatus: @Model.ModalTitle</h4>
+            }
+        </div>
+        <div class="pull-right" style="line-height:25px;">
+            <strong>@Messages.Count.ToLower(): <text id="athletics_count">@(Model?.AthleticRegistrations?.Count() ?? 0)</text></strong>
+        </div>
+    </div>
+    @if ((Model.SectionName == SectionAliases.Athletics || Model.SectionName == SectionAliases.WeightLifting || Model.SectionName == SectionAliases.Bicycle || Model.SectionName == SectionAliases.Climbing) && !isCallRoomManager && ViewBag.ClubId == null)
+    {
+        <style>
+            .input-icon {
+                position: absolute;
+                left: 5px;
+                top: calc(50% - 0.5em);
+                -webkit-animation: spin 2s infinite linear;
+                -moz-animation: spin 2s infinite linear;
+                -o-animation: spin 2s infinite linear;
+                animation: spin 2s infinite linear;
+            }
+
+            .typeahead {
+                padding-left: 17px;
+            }
+
+            .input-wrapper {
+                position: relative;
+            }
+
+            .resultField {
+                width: 100%
+            }
+        </style>
+        if (ViewBag.DisciplineId != null && !refereePermission)
+        {
+            <div class="row" style="display:flex">
+                <div class="col-sm-8"></div>
+                <div class="col-sm-4" id="register_box">
+                    <h4 class="modal-title">@(Model.SectionName == SectionAliases.Athletics ? Messages.AthleteRegister : Messages.SportsManRegister)</h4>
+                    <div class="input-wrapper">
+                        <input type="text" class="typeahead form-control" placeholder="@(Model.SectionName == SectionAliases.Athletics ? Messages.SearchByIDNameAthleteNum : Messages.SearchByIDNamePassport)" />
+                        <span style="display:none;" class='glyphicon glyphicon-repeat fast-right-spinner input-icon '></span>
+                    </div>
+                    <div id="player_chosen_for_comp_register">
+
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+<script>
+    var searchForCompRegistrationUrl = '/Clubs/SearchForCompRegistration/_QUERY_?leagueId=@ViewBag.LeagueId&disciplineId=@ViewBag.DisciplineId&seasonId=@ViewBag.SeasonId';
+    var bloodHoundEngine2 = new Bloodhound({
+        datumTokenizer: function (datum) {
+            return Bloodhound.tokenizers.whitespace(datum.Name);
+        },
+        queryTokenizer: Bloodhound.tokenizers.whitespace,
+        remote: {
+            url: searchForCompRegistrationUrl,
+            wildcard: '_QUERY_',
+            rateLimitWait: 2000,
+            prepare: function (query, settings) {
+                $(".input-icon").show();
+                var trimmedQuery = query.trim();
+                var url = searchForCompRegistrationUrl.replace("_QUERY_", trimmedQuery);
+                settings.url = url;
+                return settings;
+            }
+        }
+    });
+    $('#register_box .typeahead').typeahead({ hint: false, highlight: true, minLength: 2 },
+        {
+            name: 'states',
+            display: 'Name',
+            limit: 200,
+            source: bloodHoundEngine2,
+            templates: {
+                suggestion: function (data) {
+                    var namedata = data.FullName;
+                    $(".input-icon").hide();
+                    if (data.AthleteNumber != null) {
+                        namedata += " - " + data.AthleteNumber;
+                    }
+                    return '<div>' + data.IdentNum + '<br />' + namedata + '</div>';
+                }
+            }
+        });
+
+    $('#register_box .typeahead').bind('typeahead:select',
+        function (ev, data) {
+            var res_box = $("#player_chosen_for_comp_register");
+            switch (data.Status) {
+            case 1: {
+                @if (Model.SectionName == SectionAliases.Athletics)
+                    {
+                        <text>
+                            res_box.html('<div style="color:green;">@Messages.ConfirmRegisterToCompetition.Replace(Messages.Player, Messages.Athlete)</div><div>@Messages.FullName: ' + data.FullName + '<br />@Messages.AthleteNumber: ' + data.AthleteNumber + '<br /></div><button class="btn btn-primary btn-save register_player_to_competition" onclick="registerPlayerToCompetition(' + data.UserId + ')">@Messages.AddNew</button>');
+                        </text>
+                    }
+                    else if(Model.SectionName == SectionAliases.WeightLifting)
+                    {
+                        <text>
+                            res_box.html('<div style="color:green;">@Messages.ConfirmRegisterToCompetition.Replace(Messages.Player, Messages.Sportsman)</div><div>@Messages.FullName: ' + data.FullName + '<br/>@Messages.WeightDeclaration: <input type="number" step="0.1" class="weight_declaration_register" value=""/>' + '<br /></div><button class="btn btn-primary btn-save register_player_to_competition" onclick="registerPlayerToCompetition(' + data.UserId + ')">@Messages.AddNew</button>');
+                        </text>
+                }
+                else
+                {
+                    //Bicycle section
+                     <text>
+                            res_box.html('<div style="color:green;">@Messages.ConfirmRegisterToCompetition.Replace(Messages.Player, Messages.Sportsman)</div><div>@Messages.FullName: ' + data.FullName + '<br /></div><button class="btn btn-primary btn-save register_player_to_competition" onclick="registerPlayerToCompetition(' + data.UserId + ')">@Messages.AddNew</button>');
+                        </text>
+                }
+                break;
+            }
+            case 2:{
+                res_box.html('<div style="color:red;">@Messages.PlayerAlreadyInTeam<div>');
+                break;
+            }
+            case 3:{
+                res_box.html('<div style="color:red;">@Messages.PlayerInAnotherCategory.Replace(Messages.Player, (Model.SectionName == SectionAliases.Athletics) ? Messages.Athlete : Messages.Sportsman)<div>');
+                break;
+            }           
+            case 4:{
+                res_box.html('<div style="color:red;">@Messages.NotAuthorizedToRegisterThisPlayer.Replace(Messages.Player, (Model.SectionName == SectionAliases.Athletics) ? Messages.Athlete : Messages.Sportsman)<div>');
+                break;
+            }                       
+            default: {
+                @if (Model.SectionName == SectionAliases.Athletics)
+                    {
+                        <text>
+                            var athleticNumberRes_box = data.AthleteNumber == null ? "@Messages.None" : data.AthleteNumber;
+                            res_box.html('<div style="color:red;">@(Messages.CannotAddPlayerToCompetition.Replace(Messages.Player, Messages.Athlete))<div><div>@Messages.FullName: ' + data.FullName + '<br />@Messages.AthleteNumber: ' + athleticNumberRes_box + '<br /></div><button class="btn btn-primary btn-save register_player_to_competition" onclick="registerPlayerToCompetitionConfirm(' + data.UserId + ')">@Messages.AddNew</button>');
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                            res_box.html('<div style="color:red;">@(Messages.CannotAddPlayerToCompetition.Replace(Messages.Player, Messages.Sportsman))<div><div>@Messages.FullName: ' + data.FullName + '<br /></div><button class="btn btn-primary btn-save register_player_to_competition" onclick="registerPlayerToCompetitionConfirm(' + data.UserId + ')">@Messages.AddNew</button>');
+                        </text>
+                    }
+            }
+                //default: {
+                //     res_box.html('<div style="color:red;">@Messages.CannotAddPlayerToCompetition<div>');
+                // }
+            }
+        }
+    );
+
+
+    function registerPlayerToCompetition(userId) {
+        var button = $(".register_player_to_competition");
+        button.attr('disabled', 'disabled');
+        button.html("<span class='glyphicon glyphicon-repeat fast-right-spinner'></span>");
+        $.ajax({
+            type: "POST",
+            url: "/Clubs/DisciplineCompetitionRegisterPlayer",
+            data: {
+                "UserId": userId,
+                "DisciplineId": "@ViewBag.DisciplineId",
+                "SeasonId": "@ViewBag.SeasonId",
+                "SectionAlias": "@Model.SectionName",
+                "WeightDeclaration": $(".weight_declaration_register") != null ? parseFloat($(".weight_declaration_register").val()).toFixed(2) : 0.0
+            },
+            success: function (data) {
+                $('#registration_tbody').prepend(data);
+                $("#player_chosen_for_comp_register").html("");
+                $(".tt-dataset").html("");
+                if (data.length > 0) {
+                    var data = $("#athletics_count").html();
+                    data = Number(data) + 1;
+                    $("#athletics_count").html(data);
+                    if (data == 1) $(".dataTables_empty").html("");
+                }
+            }
+        });
+    }
+
+    function registerPlayerToCompetitionConfirm(userId) {
+        @if (Model.SectionName == SectionAliases.Athletics)
+        {
+         <text>
+             var msg = "@Messages.ConfirmDespiteRequirements.Replace(Messages.Player, Messages.Athlete)";
+         </text>
+        }
+        else
+        {
+         <text>
+             var msg = "@Messages.ConfirmDespiteRequirements.Replace(Messages.Player, Messages.Sportsman)";
+         </text>
+        }
+
+        var isConfirmed = confirm(msg);
+        if (isConfirmed) {
+            registerPlayerToCompetition(userId);
+        }
+        return false;
+    }
+
+
+</script>
+<div class="modal-body">
+    <div class="row col-sm-12" style="margin-bottom:10px;">
+        <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportregistrations').submit()">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+            @using (Html.BeginForm("ExportDisciplineRegistrationsToExcel", "Clubs", new { clubId = ViewBag.ClubId, disciplineId = ViewBag.DisciplineId, seasonId = ViewBag.SeasonId, leagueId = ViewBag.LeagueId },
+FormMethod.Post, new { id = "exportregistrations" })) { }
+        </a>
+        <a id="printregistrations" class="btn btn-info remove_print">
+            <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+        </a>
+        @if (Model.SectionName == SectionAliases.Athletics || Model.SectionName == SectionAliases.Bicycle || Model.SectionName == SectionAliases.Climbing)
+        {
+            <a class="btn btn-primary btn-edit"
+               href='@Url.Action("GenerateEntryList", "Clubs", new { clubId = ViewBag.ClubId, disciplineId = ViewBag.DisciplineId, seasonId = ViewBag.SeasonId, leagueId = ViewBag.LeagueId })'>
+                <i class="glyphicon glyphicon-open"></i>&nbsp @Messages.EntryList
+            </a>
+        }
+    </div>
+    <div class="row" style="margin-top:20px;">
+        <div class="col-sm-12">
+            <table id="print_table" class="table table-bordered">
+                <thead>
+					<tr>
+						@if (Model.SectionName == SectionAliases.Athletics)
+						{
+							<th>@Messages.AthleteNumber</th>
+						}
+
+						@if (Model.SectionName == SectionAliases.WeightLifting)
+						{
+							if (ViewBag.ClubId == null)
+							{
+								<th>@Messages.ClubName</th>
+							}
+							<th>@Messages.Category</th>
+						}
+						else
+						{
+							if (ViewBag.DisciplineId != null && Model.SectionName != SectionAliases.Athletics)
+							{
+								if (Model.SectionName == GamesAlias.Rowing)
+								{
+									<th>@Messages.ClubName</th>
+									<th>@Messages.RelatedClubName</th>
+								}
+								else if (Model.SectionName != GamesAlias.Bicycle)
+								{
+									<th>@Messages.ClubName</th>
+								}
+							}
+							else
+							{
+								if (Model.SectionName == GamesAlias.Rowing)
+								{
+									<th>@Messages.ClubName</th>
+									<th>@Messages.RelatedClubName</th>
+								}
+								if (Model.SectionName != GamesAlias.WeightLifting && Model.SectionName != GamesAlias.Bicycle && Model.SectionName != GamesAlias.Climbing)
+								{
+									<th>@(Model.SectionName == GamesAlias.Rowing ? Messages.Boat : Messages.Discipline)</th>
+								}
+								if (Model.SectionName != GamesAlias.Bicycle && Model.SectionName != GamesAlias.Climbing)
+								{
+									<th>@Messages.Category</th>
+								}
+								if (Model.SectionName == GamesAlias.Climbing)
+								{
+									<th>@Messages.ClubName</th>
+								}
+							}
+						}
+						@if (Model.SectionName == GamesAlias.Rowing || Model.SectionName == GamesAlias.Bicycle)
+						{
+							<th>@Messages.IdentNum</th>
+						}
+						<th>@Messages.FullName</th>
+						@if (Model.SectionName == SectionAliases.Athletics && string.IsNullOrWhiteSpace(ViewBag.ClubName))
+						{
+							<th>@Messages.ClubName</th>
+						}
+						<th>@Messages.BirthDay</th>
+						@if (Model.SectionName == SectionAliases.Bicycle)
+						{
+							<th>@Messages.ClubName</th>
+							<th>@Messages.Expertise</th>
+							<th>@Messages.Heat</th>
+						}
+						@if (Model.SectionName == SectionAliases.Climbing)
+						{
+							<th>@Messages.Category</th>
+							<th>@Messages.Heat</th>
+						}
+						@if (Model.SectionName == SectionAliases.Athletics && ViewBag.ClubId == null)
+						{
+							<th>@Messages.Heat</th>
+							<th>@(ViewBag.Format == 10 || ViewBag.Format == 11 || ViewBag.Format == 6 ? Messages.OrderRaw : Messages.Lane)</th>
+						}
+						@if (Model.SectionName == SectionAliases.Rowing)
+						{
+							<th>@Messages.Distance</th>
+							<th>@Messages.Team</th>
+							<th class="coxwain-cell">@Messages.Coxwain</th>
+							<th>@Messages.Result</th>
+							<th>@Messages.Rank</th>
+						}
+						@if (@Model.SectionName == GamesAlias.WeightLifting)
+						{
+							<th>@Messages.WeightDeclaration</th>
+							<th>@Messages.Approve <input type="checkbox" id="selectAllForApprove_checkbox" /></th>
+							<th>@Messages.Charge <input type="checkbox" id="selectAllForCharge_checkbox" /></th>
+						}
+						else
+						{
+							if (Model.SectionName == GamesAlias.Swimming)
+							{
+								<th class="remove_print">@Messages.EntryTime</th>
+							}
+							else if (Model.SectionName != SectionAliases.Rowing && Model.SectionName != SectionAliases.Bicycle)
+							{
+								<th class="remove_print">@Messages.BestResult</th>
+							}
+						}
+						@if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) || User.HasTopLevelJob(JobRole.LeagueManager))
+						{
+							<th class="remove_print"></th>
+						}
+						@if (Model.SectionName == SectionAliases.Rowing)
+						{
+							<th class="remove_print"></th>
+						}
+					</tr>
+                </thead>
+                <tbody id="registration_tbody">
+                    @{
+                        List<DataService.DTO.AthleticRegDto> sortedRegisteredPlayers = null;
+                        if (Model.SectionName != SectionAliases.Rowing)
+                        {
+                            if (ViewBag.DisciplineId != null)
+                            {
+                                sortedRegisteredPlayers = Model.AthleticRegistrations.OrderBy(r => r.DisciplineName).ThenBy(r => r.FullName).ToList();
+                            }
+                            else
+                            {
+                                sortedRegisteredPlayers = Model.AthleticRegistrations.OrderBy(r => r.ClubName).ThenBy(r => r.DisciplineName).ThenBy(r => r.FullName).ToList();
+                            }
+                        }
+                        else
+                        {
+                            sortedRegisteredPlayers = Model.AthleticRegistrations;
+                        }
+                    }
+                    @foreach (var reg in sortedRegisteredPlayers)
+                    {
+                    <tr id="reg_tr_@reg.RegistrationId">
+                        @if (Model.SectionName == SectionAliases.Athletics)
+                        {
+                            <td>@reg.AthleteNumber</td>
+                        }
+
+                        @if (Model.SectionName == SectionAliases.WeightLifting)
+                        {
+                            if (ViewBag.ClubId == null)
+                            {
+                                <td>@reg.ClubName</td>
+                            }
+                            <td>@reg.CategoryName</td>
+                        }
+                        else
+                        {
+                            if (ViewBag.DisciplineId != null && Model.SectionName != SectionAliases.Athletics)
+                            {
+
+                                if (Model.SectionName == GamesAlias.Rowing)
+                                {
+                                    <td>@reg.ClubName</td>
+                                    <td>@reg.RelatedClubName</td>
+                                }
+                                else if (Model.SectionName != GamesAlias.Bicycle)
+                                {
+                                    <td>@reg.ClubName</td>
+                                }
+                            }
+                            else
+                            {
+                                if (Model.SectionName == GamesAlias.Rowing)
+                                {
+                                    <td>@reg.ClubName</td>
+                                    <td>@reg.RelatedClubName</td>
+                                }
+                                if (Model.SectionName != GamesAlias.Bicycle && Model.SectionName != GamesAlias.Climbing)
+                                {
+                                    <td>@reg.DisciplineName</td>
+                                    <td>@reg.CategoryName</td>
+                                }
+                                if (Model.SectionName == GamesAlias.Climbing)
+                                {
+                                    <td>@reg.ClubName</td>
+                                }
+                            }
+                        }
+                        @if (Model.SectionName == GamesAlias.Rowing || Model.SectionName == GamesAlias.Bicycle)
+                        {
+                            <td>@reg.IdentNum</td>
+                        }
+                        <td>@reg.FullName</td>
+                        @if (Model.SectionName == SectionAliases.Athletics && string.IsNullOrWhiteSpace(ViewBag.ClubName))
+                        {
+                            <td>@reg.ClubName</td>
+                        }
+                        <td>@(reg.BirthDay?.ToShortDateString())</td>
+                        @if (Model.SectionName == SectionAliases.Bicycle)
+                        {
+                            <td>@reg.ClubName</td>
+                            <td>@reg.CategoryName</td>
+                            <td>@reg.Heat</td>
+                        }
+                        @if (Model.SectionName == SectionAliases.Climbing)
+                        {
+                            var disHeat = ViewBag.ClubId == null ? disabledAttribute : "readonly";
+                            <td>@reg.CategoryName</td>
+                            if (ViewBag.ClubId == null)
+                            {
+                                <td><input type="text" @disabledAttribute class="form-control" style="max-width: 120px;" id="heat_id_@reg.RegistrationId" value="@reg.Heat" onchange="onHeatChange(@reg.RegistrationId);" /></td>
+                            }
+                            else
+                            {
+                                <td>@reg.Heat</td>
+                            }
+                        }
+                        @if (Model.SectionName == SectionAliases.Athletics && ViewBag.ClubId == null)
+                        {
+                            <td><input type="text" @disabledAttribute class="form-control" style="max-width: 120px;" id="heat_id_@reg.RegistrationId" value="@reg.Heat" onchange="onHeatChange(@reg.RegistrationId);" /></td>
+                            <td><input type="number" @disabledAttribute class="form-control" style="max-width: 120px;" id="lane_id_@reg.RegistrationId" value="@reg.Lane" onchange="onLaneChange(@reg.RegistrationId);" /></td>
+                        }
+                        @if (Model.SectionName == SectionAliases.Rowing)
+                        {
+                            <td>@reg.RowingDistance</td>
+                            <td>@Messages.Team @reg.TeamNumber</td>
+                            <td class="coxwain-cell">
+                                @if (reg.FullName == reg.CoxwainFullName)
+                                {
+                                    <text><strong>V</strong></text>
+                                }
+                            </td>
+							<td>@reg.Result</td>
+							<td>@reg.Rank</td>
+                        }
+                        @if (Model.SectionName == GamesAlias.WeightLifting)
+                        {
+                            <td>@reg.WeightDeclaration</td>
+                            <td>
+                                @Html.CheckBoxFor(m => reg.IsApproved, new { @class = "approvereg", data_id = $"{reg.RegistrationId}" })
+                            </td>
+                            <td>
+                                @Html.CheckBoxFor(m => reg.IsCharged, new { @class = "chargereg", data_id = $"{reg.RegistrationId}" })
+                            </td>
+                        }
+                        else
+                        {
+                            if (Model.SectionName == GamesAlias.Swimming)
+                            {
+                                <td id="result_box_@reg.RegistrationId" class="results-td result_related" style="direction: ltr;text-align: center;display: flex;font-size: 24px; max-width: 200px">
+                                    @Html.Raw(UIHelpers.GetFormatRawHtml("reg_tr_" + reg.RegistrationId, 3, reg.EntryTime, ViewBag.ClubId != null, reg.RegistrationId))
+                                    @Html.HiddenFor(x => reg.UserId, new { id = "user_Id_" + reg.RegistrationId })
+                                    @Html.HiddenFor(x => reg.DisciplineId, new { id = "discipline_Id_" + reg.RegistrationId })
+                                    @Html.HiddenFor(x => reg.ClubId, new { id = "club_Id_" + reg.RegistrationId })
+                                    @Html.HiddenFor(x => reg.SeassonId, new { id = "season_Id_" + reg.RegistrationId })
+                                </td>
+                            }
+                            else if (Model.SectionName != SectionAliases.Bicycle)
+                            {
+                                <td class="remove_print">@reg.BestResult</td>
+                            }
+                        }
+                        @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) || User.HasTopLevelJob(JobRole.LeagueManager))
+                        {
+                            if (Model.SectionName != SectionAliases.Bicycle)
+                            {
+                                <td class="remove_print">
+                                    <a class="@AppCss.Delete"
+                                       data-ajax="true"
+                                       data-ajax-confirm="@Messages.DeleteConfirm"
+                                       data-ajax-success="deleteRegistration('@reg.RegistrationId')"
+                                       href="@Url.Action("DeleteDisciplineRegistration", "Clubs", new { id = reg.RegistrationId })">
+                                    </a>
+                                </td>
+                            }
+                            else
+                            {
+                                <td class="remove_print">
+                                    <a class="@AppCss.Delete"
+                                       data-ajax="true"
+                                       data-ajax-confirm="@Messages.DeleteConfirm"
+                                       data-ajax-success="deleteRegistration('@reg.RegistrationId')"
+                                       href="@Url.Action("DeleteBicycleRegistration", "Clubs", new { id = reg.RegistrationId })">
+                                    </a>
+                                </td>
+                            }
+                        }
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    var confirmSelectAll = "@Messages.ConfirmSelectAll";
+    var confirmUnselectAll = "@Messages.ConfirmUnselectAll";
+    var isDeleted = false;
+    $('#athleticsregistrationlist').on('hidden.bs.modal', function () {
+        if (isDeleted) {
+            location.reload();
+        }
+    });
+
+    $('.resultField').css('width', '100%');
+
+    $(".approvereg").on("click", function () {
+        var registrationId = $(this).attr("data-id");
+        var isChecked = $(this).is(":checked");
+        if (registrationId) {
+            $.ajax({
+                url: "/Players/ApproveRegistrationStatus",
+                type: "POST",
+                data: {
+                    id: registrationId,
+                    leagueId: @ViewBag.LeagueId,
+                    isApproved: isChecked
+                },
+                success: function (data) {
+                    if (isChecked)
+                        $("input[type=checkbox][data-id=" + registrationId + "]").prop("checked", true);
+                }
+            })
+        }
+    });
+
+    function updateExistingResult(regId) {
+        var result1 = $("#result_box_" + regId + " > .resultField[name = 'Result1']").val();
+        var result2 = $("#result_box_" + regId + " > .resultField[name='Result2']").val();
+        var result3 = $("#result_box_" + regId + " > .resultField[name='Result3']").val();
+        var result4 = $("#result_box_" + regId + " > .resultField[name='Result4']").val();
+        var userId = $("#user_Id_" + regId).val();
+        var disciplineId = $("#discipline_Id_" + regId).val();
+        var clubId = $("#club_Id_" + regId).val();
+        var seasonId = $("#season_Id_" + regId).val();
+
+        var dataToSend = {
+            "Result1": result1,
+            "Result2": result2,
+            "Result3": result3,
+            "Result4": result4,
+            "UserId": userId,
+            "DisciplineId": disciplineId,
+            "ClubId": clubId,
+            "SeasonId": seasonId
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/UpdateRegistrationSwimming",
+            data: dataToSend,
+            success: function (data) {
+
+            }
+        });
+
+    }
+
+    function addError(errorStr) {
+        var statusElement = errorStr;
+    }
+
+    $('input').on("input", function () {
+        if ($(this).val().length == $(this).attr("maxlength")) {
+            if ($(this).next().length != 0 && $(this).next()[0] && $(this).next()[0].type != 'hidden') {
+                $(this).next().focus();
+            } else {
+                $($($(this).parent().next()).parent().next()[0]).find('.resultField')[0].focus();
+            }
+        }
+    });
+
+    function approveReg(registrationId, element) {
+        var isChecked = $(element).is(":checked");
+        if (registrationId) {
+            $.ajax({
+                url: "/Players/ApproveRegistrationStatus",
+                type: "POST",
+                data: {
+                    id: registrationId,
+                    leagueId: @ViewBag.LeagueId,
+                    isApproved: isChecked
+                },
+                success: function (data) {
+                    if (isChecked)
+                        $("input[type=checkbox][data-id=" + registrationId + "]").prop("checked", true);
+                }
+            })
+        }
+    }
+
+
+    $(".chargereg").on("click",
+        function() {
+            var registrationId = $(this).attr("data-id");
+            var isChecked = $(this).is(":checked");
+            if (registrationId) {
+                $.ajax({
+                    url: "/Players/ChargeRegistrationStatus",
+                    type: "POST",
+                    data: {
+                        id: registrationId,
+                        leagueId: @ViewBag.LeagueId,
+                        isCharged: isChecked
+                    },
+                });
+            }
+        });
+
+
+
+    function chargeReg(registrationId, element) {
+        var isChecked = $(element).is(":checked");
+        if (registrationId) {
+            $.ajax({
+                url: "/Players/ChargeRegistrationStatus",
+                type: "POST",
+                data: {
+                    id: registrationId,
+                    leagueId: @ViewBag.LeagueId,
+                    isCharged: isChecked
+                },
+            })
+        }
+    }
+
+
+
+    function deleteRegistration(id) {
+        $("#reg_tr_" + id).remove();
+        var count = Number($("#athletics_count").text());
+        if (count != 0) {
+            count = count - 1;
+        }
+        $("#athletics_count").text(count);
+        isDeleted = true;
+    }
+
+    function editRegistration(id) {
+        $("#reg_tr_" + id).remove();
+        var count = Number($("#athletics_count").text());
+        if (count != 0) {
+            count = count - 1;
+        }
+        $("#athletics_count").text(count);
+        isDeleted = true;
+    }
+
+    var enterPressed = false;
+
+    $(document).keydown(function (event) {
+        if (event.keyCode == 13) {
+            enterPressed = true;
+        }
+    });
+
+    $(document).keyup(function (event) {
+        if (event.keyCode == 13 && enterPressed) {
+            enterPressed = false;
+            var element = document.querySelector(".register_player_to_competition");
+            if (element != null) {
+                element.onclick();
+            }
+        }
+    });
+
+
+    $('#printregistrations').click(function () {
+        var tbl = $("#print_table");
+        if (tbl.length > 0) {
+            tablePrint(tbl);
+        }
+    });
+
+    var isClimbing = "@Model.SectionName" === "@SectionAliases.Climbing";
+    var isClubSection = "@ViewBag.ClubId" != "";
+
+    function tablePrint(el) {
+        console.log("@ViewBag.ClubId");
+        var wnd = window.open('', '@Messages.RegistrationStatus', 'height=600, width=600');
+        wnd.document.write('<html><head><title></title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+        wnd.document.write('<h3 style="text-align: center; direction: ' + $('.modal-header:first h4').css('direction') + ';">@Messages.RegistrationStatus @(string.IsNullOrEmpty(ViewBag.ClubName) ? $" - {ViewBag.DisciplineName} / {ViewBag.CategoryName}" : string.Empty) - @ViewBag.CompetitionName - @ViewBag.CompetitionDate</h3>');
+        if (isClimbing) {
+
+            var TableData = new Array();
+
+            $("#print_table tbody tr").each(function (row, tr) {
+                TableData[row] = {
+                    "club": $($(tr).find('td:nth-child(1)')).text(),
+                    "name": $($(tr).find('td:nth-child(2)')).text(),
+                    "birthday": $($(tr).find('td:nth-child(3)')).text(),
+                    "category": $($(tr).find('td:nth-child(4)')).text(),
+                    "heat": isClubSection ? $($(tr).find('td:nth-child(5)')).text() : $($(tr).find('td:nth-child(5) input')).val(),
+                    "bestResult": $($(tr).find('td:nth-child(6)')).text()
+                }
+            });
+            wnd.document.write('<table class="table table-bordered offset-3"><thead>');
+            wnd.document.write("<tr>");
+            wnd.document.write("<th>" + "@Messages.Club" + "</th>");
+            wnd.document.write("<th>" + "@Messages.Name" + "</th>");
+            wnd.document.write("<th>" + "@Messages.BirthDay" + "</th>");
+            wnd.document.write("<th>" + "@Messages.Category" + "</th>");
+            wnd.document.write("<th>" + "@Messages.Heat" + "</th>");
+            wnd.document.write("<th>" + "@Messages.BestResult" + "</th>");
+            wnd.document.write("</tr>");
+            wnd.document.write('</thead><tbody>');
+            for (var i = 0; i < TableData.length; i++) {
+                wnd.document.write("<tr>");
+                wnd.document.write("<td>" + TableData[i].club + "</td>");
+                wnd.document.write("<td>" + TableData[i].name + "</td>");
+                wnd.document.write("<td>" + TableData[i].birthday + "</td>");
+                wnd.document.write("<td>" + TableData[i].category + "</td>");
+                wnd.document.write("<td>" + TableData[i].heat + "</td>");
+                wnd.document.write("<td>" + TableData[i].bestResult + "</td>");
+                wnd.document.write("</tr>");
+            }
+            wnd.document.write('</tbody></table>');
+        }
+        else {
+            //wnd.document.write('<h3 style="text-align: center; direction: ' + $('.modal-header:first h4').css('direction') + ';">@Messages.RegistrationStatus @(string.IsNullOrEmpty(ViewBag.ClubName) ? $" - {ViewBag.DisciplineName} / {ViewBag.CategoryName}" : string.Empty) - @ViewBag.CompetitionName - @ViewBag.CompetitionDate</h3>');
+            wnd.document.write($(el).prop('outerHTML'));
+            $(wnd.document).find('.remove_print').remove();
+        }
+
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 1000);
+    }
+
+    function onHeatChange(regId) {
+        var newHeatValue = $("#heat_id_" + regId).val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/ModifyAthleteCompetitionHeat",
+            data: {
+                "regId": regId,
+                "heat": newHeatValue
+            },
+            success: function (data) {
+                $("#loading_data").hide();
+            }
+        });
+    }
+    function onLaneChange(regId) {
+        var newLaneValue = $("#lane_id_" + regId).val();
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/ModifyAthleteCompetitionLane",
+            data: {
+                "regId": regId,
+                "lane": newLaneValue
+            },
+            success: function (data) {
+                $("#loading_data").hide();
+            }
+        });
+    }
+
+
+    $(document).ready(function () {
+
+        var coxwain_content_len = 0;
+        $('td.coxwain-cell').each(function () {
+            coxwain_content_len += $(this).html().trim().length;
+        });
+
+        if (coxwain_content_len == 0)
+            $('.coxwain-cell').css('display', 'none');
+            var extensions = {
+                "sFilter": "dataTables_filter float_left"
+            }
+            $.extend($.fn.dataTableExt.oStdClasses, extensions);
+            $.extend($.fn.dataTableExt.oJUIClasses, extensions);
+		// Vitaly: this is too much awkward, need to store columns count in a Viewbag instead
+		@if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) || User.HasTopLevelJob(JobRole.LeagueManager))
+		{
+			if (Model.SectionName == SectionAliases.Rowing)
+			{
+				<text>
+					var lastColumnTargets = [11,10];
+				</text>
+			}
+			else
+			{
+				<text>
+					var lastColumnTargets = [9,8];
+				</text>
+			}
+		}
+		else
+		{
+			if (Model.SectionName == SectionAliases.Rowing)
+			{
+				<text>
+					var lastColumnTargets = [10,9];
+				</text>
+			}
+			else
+			{
+				<text>
+					var lastColumnTargets = [8];
+				</text>
+			}
+		}
+
+            @if (ViewBag.DisciplineId != null)
+            {
+          <text>
+              var extra_columns = -2;
+          </text>
+            }
+            else
+            {
+          <text>
+              var extra_columns = 0;
+          </text>
+            }
+
+
+
+              $.fn.dataTable.ext.errMode = 'none';
+              var table = $('#print_table').on('error.dt', function (e, settings, techNote, message) {
+                  console.log('An error has been reported by DataTables: ', message);
+              }) .DataTable({
+                  "distroy": true,
+                colReorder: false,
+                "bPaginate": false,
+                "paging": false,
+                info: false,
+                "oLanguage": {
+                    "sSearch": "@Messages.Search: "
+                },
+                @if (Model.SectionName == SectionAliases.Athletics) {
+                            <text>
+                                "columnDefs": [
+                                    { "type": "date-eu", targets: 5 },
+                                    { "type": "input_inner_num", targets: [6,7] },
+                                    {
+                                        "targets": lastColumnTargets, "orderable": false
+                                    },
+                                ],
+                            </text>
+            }
+            @if (Model.SectionName == SectionAliases.Climbing) {
+                            <text>
+                          "columnDefs": [
+                                    { "type": "date-eu", targets: 2 },
+                                    { "type": "input_inner_num", targets: 4, "orderable": true },
+                                    {
+                                        "targets": 6, "orderable": false
+                                    },
+                                ],
+                            </text>
+            }
+            @if (Model.SectionName == SectionAliases.Rowing)
+			{
+                if (ViewBag.DisciplineId == null)
+                {
+                            <text>
+                "order" :[],
+                "columnDefs": [
+                    { "type": "date-eu", targets: 6 },
+                    {
+                        "targets": lastColumnTargets, "orderable": false
+                    },
+                ],
+                            </text>
+                }
+                else
+                {
+                            <text>
+                "order" :[],
+                "columnDefs": [
+                    { "type": "date-eu", targets: 4 },
+                    {
+                        "targets": lastColumnTargets, "orderable": false
+                    },
+                ],
+                            </text>
+                }
+            }
+            });
+            //var json_str = getCookie('registration_status_col_order');
+            //if (json_str.length > 10) {
+            //    var arr = JSON.parse(json_str);
+            //    if (arr.length > 0) {
+            //        table.colReorder.order(arr, true);
+            //    }
+            //}
+            //table.on('column-reorder', function (e, settings, details) {
+            //    var orderForSave = [];
+            //    for(col in settings.aoColumns)
+            //    {
+            //        orderForSave.push(settings.aoColumns[col]._ColReorder_iOrigCol);
+            //    }
+            //    var json_str = JSON.stringify(orderForSave);
+            //    setCookie('registration_status_col_order', json_str, 365);
+            //});
+
+        }
+    );
+
+    @if (Model.SectionName == GamesAlias.WeightLifting)
+    {
+        <text>
+    $(document).ready(function() {
+        $('#selectAllForCharge_checkbox').click(function() {
+            var isChecked = $('#selectAllForCharge_checkbox').is (':checked');
+            var confirmed = confirm(isChecked ? confirmSelectAll : confirmUnselectAll);
+            if (confirmed) {
+                if (isChecked) {
+                    $.ajax({
+                        url: "/Players/ChangeToChargeForAllPlayers",
+                        type: "POST",
+                        data: {
+                            leagueId: '@ViewBag.LeagueId',
+                            seasonId: '@ViewBag.SeasonId',
+                            disciplineId: '@ViewBag.DisciplineId',
+                            isCharged: true
+                        },
+                    });
+                    $(".chargereg").prop("checked", true);
+                } else {
+                    $.ajax({
+                        url: "/Players/ChangeToChargeForAllPlayers",
+                        type: "POST",
+                        data: {
+                            leagueId: '@ViewBag.LeagueId',
+                            seasonId: '@ViewBag.SeasonId',
+                            disciplineId: '@ViewBag.DisciplineId',
+                            isCharged: false
+                        },
+                    });
+                    $(".chargereg").prop("checked", false);
+                }
+            }
+        });
+
+        var allChecked = true;
+        $(".chargereg").each(function(index, value) {
+            var regbox = $(value);
+            if (!regbox.is (':checked')) {
+                allChecked = false;
+            }
+        });
+
+        if (allChecked) {
+            $('#selectAllForCharge_checkbox').prop("checked", true);
+        }
+
+
+        $('#selectAllForApprove_checkbox').click(function() {
+            var isChecked = $('#selectAllForApprove_checkbox').is (':checked');
+            var confirmed = confirm(isChecked ? confirmSelectAll : confirmUnselectAll);
+            if (confirmed) {
+                if (isChecked) {
+                    $.ajax({
+                        url: "/Players/ChangeToApproveForAllPlayers",
+                        type: "POST",
+                        data: {
+                            leagueId: '@ViewBag.LeagueId',
+                            seasonId: '@ViewBag.SeasonId',
+                            disciplineId: '@ViewBag.DisciplineId',
+                            isApproved: true
+                        },
+                    });
+                    $(".approvereg").prop("checked", true);
+                } else {
+                    $.ajax({
+                        url: "/Players/ChangeToApproveForAllPlayers",
+                        type: "POST",
+                        data: {
+                            leagueId: '@ViewBag.LeagueId',
+                            seasonId: '@ViewBag.SeasonId',
+                            disciplineId: '@ViewBag.DisciplineId',
+                            isApproved: false
+                        },
+                    });
+                    $(".approvereg").prop("checked", false);
+                }
+            }
+        });
+
+        var allChecked = true;
+        $(".approvereg").each(function(index, value) {
+            var regbox = $(value);
+            if (!regbox.is (':checked')) {
+                allChecked = false;
+            }
+        });
+
+        if (allChecked) {
+            $('#selectAllForApprove_checkbox').prop("checked", true);
+        }
+
+    });
+        </text>
+    }
+
+</script>

@@ -1,0 +1,848 @@
+﻿@using Resources
+@using DataService
+@using LogLigFront.Controllers
+@using DataService.Utils
+@using System.Configuration
+
+@model SchedulesDto
+@{
+    EventDto evnt = null;
+    var GroupIndex = -1;
+    var BracketWinnerDivPrefix = "bracket_winner_div_";
+    var BracketLoserDivPrefix = "bracket_loser_div_"; var rounds = 1;
+    List<StageBracketsDto> stBracketsData = new List<StageBracketsDto>();
+}
+<style>
+    .losers {
+        transform: rotateY(180deg);
+    }
+
+        .losers .team {
+            transform: rotateY(180deg);
+        }
+
+        .losers .brackets-header .title {
+            transform: rotateY(180deg);
+        }
+
+        .losers .round.rd-1 {
+            display: none;
+        }
+
+        .losers .round.rd-0-1 {
+            display: none;
+        }
+
+        .losers .round.rd-1-1 {
+            display: none;
+        }
+
+        .losers .round.rd-3-1 {
+            display: none;
+        }
+
+    .row-like {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+        border-spacing: 10px;
+    }
+
+    .column-like {
+        display: table-cell;
+    }
+
+    .ranking {
+        display: none;
+    }
+</style>
+<a href="#" id="print" class="btn btn-info remove_print float-last">
+    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+</a>
+@if (ViewBag.Leagues != null)
+{
+    IEnumerable<SelectListItem> list = ViewBag.Leagues;
+
+    using (Html.BeginForm(nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = ViewBag.TeamId, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId }))
+    {
+        @Html.DropDownList("leagueId", list, new { @class = "form-control combo", onchange = "this.form.submit();" });
+    }
+}
+
+<h3 class="main-title">
+    @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+    {
+        <img src="@ViewBag.Logo" class="img-circle logo" alt="" />
+    }
+    @ViewBag.ResTitle - @Messages.ScheduleResults
+</h3>
+
+@foreach (var group in Model.BracketData)
+{
+    GroupIndex++;
+    string BracketWinnerDivId = $"{BracketWinnerDivPrefix}{group.GroupName}".Replace(' ', '_').Replace("'", "");
+    string BracketLoserDivId = $"{BracketLoserDivPrefix}{group.GroupName}".Replace(' ', '_').Replace("'", "");
+    var bracketItems = Model.BracketData?.Where(r => r.GameTypeId == GameTypeId.Playoff && r.GroupName.Equals(group.GroupName))
+        ?.Where(r => r.Stages.Any(s => s.Items.Count == 8))?.FirstOrDefault()?.Stages[1]?.Items;
+
+    if (Model.BracketData.Count() > 1 && (group.GameTypeId == GameTypeId.Knockout || group.GameTypeId == GameTypeId.Playoff))
+    {
+        <h4>@group.GroupName</h4>
+    }
+    else
+    {
+        <div>&nbsp;</div>
+    }
+    <div class="container-fluid" style="margin-left:90px;direction: rtl;">
+        <div class="row no-print" style="margin-right:-90px; display:inline-flex">
+            <div id="@BracketWinnerDivId"></div>
+            <div class="losers" id='@BracketLoserDivId'></div>
+        </div>
+        <div class="row-like" style="margin-bottom:100px;">
+            @if (bracketItems != null)
+            {
+                <div class="column-like" id="bracket_winner_div_Test_group">
+                    <div class="brackets-header">
+                        <div class="title" style="width:120px;">@bracketItems[5].MinPlayoffPos - @bracketItems[5].MaxPlayoffPos</div>
+                    </div>
+                    <div class="container-brackets">
+                        <div style="width:120px;" class="round rd-1">
+                            <div class="match">
+                                <div data-index="@bracketItems[5].MaxPlayoffPos"
+                                     class="team @(bracketItems[5].WinnerId == bracketItems[5].HomeTeamId ? "winner" : string.Empty)
+                                    team-@bracketItems[5].HomeTeamId" data-id="@bracketItems[5].HomeTeamId">
+                                    <label class="teamname">@bracketItems[5].HomeTeam</label>
+                                    <label class="score">@bracketItems[5].BasketBallWaterpoloHomeTeamScore</label>
+                                </div>
+                                <div data-index="@bracketItems[5].MinPlayoffPos"
+                                     class="team @(bracketItems[5].WinnerId == bracketItems[5].GuestTeamId ? "winner" : string.Empty)
+                                     team-@bracketItems[5].GuestTeamId" data-id="@bracketItems[5].GuestTeamId">
+                                    <label class="teamname">@bracketItems[5].GuestTeam</label>
+                                    <label class="score">@bracketItems[5].BasketBallWaterpoloGuestTeamScore</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="column-like"></div>
+                <div class="column-like" id="bracket_winner_div_Test_group">
+                    <div class="brackets-header">
+                        <div class="title" style="width:120px;">@bracketItems[6].MinPlayoffPos - @bracketItems[6].MaxPlayoffPos</div>
+                    </div>
+                    <div class="container-brackets">
+                        <div style="width:120px;" class="round rd-1">
+                            <div class="match">
+                                <div data-index="@bracketItems[6].MaxPlayoffPos"
+                                     class="team @(bracketItems[6].WinnerId == bracketItems[6].HomeTeamId ? "winner" : string.Empty)
+                                     team-@bracketItems[6].HomeTeamId" data-id="@bracketItems[6].HomeTeamId">
+                                    <label class="teamname">@bracketItems[6].HomeTeam</label>
+                                    <label class="score">@bracketItems[6].BasketBallWaterpoloHomeTeamScore</label>
+                                </div>
+                                <div data-index="@bracketItems[6].MinPlayoffPos"
+                                     class="team @(bracketItems[6].WinnerId == bracketItems[6].GuestTeamId ? "winner" : string.Empty)
+                                 team-@bracketItems[6].GuestTeamId" data-id="@bracketItems[6].GuestTeamId">
+                                    <label class="teamname">@bracketItems[6].GuestTeam</label>
+                                    <label class="score">@bracketItems[6].BasketBallWaterpoloGuestTeamScore</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (group.GameTypeId == GameTypeId.Knockout34)
+            {
+                GamesCycleDto bracket34 = null;
+                foreach (var bracket in Model.BracketData)
+                {
+                    foreach (var stage in bracket.Stages)
+                    {
+                        foreach (var item in stage.Items)
+                        {
+                            if (item.MaxPlayoffPos == 3 && item.MinPlayoffPos == 4)
+                            {
+                                bracket34 = item;
+                                break;
+                            }
+                        }
+                    }
+                }
+                <div class="row-like">
+                    <div class="column-like" id="bracket_winner_div_Test_group">
+                        <div class="brackets-header">
+                            <div class="title" style="width:120px;">@bracket34.MinPlayoffPos - @bracket34.MaxPlayoffPos</div>
+                        </div>
+                        <div class="container-brackets">
+                            <div style="width:120px;" class="round rd-1">
+                                <div class="match">
+                                    <div data-index="@bracket34.MaxPlayoffPos"
+                                         class="team @(bracket34.WinnerId == bracket34.HomeTeamId ? "winner" : string.Empty)
+                                    team-@bracket34.HomeTeamId" data-id="@bracket34.HomeTeamId">
+                                        <label class="teamname">@bracket34.HomeTeam</label>
+                                        <label class="score">@bracket34.HomeTeamScore</label>
+                                    </div>
+                                    <div data-index="@bracket34.MinPlayoffPos"
+                                         class="team @(bracket34.WinnerId == bracket34.GuestTeamId ? "winner" : string.Empty)
+                                     team-@bracket34.GuestTeamId" data-id="@bracket34.GuestTeamId">
+                                        <label class="teamname">@bracket34.GuestTeam</label>
+                                        <label class="score">@bracket34.GuestTeamScore</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column-like"></div>
+                    <div class="column-like"></div>
+                </div>
+            }
+        </div>
+
+    </div>
+
+    <style>
+        #@BracketLoserDivId > div.brackets-header > div:nth-child(1) {
+            margin-left: 65px;
+        }
+    </style>
+
+    var stgIndex = 1;
+    var currentSwapIndex = 1;
+    var currentRound = 1;
+    bool isMonthSet = false;
+    var firstTeamId = group.Stages.First().Items.First().HomeTeamId;
+    rounds = group.Stages.First().Items.Count(x => x.GuestTeamId == firstTeamId || x.HomeTeamId == firstTeamId);
+    stBracketsData.Add(new StageBracketsDto
+    {
+        elementWinnerId = BracketWinnerDivId,
+        elementLoserId = BracketLoserDivId,
+        rounds = rounds,
+        stages = group.Stages
+    });
+    foreach (var stage in group.Stages)
+    {
+        var stageIndex = group.Stages.IndexOf(stage);
+        string maxMinStr = null;
+
+        var stageFirst = stage.Items.FirstOrDefault();
+        if (stageFirst != null && stageFirst.MaxPlayoffPos != null && stageFirst.MinPlayoffPos != null)
+        {
+            maxMinStr = $"({stageFirst.MinPlayoffPos} - {stageFirst.MaxPlayoffPos})";
+        }
+
+        var tableId = $"group_{GroupIndex}_table_{stageIndex}";
+        <!--     if ((group.GameTypeId == GameTypeId.Playoff && stageIndex == 0) || group.GameTypeId == GameTypeId.Knockout)
+             {
+                 <div class="btn-group no-print" role="group">
+                     <button type="button" class="btn btn-default" onclick="schedulesCtrl.toggleBracketList(this,'@tableId')">Hide List</button>
+                 </div>
+             }  -->
+
+        if (stageIndex == 0 || group.GameTypeId != GameTypeId.Playoff)
+        {
+            <h4 style="border-bottom: 1px solid #e5e6e7; margin-top: 0px; margin-bottom:5px; font-size:14px;">
+                @if (group.GameTypeId == GameTypeId.Knockout34)
+                {
+                    @(stage.Items.FirstOrDefault()?.StageName)
+                }
+                else
+                {
+                    @(stage.StageCustomName ?? $"{stage.StageName} {maxMinStr}")
+                }
+            </h4>
+        }
+
+        <div id="@tableId">
+            <table class="table res-table">
+                <tbody>
+                    @{
+                        GenerateTeamNumbers teamNumbers = null;
+                        var maxItemsForThisStage = 0;
+                        var maxSwapIndex = 0;
+                        var itmCount = 0;
+                        if (stage != group.Stages[0] && group.GameTypeId == GameTypeId.Playoff)
+                        {
+                            teamNumbers = new GenerateTeamNumbers(group.Stages[0].Items.Count * 2, rounds);
+                            maxItemsForThisStage = teamNumbers.GetStageTotalMatchesPerRow(stgIndex);
+                            itmCount = maxItemsForThisStage;
+                            maxSwapIndex = teamNumbers.MaxSwapIndexForStage(stgIndex);
+                        }
+                    }
+                    @if (Model.NeedShowCycles)
+                    {
+                        foreach (var gamesInRound in stage.Items.GroupBy(t => t.RoundNum))
+                        {
+                            var cycleNum = 0;
+                            var differences = new Dictionary<int?, int>();
+                            if (Model.RoundStartCycle == RoundStartCycle.StartEachRoundFromCycleOne)
+                            {
+                                var min = gamesInRound.First().CycleNum ?? 0;
+                                foreach (var game in gamesInRound)
+                                {
+                                    if (!differences.ContainsKey(game.GroupId))
+                                    {
+                                        differences.Add(game.GroupId, game.CycleNum ?? 0 - min);
+                                    }
+
+                                    game.CycleNum -= differences[game.GroupId];
+                                }
+                            }
+                            foreach (var games in gamesInRound.GroupBy(t => t.CycleNum))
+                            {
+                                cycleNum++;
+                                <!--
+                                                if (Model.RoundStartCycle == RoundStartCycle.StartEachRoundFromCycleOne)
+                                                {
+                                                    <tr style="background:none"><td colspan="5">@Resources.Messages.Cycle @cycleNum</td></tr>
+                                                }
+                                                else
+                                                {
+                                                    <tr style="background:none"><td colspan="5">@Resources.Messages.Cycle @(games.Key + 1)</td></tr>
+                                                }
+                                -->
+                                foreach (var m in games)
+                                {
+                                    if (group.GameTypeId == GameTypeId.Playoff && stageIndex > 0)
+                                    {
+                                        if (itmCount == maxItemsForThisStage)
+                                        {
+                                            <tr style="border-bottom: 1px solid rgb(229, 230, 231); background: none;">
+                                                <td class="res-stat" style="width: 150px; padding: 0;">
+                                                    <h4>
+
+
+
+                                                        @if (currentSwapIndex == 1)
+                                                        {
+                                                            var id = "hide" + stageIndex + "r_" + currentRound;
+                                                            <!--     <span id="@id" class="btn-group no-print" role="group">
+                                                                <button type="button" class="btn btn-default" onclick="schedulesCtrl.toggleBracketList(this,'@id',true)">Hide List</button>
+                                                            </span> <br />
+                                                            if (rounds > 1)
+                                                            {
+                                                                <text>@($"Stage {stgIndex + 1} Round {currentRound}")</text>
+                                                            }
+                                                            else
+                                                            {
+                                                                <text>@($"Stage {stgIndex + 1}") </text>
+                                                            }
+                                                            <br />  -->
+                                                        }
+                                                        @if (teamNumbers != null && group.GameTypeId == GameTypeId.Playoff)
+                                                        {
+                                                            <text>(@teamNumbers.PrintTeamIndex(stgIndex - 1, currentSwapIndex - 1))</text>
+                                                        }
+                                                    </h4>
+
+                                                </td>
+                                                <td title="" style="padding: 0;">
+                                                    <h4>&nbsp</h4>
+                                                </td>
+                                                <td title="Event date" style="padding: 0;">
+                                                    <h4>&nbsp</h4>
+                                                </td>
+                                                <td class="text-center text-success" colspan="7" style="padding: 0;">
+                                                    <h4>&nbsp</h4>
+                                                </td>
+                                            </tr>
+                                        }
+                                        if (itmCount > 0)
+                                        {
+                                            itmCount--;
+                                        }
+
+                                    }
+
+                                    //@m.MinPlayoffPos <br>@m.MaxPlayoffPos;
+                                    string elId = null;
+                                    if (m.StartDate.Month == DateTime.Now.Month && m.StartDate.Year == DateTime.Now.Year && !isMonthSet)
+                                    {
+                                        isMonthSet = true;
+                                        elId = "closemonth";
+                                    }
+                                    if (m.EventRef != null && m.EventRef != evnt)
+                                    {
+                                        evnt = m.EventRef;
+                                        if (!evnt.IsUsed)
+                                        {
+                                            evnt.IsUsed = true;
+                                            <tr>
+                                                <td class="res-stat remove_print" style="width: 70px;">
+                                                    <span class="label label-success">ארוע</span>
+                                                </td>
+                                                <td title="">
+                                                    @evnt.Place
+                                                </td>
+                                                <td title="Event date">@evnt.EventTime.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td class="text-center text-success" colspan="7">
+                                                    <h4>@evnt.Title</h4>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    if (m.IsPublished)
+                                    {
+                                        <tr id="@elId">
+                                            <td class="res-stat remove_print" style="width: 70px;">
+                                                @if (m.GameStatus == GameStatus.Started)
+                                                {
+                                                    <span class="label label-success">@Messages.Started</span>
+                                                }
+                                                else if (m.GameStatus == GameStatus.Ended)
+                                                {
+                                                    <span class="label label-danger">@Messages.Ended</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="label label-default">@Messages.Waiting</span>
+                                                }
+                                            </td>
+                                            <td title="@m.AuditoriumAddress">
+                                                @if (string.IsNullOrEmpty(m.Auditorium))
+                                                {
+                                                    @m.Auditorium
+                                                }
+                                                else
+                                                {
+                                                    @Html.ActionLink(m.Auditorium ?? "", "AuditoriumSchedules", "LeagueTable",
+                                                                        new { id = m.AuditoriumId, seasonId = ViewBag.SeasonId },
+                                                                        new { @class = "btn", target = "_blank" })
+                                                }
+                                            </td>
+                                            <td class="group-name">@m.GroupName</td>
+                                            <!-- <td>@($"{m.CrossesRank} - {m.CrossesRank + 1}")</td> -->
+                                            <td style="direction:ltr;">@m.MaxPlayoffPos - @m.MinPlayoffPos</td>
+                                            @if (Model.GameCycles?.Any(t => t.RoundNum.HasValue && t.RoundNum > 1) == true)
+                                            {
+                                                <td>
+                                                    <text>@($"סיבוב {m.RoundNum}")</text>
+                                                </td>
+                                            }
+                                            <td>@(m.IsNotSetYet ? Messages.IsNotSetYet : m.StartDate.ToString("dd/MM/yyyy HH:mm"))</td>
+                                            <td class="text-center">
+                                                <img src="@UIHelper.GetTeamLogo(m.HomeLogo)" class="img-circle" alt="" />
+                                            </td>
+                                            <td class="text-center main-title">
+                                                @if (m.IsHomeTeamKnown)
+                                                {
+                                                    <h4>
+                                                        @Html.ActionLink(@m.HomeTeam, nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = @m.HomeTeamId, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId }, new { @class = "main-title", target = "_blank" })
+                                                    </h4>
+                                                }
+                                                else if (m.IsRoot)
+                                                {
+                                                    <h4>
+                                                        @(@m.HomeTeam)
+                                                    </h4>
+                                                }
+                                                else
+                                                {
+                                                    if (m.Bracket != null)
+                                                    {
+                                                        <a href="@Url.Action("PotentialTeams", "LeagueTable", new { id = m.Bracket.Id, index = m.IndexInBracket % 2 == 0 ? 1 : 2 })"
+                                                           data-target="#barcket-potential-teams"
+                                                           data-toggle="modal"
+                                                           class="main-title">@m.HomeTeam</a>
+                                                    }
+                                                }
+                                            </td>
+                                            <td class="text-center result">
+
+                                                @if (m.PenaltyHomeTeamScore.HasValue)
+                                                {
+                                                    <text>@m.HomeTeamScore <font size="2">(@m.PenaltyHomeTeamScore.Value)</font></text>
+                                                }
+                                                else
+                                                {
+                                                    @m.BasketBallWaterpoloHomeTeamScore
+                                                }
+                                            </td>
+
+                                            <td class="text-center result">
+
+                                                @if (m.PenaltyHomeTeamScore.HasValue)
+                                                {
+                                                    <text><font size="2">(@m.PenaltyGuestTeamScore.Value)</font> @m.GuestTeamScore</text>
+                                                }
+                                                else
+                                                {
+                                                    @m.BasketBallWaterpoloGuestTeamScore
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                @if (m.IsGuestTeamKnown)
+                                                {
+                                                    <h4>
+                                                        @Html.ActionLink(@m.GuestTeam, nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = @m.GuestTeamId, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId }, new { @class = "main-title", target = "_blank" })
+                                                    </h4>
+                                                }
+                                                else if (m.IsRoot)
+                                                {
+                                                    <h4>
+                                                        @(@m.GuestTeam)
+                                                    </h4>
+                                                }
+                                                else
+                                                {
+                                                    if (m.Bracket != null)
+                                                    {
+                                                        <a href="@Url.Action("PotentialTeams", "LeagueTable", new { id = m.Bracket.Id, index = m.IndexInBracket % 2 == 0 ? 2 : 1 })"
+                                                           data-target="#barcket-potential-teams"
+                                                           data-toggle="modal"
+                                                           class="main-title">@m.GuestTeam</a>
+                                                    }
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <img src="@UIHelper.GetTeamLogo(m.GuesLogo)" class="img-circle" alt="" />
+                                            </td>
+                                            @if (ViewBag.ShouldShowRemarkColumn)
+                                            {
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(m.Remark))
+                                                    {
+                                                        <h4 id="remark" style="float: left; width: 150px; overflow: hidden; height: auto;">@m.Remark</h4>
+                                                    }
+                                                </td>
+                                            }
+                                            <td class="text-left"><a href="@Url.Action("GameSet", new { id = m.CycleId })" class="btn btn-danger main-btn" data-target="#resbox" data-toggle="modal" style="background-color:#01559e; border-color:#01559e;">@Messages.ToGame</a></td>
+                                            <td class="text-left">
+                                                @if (!string.IsNullOrEmpty(m.PdfGameReport))
+                                                {
+                                                    <a class="btn btn-danger main-btn" onclick="window.open('http://loglig.com:8080/assets/gamereports/@m.PdfGameReport')">
+                                                        דוח משחק
+                                                    </a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                    if (group.GameTypeId == GameTypeId.Playoff && stageIndex > 0 && itmCount == 0)
+                                    {
+                                        if (currentSwapIndex == maxSwapIndex)
+                                        {
+                                            if (currentRound == rounds)
+                                            {
+                                                stgIndex++;
+                                                currentRound = 1;
+                                            }
+                                            else
+                                            {
+                                                currentRound++;
+                                            }
+
+                                            maxItemsForThisStage = teamNumbers.GetStageTotalMatchesPerRow(stgIndex);
+                                            maxSwapIndex = teamNumbers.MaxSwapIndexForStage(stgIndex);
+                                            currentSwapIndex = 1;
+                                        }
+                                        else if (currentSwapIndex < maxSwapIndex)
+                                        {
+                                            currentSwapIndex++;
+                                        }
+                                        itmCount = maxItemsForThisStage;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var m in stage.Items)
+                        {
+                            if (group.GameTypeId == GameTypeId.Playoff && stageIndex > 0)
+                            {
+                                if (itmCount == maxItemsForThisStage)
+                                {
+                                    <tr style="border-bottom: 1px solid rgb(229, 230, 231); background: none;">
+                                        <td class="res-stat" style="width: 150px; padding: 0;">
+                                            <h4>
+
+                                                @if (currentSwapIndex == 1)
+                                                {
+                                                    var id = "hide" + stageIndex + "r_" + currentRound;
+                                                    <!--     <span id="@id" class="btn-group no-print" role="group">
+                                                        <button type="button" class="btn btn-default" onclick="schedulesCtrl.toggleBracketList(this,'@id',true)">Hide List</button>
+                                                    </span> <br />
+                                                    if (rounds > 1)
+                                                    {
+                                                        <text>@($"Stage {stgIndex + 1} Round {currentRound}")</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>@($"Stage {stgIndex + 1}") </text>
+                                                    }
+                                                    <br />  -->
+                                                }
+                                                @if (teamNumbers != null && group.GameTypeId == GameTypeId.Playoff)
+                                                {
+                                                    <text>(@teamNumbers.PrintTeamIndex(stgIndex - 1, currentSwapIndex - 1))</text>
+                                                }
+                                            </h4>
+
+                                        </td>
+                                        d
+                                        y
+                                        <td title="" style="padding: 0;">
+                                            <h4>&nbsp</h4>
+                                        </td>
+                                        <td title="Event date" style="padding: 0;">
+                                            <h4>&nbsp</h4>
+                                        </td>
+                                        <td class="text-center text-success" colspan="7" style="padding: 0;">
+                                            <h4>&nbsp</h4>
+                                        </td>
+                                    </tr>
+                                }
+                                if (itmCount > 0)
+                                {
+                                    itmCount--;
+                                }
+
+                            }
+
+                            //@m.MinPlayoffPos <br>@m.MaxPlayoffPos;
+                            string elId = null;
+                            if (m.StartDate.Month == DateTime.Now.Month && m.StartDate.Year == DateTime.Now.Year && !isMonthSet)
+                            {
+                                isMonthSet = true;
+                                elId = "closemonth";
+                            }
+                            if (m.EventRef != null && m.EventRef != evnt)
+                            {
+                                evnt = m.EventRef;
+                                if (!evnt.IsUsed)
+                                {
+                                    evnt.IsUsed = true;
+                                    <tr>
+                                        <td class="res-stat remove_print" style="width: 70px;">
+                                            <span class="label label-success">ארוע</span>
+                                        </td>
+                                        <td title="">
+                                            @evnt.Place
+                                        </td>
+                                        <td title="Event date">@evnt.EventTime.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="text-center text-success" colspan="7">
+                                            <h4>@evnt.Title</h4>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            if (m.IsPublished)
+                            {
+                                <tr id="@elId">
+                                    <td class="res-stat remove_print" style="width: 70px;">
+                                        @if (m.GameStatus == GameStatus.Started)
+                                        {
+                                            <span class="label label-success">@Messages.Started</span>
+                                        }
+                                        else if (m.GameStatus == GameStatus.Ended)
+                                        {
+                                            <span class="label label-danger">@Messages.Ended</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="label label-default">@Messages.Waiting</span>
+                                        }
+                                    </td>
+                                    <td title="@m.AuditoriumAddress">
+                                        @if (string.IsNullOrEmpty(m.Auditorium))
+                                        {
+                                            @m.Auditorium
+                                        }
+                                        else
+                                        {
+                                            @Html.ActionLink(m.Auditorium ?? "", "AuditoriumSchedules", "LeagueTable",
+                                                                new { id = m.AuditoriumId, seasonId = ViewBag.SeasonId },
+                                                                new { @class = "btn", target = "_blank" })
+                                        }
+                                    </td>
+                                    <td>@m.GroupName</td>
+                                    <td style="direction:ltr;">@m.MaxPlayoffPos - @m.MinPlayoffPos</td>
+                                    @if (Model.GameCycles?.Any(t => t.RoundNum.HasValue && t.RoundNum > 1) == true)
+                                    {
+                                        <td>
+                                            <text>@($"סיבוב {m.RoundNum}")</text>
+                                        </td>
+                                    }
+                                    <td>@(m.IsNotSetYet ? Messages.IsNotSetYet : m.StartDate.ToString("dd/MM/yyyy HH:mm"))</td>
+                                    <td class="text-center">
+                                        <img src="@UIHelper.GetTeamLogo(m.HomeLogo)" class="img-circle" alt="" />
+                                    </td>
+                                    <td class="text-center main-title">
+                                        @if (m.IsHomeTeamKnown)
+                                        {
+                                            <h4>
+                                                @Html.ActionLink(@m.HomeTeam, nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = @m.HomeTeamId, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId }, new { @class = "main-title", target = "_blank" })
+                                            </h4>
+                                        }
+                                        else if (m.IsRoot)
+                                        {
+                                            <h4>
+                                                @(@m.HomeTeam)
+                                            </h4>
+                                        }
+                                        else
+                                        {
+                                            if (m.Bracket != null)
+                                            {
+                                                <a href="@Url.Action("PotentialTeams", "LeagueTable", new { id = m.Bracket.Id, index = m.IndexInBracket % 2 == 0 ? 1 : 2 })"
+                                                   data-target="#barcket-potential-teams"
+                                                   data-toggle="modal"
+                                                   class="main-title">@m.HomeTeam</a>
+                                            }
+                                        }
+                                    </td>
+                                    <td class="text-center result">
+
+                                        @if (m.PenaltyHomeTeamScore.HasValue)
+                                        {
+                                            <text>@m.HomeTeamScore <font size="2">(@m.PenaltyHomeTeamScore.Value)</font></text>
+                                        }
+                                        else
+                                        {
+                                            @m.BasketBallWaterpoloHomeTeamScore
+                                        }
+                                    </td>
+
+                                    <td class="text-center result">
+
+                                        @if (m.PenaltyHomeTeamScore.HasValue)
+                                        {
+                                            <text><font size="2">(@m.PenaltyGuestTeamScore.Value)</font> @m.GuestTeamScore</text>
+                                        }
+                                        else
+                                        {
+                                            @m.BasketBallWaterpoloGuestTeamScore
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (m.IsGuestTeamKnown)
+                                        {
+                                            <h4>
+                                                @Html.ActionLink(@m.GuestTeam, nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = @m.GuestTeamId, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId }, new { @class = "main-title", target = "_blank" })
+                                            </h4>
+                                        }
+                                        else if (m.IsRoot)
+                                        {
+                                            <h4>
+                                                @(@m.GuestTeam)
+                                            </h4>
+                                        }
+                                        else
+                                        {
+                                            if (m.Bracket != null)
+                                            {
+                                                <a href="@Url.Action("PotentialTeams", "LeagueTable", new { id = m.Bracket.Id, index = m.IndexInBracket % 2 == 0 ? 2 : 1 })"
+                                                   data-target="#barcket-potential-teams"
+                                                   data-toggle="modal"
+                                                   class="main-title">@m.GuestTeam</a>
+                                            }
+                                        }
+                                    </td>
+                                    @if (ViewBag.ShouldShowRemarkColumn)
+                                    {
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(m.Remark))
+                                            {
+                                                <h4 id="remark" style="float: left; width: 150px; overflow: hidden; height: auto;">@m.Remark</h4>
+                                            }
+                                        </td>
+                                    }
+                                    <td class="text-center">
+                                        <img src="@UIHelper.GetTeamLogo(m.GuesLogo)" class="img-circle" alt="" />
+                                    </td>
+                                    <td class="text-left"><a href="@Url.Action("GameSet", new { id = m.CycleId })" class="btn btn-danger main-btn" data-target="#resbox" data-toggle="modal" style="background-color:#01559e; border-color:#01559e;">@Messages.ToGame</a></td>
+                                    <td class="text-left">
+                                        @if (!string.IsNullOrEmpty(m.PdfGameReport))
+                                        {
+                                            <a class="btn btn-danger main-btn" onclick="window.open('http://loglig.com:8080/assets/gamereports/@m.PdfGameReport')">
+                                                דוח משחק
+                                            </a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            if (group.GameTypeId == GameTypeId.Playoff && stageIndex > 0 && itmCount == 0)
+                            {
+                                if (currentSwapIndex == maxSwapIndex)
+                                {
+                                    if (currentRound == rounds)
+                                    {
+                                        stgIndex++;
+                                        currentRound = 1;
+                                    }
+                                    else
+                                    {
+                                        currentRound++;
+                                    }
+
+                                    maxItemsForThisStage = teamNumbers.GetStageTotalMatchesPerRow(stgIndex);
+                                    maxSwapIndex = teamNumbers.MaxSwapIndexForStage(stgIndex);
+                                    currentSwapIndex = 1;
+                                }
+                                else if (currentSwapIndex < maxSwapIndex)
+                                {
+                                    currentSwapIndex++;
+                                }
+                                itmCount = maxItemsForThisStage;
+                            }
+                        }
+                    }
+
+                    @*Events scheduled after all games in league*@
+                    @if (Model.Events != null && group == Model.BracketData.Last() && stage == group.Stages.Last())
+                    {
+                        foreach (var ev in Model.Events.Where(e => (evnt == null || e.EventTime > evnt.EventTime) && !e.IsUsed).OrderBy(e => e.EventTime))
+                        {
+                            <tr>
+                                <td class="res-stat remove_print" style="width: 70px;">
+                                    <span class="label label-success">ארוע</span>
+                                </td>
+                                <td title="Event place">
+                                    @ev.Place
+                                </td>
+                                <td title="Event date">@ev.EventTime.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-center text-success" colspan="7">
+                                    <h4>@ev.Title</h4>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@section scripts
+{
+    <script src="~/Scripts/App/PrintSchedule.js"></script>
+    <script src="~/Scripts/bracketsmodified.js"></script>
+    <script src="~/Content/app/schedulesCtrl.js"></script>
+    @*@Scripts.Render("~/bundles/scheduleScripts")*@
+    <script>
+        $(document).ready(function () {
+            @foreach (var brItem in stBracketsData)
+                {
+                     @:schedulesCtrl.fillBrackets('@brItem.elementWinnerId', '@brItem.elementLoserId', @Html.Raw(Json.Encode(brItem.stages)), @brItem.rounds, true);
+                }
+        });
+    </script>
+}
+
+<div class="modal fade" id="resbox" tabindex="-1" role="dialog">
+</div>
+
+@helper ShowImage(string imgName)
+{
+    string imgSrc = "";
+    if (!string.IsNullOrEmpty(imgName))
+    {
+        imgSrc = String.Concat(ConfigurationManager.AppSettings["SiteUrl"], "/assets/players/" + imgName);
+    }
+    else
+    {
+        imgSrc = Url.Content("~/content/img/default.png");
+    }
+    <img src="@imgSrc" class="img-circle" alt="" />
+}
+
+<div class="modal fade" id="barcket-potential-teams" tabindex="-1" role="dialog">
+</div>

@@ -1,0 +1,1 @@
+ALTER TABLE dbo.Teams ADD IsRankCalculated bit NOT NULL Default(0)

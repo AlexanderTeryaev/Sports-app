@@ -1,0 +1,43 @@
+﻿@model MultiSelectList
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <h4 class="modal-title">@Messages.PickCompetitionForRouteDuplication</h4>
+</div>
+<div class="center modal-body">
+    <div id="duplicate_routes_body">
+        @using (Ajax.BeginForm("DuplicateRoutesList", "Teams", new { leagueId = ViewBag.leagueId, seasonId = ViewBag.seasonId, disciplineId = ViewBag.disciplineId }, new AjaxOptions
+        {
+            HttpMethod = "POST",
+            OnBegin = "load_spinner",
+            OnComplete = "on_complete_duplication"
+        }, new { id = "duplicateRoutesForm" }))
+        {
+            @Html.DropDownList("LeagueIdToDup", Model, Messages.Select, new { @class = "form-control" })
+        }
+    </div>
+    <span style="display:none" id="loading-spinner" class='@AppCss.Loading'></span>
+    <div style="display:none" id="succesful-div" class="alert alert-success">
+        <strong><i class="fa fa-check-square-o"></i></strong> &nbsp;&nbsp; @Messages.SuccessfulDuplication
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>  
+    <button type="submit" form="duplicateRoutesForm" id="save_dup_routes" class="btn btn-primary">@Messages.Save</button>
+</div>
+<script>
+
+    function load_spinner() {
+        $("#duplicate_routes_body").hide();
+        $("#save_dup_routes").hide();
+        $("#loading-spinner").show();
+    }
+    function on_complete_duplication() {
+        $("#loading-spinner").hide();
+        $("#succesful-div").show();
+        window.location.reload();
+    }
+</script>
+

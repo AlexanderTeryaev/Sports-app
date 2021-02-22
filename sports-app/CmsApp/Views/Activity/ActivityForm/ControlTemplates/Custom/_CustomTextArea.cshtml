@@ -1,0 +1,20 @@
+﻿@model ActivityFormControlTemplateModel
+
+@{
+    var controlEnabled = (!Model.IsPublish || !Model.IsDisabled) && !Model.IsDisabledBySettings;
+}
+
+<div class="control custom-control @(controlEnabled ? "" : "hidden")" data-type="@ActivityFormControlType.CustomTextArea" data-canberemoved="@Model.CanBeRemoved" data-hasoptions="@Model.HasOptions" data-fieldnote="@Model.FieldNote" data-isdisabled="@Model.IsDisabled" data-isrequired="@Model.IsRequired" data-canberequired="@Model.CanBeRequired" data-canbedisabled="@Model.CanBeDisabled" @Model.GetDataAttributesForLabels() data-propertyname="@Model.PropertyName" data-isreadonly="@Model.IsReadOnly">
+    @if (controlEnabled)
+    {
+        <label for="buildForm-body-@Model.PropertyName" class="control-label">@Model.GetLabelText():</label>
+        <textarea id="buildForm-body-@Model.PropertyName" name="@Model.PropertyName" class="form-control" data-val-required="@Messages.PropertyValueRequired" data-val="@(Model.IsRequired ? "true" : "false")" @(Model.IsReadOnly ? "readonly" : "")></textarea>
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_ValidationMessage", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_RequiredSwitch", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_DisabledSwitch", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_FieldNote", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Custom/_CustomControlOptions", Model)
+    }
+</div>

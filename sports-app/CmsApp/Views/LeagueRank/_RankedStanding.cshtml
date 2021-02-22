@@ -1,0 +1,60 @@
+﻿@model DataService.LeagueRankedStanding
+
+<h4>@Messages.League_RankedStandings</h4>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>@Messages.Team</th>
+        <th>@Messages.Points</th>
+        <th>@Messages.League_RankedStanding_Correction</th>
+    </tr>
+    </thead>
+
+    <tbody>
+        @if (Model.Teams?.Any() == true)
+        {
+            var counter = 0;
+            var previousTeamPoints = int.MinValue;
+            foreach (var standing in Model.Teams.OrderByDescending(x => x.Points))
+            {
+                <tr>
+                    <td>
+                        @if (standing.Points <= 0)
+                        {
+                            <text> - </text>
+                        }
+                        else
+                        {
+                            if (standing.Points != previousTeamPoints)
+                            {
+                                previousTeamPoints = standing.Points;
+
+                                counter++;
+                            }
+
+                            @counter
+                        }
+                    </td>
+                    <td>@standing.Name</td>
+                    <td>@standing.Points</td>
+                    <td style="width: 25%;">
+                        <input class="ranked-standing-correction form-control flip-to-ltr"
+                               type="number"
+                               data-teamid="@standing.Id"
+                               data-leagueid="@Model.LeagueId"
+                               value="@standing.Correction"/>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4">
+                    <i>@Messages.League_RankedStanding_NoFinishedGamesInStage</i>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

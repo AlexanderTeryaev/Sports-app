@@ -1,0 +1,24 @@
+﻿@model TeamStandingsModel
+
+@foreach (var club in Model.ClubStandings)
+{
+    Html.RenderPartial("SoccerStandings", club);
+}
+
+@if (Model.Leagues.Count > 0)
+{
+    <div class="row col-sm-12">
+        @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+        {
+            <a href="@GlobVars.SiteUrl/LeagueTable/Index?id=@Model.Leagues[0].Id&seasonId=@Model.SeasonId&union=@Model.Leagues[0].UnionId" target="_blank" class="btn btn-info export">@Messages.ExternalLink</a>
+        }
+    </div>
+}
+
+@foreach (var league in Model.Leagues)
+{
+    <div class="row col-sm-12">
+        <h3>@Html.Label(league.Name)</h3>
+    </div>
+    @Html.Action("Details", "LeagueRank", new { id = league.Id, seasonId = Model.SeasonId, unionId = league.UnionId })
+}

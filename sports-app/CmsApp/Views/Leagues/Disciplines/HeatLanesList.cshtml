@@ -1,0 +1,60 @@
+﻿@model DataService.DTO.HeatDto
+@{
+    var heat = Model;
+}
+
+@foreach (var lane in Model.Lanes)
+{
+if (lane.ClubId.HasValue)
+ {
+     <tr>
+         <td>@lane.Number</td>
+         <td>@lane.SwimmerName</td>
+         <td>@lane.ClubName</td>
+         <td>@(lane.BirthDate?.ToShortDateString())</td>
+         <td>@lane.EntryTime</td>
+         <td id="result_box_@lane.Id" class="results-td result_related" style="direction: ltr;text-align: center;display: flex;font-size: 24px; max-width: 200px">
+             @Html.Raw(UIHelpers.GetFormatRawHtml("reg_tr_" + lane.Id, 3, lane.Result, false, lane.Id))
+         </td>
+         <td><button class="btn btn-danger glyphicon glyphicon-trash" onclick="removeSwimmer(@lane.Id, @heat.CompetitionDisciplineId)"></button></td>
+         <td><a href="@Url.Action("GetChangeSwimmerModel", "Leagues", 
+                          new { competitionDisciplineId = heat.CompetitionDisciplineId, seasonId = ViewBag.SeasonId, swimmerId = lane.UserId })"
+                data-toggle="modal"
+                data-target="#changeSwimmerModal"
+                data-ajax-update="#changeSwimmerModal_pl"
+                data-ajax="true"
+                class="btn btn-primary glyphicon glyphicon-refresh" style="margin: 8px 0;padding: 2px 12px;" title="@Messages.ChangeSwimmers"></a></td>
+     </tr>
+ }
+ else
+ {
+     <tr>
+         <td>@lane.Number</td>
+         <td>
+             @{
+                 var players = new SelectList(lane.PlayersList,
+                     nameof(DataService.DTO.PlayerShortDTO.UserId), nameof(DataService.DTO.PlayerShortDTO.UserName),
+                     lane.UserId).ToList();
+                 players.Insert(0, new SelectListItem() { Text = Messages.NoneSelected, Value = "" });
+             }
+             @Html.DropDownList($"PlayersIds", players, new
+             {
+                 data_lane_id = lane.Number,
+                 data_heat_id = heat.Id,
+                 id = $"player_ids_{heat.Id}_{lane.Number}",
+                 onchange= $"setButtonAvailability({heat.Id}, {lane.Number})",
+                 style = "min-width:80px;text-align-last: center; width: 38%",
+                 @class = "form-control col-sm-6"
+             })
+             <button id="buttonAddNew_@heat.Id _@lane.Number" type="button" onclick="addSwimmer(@heat.Id, @lane.Number, @heat.CompetitionDisciplineId);" style ="width: 25%"class="btn btn-primary form-control col-sm-6" disabled="true">
+                 <i class="fa fa-plus"></i> @Messages.AddNew
+             </button>
+         </td>
+         <td></td>
+         <td></td>
+         <td></td>
+         <td></td>
+
+     </tr>
+ }
+}

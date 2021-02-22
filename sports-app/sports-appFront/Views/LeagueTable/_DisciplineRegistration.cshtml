@@ -1,0 +1,94 @@
+﻿@using Resources
+@using LogLigFront.Helpers
+@model AppModel.CompetitionDiscipline
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close pull-left" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+            <div class="modal-title disciplines-title" style="text-align:center;">
+                
+                <br />
+
+
+                <table class="borderless disciplines-title" style="width:100%;">
+                    <tr>
+                        <td style="vertical-align : middle;text-align:center;" colspan="3" rowspan="3">
+                            @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+                            {
+                                <img src="@ViewBag.Logo" class="img-circle keep-for-print" style="max-height:100px;max-width:150px;" alt="" />
+                            }
+                        </td>
+                        <td style="text-align:center;" colspan="4">
+                            <h3 style="margin-top:0px;margin-bottom:0px;">
+                                @Model.League.Union.Name
+                            </h3>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <h4 style="margin-top:0px;margin-bottom:0px;">
+                                @($" {Messages.StartListHeb}: {Model.League.Name}")
+                            </h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"> @if (Model.StartTime.HasValue)
+                {
+                    @($" {Messages.Discipline}: {@UIHelpers.GetCompetitionDisciplineName(Model.DisciplineId.Value)} {Messages.Date}: {Model.StartTime.Value.ToString("dd-MM-yyy")}")
+                }
+                else
+                {
+                    @($" {Messages.Discipline}: {@UIHelpers.GetCompetitionDisciplineName(Model.DisciplineId.Value)}")
+                }</td>
+                    </tr>
+                </table>
+
+
+
+            </div>
+        </div>
+        <div class="modal-body">
+            <table class="table res-table">
+                <thead>
+                    <tr>
+                        <th>@Messages.AthleteNumber</th>
+                        <th>@Messages.FullName</th>
+                        <th>@Messages.Club</th>
+                        <th>@Messages.YearOfBirth</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var participant in Model.CompetitionDisciplineRegistrations.OrderBy(r => r.User.FullName))
+                    {
+
+                        <tr>
+                            @{
+                                var athleteNumber = participant.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                            }
+                            <td>@athleteNumber</td>
+                            <td>
+                                <a href="@Url.Action("Details","Players", new { id = participant.UserId,  seasonId = ViewBag.SeasonId})"
+                                   style="margin: 8px 0;padding: 2px 12px; color:#000080;" target='_blank'>@participant.User.FullName</a>
+                            </td>
+                            <td>@participant.Club.Name</td>
+                            <td>
+                                @if (participant.User.BirthDay.HasValue)
+                                {@participant.User.BirthDay.Value.Year.ToString()}
+                            </td>
+                        </tr>
+
+                    }
+                </tbody>
+            </table>
+            @section scripts
+            {
+                <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+            }
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+

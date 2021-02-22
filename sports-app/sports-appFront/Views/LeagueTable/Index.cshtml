@@ -1,0 +1,238 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+@using LogLigFront.Controllers
+@using Resources
+@model DataService.LeagueRank.RankLeague
+@{
+    var leagueRankTable = ViewBag.PlayoffTable != null
+        ? (IEnumerable<DataService.DTO.PlayoffRank>)ViewBag.PlayoffTable
+        : Enumerable.Empty<DataService.DTO.PlayoffRank>();
+    var hasPlayoff = TempData["IsPlayoff"] != null ? (bool)TempData["IsPlayoff"] : false;
+}
+
+
+
+@if (leagueRankTable != null && leagueRankTable.Any())
+{
+    Html.RenderPartial("_PlayoffRankTable", leagueRankTable);
+}
+else if (leagueRankTable == null && !leagueRankTable.Any() && hasPlayoff)
+{
+    <div style="width:450px;" class="alert alert-danger">@Messages.FullRankingAlert</div>
+}
+
+
+@if (Model.Teams.Count > 0)
+{
+    <h2 class="main-title">
+        @if (!string.IsNullOrEmpty(Model.Logo))
+        {
+            <img src="@UIHelper.GetLeagueLogo(Model.Logo)" class="img-circle logo" alt="" />
+        }
+        @Model.Name - @Messages.CompetitionTable
+        <span class="pull-left">
+            <a href="#" class="btn btn-info show-hide-league-info" style="margin: 5px;">@Messages.LeagueStructure</a>
+        </span>
+    </h2>
+
+    <div class="row col-sm-12">
+        <div class="rank">
+            <div class="playOff">
+                <div class="league-info">
+                    <strong style="display: block;">
+                        @Html.DisplayFor(x => x.AboutLeague)
+                    </strong>
+
+                    @Html.DisplayFor(x => x.LeagueStructure)
+                </div>
+                <br />
+                <table class="table table-bordered tableRank">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-1">#</th>
+                            <th>@Messages.Team</th>
+                            <th class="col-sm-1">@Messages.GamesNum</th>
+                            <th class="col-sm-1">@Messages.WinsNum</th>
+                            <th class="col-sm-1">@Messages.LossNum</th>
+                            <th class="col-sm-1">@Messages.Acts</th>
+                            <th class="col-sm-1">@Messages.ActsRatio</th>
+                            <th class="col-sm-1">@Messages.Points</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var team in Model.Teams)
+                        {
+                            <tr>
+                                <td>-</td>
+                                <td>@team.Title</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row col-sm-12">
+
+        <h2 class="main-title">
+            @if (!string.IsNullOrEmpty(Model.Logo))
+            {
+                <img src="@UIHelper.GetLeagueLogo(Model.Logo)" class="img-circle logo" alt="" />
+            }
+            @Model.Name - @Messages.CompetitionTable
+            <span class="pull-left">
+                <a href="#" class="btn btn-info show-hide-league-info" style="margin: 5px;">@Messages.LeagueStructure</a>
+            </span>
+        </h2>
+        <div class="playOff">
+            <div class="league-info">
+                <strong style="display: block;">
+                    @Html.DisplayFor(x => x.AboutLeague)
+                </strong>
+
+                <div style="white-space: pre-line;">  @Html.DisplayFor(x => x.LeagueStructure) </div>
+
+            </div>
+            <br />
+            @foreach (var stage in @Model.Stages)
+            {
+                var groups = stage.Groups;
+                if (groups.Count() > 0 && groups.All(g => g.IsAdvanced))
+                {
+                    var firstGroup = groups.FirstOrDefault();
+                    if (firstGroup != null && firstGroup.PlayoffBrackets != null)
+                    {
+                        int numOfBrackets = (int)firstGroup.PlayoffBrackets;
+                        switch (numOfBrackets)
+                        {
+                            case 1:
+                                <h3>גמר</h3>
+                                break;
+                            case 2:
+                                <h3>חצי גמר</h3>
+                                break;
+                            case 4:
+                                <h3>רבע גמר</h3>
+                                break;
+                            case 8:
+                                <h3>שמינית גמר</h3>
+                                break;
+                            default:
+                                <h3>@(numOfBrackets * 2) אחרונות</h3>
+                                break;
+                        }
+                    }
+                }
+                else
+                {
+                    <h3 class="main-title">@(stage.CustomStageName ?? $"שלב מספר {stage.Number}")</h3>
+                }
+
+
+                <div class="playOff">
+                    @foreach (var group in stage.Groups)
+                    {
+                        if (!group.IsAdvanced)
+                        {
+                            <h4>@group.Title</h4>
+                        }
+                        <table class="table table-bordered tableRank">
+                            <thead>
+                                <tr>
+                                    <th width="40px">#</th>
+                                    <th>@Messages.Team</th>
+                                    @if (!group.IsAdvanced)
+                                    {
+                                        <th width="70px">@Messages.Game</th>
+                                        <th width="70px">@Messages.Win</th>
+                                        <th width="70px">@Messages.Lost</th>
+                                        <th width="90px">@Messages.Set</th>
+                                        <th width="90px">@Messages.ActsRatio</th>
+                                        @*<th width="90px">+/-</th>*@
+                                        <th width="70px">@Messages.PointsShort</th>
+
+
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var i = 0; i < group.Teams.Count(); i++)
+                                {
+                                    var team = group.Teams[i];
+                                    <tr>
+                                        @if (group.IsAdvanced)
+                                        {
+                                            int numOfBrackets = (int)group.PlayoffBrackets;
+                                            if (i % ((numOfBrackets)) == 0)
+                                            {
+                                                <td>@(i + 1)</td>
+                                            }
+                                            else
+                                            {
+                                                <td>-</td>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (i != 0 && group.Teams[i].Position == group.Teams[i - 1].Position)
+                                            {
+                                                <td>-</td>
+                                            }
+                                            else
+                                            {
+                                                <td>@(i + 1)</td>
+                                            }
+                                        }
+                                        <td>
+                                            <span class="rank-team-logo">
+                                                <img src="@UIHelper.GetTeamLogo(team.Logo)" class="img-circle" alt="" />
+                                            </span>
+                                            @Html.ActionLink(team.Title, nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = team.Id, leagueId = Model.LeagueId, seasonId = Model.SeasonId }, new { @class = "main-title", target = "_blank" })
+                                        </td>
+                                        @if (!group.IsAdvanced)
+                                        {
+                                            if (Model.IsEmptyRankTable)
+                                            {
+                                                <td>0</td>
+                                                <td>0</td>
+                                                <td>0</td>
+                                                <td>0</td>
+                                                <td>0</td>
+                                                <td>0</td>
+                                            }
+                                            else
+                                            {
+                                                <td>@group.Teams[i].Games</td>
+                                                <td>@group.Teams[i].Wins</td>
+                                                <td>@group.Teams[i].Loses</td>
+                                                <td>@group.Teams[i].SetsWon - @group.Teams[i].SetsLost</td>
+                                                <td>@group.Teams[i].SetsRatio</td>
+                                                @*<td>@team.TotalPointsScored - @team.TotalPointsLost</td>
+                                                    <td>@team.TotalPointsRatio</td>*@
+                                                <td>@group.Teams[i].Points</td>
+                                            }
+
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+

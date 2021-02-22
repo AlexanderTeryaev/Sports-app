@@ -1,0 +1,1 @@
+ALTER TABLE [LogLig].[dbo].[Disciplines] ADD Format INT NULL

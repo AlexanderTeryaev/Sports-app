@@ -1,0 +1,111 @@
+﻿@model Workers
+
+<div id="userview">
+    <a class="btn btn-primary btn-edit"
+       href="@Url.Action("CreateWorker", "Jobs", new {relevantEntityId = @Model.RelevantEntityId, logicalName = @Model.RelevantEntityLogicalName, seasonId = @ViewBag.SeasonId})"
+       data-target="#worker_modal_view"
+       data-toggle="modal">
+        <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+    </a>
+
+    @using (Ajax.BeginForm("AddExistingUser", "Jobs", new AjaxOptions { UpdateTargetId = "workers_list" }, new { id = "worker_form", autocomplete = "off" }))
+    {
+        @Html.Hidden("clubId", (int)ViewBag.ClubId)
+        @Html.Hidden("seasonId", (int)ViewBag.SeasonId)
+        <table class="table table-bordered offset-3">
+            <thead>
+                <tr>
+                    <th>@Messages.Name</th>
+                    <th>@Messages.Role</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.UsersList)
+                {
+                    <tr>
+                        <td>@user.FullName</td>
+                        <td>@user.JobName</td>
+                        <td>
+                            <a class="@AppCss.Edit"
+                               id="user@(user.UserId)"
+                               href="@Url.Action("EditWorker", "Jobs", new
+                                {
+                                    id = user.Id,
+                                    relevantEntityId = @Model.RelevantEntityId,
+                                    logicalName = @Model.RelevantEntityLogicalName,
+                                    seasonId = ViewBag.SeasonId,
+                                    SectionAlias = Model.SectionAlias
+                                })"
+                               data-target="#worker_modal_view"
+                               data-toggle="modal"></a>
+                        </td>
+                        <td>
+                            <a href="@Url.Action("DeleteWorker", new
+                                {
+                                    @id = user.Id,
+                                    relevantEntityId = @Model.RelevantEntityId,
+                                    logicalName = @Model.RelevantEntityLogicalName,
+                                    seasonId = ViewBag.SeasonId
+                                })"
+                               class="@AppCss.Delete"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#workers_list"
+                               data-ajax="true"></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>
+                        <div class="form-group no-marging">
+                            @Html.TextBoxFor(m => m.FullName, new
+                            {
+                                @class = "form-control auto-search",
+                                placeholder = Messages.SearchName,
+                                data_remote = Url.Action("Search", "Jobs", new { id = Model.RelevantEntityId, logicalName = Model.RelevantEntityLogicalName }),
+                                data_field = "UserId"
+                            })
+                            @Html.ValidationMessageFor(m => m.FullName)
+                            @Html.HiddenFor(m => m.UserId)
+                        </div>
+                    </td>
+                    <td>
+                        @Html.DropDownListFor(s => s.JobId, Model.JobsList, Messages.Select, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(s => s.JobId)
+                    </td>
+                    <td>
+                        <button class="btn btn-primary">@Messages.Save</button>
+                        @Html.HiddenFor(m => m.RelevantEntityId)
+                        @Html.HiddenFor(m => m.RelevantEntityLogicalName)
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    }
+
+</div>
+
+<script>
+    $('#usersform').validateBootstrap(true);
+
+    function updateUsersList() {
+        $.post('@Url.Action("WorkerList", "Jobs")',
+                { id: @Model.RelevantEntityId, logicalName: '@Model.RelevantEntityLogicalName', seasonId: '@ViewBag.SeasonId'},
+                function (data) {
+                    $('#workers_list').html(data);
+                });
+    }
+
+    setAutoSearch();
+
+</script>
+
+<div class="modal fade" id="worker_modal_view" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="worker_modal_form"></div>
+    </div>
+</div>

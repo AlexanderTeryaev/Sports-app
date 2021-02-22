@@ -1,0 +1,152 @@
+﻿@model RegionalClubsForm
+@{
+    var mappingError = TempData["RegionalClubMappingError"] ?? string.Empty;
+    var options = Model.DdlOptions;     
+
+    //if (Model.DdlOptions == null || Model.DdlOptions.Count() == 0)
+    //{
+    //    var regClubs = new MultiSelectList(Model.Clubs?.Select(c =>
+    //    {
+    //        return c;
+    //    })
+    //    ?? new List<AppModel.Club>(), nameof(AppModel.Club.ClubId), nameof(AppModel.Club.Name), Model.SelectedValues);
+
+    //    Model.DdlOptions = regClubs;
+    //}
+HttpCookie cookie = Request.Cookies["_culture"];
+    bool isHebrew = cookie?.Value != "en-US";
+    var btnClass = isHebrew ? "pull-left" : "pull-right";
+}
+
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+@if (Model.IsRegionalFederation)
+{
+    @Html.HiddenFor(m => m.RegionalId);
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>@Messages.Id</th>
+                <th width="10"></th>
+                <th  width="110">@Messages.ClubApprove</th>
+                <th>@Messages.ClubName</th>
+                <th >@Messages.ClubManager</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var m in Model.RegionalClubs)
+            {
+                string frmid = "regionalclubform" + m.ClubId;
+
+                <tr>
+                    <td>
+                        @m.ClubId
+                    </td>
+                    <td width="10">
+                        <a class="@AppCss.Edit" href="@Url.Action("Edit", "Clubs", new { id = m.ClubId,
+                                                     unionId = Model.UnionId, seasonId = Model.SeasonId.GetValueOrDefault(0)
+                                                 })"></a>
+                       
+                    </td>
+                    <td align="center">
+                        @Html.CheckBoxFor(item => m.IsClubApproveByRegional, new
+                       {
+                           id = $"approveclubCheckbox_{m.ClubId}",
+                           onclick = $"approveclub({m.ClubId})"
+                       })
+                    </td>
+                    <td>
+                        @m.ClubName
+                    </td>
+                    <td>
+                        @m.ClubManager
+                    </td>
+
+                    <td>
+                        <a href="@Url.Action("RemoveRegionalClubMapping", "Regional", new { id = Model.RegionalId, clubid = m.ClubId })" 
+                           class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#regionalclubs"
+                           data-ajax="true"></a>
+                    </td>
+                </tr>
+
+            }
+        </tbody>
+
+        <tfoot>
+            <tr>
+                <td></td>
+                <td colspan="3">
+                    @using (Ajax.BeginForm("MapClubWithRegional", "Regional", new AjaxOptions { UpdateTargetId = "regionalclubs" }, new { id = "regionalclubform" }))
+                    {
+                        <span class="form-group">
+                            @Html.DropDownList("SelectedValues", Model.DdlOptions, new { @class = "clubids form-control", multiple = "multiple" })
+
+                        </span>
+                        @Html.HiddenFor(m => m.SelectedValues)
+                        @Html.HiddenFor(m => m.RegionalId)
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-primary" form="regionalclubform">@Messages.Save</button>
+                </td>
+            </tr>
+        </tfoot>
+
+    </table>
+}
+
+<script>
+
+    $('#regionalclubform').validateBootstrap(true);
+    var errorMsg = '@mappingError';
+    if(errorMsg.length>0){
+        alert(errorMsg);
+    }
+
+    function approveclub(id) {
+        var isApproved = $("#approveclubCheckbox_" + id).is(":checked");
+        $.ajax({
+            url: '@Url.Action("UpdateClubApprovelByRegional", "Regional")',
+            type: "POST",
+            data: {
+                id: $("#RegionalId").val(),
+                clubid: id,
+                isApproved: isApproved
+            }
+        });
+    };
+
+    $(document).ready(function () {
+        $(".clubids").multiselect({
+            buttonText: function (options, select) {
+                return '@Messages.RegionalChooseClub';
+            },
+            buttonTitle: function (options, select) {
+                var labels = [];
+                options.each(function () {
+                    labels.push($(this).text());
+                });
+                return labels.join(' - ');
+            },
+           // includeSelectAllOption: true,
+            enableFiltering: true,
+            maxHeight: 500,
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+    });
+   
+</script>

@@ -1,0 +1,8 @@
+﻿@if (TempData["Close"] != null)
+{
+    <script>
+            $('#setting').dialog('close');
+            $('#setting').remove();
+            //$('#groups').load('@Url.Action("Groups", "Schedules", new { id = TempData["Id"] })');
+    </script>
+}

@@ -1,0 +1,15 @@
+﻿@model Tuple<ActivityRegistrationItem, bool>
+
+@if (Model.Item1.IsLocked.HasValue && Model.Item2)
+{
+    <a href="javascript:;" class="activity-unlock-player" data-id="@(Model.Item1.TeamPlayerId)">
+        @if (Model.Item1.IsLocked == true)
+        {
+            <i class="fa fa-lock"></i>
+        }
+        else
+        {
+            <i class="fa fa-unlock"></i>
+        }
+    </a>
+}

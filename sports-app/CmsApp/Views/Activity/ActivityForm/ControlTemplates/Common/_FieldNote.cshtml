@@ -1,0 +1,12 @@
+﻿@model ActivityFormControlTemplateModel
+    
+@if (!Model.IsPublish)
+{
+    <div>
+        <input type="text" class="form-control fieldDescription" placeholder="@Messages.Activity_BuildForm_FieldNote" value="@Model.FieldNote"/>
+    </div>
+}
+else
+{
+    <div class="published-field-note"><small><i>@Model.FieldNote</i></small></div>
+}

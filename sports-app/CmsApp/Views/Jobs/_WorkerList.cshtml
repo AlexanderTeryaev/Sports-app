@@ -1,0 +1,1259 @@
+﻿@using DataService
+@model Workers
+@{
+    var showAll = ViewBag.ShowAll ?? false;
+    var isRegionalManager = ViewBag.IsRegionalManager ?? false;
+    var jobs = new MultiSelectList(Model.JobsRoles?.Values.Select(c =>
+    {
+        c.Title = LangHelper.GetJobName(c.RoleName); return c;
+    })
+        ?? new List<AppModel.JobsRole>(), nameof(AppModel.JobsRole.RoleId), nameof(AppModel.JobsRole.Title), Model.SelectedValues);
+    bool isHebrew = Request.IsHebrew();
+    var btnClass = isHebrew ? "pull-left" : "pull-right";
+    var jobsOfficials = new MultiSelectList(Model.ReportOfficials?.Values ?? new List<DataService.UserJobDto>(), nameof(DataService.UserJobDto.Id), nameof(DataService.UserJobDto.FullName));
+    string distanceSettings = ViewBag.DistanceSettings != null ? ViewBag.DistanceSettings : string.Empty;
+    string reportSet = ViewBag.ReportSettings != null ? ViewBag.ReportSettings : string.Empty;
+    var canBlockRefereesRegistration = User.IsInAnyRole(AppRole.Admins) || Model.IsUnionManager;
+    bool isRefereeRole = User.HasTopLevelJob(JobRole.RefereeAssignment);
+    bool canPickSaturdayDays = false;
+    if ((User.IsInAnyRole(AppRole.Admins) || Model.IsUnionManager || isRefereeRole) && ViewBag.IsClubOrUnion && Model.RelevantEntityLogicalName == LogicaName.Union)
+    {
+        canPickSaturdayDays = true;
+    }
+    var leagueDates = Model.UsersList.FirstOrDefault(x => x.LeagueDates != null && x.LeagueDates.Count > 0);
+    string selectedDate;
+    if (leagueDates!=null)
+    {
+        selectedDate = leagueDates.LeagueDates.Min().Date.ToShortDateString();
+    } else
+    {
+        selectedDate = DateTime.Now.ToShortDateString();
+    }
+}
+<style>
+    .large-modal {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .large-content {
+        height: auto;
+        min-height: 100%;
+        border-radius: 0;
+    }
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .leagueDayAll {
+        width: 133px;
+        float: left;
+        margin: 5px;
+        margin-right: 240px;
+    }
+    
+</style>
+<script>
+    var isHeb = '@Request.IsHebrew()';
+</script>
+@if (Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League)
+{
+    <link href="~/Content/css/jquery.timesetter.css" rel="stylesheet" />
+    <script src="~/Content/js/jquery.timesetter.js"></script>
+    <script src="~/Scripts/jquery.tablesorter.min.js"></script>
+}
+
+<div id="sections_pl">
+    @if ((User.IsInAnyRole(AppRole.Admins) || Model.IsUnionManager || isRefereeRole) && ViewBag.IsClubOrUnion)
+    {
+        <div id="paymentReportDiv" class="row remove_print">
+            <div class="panel-default">
+                <div class="panel-heading">@Messages.PaymentReport</div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <form>
+                                <label style="display:inline-flex">@Messages.Distance @Messages.Settings.ToLower():</label>
+                                <label class="radio-inline">
+                                    <input name="distanceCheck" id="tableCheck" checked type="radio" value="table">@Messages.PaymentReport_ByDistTable
+                                </label>
+                                <label class="radio-inline">
+                                    <input name="distanceCheck" id="googleCheck" type="radio" value="googleMapsApi"> @Messages.PaymentReport_ByGoogleApi
+                                </label>
+                                <a id="editDistance" class="btn btn-default @btnClass">@Messages.Edit <i id="distanceLoading" style="display: none" class="@AppCss.Loading"></i></a>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:10px;">
+                        <div class="col-sm-12">
+                            <form>
+                                <label style="display:inline-flex">@Messages.Report @Messages.Settings.ToLower():</label>
+                                <div>
+                                    <label class="radio-inline">
+                                        <input name="reportSettings" id="fullReport" checked type="radio" value="table">@Messages.FullReport
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input name="reportSettings" id="reportWithoutSum" type="radio" value="googleMapsApi"> @Messages.ReportWithoutSum
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="checkbox-inline">
+                                        <input id="reportRemoveTravelDistanceForUnpublished" @(Model.ReportRemoveDistance ? "checked" : "") type="checkbox"> @Messages.RemoveTravelDistanceForUnpublishedGames
+                                    </label>
+
+                                    @if (Model.RelevantEntityLogicalName == LogicaName.Union)
+                                    {
+                                        <div>
+                                            <input id="SaturdaysTariff" @(Model.SaturdaysTariff ? "checked" : "") type="checkbox"> @Messages.SaturdaysTariff     <div id="from-time" name="@Messages.FromHour" class="weekly-appointment-picker"></div> - <div id="to-time" name="@Messages.ToHour" class="weekly-appointment-picker"></div>
+                                        </div>
+                                    }
+
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr />
+        </div>
+    }
+    <div class="row offset-2 remove_print">
+        <div class="col-sm-12">
+            <div class="col-sm-1">
+                <a class="btn btn-primary btn-edit"
+                   href="@Url.Action("CreateWorker", "Jobs", new {relevantEntityId = @Model.RelevantEntityId, logicalName = @Model.RelevantEntityLogicalName, seasonId = @ViewBag.SeasonId, unionId = Model.UnionId})"
+                   data-target="#worker_modal_view"
+                   data-toggle="modal">
+                    <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                </a>
+            </div>
+            @if (Model.IsIndividualSection && ViewBag.IsLeague)
+            {
+                <div class="col-sm-2">
+                    <a id="exportRefereesSummaryReportCompetition" class="btn btn-primary">@Messages.RefereesSummaryReport<i id="exportRefereesCompetitionLoad" class="@AppCss.Loading" style="display: none;"></i></a>
+                </div>
+                <div class="col-sm-5 col-sm-offset-4">
+                    <div style="margin-left: 42px;">
+                        @if (leagueDates != null)
+                        {
+                            if (isHebrew)
+                            {
+                                <button onclick="updateJobUserTimesAll();" class="btn btn-primary @btnClass" style="margin: 5px;">@Messages.Save <i id="updateJobWorkTime" class="@AppCss.Loading" style="display: none;"></i></button>
+                                @Html.Hidden("userJobWorkToTimeHdn", (DateTime)(ViewBag.DateTimeTo ?? DateTime.MinValue), new { data_format = "HH:mm ", id = "userJobToTimeAlli" })
+                                <div class="UserJobWorkToTimeAll @btnClass" id="userJobToTimeAll"></div>
+                                @Html.Hidden("userJobWorkFromTimeHdn", (DateTime)(ViewBag.DateTimeFrom ?? DateTime.MinValue), new { data_format = "HH:mm ", id = "userJobFromTimeAlli" })
+                                <div class="UserJobWorkFromTimeAll @btnClass" id="userJobFromTimeAll"></div>
+                                if (Model.UsersList != null && Model.UsersList.Any(x => x.LeagueDates.Count > 0))
+                                {
+                                    @Html.DropDownListFor(x => selectedDate, new SelectList(Model.UsersList.First().LeagueDates.Select(x => x.Date.ToShortDateString()), Model.UsersList.First().LeagueDates.Min().Date.ToShortDateString()), Messages.Select, new { @class = "form-control leagueDayAll", id = "leagueDay_ld", @onchange = "dayChangedAll()" })
+                                }
+                                else
+                                {
+                                    <div class="leagueDayAll"></div>
+                                }
+                            }
+                            else
+                            {
+                                if (Model.UsersList != null && Model.UsersList.Any(x => x.LeagueDates.Count > 0))
+                                {
+                                    @Html.DropDownListFor(x => selectedDate, new SelectList(Model.UsersList.First().LeagueDates.Select(x => x.Date.ToShortDateString()), (string)ViewBag.DateSelected), Messages.Select, new { @class = "form-control leagueDayAll", id = "leagueDay_ld", @onchange = "dayChangedAll()" })
+                                }
+                                else
+                                {
+                                    <div class="leagueDayAll"></div>
+                                }
+                                @Html.Hidden("userJobWorkFromTimeHdn", (DateTime)(ViewBag.DateTimeFrom ?? DateTime.MinValue), new { data_format = "HH:mm ", id = "userJobFromTimeAlli" })
+                                <div class="UserJobWorkFromTimeAll" id="userJobFromTimeAll"></div>
+                                @Html.Hidden("userJobWorkToTimeHdn", (DateTime)(ViewBag.DateTimeTo ?? DateTime.MinValue), new { data_format = "HH:mm ", id = "userJobToTimeAlli" })
+                                <div class="UserJobWorkToTimeAll" id="userJobToTimeAll"></div>
+                                <button onclick="updateJobUserTimesAll();" class="btn btn-primary" style="margin: 5px;">@Messages.Save <i id="updateJobWorkTime" class="@AppCss.Loading" style="display: none;"></i></button>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+            @if (ViewBag.IsClubOrUnion && (User.IsInAnyRole(AppRole.Admins) || isRefereeRole || Model.IsUnionManager))
+            {
+                <a id="showAllOfficials" class="btn btn-primary" href="@Url.Action("WorkerList", "Jobs", new
+                                                                       {
+                                                                           id = Model.RelevantEntityId,
+                                                                           logicalName = Model.RelevantEntityLogicalName,
+                                                                           seasonId = Model.SeasonId,
+                                                                           showAll = true
+                                                                       })"
+                   data-ajax="true"
+                   data-ajax-update="#workers_list"
+                   data-ajax-mode="replace"
+                   data-ajax-loading="#showAllLoading"
+                   data-ajax-method="GET">
+                    @Messages.ShowAllOfficials
+                    <span id="showAllLoading" class="@AppCss.Loading" style='display: none'></span>
+                </a>
+                <a id="showInactiveReferees" class="btn btn-primary" href="@Url.Action("WorkerList", "Jobs", new
+                                                                       {
+                                                                           id = Model.RelevantEntityId,
+                                                                           logicalName = Model.RelevantEntityLogicalName,
+                                                                           seasonId = Model.SeasonId,
+                                                                           showInactive = true
+                                                                       })"
+                   data-ajax="true"
+                   data-ajax-update="#workers_list"
+                   data-ajax-mode="replace"
+                   data-ajax-loading="#showInactiveLoading"
+                   data-ajax-method="GET">
+                    @Messages.ShowInactiveReferees
+                    <span id="showInactiveLoading" class="@AppCss.Loading" style='display: none'></span>
+                </a>
+
+                <a class="btn btn-info" id="exportOfficialsList">
+                    <i class="glyphicon glyphicon-export"></i>@Messages.ExportToExcel
+                    <i class="fa fa-spin fa-spinner" id="exportloading" style="display: none"></i>
+                </a>
+                <a href="#" id="print" class="btn btn-info remove_print">
+                    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+                </a>
+                @Html.DropDownList("JobsIds", jobs, new { @class = "jobsids form-contro", multiple = "multiple" })
+                <a id="filterOfficials" class="btn btn-default">@Messages.Filter<i id="filterLoad" class="@AppCss.Loading" style="display: none;"></i></a>
+            }
+        </div>
+    </div>
+    @if (ViewBag.IsClubOrUnion && (User.IsInAnyRole(AppRole.Admins) || isRefereeRole || Model.IsUnionManager))
+    {
+        <div class="row offset-2" id="downloadAllReports">
+            <form class="form-inline">
+                <div class="form-group">
+                    @Html.LabelFor(m => m.StartReportDate, Messages.StartDate)
+                    @Html.TextBoxFor(m => m.StartReportDate, new { @class = "form-control frm-date-wo-time" })
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.EndReportDate, Messages.EndDate)
+                    @Html.TextBoxFor(m => m.EndReportDate, new { @class = "form-control frm-date-wo-time" })
+                </div>
+                <div class="form-group">
+                    <a id="exportRefereesSummaryReport" class="btn btn-primary">@Messages.RefereesSummaryReport<i id="exportRefereesLoad" class="@AppCss.Loading" style="display: none;"></i></a>
+                </div>
+            </form>
+            <div class="offset-2">
+                @Html.DropDownList("ReportOfficialsIds", jobsOfficials, new { @class = "reportids form-control", multiple = "multiple" })
+                <a id="exportJobsOfficials" class="btn btn-primary">@Messages.ExportOfficials<i id="exportOfficialsLoad" class="@AppCss.Loading" style="display: none;"></i></a>
+
+                <input type="checkbox" id="SaveReportToOfficials" />
+                <label for="SaveReportToOfficials">@Messages.SaveReportToOfficials</label>
+            </div>
+        </div>
+    }
+
+    @using (Ajax.BeginForm("AddExistingUser", "Jobs", new { showAll = showAll }, new AjaxOptions { UpdateTargetId = "workers_list" },
+                                                                                                                                                                                    new { id = "worker_form", autocomplete = "off" }))
+    {
+        var userlist = Model.UsersList.GroupBy(p => p.UserId).Select(p => new
+        {
+            UserId = p.First().UserId,
+            Id = p.First().Id,
+            UserJobIds = p.Select(x => x.Id).ToArray(),
+            FullName = p.First().FullName,
+            JobName = string.Join(", ", p.Select(j => j.JobName).ToArray()),
+            Email = p.First().Email,
+            Phone = p.First().Phone,
+            BirthDay = p.First().BirthDate,
+            Address = p.First().Address,
+            City = p.First().City,
+            RoleName = string.Join(",", p.Select(x => x.RoleName.ToLower())),
+            IdentNum = p.First().IdentNum,
+            IsBlocked = p.First().IsBlocked,
+            IsUnionTravel = p.First().TravelInformationDtos?.First().IsUnionTravel,
+            NoTravel = p.First().TravelInformationDtos?.First().NoTravel,
+            IsCompetitionRegistrationBlocked = p.First().IsCompetitionRegistrationBlocked,
+            GamesCount = p.First().GamesCount,
+            CompetitionsParticipationCount = p.First().CompetitionsParticipationCount,
+            MartialArtsCompetitionsCount = p.First().MartialArtsCompetitionsCount,
+            FromHour = p.First().TravelInformationDtos?.First().FromHour,
+            ToHour = p.First().TravelInformationDtos?.First().ToHour,
+            DateList = p.First().LeagueDates?.Count > 0 ? new SelectList(p.First().LeagueDates.Select(x => x.Date.ToShortDateString()), p.First().CurrentDateInformation.Date.ToShortDateString()) : null,
+            CurrentDateInformation = p.First().CurrentDateInformation,
+            Active = p.First().Active
+    }).OrderByDescending(p => p.Active).ThenBy(p => p.FullName);
+
+
+
+        @Html.Hidden("SeasonId", (object)ViewBag.SeasonId == null ? string.Empty : (object)ViewBag.SeasonId.ToString())
+
+        <table class="table table-bordered offset-3">
+            <thead>
+                <tr>
+                    <th class="remove_print"></th>
+                    <th>@Messages.Active</th>
+                    @if (ViewBag.IsClubOrUnion && Model.SectionAlias == SectionAliases.Gymnastic)
+                    {
+                        <th>@Messages.BlockRefereeRegistration</th>
+                    }
+                    <th>#</th>
+                    @if ((Model.RelevantEntityLogicalName == LogicaName.Club || Model.RelevantEntityLogicalName == LogicaName.Team) && (User.IsInAnyRole(AppRole.Admins) || Model.IsUnionManager))
+                    {
+                        <th>@Messages.Block</th>
+                    }
+                    <th>@Messages.IdentNum</th>
+                    <th>@Messages.Name</th>
+                    <th>@Messages.Role</th>
+                    <th>@Messages.Email</th>
+                    <th>@Messages.Phone</th>
+                    <th>@Messages.BirthDay</th>
+                    <th>@Messages.Address</th>
+                    <th>@Messages.City</th>
+                    @if (Model.RelevantEntityLogicalName == LogicaName.League)
+                    {
+                        <th style="min-width: 132px;">@Messages.Day</th>
+                    }
+                    @if (Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League)
+                    {
+                        <th>@Messages.UnionTransport</th>
+                    }
+                    else
+                    {
+                        if (!isRegionalManager)
+                        {
+                            <th>@(Model.IsIndividualSection ? Messages.Competitions : Messages.Games)</th>
+                        }
+                    }
+                    @if (Model.IsIndividualSection && Model.RelevantEntityLogicalName == LogicaName.League)
+                    {
+                        <th>@Messages.NoTravel</th>
+                    }
+                    @if (Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League)
+                    {
+                        <th style="min-width: 132px;">@Messages.FromHour</th>
+                        <th style="min-width: 132px;">@Messages.ToHour</th>
+                    }
+                    @if (showAll)
+                    {
+                        <th class="remove_print"></th>
+                    }
+                    <th class="remove_print"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in userlist)
+                {
+                    var needReport = user.RoleName.Equals(JobRole.Referee, StringComparison.InvariantCultureIgnoreCase) ||
+                                     user.RoleName.Equals(JobRole.Spectator, StringComparison.InvariantCultureIgnoreCase) ||
+                                     user.RoleName.Equals(JobRole.Desk, StringComparison.InvariantCultureIgnoreCase);
+
+                    var canBeEdit = true;
+                    if (ViewBag.JobRole == JobRole.RefereeAssignment)
+                    {
+                        if (user.RoleName.Equals(JobRole.Desk, StringComparison.InvariantCultureIgnoreCase)
+                            || user.RoleName.Equals(JobRole.Referee, StringComparison.InvariantCultureIgnoreCase)
+                            || user.RoleName.Equals(JobRole.Spectator, StringComparison.InvariantCultureIgnoreCase)
+                            || user.RoleName.Equals(JobRole.RefereeAssignment, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            canBeEdit = true;
+                            needReport = true;
+                        }
+                        else
+                        {
+                            canBeEdit = false;
+                            needReport = false;
+                        }
+                    }
+
+                <tr>
+                    <td class="res-stat remove_print">
+                        @if (canBeEdit)
+                        {
+                            <a class="@AppCss.Edit"
+                               id="user@(user.UserId)"
+                               href="@Url.Action("EditWorker", "Jobs", new
+                            {
+                                id = user.Id,
+                                relevantEntityId = @Model.RelevantEntityId,
+                                logicalName = @Model.RelevantEntityLogicalName,
+                                seasonId = ViewBag.SeasonId,
+                                showAll = showAll,
+                                SectionAlias = Model.SectionAlias
+                            })"
+                               data-target="#worker_modal_view"
+                               data-toggle="modal"></a>
+                        }
+                    </td>
+                    <td class="text-center">
+                        @if (user.RoleName.Contains(JobRole.Referee.ToLower()))
+                        {
+                            <input type="checkbox" name="activeJob"
+                                   @(user.Active ? "checked" : "")
+                                   onchange="UpdateUsersJobActiveFlag(@user.Id)" />
+                        }
+                    </td>
+                    @if (ViewBag.IsClubOrUnion && Model.SectionAlias == SectionAliases.Gymnastic)
+                    {
+                        <td>
+                            @if (user.RoleName.Contains(JobRole.Referee.ToLower()))
+                            {
+                                <input type="checkbox" class="block-referee-reg-checkbox"
+                                       @(user.IsCompetitionRegistrationBlocked ? "checked" : "")
+                                       data-ids="@(Json.Encode(user.UserJobIds))"
+                                       @(canBlockRefereesRegistration ? "" : "disabled") />
+                            }
+                        </td>
+                    }
+                    <td class="tdUserJobId">@user.Id</td>
+                    @if ((Model.RelevantEntityLogicalName == LogicaName.Club || Model.RelevantEntityLogicalName == LogicaName.Team) && (User.IsInAnyRole(AppRole.Admins) || Model.IsUnionManager))
+                    {
+                        <td>
+                            @Html.CheckBoxFor(m => user.IsBlocked, new { @class = "is-blocked", data_id = $"{user.Id}" })
+                        </td>
+                    }
+                    <td>@user.IdentNum</td>
+                    <td>@user.FullName</td>
+                    <td>@user.JobName</td>
+
+                    <td>@user.Email</td>
+                    <td>@user.Phone</td>
+                    <td>@{ var birthday = user.BirthDay.HasValue ? user.BirthDay.Value.ToString("dd/MM/yyyy") : ""; }@birthday</td>
+                    <td>@user.Address</td>
+                    <td>@user.City</td>
+                    @if (Model.SectionAlias != SectionAliases.Athletics || Model.RelevantEntityLogicalName != LogicaName.League)
+                    {
+                        if (!isRegionalManager)
+                        {
+                            <td>
+
+                                @if (Model.SectionAlias.Equals(GamesAlias.MartialArts))
+                                {
+                                    @user.MartialArtsCompetitionsCount
+                                }
+                                else
+                                {
+                                    if (Model.SectionAlias.Equals(GamesAlias.Athletics))
+                                    {
+                                        @user.CompetitionsParticipationCount
+                                    }
+                                    else
+                                    {
+                                        @user.GamesCount
+                                    }
+                                }
+                            </td>
+                        }
+                    }
+                    @if (Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League)
+                    {
+                        if (Model.UsersList.Count > 0 && Model.UsersList.FirstOrDefault().LeagueDates.Count > 0)
+                        {
+                            <td>
+                                <div>
+                                    @Html.DropDownListFor(x => user.CurrentDateInformation, user.DateList, Messages.Select, new { @class = "form-control leagueDay", id = "leagueDay_" + user.Id + "ld", @onchange = "dayChanged(" + user.Id + ")" })
+                                </div>
+                            </td>
+                            @Html.Partial("_TravelInformation", new TravelSectionModel
+                            {
+                                TravelInformationDto = Model.UsersList.First(x => x.Id == user.Id).TravelInformationDtos.FirstOrDefault(x => x.FromHour.HasValue && x.FromHour.Value.Date == user.CurrentDateInformation.Date) != null ?
+                                    Model.UsersList.First(x => x.Id == user.Id).TravelInformationDtos.FirstOrDefault(x => x.FromHour.HasValue && x.FromHour.Value.Date == user.CurrentDateInformation.Date) :
+                                new TravelInformationDto
+                                {
+                                    NoTravel = false,
+                                    IsUnionTravel = false,
+                                    FromHour = user.CurrentDateInformation,
+                                    ToHour = user.CurrentDateInformation
+                                },
+                                IsAthleticsLeague = Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League,
+                                IsIndividualSection = Model.IsIndividualSection,
+                                JobId = user.Id
+                            })
+                        }
+                        else
+                        {
+                            <td colspan="5">@Messages.SelectLeagueStartDateAndEndDateToUseThisFunction</td>
+                        }
+                    }
+                    <td class="reportcolumn remove_print">
+                        @if (needReport)
+                        {
+                            <a data-user-id="@user.UserId" data-jobid="@user.Id" data-user-official="@user.RoleName.ToString()" id="reportBtn" class="btn btn-primary" data-toggle="tooltip" title="@Messages.ReportTooltip.Replace("{0}",LangHelper.GetJobName(user.RoleName).ToLower())">
+                                <i class="fa fa-file-text"></i>
+                            </a>
+                        }
+                    </td>
+                    <td class="remove_print">
+                        @if ((User.IsInAnyRole(AppRole.Admins) || ViewBag.JobRole == JobRole.RefereeAssignment || User.HasTopLevelJob(JobRole.ClubManager) || User.HasTopLevelJob(JobRole.UnionManager)) && Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League)
+                        {
+                            <a href="#" onclick="updateJobUserTimes(@user.Id);"
+                               class="@AppCss.Save svButton_@user.Id"></a>
+                        }
+                        @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.JobRole == JobRole.RefereeAssignment || User.HasTopLevelJob(JobRole.ClubManager) || User.HasTopLevelJob(JobRole.UnionManager))
+                        {
+                            <a href="@Url.Action("DeleteWorker", new
+                                {
+                                @id = user.Id,
+                                    relevantEntityId = @Model.RelevantEntityId,
+                                    logicalName = @Model.RelevantEntityLogicalName,
+                                    seasonId = ViewBag.SeasonId,
+                                    showAll = showAll
+                                })"
+                               class="@AppCss.Delete"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#workers_list"
+                               data-ajax="true"></a>
+                        }
+                    </td>
+                </tr>
+                }
+            </tbody>
+            <tfoot class="remove_print">
+                <tr>
+                    <td></td>
+                    <td colspan="3">
+                        <div class="form-group no-marging">
+                            @Html.TextBoxFor(m => m.FullName, new
+                       {
+                           @class = "form-control auto-search",
+                           placeholder = Messages.SearchExisting,
+                           data_remote = Url.Action("Search", "Jobs", new { id = Model.RelevantEntityId, logicalName = Model.RelevantEntityLogicalName, seasonId = Model.SeasonId }),
+                           data_field = "UserId"
+                       })
+                            @Html.ValidationMessageFor(m => m.FullName)
+                            @Html.HiddenFor(m => m.UserId)
+                        </div>
+                    </td>
+                    <td colspan="2">
+                        @Html.DropDownListFor(m => m.JobId, Model.JobsList, Messages.Select, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.JobId)
+                    </td>
+                    <td>
+                        <button class="btn btn-primary">@Messages.Save</button>
+                        @Html.HiddenFor(m => m.RelevantEntityId)
+                        @Html.HiddenFor(m => m.RelevantEntityLogicalName)
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+    }
+    <script>
+        $('#usersform').validateBootstrap(true);
+
+        function updateUsersList() {
+            var selectedDay = $("#leagueDay_ld").val();
+            $.post('@Url.Action("WorkerList", "Jobs")',
+                {
+                    id: @Model.RelevantEntityId,
+                    logicalName: '@Model.RelevantEntityLogicalName',
+                    seasonId: '@ViewBag.SeasonId',
+                    unionId: '@(Model.RelevantEntityLogicalName == LogicaName.Union ? Model.RelevantEntityId : 0)',
+                    dateSelected: selectedDay
+                },
+                function(data) {
+                    $('#workers_list').html(data);
+                    $('#updateJobWorkTime').hide();
+                });
+        }
+
+        function updateJobUserTimes(userId) {
+            var selectedDay = $("#leagueDay_" + userId +"ld").val();
+            var fromTime = $("#userJobFromTime_" + userId + " #txtHours").val() + ":" + $("#userJobFromTime_" + userId + " #txtMinutes").val();
+            var toTime = $("#userJobToTime_" + userId + " #txtHours").val() + ":" + $("#userJobToTime_" + userId + " #txtMinutes").val();
+            var isUnionTravel = $('#union_transport_' + userId).is(':checked');
+            var noTravel = $('#no_travel_' + userId).is(':checked');
+
+            $.post('@Url.Action("UpdateWorkTimes", "Jobs")',
+                {
+                    id: userId,
+                    fromHour: fromTime,
+                    toHour: toTime,
+                    'isUnionTravel': isUnionTravel,
+                    'noTravel': noTravel,
+                    'dateTimeString': selectedDay
+                },
+                function (data) {
+                    $(".svButton_" + userId).removeClass("btn-primary")
+                        .addClass("btn-success");
+                });
+        }
+
+        function updateJobUserTimesAll() {
+            var selectedDay = $("#leagueDay_ld").val();
+            var fromTime = $("#userJobFromTimeAll" + " #txtHours").val() + ":" + $("#userJobFromTimeAll" + " #txtMinutes").val();
+            var toTime = $("#userJobToTimeAll" + " #txtHours").val() + ":" + $("#userJobToTimeAll" + " #txtMinutes").val();
+            var userJobsIds = [];
+            $('.tdUserJobId').each(function (i, ele) {
+                userJobsIds.push(parseInt($(ele).html()));
+            });
+            $.ajax({
+                url: "/Jobs/UpdateWorkTimesAll",
+                type: "POST",
+                traditional: true,
+                data: {
+                    userJobsIds: userJobsIds,
+                    fromHour: fromTime,
+                    toHour: toTime,
+                    'dateTimeString': selectedDay
+                },
+                beforeSend: function() {
+                    $("#updateJobWorkTime").show();
+                },
+                complete: function () {
+                    updateUsersList();
+                }
+            });
+        }
+
+        function UpdateUsersJobActiveFlag(usersJobId) {
+            $.ajax({
+                url: "/Jobs/UpdateUsersJobActiveStatus",
+                type: "POST",
+                traditional: true,
+                data: {
+                    id: usersJobId,
+                },
+                beforeSend: function () {
+                    
+                },
+                success: function (data) {
+                    alert(data.Message);
+                }
+            });
+        }
+
+        function getJobWorkTimeSettings() {
+                var options1 = {
+                    hour: {
+                        value: 0,
+                        min: 0,
+                        max: 24,
+                        step: 1,
+                        symbol: "h"
+                    },
+                    minute: {
+                        value: 0,
+                        min: 0,
+                        max: 60,
+                        step: 1,
+                        symbol: "m"
+                    },
+                    direction: "increment", // increment or decrement
+                    inputHourTextbox: null, // hour textbox
+                    inputMinuteTextbox: null, // minutes textbox
+                    postfixText: "", // text to display after the input fields
+                    numberPaddingChar: '0' // number left padding character ex: 00052
+                };
+                return options1;
+        };
+
+        @if (Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League)
+        {
+            <text>
+            $(".UserJobWorkFromTime").each(function(i, value) {
+                var $value = $(value);
+                $value.timesetter(getJobWorkTimeSettings());
+            });
+            $(".UserJobWorkToTime").each(function (i, value) {
+                var $value = $(value);
+                $value.timesetter(getJobWorkTimeSettings());
+            });
+            $(".UserJobWorkFromTimeAll").timesetter(getJobWorkTimeSettings());
+            $(".UserJobWorkToTimeAll").timesetter(getJobWorkTimeSettings());
+            </text>
+        }
+
+
+        setAutoSearch();
+        $(document).ready(function () {
+            @if (Model.DefaultJobSelected != 0)
+            {
+                <text>
+                    $("select#@(nameof(Model.JobId))").val("@(Model.DefaultJobSelected)");
+                </text>
+            }
+            @if (Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League)
+        {
+            <text>
+                $(".UserJobWorkFromTime").each(function(i, value) {
+                    var $value = $(value);
+                    var id = $value[0].id;
+                    var initialValue = $("#" + id + "i")[0].value;
+                    var d;
+                    var timestamp = Date.parse(initialValue);
+                    if (isNaN(timestamp) == false) {
+                        d = new Date(timestamp);
+                    } else {
+                        d = new Date("01/01/1970 " + initialValue.split(' ')[1]);
+                    }
+                    var h = d.getHours();
+                    var m = d.getMinutes();
+                    $value.setHour(h);
+                    $value.setMinute(m);
+                });
+
+                $(".UserJobWorkToTime").each(function(i, value) {
+                    var $value = $(value);
+                    var id = $value[0].id;
+                    var initialValue = $("#" + id + "i")[0].value;
+                    var d;
+                    var timestamp = Date.parse(initialValue);
+                    if (isNaN(timestamp) == false) {
+                        d = new Date(timestamp);
+                    } else {
+                        d = new Date("01/01/1970 " + initialValue.split(' ')[1]);
+                    }
+                    var h = d.getHours();
+                    var m = d.getMinutes();
+                    $value.setHour(h);
+                    $value.setMinute(m);
+                });
+
+                $(".UserJobWorkFromTimeAll").each(function (i, value) {
+                    var $value = $(value);
+                    var initialValue = $("#userJobFromTimeAlli")[0].value;
+                    var d;
+                    var timestamp = Date.parse(initialValue);
+                    if (isNaN(timestamp) == false) {
+                        d = new Date(timestamp);
+                    } else {
+                        d = new Date("01/01/1970 " + initialValue.split(' ')[1]);
+                    }
+                    var h = d.getHours();
+                    var m = d.getMinutes();
+                    $value.setHour(h);
+                    $value.setMinute(m);
+                });
+
+                $(".UserJobWorkToTimeAll").each(function (i, value) {
+                    var $value = $(value);
+                    var initialValue = $("#userJobToTimeAlli")[0].value;
+                    var d;
+                    var timestamp = Date.parse(initialValue);
+                    if (isNaN(timestamp) == false) {
+                        d = new Date(timestamp);
+                    } else {
+                        d = new Date("01/01/1970 " + initialValue.split(' ')[1]);
+                    }
+                    var h = d.getHours();
+                    var m = d.getMinutes();
+                    $value.setHour(h);
+                    $value.setMinute(m);
+                });
+            </text>
+        }
+        });
+    </script>
+</div>
+
+<div class="modal fade" id="worker_modal_view" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="worker_modal_form"></div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="officialsform" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="officialsform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="distanceform" role="dialog">
+    <div class="modal-dialog large-modal">
+        <div class="modal-content large-content" id="distanceform_pl">
+        </div>
+    </div>
+</div>
+<div class="modal fade official-report-modal" id="reportform" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="reportform_pl">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="reportexport" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="reportexport_pl">
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/weekly-appointment-picker.js"></script>
+<script>
+    $(".is-blocked").on("click",
+        function() {
+            var isBlocked = $(this).is(":checked");
+            var id = $(this).attr("data-id");
+            $.ajax({
+                url: "/Jobs/BlockOfficial",
+                type: "POST",
+                data: {
+                    id: id,
+                    isBlocked: isBlocked
+                }
+            });
+        });
+    $(".block-referee-reg-checkbox").click(function() {
+        var checked = $(this).is(":checked");
+        var ids = $(this).data("ids");
+        $.post("/Jobs/BlockRefereeCompetition", { ids: ids, value: checked });
+    });
+    function changeSettingsValue() {
+        var distance = '@distanceSettings';
+        if (distance == "googleCheck") {
+            $("#googleCheck").attr('checked', true);
+            $("#distanceCheck").attr('checked', false);
+        }
+        else {
+            $("#googleCheck").attr('checked', false);
+            $("#distanceCheck").attr('checked', true);
+        }
+    }
+
+    function addZero(i) {
+        if (i < 10) {
+            i = "0" + i;
+        }
+        return i;
+    }
+
+    function updateTravelInformation(userjobId, selectedDay) {
+        $.ajax({
+            type: "GET",
+            url: "/Jobs/RefreshTravelResults",
+            data: {
+                'JobId': userjobId,
+                'SelectedDate': selectedDay,
+                'isAthleticsLeague': '@(Model.SectionAlias == SectionAliases.Athletics && Model.RelevantEntityLogicalName == LogicaName.League)',
+                'isIndividualSection': '@Model.IsIndividualSection'
+            }
+        }).success(function (data) {
+            $('#union_transport_' + userjobId).prop('checked', data.TravelInformationDto.IsUnionTravel);
+            $('#no_travel_' + userjobId).prop('checked', data.TravelInformationDto.NoTravel);
+            var fromHourDate = new Date(parseInt(data.TravelInformationDto.FromHour.substr(6)));
+            var toHourDate = new Date(parseInt(data.TravelInformationDto.ToHour.substr(6)));
+
+            $("#userJobFromTime_" + userjobId + " #txtHours").val(addZero(fromHourDate.getHours()));
+            $("#userJobFromTime_" + userjobId + " #txtMinutes").val(addZero(fromHourDate.getMinutes()));
+            $("#userJobToTime_" + userjobId + " #txtHours").val(addZero(toHourDate.getHours()));
+            $("#userJobToTime_" + userjobId + " #txtMinutes").val(addZero(toHourDate.getMinutes()));
+
+        });
+    }
+
+    function dayChanged(userjobId) {
+        var selectedDay = $("#leagueDay_" + userjobId + "ld").val();
+        updateTravelInformation(userjobId, selectedDay);
+    };
+
+    function dayChangedAll() {
+        var selectedDay = $("#leagueDay_ld").val();
+        $('.tdUserJobId').each(function (i, ele) {
+            var userjobId = parseInt($(ele).html());
+            updateTravelInformation(userjobId, selectedDay);
+        });
+        $('.leagueDay').each(function (i, ele) {
+            $(ele).val(selectedDay);
+        });
+    }
+
+   
+
+    function changeReportValue() {
+        var reportSet = '@reportSet';
+        if (reportSet == "fullReport") {
+            $("#fullReport").attr('checked', true);
+            $("#reportWithoutSum").attr('checked', false);
+        }
+        else {
+            $("#fullReport").attr('checked', false);
+            $("#reportWithoutSum").attr('checked', true);
+        }
+    }
+
+
+    function hideEdit() {
+        var isTable = $("#tableCheck").is(":checked");
+        if (isTable) {
+            $("#editDistance").show();
+        }
+        else {
+            $("#editDistance").hide();
+        }
+        return isTable;
+    }
+
+    function changeReportStatus() {
+        var isChecked = $("#IsReportsEnabled").is(':checked');
+        if (isChecked || $("#reportsHidden").val() == "True") {
+            $(".reportcolumn").show();
+            $("#downloadAllReports").show();
+            $("#paymentReportDiv").show();
+        } else {
+            $(".reportcolumn").hide();
+            $("#downloadAllReports").hide();
+            $("#paymentReportDiv").hide();
+        }
+    }
+
+    $(document).ready(function () {
+        changeSettingsValue();
+        changeReportValue();
+        changeReportStatus();
+        hideEdit();
+        cmn.initDateTimePickers();
+
+        $(".jobsids").multiselect({
+            buttonText: function (options, select) {
+                return '@Messages.ChooseOfficialsType';
+            },
+            buttonTitle: function (options, select) {
+                var labels = [];
+                options.each(function () {
+                    labels.push($(this).text());
+                });
+                return labels.join(' - ');
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+        $(".reportids").multiselect({
+            buttonText: function(options, select) {
+                return '@Messages.ChooseOfficials';
+            },
+            buttonTitle: function (options, select) {
+                var labels = [];
+                options.each(function () {
+                    labels.push($(this).text());
+                });
+                return labels.join(' - ');
+            },
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+        var pickerButtons = $(".weekly-appointment-picker");
+        pickerButtons.data('onClosePicker', function () {
+            updateTarrifSettings();
+        });
+
+        @if (Model.FromTime.HasValue && canPickSaturdayDays)
+        {
+            <text>
+            var fromTime = new Date('@Model.FromTime.Value.ToString("yyyy/MM/dd HH:mm:ss")');
+            var fromTimeEl = $("#from-time");
+            if (typeof fromTimeEl.data !== "undefined") {
+                 fromTimeEl.data('onSetDate')(fromTime);
+            }
+            </text>
+        }
+        @if (Model.ToTime.HasValue && canPickSaturdayDays)
+        {
+            <text>
+                var toTime = new Date('@Model.ToTime.Value.ToString("yyyy/MM/dd HH:mm:ss")');
+            var toTimeEl = $("#to-time");
+            if (typeof toTimeEl.data !== "undefined") {
+                 toTimeEl.data('onSetDate')(toTime);
+            }
+            </text>
+        }
+        var toTime = Date.parse('@(Model.FromTime.HasValue ? Model.ToTime.Value.ToString("yyyy/MM/dd HH:mm:ss") : "")');
+    });
+
+
+    $("#filterOfficials").click(function () {
+        var filterArray = $("#JobsIds").val();
+        var filteredOfficialsVal = filterArray != null && filterArray[0] !== 0 ? filterArray : undefined;
+        $.ajax({
+            url: "/Jobs/WorkerList",
+            type: "GET",
+            traditional: true,
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                seasonId: @Model.SeasonId,
+                filteredOfficialsIds: filteredOfficialsVal,
+                showAll: '@showAll' === 'True' ? true : false
+            },
+            beforeSend: function() {
+                $("#filterLoad").show();
+            },
+            success: function (data) {
+                $("#filterLoad").hide();
+                $("#workers_list").html(data);
+            }
+        });
+    });
+
+    $("#exportOfficialsList").click(function () {
+        var filterArray = $("#JobsIds").val();
+        var filteredOfficialsVal = filterArray != null && filterArray[0] !== 0 ? filterArray : undefined;
+        $.ajax({
+            url: "/Jobs/ExportWorkersToExcel",
+            type: "POST",
+            traditional: true,
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                seasonId: @Model.SeasonId,
+                filteredOfficialsIds: filteredOfficialsVal,
+                showAll: '@showAll' === 'True' ? true : false,
+                isReferee: false,
+                unionId : '@Model.UnionId'
+            },
+            beforeSend: function() {
+                $("#exportloading").show();
+            },
+            complete: function() {
+                $('#exportloading').hide();
+            },
+            success: function(data) {
+                $("#officialsform_pl").html(data);
+                $("#officialsform").modal('show');
+            }
+        });
+    });
+
+    $('#print').click(function () {
+        var tbl = $('div.active').find('table');
+        if (tbl.length > 0) {
+            tablePrint(tbl);
+        }
+    });
+
+    function tablePrint(el) {
+        var wnd = window.open('', '@Messages.Workers', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.Workers</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 200);
+    }
+
+    $("#editDistance").click(function () {
+        $.ajax({
+            url: "/Jobs/DistanceEdit",
+            type: "POST",
+            traditional: true,
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                seasonId: "@Model.SeasonId"
+            },
+            beforeSend: function () {
+                $("#distanceLoading").show();
+            },
+            success: function(data) {
+                $("#distanceform_pl").html(data);
+                $("#distanceform").modal('show');
+                $("#distanceLoading").hide();
+            }
+        });
+    });
+
+    $('table').on('click', '#reportBtn', function () {
+        var id = $(this).attr('data-user-id');
+        var jobId = $(this).attr('data-jobid');
+        var distanceSettings = $("#tableCheck").is(":checked") ? "table" : "googleMapsApi";
+        var officialType = $(this).attr('data-user-official');
+        var requestData = {
+            userId: id,
+            officialType: officialType,
+            seasonId: @Model.SeasonId,
+            logicalName: '@Model.RelevantEntityLogicalName',
+            relevantId: @Model.RelevantEntityId,
+            distanceSettings: distanceSettings,
+            jobId: jobId,
+            isSaturdayTariff: $("#SaturdaysTariff").is(":checked")
+        };
+        $.ajax({
+            type: 'POST',
+            url: '/Jobs/ShowReport',
+            data: requestData,
+            success: function(data) {
+                if (!data.Message) {
+                    $("#reportform_pl").html(data);
+                    $("#reportform").data("report-request-data", requestData);
+                    $("#reportform").modal('show');
+                } else {
+                    alert(data.Message);
+                }
+            }
+        });
+    });
+
+    $("#exportJobsOfficials").click(function () {
+        var distanceSettings = $("#tableCheck").is(":checked") ? "table" : "googleMapsApi";
+        var filterArray = $("#ReportOfficialsIds").val();
+        var filteredOfficialsVal = filterArray != null && filterArray[0] !== 0 ? filterArray : undefined;
+
+        if (filteredOfficialsVal == undefined) {
+            alert("@Messages.ExportOfficialsError");
+        }
+        else {
+            $.ajax({
+                url: "/Jobs/ExportChoosenJobs",
+                type: "POST",
+                traditional: true,
+                data: {
+                    id: $("#RelevantEntityId").val(),
+                    logicalName: $("#RelevantEntityLogicalName").val(),
+                    seasonId: $("#SeasonId").val(),
+                    jobsIds: filteredOfficialsVal,
+                    startReportDate: $("#StartReportDate").val(),
+                    endReportDate: $("#EndReportDate").val(),
+                    distanceSettings: distanceSettings,
+                    jobId: "@Model.JobId",
+                    isSaturdayTariff: $("#SaturdaysTariff").is(":checked"),
+                    saveToOfficials: $("#SaveReportToOfficials").is(":checked")
+                },
+                beforeSend: function () {
+                    $("#exportOfficialsLoad").show();
+                },
+                complete: function () {
+                    $("#exportOfficialsLoad").hide();
+                },
+                success: function (data) {
+                    $("#reportexport_pl").html(data);
+                    $("#reportexport").modal('show');
+                }
+            });
+        }
+
+    });
+
+    $("#exportRefereesSummaryReport").click(function () {
+        var distanceSettings = $("#tableCheck").is(":checked") ? "table" : "googleMapsApi";
+        var jsonObj = @Html.Raw(Json.Encode(ViewBag.UserIds));
+        $.ajax({
+            url: "/Jobs/ExportReferees",
+                type: "POST",
+                traditional: true,
+                data: {
+                    id: $("#RelevantEntityId").val(),
+                    relevantId: @Model.RelevantEntityId,
+                    logicalName: $("#RelevantEntityLogicalName").val(),
+                    seasonId: $("#SeasonId").val(),
+                    startReportDate: $("#StartReportDate").val(),
+                    endReportDate: $("#EndReportDate").val(),
+                    distanceSettings: distanceSettings,
+                    userIds: jsonObj,
+                    isSaturdayTariff: $("#SaturdaysTariff").is(":checked")
+                },
+                beforeSend: function () {
+                    $("#exportRefereesLoad").show();
+                },
+                complete: function () {
+                    $("#exportRefereesLoad").hide();
+                },
+                success: function (data) {
+                    document.location.href = "/Jobs/DownloadExportFile";
+                }
+        });
+
+    });
+
+    $("#exportRefereesSummaryReportCompetition").click(function () {
+        var distanceSettings = $("#tableCheck").is(":checked") ? "table" : "googleMapsApi";
+        var jsonObj = @Html.Raw(Json.Encode(ViewBag.UserIds));
+        var userJobsIds = [];
+        $('.tdUserJobId').each(function (i, ele) {
+            userJobsIds.push(parseInt($(ele).html()));
+        });
+        $.ajax({
+            url: "/Jobs/ExportRefereesCompetition",
+            type: "POST",
+            traditional: true,
+            data: {
+                id: $("#RelevantEntityId").val(),
+                relevantId: @Model.RelevantEntityId,
+                logicalName: $("#RelevantEntityLogicalName").val(),
+                distanceSettings: distanceSettings,
+                userJobIds: userJobsIds,
+                isSaturdayTariff: $("#SaturdaysTariff").is(":checked")
+            },
+            beforeSend: function () {
+                $("#exportRefereesCompetitionLoad").show();
+            },
+            complete: function () {
+                $("#exportRefereesCompetitionLoad").hide();
+            },
+            success: function (data) {
+                document.location.href = "/Jobs/DownloadExportFile";
+            }
+        });
+
+    });
+
+
+    $("#tableCheck, #googleCheck").click(function() {
+        var isTable = hideEdit();
+        $.ajax({
+            type: "POST",
+            url: "/Jobs/ChangeDistanceSettings",
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                type: isTable ? 'tableCheck' : 'googleCheck'
+            }
+        });
+    });
+
+    $("#fullReport, #reportWithoutSum, #reportRemoveTravelDistanceForUnpublished").click(function() {
+        $.ajax({
+            type: "POST",
+            url: "/Jobs/ChangeReportSettings",
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                type: $("#fullReport").is(":checked") ? "fullReport" : "reportWithoutSum",
+                removeTravel: $("#reportRemoveTravelDistanceForUnpublished").is(":checked")
+            }
+        });
+    });
+
+
+    $("#SaturdaysTariff").click(function() {
+        $.ajax({
+            type: "POST",
+            url: "/Jobs/ChangeTariffSettings",
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                enableTariff: $("#SaturdaysTariff").is(":checked"),
+                fromTime: new Date($('#from-time').attr('time')),
+                toTime: new Date($('#to-time').attr('time'))
+            }
+        });
+    });
+
+
+    function updateTarrifSettings() {
+        $.ajax({
+            type: "POST",
+            url: "/Jobs/ChangeTariffSettings",
+            data: {
+                id: @Model.RelevantEntityId,
+                logicalName: '@Model.RelevantEntityLogicalName',
+                enableTariff: $("#SaturdaysTariff").is(":checked"),
+                fromTime: $('#from-time').attr('time'),
+                toTime: $('#to-time').attr('time')
+            }
+        });
+    }
+</script>

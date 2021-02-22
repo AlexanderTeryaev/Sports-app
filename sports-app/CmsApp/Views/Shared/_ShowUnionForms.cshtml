@@ -1,0 +1,56 @@
+﻿@model IEnumerable<UnionFormModel>
+@{ 
+    bool isClub = ViewBag.IsClub == null ? false : ViewBag.IsClub;
+}
+<button type="button" class="btn btn-link" data-toggle="modal" data-target="#unionsFormsModal">@Messages.Show @Messages.UnionForms</button>
+<div class="modal fade" id="unionsFormsModal" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content" >
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">@Messages.UnionForms:</h4>
+            </div>
+            <div class="modal-body" id="modalMainForm">
+                @foreach (var form in Model)
+                {
+                <p id="content_@form.FormId">
+                        @form.Title -
+                        <button type="button" class="btn btn-link"
+                                onclick="window.open('@(GlobVars.ContentPath + "/union/" + form.Path)')">
+                            @Messages.Show
+                        </button>
+                    @if (!isClub)
+                    {
+                        <button type="button" class="btn btn-link" style="color:red"
+                                onclick="deleteUnitForm(@form.FormId)">
+                            @Messages.Delete
+                        </button>
+                    }
+                </p>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@if (!isClub)
+{
+    <script>
+        function deleteUnitForm(id) {
+            $.ajax({
+                type: "POST",
+                url: "/Unions/DeleteUnionForm",
+                data: {
+                    formId: id
+                },
+                success: function () {
+                    $("#content_" + id).hide();
+                }
+            });
+
+        }
+    </script>
+}
+

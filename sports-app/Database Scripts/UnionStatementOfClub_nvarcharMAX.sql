@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[Unions] ALTER COLUMN [StatementOfClub] NVARCHAR (MAX) NULL;

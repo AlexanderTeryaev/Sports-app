@@ -1,0 +1,1090 @@
+﻿@using Newtonsoft.Json;
+@model TeamNavView
+@{
+    var IsTrainingEnabled = Model.IsTrainingEnabled && (User.IsInAnyRole(AppRole.Admins) || (ViewBag.IsTeamManager == true || ViewBag.IsClubManager == true)
+                                                        || (ViewBag.IsDepartMgr == true && ViewBag.IsClubTrainingEnabled == true));
+    var trainingStyle = IsTrainingEnabled ? "" : "display:none";
+    var isGymnastic = Model.IsGymnastic;
+    bool isUnionViewer = ViewBag.IsUnionViewer;
+
+    string downloadForm = string.Empty;
+    string import = string.Empty;
+    string importPic = string.Empty;
+    string exportImgs = string.Empty;
+    string move = string.Empty;
+    string tooltip = string.Empty;
+
+    var topJob = User.CurrentTopLevelJob(Model.SeasonId);
+    var clubandTeamJobs = new List<string> { JobRole.ClubManager, JobRole.TeamManager };
+
+    var allowAddingPlayers = true; //!clubandTeamJobs.Contains(topJob) || !Model.IsWaterPolo; // in case we will need to prevent clubmanagers/teammanagers to add team players again.
+
+    var sectionAlias = Model.Section ?? ViewBag.Section ?? string.Empty;
+    UIHelpers.GetButtonCaption(sectionAlias, out downloadForm, out import, out importPic, out exportImgs, out move, out tooltip);
+    var isRegistrationBlockedForNonTopLevel = Model.IsBlockedForRegistrationByTennisCompetition && Model.IsTennisCompetition != 1 && !Model.IsTrainingTeam;
+}
+<link href="~/Content/css/jquery.timesetter.css" rel="stylesheet" />
+<script src="~/Content/js/jquery.timesetter.js"></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiwCq-EDCvfhQ786WvFgSQvrSxCgjzsYM&libraries=places"></script>
+
+<div class="row">
+    <div class="col-lg-10">
+        <h3 class="sub-header">
+            @{
+                if (!Model.IsDepartmentTeam)
+                {
+                    int i = 0;
+                    foreach (var l in Model.TeamLeagues)
+                    {
+                        if (i++ > 0)
+                        {
+                            <text>, </text>
+                        }
+                        if (Model.IsValidUser || Model.UserLeagues.Any(t => t.Name == l.Name) && !Model.IsDepartmentTeam)
+                        {
+                            if (Model.IsTennisCompetition == 1)
+                            {
+                                <a href="@Url.Action("Edit", "Leagues", new {id = l.Id, seasonId = Model.SeasonId, isTennisCompetition = Model.IsTennisCompetition})">@l.Name</a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Edit", "Leagues", new {id = l.Id, seasonId = Model.SeasonId})">@l.Name</a>
+                            }
+                        }
+                        else
+                        {
+                            @l.Name
+                        }
+                    }
+
+                    if (Model.TeamLeagues.Count > 0 && Model.clubs.Count > 0 && !Model.IsDepartmentTeam)
+                    {
+                        <text>, </text>
+                    }
+
+                    i = 0;
+                    foreach (var c in Model.clubs)
+                    {
+                        if (i++ > 0)
+                        {
+                            <text>, </text>
+                        }
+                        <a href="@Url.Action("Edit", "Clubs", new {id = c.Id, seasonId = c.SeasonId})">@c.Name</a>
+                    }
+                }
+                else if (Model.IsDepartmentTeam)
+                {
+                    if (ViewBag.DepartmentSeasonId != null && ViewBag.DepartmentSportId != null)
+                    {
+                        <a href="@Url.Action("Edit", "Clubs", new {id = Model.DepartmentId, isDepartment = Model.IsDepartmentTeam,
+                                seasonId = ViewBag.DepartmentSeasonId, sportId = ViewBag.DepartmentSportId })">
+                            @Model.CurrentClubName
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Edit", "Clubs", new {id = Model.DepartmentId ?? Model.ClubId, isDepartment = Model.IsDepartmentTeam, seasonId = Model.SeasonId})">@Model.CurrentClubName</a>
+                    }
+                }
+            }
+
+            <span>&raquo;</span> @Model.TeamName
+        </h3>
+    </div>
+    <div class="col-lg-2">
+        <h3 class="currentSeason"></h3>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" id="league_tabs" role="tablist">
+    <li class="active">
+        <a href="#details" data-toggle="tab">@Messages.Info</a>
+    </li>
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        <li>
+            <a href="#players" data-toggle="tab">
+                @if (!isGymnastic)
+                {
+                    @UIHelpers.GetPlayerCaption(Model.Section ?? ViewBag.Section)
+                }
+                else
+                {
+                    @Messages.Gymnastics
+                }
+            </a>
+        </li>
+        <li>
+            <a href="#userstab" data-toggle="tab">@Messages.Workers</a>
+        </li>
+        if (!sectionAlias.Equals("Wave surfing", StringComparison.OrdinalIgnoreCase) && Model.IsTennisCompetition != 1)
+        {
+            <li>
+                <a href="#halls" data-toggle="tab">@UIHelpers.GetAuditoriumCaption(Model.Section ?? ViewBag.Section)</a>
+            </li>
+        }
+    }
+    @if (Model.IsTennisCompetition != 1 && !isGymnastic)
+    {
+        <li>
+            <a href="#schedules" data-toggle="tab">
+                @if (Model.IsIndividual)
+                {
+                    @Messages.SchedualForIndividual
+                }
+                else
+                {
+                    @Messages.GamesTable
+                }
+            </a>
+        </li>
+        <li>
+            <a href="#standings" data-toggle="tab">@Messages.Standings</a>
+        </li>
+    }
+
+    @if (Model.IsTennisCompetition == 1)
+    {
+        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+        {
+            <li><a href="#groups" data-toggle="tab">@Messages.Groups</a></li>
+        }
+        <li><a href="#schedules" data-toggle="tab">@Messages.GamesTable</a></li>
+        if (Model.IsRankCalculated)
+        {
+            <li><a href="#categoryrank" data-toggle="tab">@Messages.Standings</a></li>
+        }
+    }
+
+    @if (Model.UnionId == 36 && ViewBag.IsUnionConnected)
+    {
+        <li><a href="#unioncompetitions" data-toggle="tab">@Messages.CompetitionRegistration</a></li>
+    }
+
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        <li>
+            <a href="#notifications" data-toggle="tab">@Messages.Notifications</a>
+        </li>
+    }
+    @if ((ViewBag.IsActivityManager || ViewBag.IsActivityManager || ViewBag.IsActivityRegistrationActive) && !string.IsNullOrWhiteSpace(Model.JobRole) && Model.JobRole != JobRole.UnionManager && !User.IsInRole(AppRole.Admins))
+    {
+        <li>
+            <a href="#activities" data-toggle="tab">@Messages.ManageActivities</a>
+        </li>
+    }
+
+    <li style="@trainingStyle"><a href="#trainngSettings" data-toggle="tab">@Messages.TrainingSettings</a></li>
+    <li style="@trainingStyle"><a href="#teamTrainings" data-toggle="tab">@Messages.TeamTrainings</a></li>
+    @if (Model.IsBasketball)
+    {
+        <li><a href="#statistics" data-toggle="tab">@Messages.Statistics</a></li>
+    }
+    @if (Model.UnionId !=52)
+    { 
+    <li><a href="#gallery" data-toggle="tab">@Messages.Gallery</a></li>
+    }
+</ul>
+<div class="tab-content row offset-3">
+    <div class="tab-pane fade" id="schedules">
+        <div id="schedules_pl">
+            @if (Model.IsTennisCompetition == 1)
+            {
+                if (Model.DepartmentId.HasValue)
+                {
+                    @Html.Action("TennisList", "Schedules", new { categoryId = Model.TeamId, desOrder = false, inpSeasonId = Model.SeasonId, departmentId = Model.DepartmentId.Value })
+                }
+                else
+                {
+                    <div id="schedules-tabloader">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("TennisList", "Schedules", new { categoryId = Model.TeamId, desOrder = false, inpSeasonId = Model.SeasonId }),
+                       DataElementId = "schedules-tabloader",
+                       LoadImmediately = true
+                   })
+                    </div>
+                }
+            }
+            else
+            {
+                if (Model.DepartmentId.HasValue)
+                {
+                    @Html.Action("TeamList", "Schedules", new { id = Model.TeamId, seasonId = Model.SeasonId, leagueId = Model.CurrentLeagueId, departmentId = Model.DepartmentId })
+                }
+                else
+                {
+                    <div id="schedules-tabloader">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("TeamList", "Schedules", new { id = Model.TeamId, seasonId = Model.SeasonId, leagueId = Model.CurrentLeagueId }),
+                       DataElementId = "schedules-tabloader"
+                   })
+                    </div>
+                }
+            }
+        </div>
+    </div>
+    <div class="tab-pane fade col-sm-12" id="players">
+        <div class="row">
+            <div class="col-sm-11">
+                @if (!Model.IsEilatTournament || Model.UnionId != UnionConstants.IsraelCatchballAssociation || User.IsInAnyRole(AppRole.Admins) || Model.JobRole == JobRole.UnionManager)
+                {
+                    if (allowAddingPlayers && Model.UnionId != 52)
+                    {
+                        <a class="btn btn-primary" href="@Url.Action("CreatePlayer", "TeamPlayers" , new { leagueId=Model.CurrentLeagueId, teamId=Model.TeamId, seasonId=Model.SeasonId, clubId=Model.CurrentClubId, departmentSportId=ViewBag.DepartmentSportId })"
+                           data-target="#playereditform"
+                           data-toggle="modal" @(isRegistrationBlockedForNonTopLevel ? "disabled" : string.Empty)>
+                            <i class="glyphicon glyphicon-plus"></i>@Messages.AddNew
+                        </a>
+                    }
+                    if (User.IsInAnyRole(AppRole.Workers, AppRole.Admins) && Model.JobRole != JobRole.TeamManager)
+                    {
+                        <a class="btn btn-primary"
+                           id="moveplayerteambtn"
+                           data-url="@Url.Action("MovePlayerToTeam", "TeamPlayers" ,
+                           new {
+                           teamId=Model.TeamId,
+                           leagueId=Model.CurrentLeagueId,
+                           seasonId=Model.SeasonId,
+                           clubId=Model.CurrentClubId ?? Model.ClubId,
+                           unionId=Model.UnionId})">
+                            <i class="glyphicon glyphicon-move"></i>@move
+                        </a>
+
+                        <a class="btn btn-primary" href="javascript:;;" id="select-all-players">
+                            <i class="glyphicon glyphicon-ok"></i> @(isGymnastic ? Messages.SelectAllGymnastics : Messages.SelectAllPlayers)
+                        </a>
+                    }
+
+                    if (((User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager)) && (Model.Section == SectionAliases.Bicycle || Model.Section == SectionAliases.Athletics)) || (Model.Section != SectionAliases.Bicycle && Model.Section != SectionAliases.Athletics))
+                    {
+                        if (Model.UnionId != 52)
+                        {
+                        <a class="btn btn-primary export" href="@Url.Action("DownloadExcel", "Unions" , new { unionId=Model.UnionId, clubId=Model.ClubId, leagueId=Model.CurrentLeagueId })" style="float: left;">
+                            <i href="#" class="glyphicon glyphicon-open"></i> @downloadForm
+                        </a>
+                            if (allowAddingPlayers)
+                            {
+                            <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayers", "Players" , new { formName="team" , leagueId=Model.CurrentLeagueId, seasonId=Model.SeasonId, teamId=Model.TeamId, clubId=Model.CurrentClubId })"
+                               @(Model.IsBlockedForRegistrationByTennisCompetition && Model.IsTennisCompetition != 1 && !Model.IsTrainingTeam ? "disabled" : string.Empty)
+                               data-target="#playerimportform"
+                               data-toggle="modal">
+                                <i class="glyphicon glyphicon-save"></i> @import
+                            </a>
+                            }
+                        }
+                    }
+                    <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayersImage", "Players" , new {seasonId=Model.SeasonId})"
+                       data-target="#playerimportimageform"
+                       data-toggle="modal">
+                        <i class="glyphicon glyphicon-save"></i> @importPic
+                    </a>
+                }
+                <a class="btn btn-info btn-edit export" onclick="exportPlayersImages()" style="float: left; margin-left: 5px;">
+                    <i class="glyphicon glyphicon-save"></i> @exportImgs
+                    <i class="fa fa-spin fa-spinner" id="spinner" style="display: none"></i>
+                </a>
+                <a class="btn btn-info btn-edit export" onclick="javascript:printPlayers();" style="float: left; margin-left: 5px;">
+                    <i class="glyphicon glyphicon-print"></i>
+                    @Messages.Print
+                </a>
+
+                <a class="btn btn-info export" style="float: left; margin-left: 5px;" href="@Url.Action("ExportList", "TeamPlayers" , new
+                   {
+                   teamId=Model.TeamId, seasonId=Model.SeasonId, leagueId=Model.CurrentLeagueId, clubId=Model.CurrentClubId, unionId=Model.UnionId, check=false, tab="team"
+                   })"
+                   data-target="#playerexportform"
+                   data-toggle="modal">
+                    <i class="glyphicon glyphicon-export"></i>
+                    @Messages.ExportToExcel
+                </a>
+                @if (!Model.UnionId.HasValue && Model.ClubId.HasValue && !Model.TeamLeagues.Any())
+                {
+                    <a href="#" class="btn btn-primary btn-edit" onclick="$('#uploadPlayers').click()" data-toggle="tooltip" title="@tooltip">
+                        <i class="glyphicon glyphicon-save"></i> @Messages.ImportFromExcel
+                    </a>
+                }
+                @if (!Model.IsCatchball)
+                {
+                    <a class="btn btn-info" style="float: left; margin-left: 5px;" href="@Url.Action("ExportTeamsActivesList", "Players" , new { id=Model.TeamId, clubId=Model.ClubId, unionId=Model.UnionId, seasonId=Model.SeasonId })" onclick="produceAthleteNumber()" target="_new" id="produceAthleteNumber">
+                        <i class="glyphicon glyphicon-export"></i>
+                        @(Messages.ExportActives.Replace(Messages.Players, UIHelpers.GetPlayerCaption(ViewBag.SectionName, true)))
+                    </a>
+                    if (sectionAlias == GamesAlias.Athletics)
+                    {
+                        <a class="btn btn-info" style="float: left; margin-left: 5px;" href="@Url.Action("ExportAthleticTeamActivesList", "Players" , new { id=Model.TeamId, clubId=Model.ClubId, unionId=Model.UnionId, seasonId=Model.SeasonId })" onclick="produceAthleteNumber()" target="_new" id="produceAthleteNumber">
+                            <i class="glyphicon glyphicon-export"></i>
+                            @(Messages.FourCompetitionsReport)
+                        </a>
+                    }
+                }
+                <a class="btn btn-info btn-edit export" href="@Url.Action("ExportList", "TeamPlayers" , new {teamId=Model.TeamId, seasonId=Model.SeasonId, leagueId=Model.CurrentLeagueId, clubId=Model.CurrentClubId, check=true, tab="team" })"
+                   data-target="#playerexportform"
+                   data-toggle="modal"
+                   style="float: left; margin-left: 5px;">
+                    <i class="glyphicon glyphicon-export"></i>
+                    @Messages.ExportMissingToExcel
+                </a>
+                @if (Model.IsRugby)
+                {
+                    <a class="btn btn-info btn-edit export" target="_blank" href="@Url.Action("ExportRoster", "TeamPlayers" , new {ClubId=Model.ClubId, LeagueId=Model.CurrentLeagueId, TeamId=Model.TeamId, SeasonId=Model.SeasonId})"
+                       style="float: left; margin-left: 5px;">
+                        <i class="glyphicon glyphicon-export"></i>
+                        @Messages.TeamPlayers_Rugby_ExportRoster
+                    </a>
+                }
+                @if (!Model.UnionId.HasValue && Model.ClubId.HasValue && !Model.TeamLeagues.Any())
+                {
+
+
+                    using (Html.BeginForm("ImportFromExcel", "TeamPlayers", new { seasonId = Model.SeasonId, clubId = Model.ClubId, teamId = Model.TeamId }, FormMethod.Post, new { id = "importExcelForm", enctype = "multipart/form-data" }))
+                    {
+                        <input type="file" id="uploadPlayers" onclick="updateExcel()" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" name="importedExcel" style="display: none" />
+                    }
+                }
+            </div>
+            @if (!isGymnastic)
+            {
+                <div class="col-sm-1">
+                    @if (Model.Benefactor == null)
+                    {
+                        <label for="cbBenefactor1">
+                            <input type="checkbox" id="cbBenefactor1" />
+                            @Messages.TeamBenefactor_Benefactor
+                        </label>
+                        <a class="hide" href="@Url.Action("Benefactor", "Teams", new {leagueId = Model.CurrentLeagueId, teamId = Model.TeamId, seasonId = Model.SeasonId, unionId = Model.UnionId})"
+                           data-target="#benefactorform"
+                           data-toggle="modal">
+                            &nbsp;
+                        </a>
+                    }
+                    else
+                    {
+                        <input type="checkbox" id="cbBenefactor2"
+                               checked="checked"
+                               @(User.IsInAnyRole(AppRole.Admins) || Model.JobRole != JobRole.UnionManager ? " disabled=\" disabled\" " : " ") />
+
+                        <a href="@Url.Action("Benefactor", "Teams", new {leagueId = Model.CurrentLeagueId, teamId = Model.TeamId, seasonId = Model.SeasonId, unionId = Model.UnionId})"
+                           data-target="#benefactorform"
+                           data-toggle="modal">
+                            @Messages.TeamBenefactor_Benefactor
+                        </a>
+                    }
+
+                    @if (Model.Benefactor != null && (User.IsInAnyRole(AppRole.Admins) || Model.JobRole == JobRole.UnionManager))
+                    {
+                        <label for="cbApproveBenefactor">
+                            <input type="checkbox" id="cbApproveBenefactor" @(Model.Benefactor?.IsApproved == true ? " checked=\" checked\" " : " ") /> @Messages.TeamBenefactor_ApproveBenefactor
+                        </label>
+                    }
+                </div>
+            }
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div id="playersedit" class="offset-3" style="margin-right: 0px">
+                    @if (Model.IsDepartmentTeam && ViewBag.DepartmentSeasonId != null && ViewBag.DepartmentSportId != null)
+                    {
+                        @Html.Action("List", "TeamPlayers", new
+                   {
+                       id = Model.TeamId,
+                       seasonId = Model.SeasonId,
+                       currentLeagueId = Model.CurrentLeagueId,
+                       clubId = Model.CurrentClubId,
+                       unionId = Model.UnionId,
+                       isDepartmentTeam = Model.IsDepartmentTeam,
+                       sportId = ViewBag.DepartmentSportId,
+                       IsRegistrationBlockedForNonTopLevel = isRegistrationBlockedForNonTopLevel
+                   })
+                    }
+                    else
+                    {
+                        @*@Html.Action("List", "TeamPlayers", new
+                            {
+                                id = Model.TeamId,
+                                seasonId = Model.SeasonId,
+                                leagueId = Model.CurrentLeagueId,
+                                clubId = Model.CurrentClubId,
+                                unionId = Model.UnionId,
+                                isTennisCompetition = Model.IsTennisCompetition,
+                                IsRegistrationBlockedForNonTopLevel = isRegistrationBlockedForNonTopLevel
+                            })*@
+                        <div id="playersedit-tabloader">
+                            @Html.Partial("_TabLoader", new TabLoaderParams
+                       {
+                           ActionUrl = Url.Action("List", "TeamPlayers", new
+                           {
+                               id = Model.TeamId,
+                               seasonId = Model.SeasonId,
+                               currentLeagueId = Model.CurrentLeagueId,
+                               clubId = Model.CurrentClubId,
+                               unionId = Model.UnionId,
+                               isTennisCompetition = Model.IsTennisCompetition,
+                               IsRegistrationBlockedForNonTopLevel = isRegistrationBlockedForNonTopLevel
+                           }),
+                           DataElementId = "playersedit-tabloader",
+                           LoadImmediately = true
+                       })
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane fade in active col-sm-12" id="details">
+        @if (Model.IsTennisCompetition == 1)
+        {
+            <div id="details-tabloader">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("Details", new { id = Model.TeamId, seasonId = Model.SeasonId, isTennisCompetition = Model.IsTennisCompetition }),
+               DataElementId = "details-tabloader"
+           })
+            </div>
+        }
+        else
+        {
+            @Html.Action("Details", new { id = Model.TeamId, seasonId = Model.SeasonId })
+        }
+    </div>
+    @if (Model.UnionId == 36 && ViewBag.IsUnionConnected)
+    {
+        <div class="tab-pane fade col-sm-10 offset-2" id="unioncompetitions">
+            <div id="unioncompetitions_div">
+                @Messages.Loading
+            </div>
+        </div>
+    }
+
+    <div class="tab-pane fade col-sm-9 offset-2" id="userstab">
+        <div id="workers_list">
+            <div id="workers-tabloader">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("WorkerList", "Jobs", new { id = Model.TeamId, logicalName = LogicaName.Team, seasonId = Model.SeasonId, leagueId = Model.CurrentLeagueId, departmentId = Model.DepartmentId }),
+               DataElementId = "workers-tabloader",
+               LoadByVisibilityOnly = true
+           })
+            </div>
+        </div>
+    </div>
+    @if (!sectionAlias.Equals("Wave surfing", StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="tab-pane fade col-sm-6" id="halls">
+            <div id="halls-tabloader">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("List", "TeamsAuditoriums", new { id = Model.TeamId, clubId = Model.ClubId, Model.SeasonId }),
+                       DataElementId = "halls-tabloader",
+                       LoadByVisibilityOnly = true
+                   })
+            </div>
+        </div>
+    }
+    @if (Model.IsTennisCompetition == 1 && !isGymnastic)
+    {
+        <div class="tab-pane fade col-sm-7" id="groups">
+            <div id="groups-tabloader">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("TennisGroups", "Schedules", new { leagueId = Model.CurrentLeagueId, categoryId = Model.TeamId, seasonId = Model.SeasonId }),
+                       DataElementId = "groups-tabloader",
+                       LoadByVisibilityOnly = true
+                   })
+            </div>
+        </div>
+        if (Model.IsRankCalculated)
+        {
+            <div class="tab-pane fade" id="categoryrank" style="padding: 0px; border-top: none;">
+                <div id="categoryrank-tabloader">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+                    {
+                        ActionUrl = Url.Action("CategoryRankDetails", "LeagueRank", new { categoryId = Model.TeamId, seasonId = Model.SeasonId, unionId = Model.UnionId, isCategoryStanding = true }),
+                        DataElementId = "categoryrank-tabloader",
+                        LoadByVisibilityOnly = true
+                    })
+                </div>
+            </div>
+        }
+    }
+
+
+    <div class="tab-pane fade" id="notifications">
+        <div id="notifications-tabloader">
+            @Html.Partial("_TabLoader", new TabLoaderParams
+       {
+           ActionUrl = Url.Action("Add", "Notifications", new { entityId = Model.TeamId, logicalName = LogicaName.Team, leagueId = Model.CurrentLeagueId, clubId = Model.ClubId, seasonId = Model.SeasonId, unionId = Model.UnionId }),
+           DataElementId = "notifications-tabloader",
+           LoadByVisibilityOnly = true
+       })
+        </div>
+    </div>
+    <div class="tab-pane fade" id="standings" style="padding: 0px; border-top: none;">
+        @if (Model.DepartmentId.HasValue)
+        {
+            @Html.Action("TeamStandings", "Teams", new { teamId = Model.TeamId, seasonId = Model.SeasonId, departmentId = Model.DepartmentId })
+        }
+        else
+        {
+            <div id="standings-tabloader">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("TeamStandings", "Teams", new { teamId = Model.TeamId, seasonId = Model.SeasonId }),
+               DataElementId = "standings-tabloader"
+           })
+            </div>
+        }
+    </div>
+
+    @if ((ViewBag.IsActivityManager || ViewBag.IsActivityManager || ViewBag.IsActivityRegistrationActive) && !string.IsNullOrWhiteSpace(Model.JobRole) && Model.JobRole != JobRole.UnionManager && !User.IsInRole(AppRole.Admins))
+    {
+        <div class="tab-pane fade" id="activities">
+            <div id="activity-list">
+                @Html.Action("List", "Activity", new { unionId = Model.UnionId, seasonId = Model.SeasonId })
+            </div>
+        </div>
+    }
+    <div class="tab-pane fade" id="trainngSettings">
+        @* @Html.Action("TrainingSettings", "Teams", new { id = Model.TeamId, clubId = Model.ClubId, Model.SeasonId })*@
+        <div id="TrainingSettings-tabloader">
+            @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("TrainingSettings", "Teams", new { id = Model.TeamId, clubId = Model.ClubId, Model.SeasonId }),
+               DataElementId = "TrainingSettings-tabloader",
+               LoadByVisibilityOnly = true
+           })
+        </div>
+    </div>
+    <div class="tab-pane fade col-sm-12" id="teamTrainings">
+        <div id="teamTrainingsContent">
+            @* @Html.Action("TeamTrainings", "Teams", new { id = Model.TeamId, clubId = Model.ClubId, Model.SeasonId, pageNumber = 1, pageSize = 10 })*@
+            <div id="teamTrainings-tabloader">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("TeamTrainings", "Teams", new { id = Model.TeamId, clubId = Model.ClubId, Model.SeasonId, pageNumber = 1, pageSize = 10 }),
+               DataElementId = "teamTrainings-tabloader",
+               LoadByVisibilityOnly = true
+           })
+            </div>
+        </div>
+    </div>
+    @if (Model.IsBasketball)
+    {
+        <div class="tab-pane fade col-sm-10" id="statistics">
+            <div id="statisticsDiv">
+                @Html.Action("Statistics", "Teams", new { id = Model.TeamId, Model.SeasonId })
+            </div>
+        </div>
+    }
+    @if (Model.UnionId != 52)
+    { 
+    <div class="tab-pane fade col-sm-10" id="gallery">
+        <div id="galleryContent">
+            <div id="gallery-tabloader">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("TeamGalleries", "Teams", new { teamId = Model.TeamId }),
+               DataElementId = "gallery-tabloader",
+               LoadByVisibilityOnly = true
+           })
+            </div>
+        </div>
+    </div>
+    }
+</div>
+
+
+<div class="modal fade" id="playereditform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playereditform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="playermoveform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" style="width: 700px" id="playermoveform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="useredit" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="userform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="playerimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="playerimportimageform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportimageform_pl"></div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="benefactorform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="benefactorform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="playerexportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="playerexportimagesform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportimagesform_pl"></div>
+    </div>
+</div>
+
+
+@section scripts
+{
+    <script>
+        @if (Model.Benefactor == null)
+        {
+            <text>
+        $("#benefactorform").on("hidden.bs.modal",
+            function() {
+                $("#cbBenefactor1").prop("checked", false);
+            }
+        );
+            </text>
+        }
+
+        $(document).ready(function() {
+            if ('@isUnionViewer' === "True" || '@Model.IsUnionClubManagerUnderPastSeason' === 'True' || '@Model.JobRole' == '@JobRole.TeamViewer') {
+                $("span").attr('disabled', true);
+                $("#cbBenefactor1").attr('disabled', true);
+                $(".export").attr('disabled', false);
+                $(".game-chbx").attr('disabled', true);
+                $('#games-chbx').attr('disabled', true);
+                $(".frm-date").attr('disabled', true);
+                $(".auditoriums-display").attr('disabled', true);
+                $("#arena_print").attr('disabled', false);
+                $(".edit-team").attr('disabled', false);
+                if ('@Model.JobRole' == '@JobRole.TeamViewer') {
+                    $("input").attr('disabled', true);
+                    $("select").attr('disabled', true);
+                    $("textarea").attr('disabled', true);
+                    $(".btn-primary").attr('disabled', true);
+                    $(".btn-danger").attr('disabled', true);
+                }
+                else {
+                    $("a").attr('disabled', true);
+                    $(".btn").attr('disabled', true);
+                }
+            }
+            $('#select-all-players').click(function() {
+                $('[name="moveplayer"]:checkbox').click();
+            });
+            $('[data-toggle="tooltip"]').tooltip();
+            $('#moveplayerteambtn').click(function() {
+                var url = $(this).data('url');
+                var playerstoMove = $('[name="moveplayer"]:checked');
+                if (playerstoMove.length == 0) {
+                    alert('Select at least one player.');
+                    return;
+                } else {
+                    $.get(url,
+                        function(result) {
+                            $('#playermoveform_pl').html(result);
+                            $('#playermoveform').modal('show');
+
+                            $('#playersToPost').empty();
+                            $(playerstoMove).each(function(k, v) {
+                                $('#playersToPost').append($('<input type="hidden" name="Players" value="' +
+                                    $(v).val() +
+                                    '"/>'));
+                            });
+                        });
+                }
+            });
+
+            //excel import
+            $('#btn-excel-import').on('click',
+                function(e) {
+                    e.preventDefault();
+                    $('#file-import-from-excel').trigger("click");
+                });
+
+            $('#file-import-from-excel').on('change',
+                function() {
+                    var form = $(this).parents('form');
+                    form.submit();
+                });
+
+            $('#cbBenefactor1').on('click',
+                function() {
+
+                    var isChecked = $('#cbBenefactor1').prop('checked');
+
+
+                    $('[data-target="#benefactorform"]').trigger('click');
+                });
+
+            $('#cbBenefactor2').on('click',
+                function() {
+
+                    var isChecked = $('#cbBenefactor2').prop('checked');
+
+                    if (isChecked == false && !confirm("@(Messages.TeamBenefactor_ConfirmRemove)")) {
+                        $('#cbBenefactor2').prop('checked', true);
+                        return;
+                    }
+
+                    $.ajax({
+                        type: "GET",
+                        url: '@Url.Action("DeleteBenefactor", "Teams")',
+                        data: { id: @Model.TeamId },
+                        success: function(data) {
+                            if (data.result) {
+                                alert(data.message)
+                                window.location.reload();
+                            } else {
+                                alert(data.message);
+                                $('#cbBenefactor2').prop('checked', false);
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(xhr.status);
+                            alert(thrownError);
+                        }
+                    });
+                });
+
+            $('#cbApproveBenefactor').on('click',
+                function() {
+
+                    var approved = $('#cbApproveBenefactor').prop('checked');
+
+                    if (approved == false && !confirm("@(Messages.TeamBenefactor_ConfirmApproveRemove)")) {
+                        $('#cbApproveBenefactor').prop('checked', true);
+                        return;
+                    }
+
+                    $.ajax({
+                        type: "GET",
+                        url: '@Url.Action("ApproveBenefactor", "Teams")',
+                        data: { id: @Model.TeamId, leagueId: @(Model.CurrentLeagueId ?? 0), approved: approved },
+                        success: function(data) {
+                            if (data.result) {
+                                alert(data.message);
+                                window.location.reload();
+                            } else {
+                                $('#cbApproveBenefactor').prop('checked', !approved);
+                                alert(data.message);
+                            }
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            alert(xhr.status);
+                            alert(thrownError);
+                        }
+                    });
+                });
+        })
+        $(document).ready(function() {
+            $(".nav-tabs a").click(function() {
+                $(this).tab('show');
+            });
+            if ('@(TempData["ShowTrainings"])' == 'True') {
+                activateTab('teamTrainings');
+            }
+
+            if ("@isGymnastic" === "True") {
+                $("#unioncompetitions_div").load('@Html.Raw(Url.Action("CompetitionsList", "Clubs",
+                                    new { clubId = Model.ClubId, unionId = Model.UnionId, seasonId = Model.SeasonId, teamId = Model.TeamId }))');
+            }
+        });
+
+        function activateTab(tab) {
+            $('.nav-tabs a[href="#' + tab + '"]').tab('show');
+            window.location.reload();
+            if (tab == "schedules") {
+                $('#schedules').html("");
+            }
+        };
+    </script>
+    <script>
+        function exportPlayersImages() {
+            $.ajax({
+                type: "POST",
+                url: "/Players/ImgsServerCheck",
+                data: {
+                    teamId: @Model.TeamId,
+                    seasonId: @Model.SeasonId,
+                    pageType: "@PageType.Team",
+                    clubId: @JsonConvert.SerializeObject(Model.ClubId),
+                    leagueId: @JsonConvert.SerializeObject(Model.CurrentLeagueId)
+                },
+                beforeSend: function() {
+                    $("#spinner").show();
+                }
+            }).done(function(data) {
+                $("#playerexportimagesform_pl").html(data);
+                $("#playerexportimagesform").modal('show');
+                $("#spinner").hide();
+            });
+        }
+    </script>
+    <script src="/Scripts/pages/scrappingTeamClubs.js"></script>
+
+    <!--Trainings-->
+    <script>
+
+
+        function test() {
+            var teamID = $("#TeamID").val();
+            $.ajax({
+                url: "@Url.Action("ReloadGrid", "Teams")",
+                type: "GET",
+                data: { teamID: teamID },
+                success: function(data) {
+                    //data = data.replace(/'/g, '"');
+                    //tbldata = jQuery.parseJSON(data).tbl;
+                    $("#tblTrainningSchedule").html(data);
+                    $("#tblTrainningSchedule").tablesorter();
+                }
+            })
+        }
+
+
+        function DeleteRecords(id) {
+            if (confirm("@Messages.DeleteConfirm")) {
+                $.ajax({
+                    url: "@Url.Action("DeleteRecord", "Teams")",
+                    type: "POST",
+                    data: { id: id },
+                    success: function(data) {
+                        test();
+                    }
+                })
+
+            }
+            return false;
+        }
+
+        function getSettings() {
+
+            var options1 = {
+                hour: {
+                    value: 0,
+                    min: 0,
+                    max: 24,
+                    step: 1,
+                    symbol: "h"
+                },
+                minute: {
+                    value: 0,
+                    min: 0,
+                    max: 60,
+                    step: 1,
+                    symbol: "m"
+                },
+                direction: "increment", // increment or decrement
+                inputHourTextbox: null, // hour textbox
+                inputMinuteTextbox: null, // minutes textbox
+                postfixText: "", // text to display after the input fields
+                numberPaddingChar: '0' // number left padding character ex: 00052
+            };
+            return options1;
+        };
+
+        $(".StartingTime").timesetter(getSettings());
+        $(".EndTime").timesetter(getSettings());
+
+
+        function getTrainingDaySettings() {
+            $.ajax({
+                url: '@Url.Action("getTrainingDaySettingDetails", "Teams")',
+                type: 'POST',
+                async: false,
+                data: {
+                    teamID: $("#TeamID").val(),
+                    audiID: $("#ChooseAuditorium").val(),
+                    trainingDay: $(".radiobtnTrainingDays:checked").val()
+                },
+                success: function(data) {
+                    if (data.TrainingStartTime !== null && data.TrainingEndTime !== null) {
+                        $(".StartingTime").timesetter(getSettings()).setHour(data.TrainingStartTime.split(':')[0]);
+                        $(".StartingTime").timesetter(getSettings()).setMinute(data.TrainingStartTime.split(':')[1]);
+                        $(".EndTime").timesetter(getSettings()).setHour(data.TrainingEndTime.split(':')[0]);
+                        $(".EndTime").timesetter(getSettings()).setMinute(data.TrainingEndTime.split(':')[1]);
+                        $("#btnSubmit").val("@Messages.Update");
+                    } else {
+                        $(".StartingTime").timesetter(getSettings()).setHour(0);
+                        $(".StartingTime").timesetter(getSettings()).setMinute(0);
+                        $(".EndTime").timesetter(getSettings()).setHour(0);
+                        $(".EndTime").timesetter(getSettings()).setMinute(0);
+                        $("#btnSubmit").val("@Messages.Save");
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function() {
+
+
+            // $("#tblTrainningSchedule").tablesorter();
+            $("#tblTrainningSchedule").tablesorter();
+
+
+            $(".radiobtnTrainingDays").click(function() {
+                getTrainingDaySettings();
+            });
+
+            $("#ChooseAuditorium").change(function() {
+                getTrainingDaySettings();
+            });
+
+            $('.number').keypress(function(event) {
+                if (event.which < 46 || event.which >= 58 || event.which == 47) {
+                    event.preventDefault();
+                }
+
+                if (event.which == 46 && $(this).val().indexOf('.') != -1) {
+                    this.value = '';
+                }
+            });
+
+
+            $("#btnSubmit_TrainingSettings").click(function(e) {
+
+                var duration = $("#DurationTraining").val();
+
+                if (duration == "0" || duration == "") {
+                    $("#errorMessageDuration_TrainingSettings").text("Please enter duration of training.");
+                    e.preventDefault();
+                    setTimeout(function() {
+                            $("#errorMessageDuration_TrainingSettings").hide('blind', {}, 500)
+                        },
+                        5000);
+                    return false;
+                }
+
+                var audiSelected = $("#MinNumTrainingDays option:selected").val()
+                if (audiSelected == "0" || audiSelected == "") {
+                    $("#errorMessage_TrainingSettings").text("Please select min number of training days.");
+                    e.preventDefault();
+                    setTimeout(function() {
+                            $("#errorMessage_TrainingSettings").hide('blind', {}, 500)
+                        },
+                        5000);
+                    return false;
+                }
+            });
+
+            $("#gnrtButton").click(function (e) {
+                var rowCount = $('#tblTrainningSchedule tr').length - 1;
+                var minTrainingValues = $('#MinNumTrainingDays option:selected').val();
+                if (rowCount > minTrainingValues) {
+                    alert("Generated number of training is bigger than count of trainings per week!");
+                    e.preventDefault();
+                    return false;
+                } else if (rowCount < minTrainingValues) {
+                    alert("Generated number of training is less than count of trainings per week!");
+                    e.preventDefault();
+                    return false;
+                } else {
+                    $("#trainingForm").submit();
+                }
+            });
+
+            $("#btnSubmit").click(function(e) {
+
+                var audiSelected = $("#ChooseAuditorium option:selected").val()
+
+                if (audiSelected == "0") {
+                    $("#errorMessage").text("Please Select Auditorium");
+                    e.preventDefault();
+                    setTimeout(function() {
+                            $("#errorMessage").hide('blind', {}, 500)
+                        },
+                        5000);
+                    return false;
+                }
+
+                var StartTime = $('.StartingTime .divTimeSetterContainer .timeValueBorder #txtHours').val() +
+                    ':' +
+                    $('.StartingTime .divTimeSetterContainer .timeValueBorder #txtMinutes').val();
+                var EndTime = $('.EndTime .divTimeSetterContainer .timeValueBorder #txtHours').val() +
+                    ':' +
+                    $('.EndTime .divTimeSetterContainer .timeValueBorder #txtMinutes').val();
+
+                $("#hdnStartTime").val(StartTime);
+                $("#hdnEndTime").val(EndTime);
+
+            });
+
+        });
+        $(function() {
+            $('#StartDate').datetimepicker({
+                format: 'd/m/Y H:i',
+                formatTime: 'H:i',
+                formatDate: 'd/m/Y',
+                step: 15,
+                closeOnDateSelect: true,
+                onChangeDateTime: function() {
+                    $(this).data("input").trigger("changedatetime.xdsoft");
+                }
+            });
+            $('#EndDate').datetimepicker({
+                format: 'd/m/Y H:i',
+                formatTime: 'H:i',
+                formatDate: 'd/m/Y',
+                step: 15,
+                closeOnDateSelect: true,
+                onChangeDateTime: function() {
+                    $(this).data("input").trigger("changedatetime.xdsoft");
+                }
+            });
+        });
+
+        if ('@IsTrainingEnabled' == "False") {
+            $(function() {
+                $('[href="#trainngSettings"]').closest('li').hide();
+                $('[href="#teamTrainings"]').closest('li').hide();
+            });
+        } else if ('@IsTrainingEnabled' == "True") {
+            $('[href="#trainngSettings"]').closest('li').show();
+            $('[href="#teamTrainings"]').closest('li').show();
+        }
+
+        function updateExcel() {
+            $('#uploadPlayers').change(function() {
+                $(this).closest('form').submit();
+            })
+        }
+
+        @if (Model.JobRole == JobRole.TeamViewer)
+        {
+            <text>
+            jQuery.fn.extend({
+              checkTeamViewerRestriction: function() {
+                    $("input").attr('disabled', true);
+                    $("select").attr('disabled', true);
+                    $("textarea").attr('disabled', true);
+                    $(".btn-primary").attr('disabled', true);
+                    //$("a").attr('disabled', true);
+                    $("#main_team_players_table_wrapper a").attr('href', "/");
+                    $("#main_team_players_table_wrapper a").on('click', function () {
+                        return false;
+                    });
+                    $("#main_team_players_table_wrapper a").css('cursor', 'default');
+                    $("#main_team_players_table_wrapper a").css('pointer-events', 'none');
+              }
+            });
+            </text>
+        }
+    </script>
+    <script src="~/Scripts/jquery.tablesorter.min.js"></script>
+    <link href="~/Content/css/tablesorter.css" rel="stylesheet" />
+    <!--/Trainings-->
+}

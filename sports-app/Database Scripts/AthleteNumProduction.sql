@@ -1,0 +1,1 @@
+ALTER TABLE [LogLig].[dbo].[Users] ADD IsAthleteNumberProduced BIT NOT NULL Default 0;  

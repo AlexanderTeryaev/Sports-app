@@ -1,0 +1,41 @@
+﻿<div class="row">
+    <div class="col-lg-9">
+        <h3 class="sub-header">
+            @{
+                if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+                {
+                    <a href="@Url.Action("Index", "Sections")">@Messages.Sections</a>
+                }
+            }
+
+            &raquo; @Messages.Section @ViewBag.SectionName
+        </h3>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" id="section_tabs" role="tablist">
+    <li class="active"><a href="#unions" data-toggle="tab">@Messages.UnionsInSection</a></li>
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors))
+    {
+        <li><a href="#clubs" data-toggle="tab">@Messages.ClubsInSection</a></li>
+        <li><a href="#jobs" data-toggle="tab">@Messages.RolesTypes</a></li>
+        <li><a href="#positions" data-toggle="tab">@Messages.Positions</a></li>
+    }
+
+</ul>
+
+<div id="groupmodal" class="tab-content row offset-4">
+    <div class="tab-pane fade in active col-sm-6" id="unions">
+        @Html.Action("List", "Unions")
+    </div>
+    <div class="tab-pane fade col-sm-6" id="clubs">
+        @Html.Action("ListBySection", "Clubs")
+    </div>
+    <div class="tab-pane fade col-sm-6" id="jobs">
+        @Html.Action("Index", "Jobs")
+    </div>
+    <div class="tab-pane fade col-sm-6" id="positions">
+        @Html.Action("List", "Positions")
+    </div>
+</div>
+

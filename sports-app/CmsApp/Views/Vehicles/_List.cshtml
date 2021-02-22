@@ -1,0 +1,125 @@
+﻿@model IEnumerable<CmsApp.Services.VehicleRegistrationShort>
+<div class="container-fluid" id="sections_pl">
+    <div class="row" style="margin-bottom:15px;">
+        <div class="col-sm-12">
+            <a class="btn btn-primary remove_print" href="@Url.Action("Create","Vehicles", new { unionId =  ViewBag.UnionId, seasonId = ViewBag.SeasonId  })" data-toggle="modal" data-target="#createNewVehicleModal">
+                @Messages.AddNew
+            </a>
+            @if (Model.Any())
+            {
+                <a class="btn btn-info remove_print" onclick="$('#exportvehicleregs').submit()">
+                    <i class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                    @using (Html.BeginForm("ExportVehiclesToExcel", "Vehicles", new { unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId, onlyHeader = false },
+                        FormMethod.Post, new { id = "exportvehicleregs" })) { }
+                </a>
+                <a id="printvehicleregistrations" class="btn btn-info remove_print">
+                    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+                </a>
+            }
+            <a class="btn btn-info remove_print" onclick="$('#vehicleFormExp').submit()">
+                <i class="glyphicon glyphicon-open"></i> @($"{Messages.Download} {Messages.VehiclesFormCaption.ToLowerInvariant()}")
+                @using (Html.BeginForm("ExportVehiclesToExcel", "Vehicles", new { unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId, onlyHeader = true },
+                    FormMethod.Post, new { id = "vehicleFormExp" })) { }
+            </a>
+            <a class="btn btn-primary btn-edit" href="@Url.Action("ImportVehicles", "Vehicles",
+                new { unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId })"
+               data-target="#vehiclesimportform"
+               data-toggle="modal">
+                <i class="glyphicon glyphicon-save"></i>@Messages.ImportGymnastics.Replace(Messages.Gymnastics.ToLower(), Messages.Vehicles.ToLower())
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            @if (Model.Any())
+            {
+                <table class="table table-bordered" id="print_vehicle_table">
+                    <thead>
+                        <tr>
+                            <td class="remove_print"></td>
+                            <td>#</td>
+                            <td>@Messages.Type</td>
+                            <td>@Messages.Product</td>
+                            <td>@Messages.Model</td>
+                            <td>@Messages.YearOfProduction</td>
+                            <td>@Messages.FullName</td>
+                            <td>@Messages.IdentNum</td>
+                            <td>@Messages.OwnershipDate</td>
+                            <td>@Messages.IssueDate</td>
+                            <td class="remove_print"></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var vehicle in Model)
+                        {
+                            <tr>
+                                <td class="remove_print">
+                                    <a class="@AppCss.Edit"
+                                       href="@Url.Action("Create","Vehicles", new { unionId =  ViewBag.UnionId, seasonId = ViewBag.SeasonId, id = vehicle.Id  })"
+                                       data-toggle="modal"
+                                       data-target="#createNewVehicleModal"></a>
+                                </td>
+                                <td>@vehicle.Id</td>
+                                <td>@vehicle.Type</td>
+                                <td>@vehicle.Product</td>
+                                <td>@vehicle.Model</td>
+                                <td>@vehicle.YearOfProduction</td>
+                                <td>@vehicle.FullName</td>
+                                <td>@vehicle.IdentNum</td>
+                                <td>@vehicle.OwnershipDate</td>
+                                <td>@vehicle.IssueDate</td>
+                                <td class="remove_print">
+                                    <a href="@Url.Action("Delete", new {id = vehicle.Id, unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId})" class="@AppCss.Delete"
+                                       data-ajax-confirm="@Messages.DeleteConfirm"
+                                       data-ajax-update="#vehicles_List"
+                                       data-ajax="true"></a>
+                                </td>
+
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+
+@*Modal windows*@
+<div class="modal fade" id="createNewVehicleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="createNewVehicleModal_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="vehiclesimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="vehiclesimportform_pl"></div>
+    </div>
+</div>
+
+<script>
+    $('#printvehicleregistrations').click(function () {
+        var tbl = $("#print_vehicle_table");
+        if (tbl.length > 0) {
+            tablePrint(tbl);
+        }
+    });
+
+    function tablePrint(el) {
+        var wnd = window.open('', '@Messages.Vehicles @Messages.Registrations.ToLower()', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.Vehicles:</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 200);
+    }
+</script>

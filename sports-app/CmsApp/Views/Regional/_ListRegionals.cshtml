@@ -1,0 +1,175 @@
+﻿@model RegionalsForm
+@{
+    int savedId = (int?)TempData["SavedId"] ?? 0;
+    int errId = (int?)TempData["ErrId"] ?? 0;
+    bool fromUnion = ViewBag.FromUnion != null && ViewBag.FromUnion == true;
+}
+
+@if (true)
+{
+    <div class="row">
+        <div class="col-sm-6" style="margin-bottom:20px;">
+            <a href="#" id="printregionalsinfo" class="btn btn-info remove_print">
+                <i class="glyphicon glyphicon-print"></i>@Messages.Print
+            </a>
+            <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportregionalslist').submit()">
+                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                @using (Html.BeginForm("ExportRegionalsList", "Regional", new { id = Model.UnionId, seasonId = Model.SeasonId },
+FormMethod.Post, new { id = "exportregionalslist" })) { }
+            </a>           
+        </div>
+    </div>
+}
+
+<table class="table table-bordered" id="print_regionalind_table">
+    @if (Model.UnionId.HasValue)
+    {
+        <thead>
+            <tr>
+                <th>@Messages.RegionalId</th>
+                <th class="remove_print"></th>
+                <th style="min-width: 300px;">@Messages.Name</th>
+                <th>@Messages.RegionalManager</th>
+                
+                <th class="remove_print"></th>
+                @*<th class="remove_print" data-toggle="tooltip" title="@Messages.ShowAllInformation_tooltip">
+                        <a class="btn btn-primary" onclick="stepByStepUnionPlayerStatistics()">
+                            <span class="fa fa-info-circle" id="main_logo"></span>
+                            <span class="fa fa-spin fa-spinner" id="main_spinner" style="display:none">&nbsp;</span>
+                        </a>
+                    </th>*@
+            </tr>
+        </thead>
+    }
+    <tbody>
+        @foreach (var item in Model.Regionals)
+        {
+            string formId = "regionalsform" + item.RegionalId;
+
+        <tr>
+            <td class="ids">
+                @item.RegionalId
+            </td>
+
+            <td class="remove_print">
+                <a class="@AppCss.Edit"
+                   href="@Url.Action("Edit", "Regional",
+                               new { id = item.RegionalId, unionId = item.UnionId, seasonId = Model.SeasonId })">
+                </a>
+            </td>
+            <td >
+                @using (Ajax.BeginForm("Update", "Regional", new AjaxOptions { UpdateTargetId = "regionalfed" },
+                    new { id = formId }))
+                {
+                    <span class="form-group">
+                        <input type="text" name="Name" value="@item.Name" form="@formId" class="form-control required"
+                               maxlength="50" />
+                        @Html.ValidationMessage("Name")
+                    </span>
+                    <input type="hidden" name="RegionalId" form="@formId" value="@item.RegionalId" />
+                }
+              
+            </td>
+            <td id="activeplayers_@item.RegionalId"><span>@(Model.RegionalManagers.FirstOrDefault(x => x.RegionalId == item.RegionalId)?.User?.FullName)</span></td>            
+           
+            <td class="remove_print">
+
+                <button class="@AppCss.Save @(savedId == item.RegionalId? " btn-success" : null) btn" form="@formId"></button>
+
+            </td>
+            <td class="remove_print">
+                <a href="@Url.Action("Delete", new { id = item.RegionalId })" class="@AppCss.Delete"
+                   data-ajax-confirm="@Messages.DeleteConfirm"
+                   data-ajax-update="#regionalfed"
+                   data-ajax="true"></a>
+            </td>
+        </tr>
+
+        }
+    </tbody>
+   
+    
+        <tfoot class="remove_print">
+            <tr>
+                <td colspan="2"></td>
+                <td>
+                    @using (Ajax.BeginForm("Save", "Regional", new AjaxOptions { UpdateTargetId = "regionalfed" }, 
+                        new { id = "regionalsform" }))
+                    {
+                        <span class="form-group">
+                            @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = Messages.AddNew, form = "regionalsform", maxlength = 50 })
+                            @Html.ValidationMessageFor(m => m.Name)
+                        </span>
+                        @Html.HiddenFor(m => m.UnionId, new { form = "regionalsform" })
+                        @Html.HiddenFor(m => m.SeasonId, new { form = "regionalsform" })
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-primary" form="regionalsform">@Messages.Save</button>
+                </td>
+                <td></td>
+            </tr>
+        </tfoot>
+    
+</table>
+
+<script>
+    $('#regionalsform').validateBootstrap(true);
+    function updateApprovedCheckbox(value, formId) {
+        $("input[type=hidden][name='Approved'][form=" + formId + "]").val(value);
+    }
+    function stepByStepUnionPlayerStatistics() {
+        $("#main_logo").hide();
+        $("#main_spinner").show();
+        var tds = $(".ids");
+        for (let i = 0; i < tds.length; i++) {
+            getClubPlayersInformation(tds[i].innerText);
+        }
+        $("#main_spinner").hide();
+        $("#main_logo").show();
+    }
+
+    $('#printregionalsinfo').click(function () {
+        var tbl = $("#print_regionalind_table");
+        if (tbl.length > 0) {
+            printRegionals(tbl);
+        }
+    });
+
+    function make_el(el) {
+        var el = $(el);
+
+        var new_value = el.val();
+
+        el.parent().html(new_value);
+        el.remove();
+    };
+
+    function printRegionals(el) {
+        var wnd = window.open('', 'Regional List', 'height=600, width=600');
+        wnd.document.write('<html><head><title>Regional List</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" /></head>');
+        wnd.document.write('<body>');
+        wnd.document.write(('<style>.table-borderless > tbody > tr > td,.table-borderless > tbody > tr > th,.table-borderless > tfoot > tr > td,.table-borderless > tfoot > tr > th,.table-borderless > thead > tr > td,.table-borderless > thead > tr > th {border: none;direction: rtl;}'));
+        wnd.document.write(('.table-borderless { direction: rtl;}'));
+        wnd.document.write(('.table-borderless caption, .table-borderless th, .table-borderless td { direction: rtl; }</style>'));
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find("#print_regionalind_table").attr("class", "table table-borderless");
+        $(wnd.document).find("#print_regionalind_table").css("fontSize", "12px");
+        $(wnd.document).find('.remove_print').remove();
+        $(wnd.document).find("input[name='Name']").each(function (index, value) {
+            make_el($(value));
+        });
+
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 1000);
+    };
+</script>
+

@@ -1,0 +1,139 @@
+﻿@model CmsApp.Models.ImportSportsmanViewModel
+
+@{
+    bool showFileBox = true;
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.ImportGymnastics.Replace(Messages.Gymnastics.ToLower(),Messages.Sportsmans.ToLower())</h4>
+</div>
+
+@using (Ajax.BeginForm("ImportSportsmenRegistrations", null,
+                    new AjaxOptions
+                    {
+                        HttpMethod = "POST",
+                        UpdateTargetId = "sportsmenimportform_pl",
+                        OnComplete = "importCompleted()"
+                    },
+                    new
+                    {
+                        id = "frmImportSportsmen",
+                        enctype = "multipart/form-data"
+                    }))
+{
+
+    <div class="modal-body">
+        @Html.HiddenFor(model => model.LeagueId)
+        @Html.HiddenFor(model => model.SeasonId)
+
+        @if (Model.Result.HasValue)
+        {
+            switch (Model.Result)
+            {
+                case ImportPlayersResult.Error:
+                    showFileBox = true;
+                    <text>
+                        <div class="alert alert-danger">
+                            @if (string.Equals(Model.ResultMessage, Messages.ImportPlayers_ChooseFile, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <p>@(Model.ResultMessage)</p>
+
+                            }
+                            else
+                            {
+                                <p>@(Model.ResultMessage)&nbsp;&nbsp;<a href="@Url.Action("DownloadPartiallyImport")"><font style="color:dodgerblue;font-weight:100">@Messages.Download</font></a></p>
+                            }
+                        </div>
+                        <br />
+                        <br />
+                    </text>
+                    break;
+                case ImportPlayersResult.PartialyImported:
+                    showFileBox = true;
+                    <text>
+                        <div class="alert alert-info">
+                            <p>@Messages.ImportPlayers_PartillyImport.Replace(Messages.Players, Messages.Sportsmans)</p>
+                            <p>@Messages.ImportPlayers_PartiallyImportMessage.Replace(Messages.Players.ToLower(), Messages.Sportsmans.ToLower()) - <a class="text-danger" href="@Url.Action("DownloadPartiallyImport")">@Messages.Download</a></p>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">@(Messages.ImportPlayers_SuccessCount)</div>
+                            <input type="hidden" id="hSuccessCount" value="@(Model.SuccessCount)" />
+                            <div class="col-md-8">@(Model.SuccessCount)</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">@(Messages.ImportPlayers_ValidationErrorCount.Replace(Messages.Players, Messages.Sportsmans))</div>
+                            <div class="col-md-8">@(Model.ErrorCount)</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">@(Messages.ImportPlayers_DuplicateCount.Replace(Messages.Players, Messages.Sportsmans))</div>
+                            <div class="col-md-8">@(Model.DuplicateCount)</div>
+                        </div>
+                        <br />
+                        <br />
+                    </text>
+                    break;
+                case ImportPlayersResult.Success:
+                    showFileBox = false;
+                    <text>
+                        <div class="alert alert-success">@Messages.ImportPlayers_SuccessImport</div>
+                        <p>@(Messages.ImportPlayers_SuccessCount.Replace(Messages.Players, Messages.Sportsmans)) - @(Model.SuccessCount)</p>
+                    </text>
+                    break;
+            }
+        }
+        @if (showFileBox)
+        {
+            <text>
+                <input type="file" id="file-import-from-excel" name="ImportFile" />
+            </text>
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        @if (Model.Result != ImportPlayersResult.Success)
+        {
+            <button id="btnImportSportsmen" class="btn btn-primary">@Messages.ImportPlayers_StartImport</button>
+        }
+    </div>
+}
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        var frm = $('#frmImportSportsmen');
+
+        $('#savebtn', frm).click(function () {
+            return true;
+        });
+        $("#sportsmenimportform").on("hidden.bs.modal", function (e) {
+            if ($("@Model.Result" === "@ImportPlayersResult.Success")) {
+                window.location.reload();
+            }
+        });
+    });
+
+    window.addEventListener("submit", function (e) {
+        var form = e.target;
+        if (form.getAttribute("enctype") === "multipart/form-data") {
+            if (form.dataset.ajax) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var xhr = new XMLHttpRequest();
+                xhr.open(form.method, form.action);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        if (form.dataset.ajaxUpdate) {
+                            var updateTarget = document.querySelector(form.dataset.ajaxUpdate);
+                            if (updateTarget) {
+                                updateTarget.innerHTML = xhr.responseText;
+                            }
+                        }
+                    }
+                };
+                xhr.send(new FormData(form));
+            }
+        }
+    }, true);
+
+</script>

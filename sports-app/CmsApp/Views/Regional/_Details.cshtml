@@ -1,0 +1,261 @@
+﻿@model RegionalDetailsForm
+@{
+    var cookie = Request.Cookies["_culture"];
+    var isHebrew = cookie?.Value != "en-US";
+}
+<form id="detailsform" method="post" data-targetid="info" action="@Url.Action("Details", "Regional", new {id = Model.RegionalId, seasonId = Model.SeasonId})"
+      autocomplete="off" enctype="multipart/form-data">
+
+@Html.HiddenFor(x => x.SeasonId)
+@Html.HiddenFor(m => m.RegionalId)
+
+@if (Model.UnionId.HasValue)
+{
+    <div class="row">
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.Name:</label>
+            @Html.TextBoxFor(m => m.Name, new {@class = "form-control"})
+            @Html.ValidationMessageFor(m => m.Name)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.Logo:</label> (<span>2mb</span>)
+            <table>
+                <tr>
+                    <td width="100px">
+                        @Html.Editor("LogoFile", "ImageUpload", new {css = "validfile"})
+                    </td>
+                    <td width="10px"></td>
+                    <td>
+                        <a class="btn btn-sm btn-danger"
+                           href="@Url.Action("DeleteImage", new {id = Model.RegionalId, imageType = RegionalImageType.Logo})"
+                           title="@Messages.Delete">
+                            <i class="glyphicon glyphicon-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            </table>
+            @Html.ValidationMessage("LogoFile")
+            @if (!string.IsNullOrEmpty(Model.Logo))
+            {
+                <div class="offset-2"></div>
+                @ShowImage(Model.Logo)
+            }
+        </div>
+
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.Image:</label> (<span>2mb</span>)
+            <table>
+                <tr>
+                    <td width="100px">
+                        @Html.Editor("ImageFile", "ImageUpload", new {css = "validfile"})
+                    </td>
+                    <td width="10px"></td>
+                    <td>
+                        <a class="btn btn-sm btn-danger"
+                           href="@Url.Action("DeleteImage", new {id = Model.RegionalId, imageType = RegionalImageType.PrimaryImage})"
+                           title="@Messages.Delete">
+                            <i class="glyphicon glyphicon-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            </table>
+            @Html.ValidationMessage("ImageFile")
+            @if (!string.IsNullOrEmpty(Model.PrimaryImage))
+            {
+                <div class="offset-2"></div>
+                @ShowImage(Model.PrimaryImage)
+            }
+        </div>
+
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.ContentImage:</label> (<span>2mb</span>)
+            <table>
+                <tr>
+                    <td width="100px">
+                        @Html.Editor("IndexFile", "ImageUpload", new {css = "validfile"})
+                    </td>
+                    <td width="10px"></td>
+                    <td>
+                        <a class="btn btn-sm btn-danger"
+                           href="@Url.Action("DeleteImage", new {id = Model.RegionalId, imageType = RegionalImageType.IndexImage})"
+                           title="@Messages.Delete">
+                            <i class="glyphicon glyphicon-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            </table>
+            @if (!string.IsNullOrEmpty(Model.IndexImage))
+            {
+                <div class="offset-2"></div>
+                @ShowImage(Model.IndexImage)
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-9">
+            <div class="progress progress-striped">
+                <div class="progress-bar progress-bar-success">0%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-4 form-group">
+            <label class="control-label">@Messages.Documents:</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.Address:</label>
+            @Html.TextBoxFor(m => m.Address, new {@class = "form-control"})
+            @Html.ValidationMessageFor(m => m.Address)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.Phone:</label>
+            @Html.TextBoxFor(m => m.Phone, new {@class = "form-control"})
+            @Html.ValidationMessageFor(m => m.Phone)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3 form-group">
+            <label class="control-label">@Messages.Email:</label>
+            @Html.TextBoxFor(m => m.Email, new {@class = "form-control"})
+            @Html.ValidationMessageFor(m => m.Email)
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6 form-group">
+            <label class="control-label">@Messages.Description:</label>
+            @Html.TextAreaFor(m => m.Description, new {@class = "form-control"})
+            @Html.ValidationMessageFor(m => m.Description)
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6 form-group">
+            <label class="control-label">@Messages.RegionalAdoutUs:</label>
+            @Html.TextAreaFor(m => m.IndexAbout, new {@class = "form-control"})
+            @Html.ValidationMessageFor(m => m.IndexAbout)
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-4">
+            @if (TempData["Saved"] != null)
+            {
+                <span class="text-success">@Messages.DataSavedSuccess</span>
+            }
+        </div>
+        <div class="col-sm-2 text-align">
+            <button class="btn btn-primary" id="saveBtn">@Messages.Save</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-sm-6 form-group">
+            <h3>@Html.DisplayFor(m => m.Name)</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6 form-group">
+            @Html.DisplayFor(m => m.Description)
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3 form-group">
+            @if (!string.IsNullOrEmpty(Model.Logo))
+            {
+                <div class="offset-2"></div>
+                @ShowImage(Model.Logo)
+            }
+        </div>
+        <div class="col-sm-3 form-group">
+            @if (!string.IsNullOrEmpty(Model.PrimaryImage))
+            {
+                <div class="offset-2"></div>
+                @ShowImage(Model.PrimaryImage)
+            }
+        </div>
+        <div class="col-sm-3 form-group">
+            @if (!string.IsNullOrEmpty(Model.IndexImage))
+            {
+                <div class="offset-2"></div>
+                @ShowImage(Model.IndexImage)
+            }
+            @Html.DisplayFor(m => m.IndexAbout)
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6 form-group">
+            @Html.DisplayFor(m => m.Phone)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6 form-group">
+            @Html.DisplayFor(m => m.Email)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6 form-group">
+            @Html.DisplayFor(m => m.Address)
+        </div>
+    </div>
+}
+</form>
+
+
+@helper ShowImage(string imgName)
+{
+    <img class="img-responsive img-thumbnail" src="@( GlobVars.RegionalContentPath + imgName)"/>
+}
+
+<script>
+    function changeReportStatus() {
+        var isChecked = $("#IsReportsEnabled").is(':checked');
+        if (isChecked || $("#reportsHidden").val() == "True") {
+            $(".reportcolumn").show();
+            $("#downloadAllReports").show();
+            $("#paymentReportDiv").show();
+        } else {
+            $(".reportcolumn").hide();
+            $("#downloadAllReports").hide();
+            $("#paymentReportDiv").hide();
+        }
+    }
+
+    $("#IsReportsEnabled").change(function() {
+        changeReportStatus();
+    });
+    $(document).ready(function() {
+        changeReportStatus();
+        if ("@isHebrew" == "True") {
+            $("#isTrainingEnabledDiv").attr('class', 'col-sm-6 pull-left form-group');
+        }
+        $(".frm-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+            step: 15,
+            closeOnDateSelect: true,
+            onChangeDateTime: function() {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            }
+        });
+    });
+
+    $('#detailsform').validateBootstrap(true);
+    setFileUpload('#detailsform', '#details');
+
+
+</script>

@@ -1,0 +1,93 @@
+﻿@model IEnumerable<DataService.DTO.GymnasticDto>
+@{
+    var clubId = ViewBag.ClubId != null ? (int?)ViewBag.ClubId : null;
+    var seasonId = ViewBag.SeasonId != null ? (int?)ViewBag.SeasonId : null;
+    var leagueId = ViewBag.LeagueId != null ? (int?)ViewBag.LeagueId : null;
+    var competitionRouteId = ViewBag.CompetitionRouteId != null ? (int?)ViewBag.CompetitionRouteId : null;
+    var sectionName = ViewBag.SectionAlias != null ? ViewBag.SectionAlias as string : string.Empty;
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex"><div class="col-sm-8"><h4 class="modal-title">@Messages.All @Messages.Registrations.ToLowerInvariant()</h4></div><div class="pull-right">@LangHelper.GetPlayerCaption(sectionName, true)  @Messages.Count.ToLower(): <strong>@(Model?.Count() ?? 0)</strong></div></div>
+</div>
+@if (Model != null)
+{
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-sm-2">
+                <table class="table table-bordered">
+                    <tbody>
+                        @for (int i = 0; i < Model.Count(); i++)
+                        {
+                            <tr>
+                                <td align="center">@(i + 1)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-sm-10">
+                <table class="table table-bordered">
+                    <tbody id="sortable">
+                        @foreach (var reg in Model)
+                        {
+                            <tr data-id="@reg.RegistrationId">
+                                <td>@reg.FullName</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+    </div>
+}
+
+<script>
+    $(function () {
+        $('#sortable').sortable({
+            items: "tr",
+            cursor: 'move',
+            helper: fixHelper,
+            update: function (event, ui) {
+
+                var ids = [];
+                var childs = event.target.children;
+
+                $.each(childs, function (key, elem) {
+                    var id = $(elem).attr('data-id');
+                    ids.push(id);
+                });
+
+                //console.log(array);
+                var postData = {
+                    clubId: '@clubId',
+                    leagueId: '@leagueId',
+                    seasonId: '@seasonId',
+                    ids: ids,
+                    competitionRouteId: "@competitionRouteId"
+                }
+                $.ajax({
+                    url: '@Url.Action("ChangePlayersOrder", "Clubs")',
+                    data: postData,
+                    type: 'POST',
+                    dataType: 'json',
+                    success: function (result) {
+                        if (result.Success) {
+                            console.log('Order updated');
+                        } else {
+                            console.log('Order not updated');
+                        }
+                    }
+                })
+            }
+        }).disableSelection();
+    });
+</script>
+

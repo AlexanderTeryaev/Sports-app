@@ -1,0 +1,3291 @@
+@using AppModel
+@using DataService.DTO
+@model PlayerFormView
+@{
+
+    var gendersList = new List<SelectListItem>
+{
+        new SelectListItem {Text = Messages.Select, Value = "" },
+        new SelectListItem {Text = LangHelper.GetGender("Female"), Value = "0" },
+        new SelectListItem {Text = LangHelper.GetGender("Male"), Value = "1", Selected = (Model.GenderId == 1) ? true:false },
+    };
+
+    if (ViewBag.NetBall)
+    {
+        gendersList = new List<SelectListItem>
+{
+            new SelectListItem {Text = LangHelper.GetGender("Female"), Value = "0" },
+        };
+    }
+
+    var shirtSizeList = new List<SelectListItem>
+{
+new SelectListItem {Text = "", Value = null},
+new SelectListItem {Text = "3XL", Value = "3XL"},
+new SelectListItem {Text = "2XL", Value = "2XL"},
+new SelectListItem {Text = "XL", Value = "XL"},
+new SelectListItem {Text = "L", Value = "L"},
+new SelectListItem {Text = "M", Value = "M"},
+new SelectListItem {Text = "S", Value = "S"},
+new SelectListItem {Text = "XS", Value = "XS"},
+new SelectListItem {Text = "S child", Value = "Sc"},
+new SelectListItem {Text = "M child", Value = "Mc"},
+new SelectListItem {Text = "L child", Value = "Lc"},
+new SelectListItem {Text = "XL child", Value = "XLc"}
+};
+    var kitStatusList = new SelectList(PlayerKitHelper.KitList, "Value", "Text", Model.KitStatus);
+    var heatTypeList = PlayerHeatTypeHelper.HeatTypeList;
+    var kgLbList = new List<SelectListItem>
+{
+new SelectListItem {Text = Messages.Kg, Value = "Kg"},
+new SelectListItem {Text = Messages.Lb, Value = "Lb"},
+};
+    bool isWaterpolo = ViewBag.IsWaterpolo;
+    var disciplines = new MultiSelectList(Model.UnionDisciplines ?? new List<Discipline>
+        (), nameof(Discipline.DisciplineId), nameof(Discipline.Name), Model.PlayerDisciplineIds);
+
+    var isThisGymnastic = string.Equals(Model.Section?.Alias, GamesAlias.Gymnastic, StringComparison.CurrentCultureIgnoreCase);
+    var isThisAthletics = string.Equals(Model.Section?.Alias, GamesAlias.Athletics, StringComparison.CurrentCultureIgnoreCase);
+    var isThisSwimming = string.Equals(Model.Section?.Alias, GamesAlias.Swimming, StringComparison.CurrentCultureIgnoreCase);
+    var isWaveSurfing = string.Equals(Model.Section?.Alias, GamesAlias.WaveSurfing, StringComparison.CurrentCultureIgnoreCase);
+    bool is31Union = ViewBag.Is31Union;
+    bool is38Union = ViewBag.Is38Union == true;
+    bool isThisTennis = string.Equals(Model.Section?.Alias, GamesAlias.Tennis, StringComparison.CurrentCultureIgnoreCase);
+    bool isThisMartialArts = string.Equals(Model.Section?.Alias, GamesAlias.MartialArts, StringComparison.CurrentCultureIgnoreCase);
+    bool isThisMotorsport = string.Equals(Model.Section?.Alias, GamesAlias.Motorsport, StringComparison.CurrentCultureIgnoreCase);
+    bool isThisRowing = string.Equals(Model.Section?.Alias, GamesAlias.Rowing, StringComparison.CurrentCultureIgnoreCase);
+    bool isThisBicycle = string.Equals(Model.Section?.Alias, GamesAlias.Bicycle, StringComparison.CurrentCultureIgnoreCase);
+    bool isThisClimbing = string.Equals(Model.Section?.Alias, GamesAlias.Climbing, StringComparison.CurrentCultureIgnoreCase);
+    bool hasAdminPermission = ViewBag.IsUnionManager || ViewBag.IsAdmin;
+
+    var auditoriumsModel = ViewBag.Auditoriums == null ? new List<AuditoriumShort>() : ViewBag.Auditoriums;
+    var auditoriums = new SelectList(auditoriumsModel, nameof(AuditoriumShort.Id), nameof(AuditoriumShort.Name), Model.AuditoriumId);
+
+    var medicalInstitutesModel = ViewBag.MedicalInstitutes == null ? new List<MedicalInstitutesDto>() : ViewBag.MedicalInstitutes;
+    var medicalInstitutes = new SelectList(medicalInstitutesModel, nameof(MedicalInstitutesDto.MedicalInstitutesId), nameof(MedicalInstitutesDto.Name), Model.AuditoriumId);
+
+    bool isSpecificTopLevelJobOtherThanAthletics = ViewBag.IsSpecificUnionTopLevelJob && !isThisAthletics;
+    bool isSpecificTopLevelJobOtherThanGymnastics = ViewBag.IsSpecificUnionTopLevelJob && !isThisGymnastic;
+
+    var leaguesOfSeason = (List<SelectListItem>)ViewBag.LeaguesOfSeason;
+}
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .switch-toggle.switch-candy, .switch-light.switch-candy > span {
+        background-color: #7b7474;
+        border-radius: 3px;
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .requiredstar:before {
+        content: "*";
+    }
+
+    .requiredstar {
+        color: red;
+        font-size: large;
+        font-weight: bold;
+    }
+</style>
+
+
+<div class="row">
+    <div class="col-lg-10">
+        <h3 class="sub-header">
+            @{
+                int i = 0;
+                foreach (var l in Model.PlayerTeams.OrderBy(t => t.Title))
+                {
+                    if (i++ > 0)
+                    {
+                        <text>, </text>
+                    }
+                    if (Model.IsValidUser || Model.ManagerTeams.Any(t => t.TeamId == l.TeamId))
+                    {
+                        if (Model.LeagueId == 0 && l.LeagueId == 0)
+                        {
+                            if (!Model.DepartmentId.HasValue)
+                            {
+                                <a href="@Url.Action("Edit", "Teams", new
+                                    {
+                                        id = l.TeamId,
+                                        seasonId = Model.SeasonId >
+0 ? Model.SeasonId : l.SeasonId,
+                                        clubId = Model.ClubId > 0 ? Model.ClubId : l.ClubId
+                                    })">
+                                    @l.Title
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Edit", "Teams", new
+                                    {
+                                        id = l.TeamId,
+                                        seasonId = Model.SeasonId >
+0 ? Model.SeasonId : l.SeasonId,
+                                        clubId = Model.ClubId > 0 ? Model.ClubId : l.ClubId,
+                                        departmentId = Model.DepartmentId,
+                                        departmentSeasonId = Model.DepartmentSeasonId,
+                                        departmentSportId = Model.SportId
+                                    })">
+                                    @l.Title
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            if (!Model.DepartmentId.HasValue)
+                            {
+                                <a href="@Url.Action("Edit", "Teams", new
+                                    {
+                                        id = l.TeamId,
+                                        currentLeagueId = Model.LeagueId >
+       0 ? Model.LeagueId : l.LeagueId,
+                                        seasonId = Model.SeasonId > 0 ? Model.SeasonId : l.SeasonId
+                                    })">
+                                    @l.Title
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Edit", "Teams", new
+                                    {
+                                        id = l.TeamId,
+                                        currentLeagueId = Model.LeagueId >
+       0 ? Model.LeagueId : l.LeagueId,
+                                        seasonId = Model.SeasonId > 0 ? Model.SeasonId : l.SeasonId,
+                                        departmentId = Model.DepartmentId,
+                                        departmentSeasonId = Model.DepartmentSeasonId,
+                                        departmentSportId = Model.SportId
+                                    })">
+                                    @l.Title
+                                </a>
+                            }
+                        }
+                    }
+                    else
+                    {
+                        <span>@l.Title</span>
+                    }
+                }
+
+                foreach (var club in Model.PlayerClubs)
+                {
+                    if (i++ > 0)
+                    {
+                        <text>, </text>
+                    }
+                    if (User.IsInAnyRole(AppRole.Players))
+                    {
+                        @club.Name
+                    }
+                    else
+                    {
+                        if (!Model.DepartmentId.HasValue)
+                        {
+                            <a href="@Url.Action("Edit", "Clubs", new
+                                {
+                                    id = club.ClubId,
+                                    seasonId = Model.SeasonId >
+0 ? Model.SeasonId : club.SeasonId,
+                                    sectionId = club.SectionId,
+                                    unionId = club.UnionId
+                                })">
+                                @club.Name
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Edit", "Clubs", new
+                                {
+                                    id = club.ClubId,
+                                    isDepartment = true,
+                                    seasonId = Model.DepartmentSeasonId,
+                                    sportId = Model.SportId
+                                })">
+                                @club.Name
+                            </a>
+                        }
+                    }
+                }
+            }
+            <span>&raquo;</span> @(Model.UserId != 0 ? Model.FullNameFormatted : "הוסף שחקן")
+        </h3>
+    </div>
+    @if (Model.SeasonId > 0)
+    {
+        <div class="col-lg-2">
+            <h3 class="currentSeasonFromUrl"></h3>
+        </div>
+    }
+    else
+    {
+        <div class="col-lg-2">
+            <h3 class="currentSeason"></h3>
+        </div>
+    }
+
+</div>
+
+<ul class="nav nav-tabs" id="section_tabs" role="tablist">
+    <li class="active">
+        <a href="#infoTab" data-toggle="tab">@Messages.Info</a>
+    </li>
+    <li>
+        <a href="#achievements" data-toggle="tab">@Messages.Achievements</a>
+    </li>
+    
+    @if (string.Equals(Model.Section?.Alias, SectionAliases.Bicycle, StringComparison.InvariantCultureIgnoreCase))
+    {
+        <li>
+            <a href="#friendshipPayments" data-toggle="tab">@Messages.PaymentsHistory</a>
+        </li>
+    }
+</ul>
+
+<div id="groupmodal" class="tab-content row offset-2">
+    <div class="tab-pane fade in active" id="infoTab">
+        <form class="form" id="playerform" role="form" method="post" enctype="multipart/form-data" autocomplete="off">
+            @if (Model.DepartmentId.HasValue)
+            {
+                @Html.HiddenFor(m => m.DepartmentId)
+                @Html.HiddenFor(m => m.DepartmentSeasonId)
+                @Html.HiddenFor(m => m.SportId)
+            }
+
+            <div class="row" id="backgroundgrey">
+                <div class="col-sm-6">
+                    <div class="row">
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.FirstName<span class="requiredstar"></span>:</label>
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.FirstName, new { @class = "form-control" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.FirstName, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.FirstName)
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.LastName<span class="requiredstar"></span>:</label>
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.LastName, new { @class = "form-control" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.LastName, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.LastName)
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.MiddleName:</label>
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.MiddleName, new { @class = "form-control" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.MiddleName, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.MiddleName)
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            @if (Model.IdentNum != null)
+                            {
+                                <label class="control-label"><input class="numsRadio" type="radio" name="IdType" value="Id" checked> @Messages.IdentNum<span class="requiredstar"></span>:</label>
+                                @Html.Raw("&nbsp")@Html.Raw("&nbsp")
+                                <label class="control-label"><input class="numsRadio" type="radio" name="IdType" value="Passport"> @Messages.PassportNum<span class="requiredstar"></span>:</label>
+                            }
+                            else
+                            {
+                                <label class="control-label"><input class="numsRadio" type="radio" name="IdType" value="Id"> @Messages.IdentNum<span class="requiredstar"></span>:</label>
+                                @Html.Raw("&nbsp")@Html.Raw("&nbsp")
+                                <label class="control-label"><input class="numsRadio" type="radio" name="IdType" value="Passport" checked> @Messages.PassportNum<span class="requiredstar"></span>:</label>
+                            }
+
+                            <div id="identNumDiv">
+                                <div class="row">
+                                    @{
+                                        var identRowCols = Model.EnableIDCorrectionCheck ? "8" : "12";
+                                        @Html.Hidden("EnableIDCorrectionCheck", Model.EnableIDCorrectionCheck)
+                                    }
+                                    @if (!Model.IsReadOnly)
+                                    {
+                                        @Html.TextBoxFor(m => m.IdentNum, new { @class = $"form-control col-sm-{ identRowCols } {(Model.IsAlternativeId ? "alternativeid" : "custid")}" })
+                                    }
+                                    else
+                                    {
+                                        @Html.TextBoxFor(m => m.IdentNum, new { @class = $"form-control col-sm-{ identRowCols } {(Model.IsAlternativeId ? "alternativeid" : "custid")}", @readonly = "readonly" })
+                                    }
+                                    @if (Model.EnableIDCorrectionCheck)
+                                    {
+                                        <input type="button" class="btn btn-default col-sm-4" id="idCheckValidationButton" style="padding-left:0px;padding-right:0px;padding-top: 6px;padding-bottom: 6px;" value="@Messages.EnableIDCorrectionCheck" onclick="checkIdValidation();">
+                                    }
+                                    @Html.ValidationMessageFor(m => m.IdentNum)
+                                </div>
+                            </div>
+                            <div id="passportNumDiv" style="display: none">
+                                @if (!Model.IsReadOnly)
+                                {
+                                    @Html.TextBoxFor(m => m.PassportNum, new { @class = "form-control" })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.PassportNum, new { @class = "form-control", disabled = "disabled" })
+                                }
+                                @Html.ValidationMessageFor(m => m.PassportNum)
+                            </div>
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.FullName:</label>
+                            <input type="text" class="form-control" value="@(string.IsNullOrWhiteSpace(Model.FullNameFormatted) ? string.Empty : Model.FullNameFormatted)" readonly />
+                        </div>
+
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.FatherName:</label>
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.ParentName, new { @class = "form-control" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.ParentName, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.ParentName)
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.MotherName:</label>
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.MotherName, new { @class = "form-control" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.MotherName, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.MotherName)
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.ParentPhone:</label>
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.ParentPhone, new { @class = "form-control" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.ParentPhone, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.ParentPhone)
+                        </div>
+
+                        @if (Model.IsUkraineGymnasticUnion)
+                        {
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.IdentityCard:</label>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    @Html.TextBoxFor(m => m.IdentCard, new { @class = "form-control" })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.IdentCard, new { @class = "form-control", @readonly = "readonly" })
+                                }
+                                @Html.ValidationMessageFor(m => m.IdentCard)
+                            </div>
+
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.LicenseDate:</label>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    @Html.TextBoxFor(m => m.LicenseValidity, new { @class = "form-control frm-date-wo-time" })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.LicenseValidity, new { @class = "form-control", @readonly = "readonly" })
+                                }
+                                @Html.ValidationMessageFor(m => m.LicenseValidity)
+                            </div>
+                        }
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.ParentEmail:</label>
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.ParentEmail, new { @class = "form-control" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.ParentEmail, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.ParentEmail)
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            @if (isThisBicycle)
+                            {
+                                <label class="control-label">@Messages.ForeignFirstName:<span class="requiredstar"></span></label>
+                            }
+                            else
+                            {
+                                <label class="control-label">@Messages.ForeignFirstName:</label>
+                            }
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.ForeignFirstName, new { @class = "form-control", onchange = "foreignToUpper('ForeignFirstName')" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.ForeignFirstName, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.ForeignFirstName)
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            @if (isThisBicycle)
+                            {
+                                <label class="control-label">@Messages.ForeignLastName:<span class="requiredstar"></span></label>
+                            }
+                            else
+                            {
+                                <label class="control-label">@Messages.ForeignLastName:</label>
+                            }
+                            @if (!Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => m.ForeignLastName, new { @class = "form-control", onchange = "foreignToUpper('ForeignLastName')" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => m.ForeignLastName, new { @class = "form-control", @readonly = "readonly" })
+                            }
+                            @Html.ValidationMessageFor(m => m.ForeignLastName)
+                        </div>
+                        @if (!Model.IsUkraineGymnasticUnion)
+                        { 
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">
+                                @Messages.IsReligious
+                                @if (ViewBag.IsUnionManager != true && ViewBag.IsAdmin != true)
+                                {
+                                    <input type="checkbox" @(Model.IsReligious ? "checked" : "" ) disabled="disabled" readonly="readonly" />
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(x => x.IsReligious)
+                                }
+                            </label>
+                        </div>
+                        }
+
+                        @if (isThisBicycle || isThisRowing)
+                        {
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.Age</label>
+                                @Html.TextBoxFor(m => m.PlayerSeasonAge, new { @class = "form-control", @readonly = "readonly" })
+                            </div>
+                        }
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.Email:</label>
+                            @Html.TextBoxFor(m => m.Email, new { @class = "form-control custemail", autocomplete = "new-password", value = Model.Email })
+                            @Html.ValidationMessageFor(m => m.Email)
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.Phone:</label>
+                            @Html.TextBoxFor(m => m.Telephone, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Telephone)
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.BirthDay<span class="requiredstar"></span>:</label>
+                            @{ var birthDay = Model.BirthDay.HasValue ? Model.BirthDay.Value.ToShortDateString() : null; }
+                            @if (ViewBag.IsUnionManager || ViewBag.IsAdmin || ViewBag.IsClubManager && !Model.IsReadOnly)
+                            {
+                                @Html.TextBoxFor(m => birthDay, new { @class = "form-control frm-date-wo-time", @name = "BirthDay", @id = "BirthDay" })
+                                @Html.HiddenFor(m => m.Age, new { @id = "hPlayerAge" })
+                            }
+                            else
+                            {
+                                @Html.TextBoxFor(m => birthDay, new { @class = "form-control", @name = "BirthDay", @id = "BirthDay" })
+                            }
+                            @Html.HiddenFor(m => m.Age, new { @id = "hPlayerAge" })
+                            @Html.Hidden("hBirthDate", Model.BirthDay?.Ticks ?? -1, new { id = "hBirthDate" })
+
+                            @Html.ValidationMessageFor(m => m.BirthDay)
+                            <div id="datetimepicker12"></div>
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.Password:</label>
+                            @Html.PasswordFor(m => m.Password, new { @class = "form-control pass", value = Model.Password, data_val_pass = Messages.IvalidPasswrodPattern, autocomplete = "new-password" })
+                            @Html.ValidationMessageFor(m => m.Password)
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.City:</label>
+                            @Html.TextBoxFor(m => m.City, new { @class = "form-control" })
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.Address:</label>
+                            @Html.TextBoxFor(m => m.Address, new { @class = "form-control" })
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.Nationality:</label>
+                            @Html.DropDownList("Nationality", (SelectList)ViewBag.CountryList, new { @class = "form-control" })
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.PostalCode:</label>
+                            @Html.TextBoxFor(m => m.PostalCode, new { @class = "form-control", type = "number", min = "1" })
+                        </div>
+
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.CountryOfBirth:</label>
+                            @Html.DropDownList("CountryOfBirth", (SelectList)ViewBag.CountryOfBirthList, new { @class = "form-control" })
+                        </div>
+                        <!--
+                    <div class="form-group col-sm-3">
+                        <label class="control-label">@Messages.ParentName:</label>
+                        @Html.TextBoxFor(m => m.ParentName, new { @class = "form-control" })
+                    </div>
+                    @if (isThisAthletics || isThisBicycle)
+                    {
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.ForeignName:</label>
+                            @Html.TextBoxFor(m => m.ForeignName, new { @class = "form-control" })
+                        </div>
+                    }  -->
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.IDFile</label> (<span>2mb max</span>):
+                            <div class="row">
+                                @if (isThisMartialArts || (ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly))
+                                {
+                                    <div class="form-group col-sm-4 btn-file-glyph">
+                                        <span class="glyphicon glyph-btn glyphicon-upload">
+                                            <input type="file" name="IDFilePost" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF)$"
+                                                   data-val-regex="@Messages.SelectValidFile" accept="image/*, application/pdf">
+                                        </span>
+                                        <div class="row">
+                                            @Html.ValidationMessage("IDFilePost")
+                                            <span id="IDFilePostName"></span>
+                                        </div>
+                                    </div>
+                                }
+
+                                @{
+                                    var idFile = Model.IDFileName;
+                                    if (!string.IsNullOrEmpty(idFile))
+                                    {
+                                        <div class="form-group col-sm-4" id="viewIDFile">
+                                            <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                                  onclick="window.open('@(GlobVars.ContentPath + "/players/" + idFile)')">
+                                            </span>
+                                        </div>
+                                        if (ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                        {
+                                            <div class="form-group col-sm-4" id="removeIDFile">
+                                                <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                                <input type="hidden" name="RemoveIDFile" value="false" />
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.PassportFile</label> (<span>2mb max</span>):
+                            <div class="row">
+                                @if (ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                {
+                                    <div class="form-group col-sm-4 btn-file-glyph">
+                                        <span class="glyphicon glyph-btn glyphicon-upload">
+                                            <input type="file" name="PassportFilePost" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF)$"
+                                                   data-val-regex="@Messages.SelectValidFile" accept="image/*, application/pdf">
+                                        </span>
+                                        <div class="row">
+                                            @Html.ValidationMessage("PassportFilePost")
+                                            <span id="PassportFilePostName"></span>
+                                        </div>
+                                    </div>
+                                }
+                                @{
+                                    var passportFile = Model.PassportFileName;
+                                    if (!string.IsNullOrEmpty(passportFile))
+                                    {
+                                        <div class="form-group col-sm-4" id="viewPassportFile">
+                                            <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                                  onclick="window.open('@(GlobVars.ContentPath + "/players/" + passportFile)')">
+                                            </span>
+                                        </div>
+                                        if (ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                        {
+                                            <div class="form-group col-sm-4" id="removePassportFile">
+                                                <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                                <input type="hidden" name="RemovePassportFile" value="false" />
+                                            </div>
+                                        }
+                                    }
+                                }
+                                <label class="control-label">@Messages.PassportValidity:</label>
+                                @{
+                                    var passportValidity = Model.PassportValidity.HasValue ? Model.PassportValidity.Value.ToShortDateString() : null;
+
+                                }
+                                @if (ViewBag.IsUnionManager || ViewBag.IsAdmin || ViewBag.IsClubManager && !Model.IsReadOnly)
+                                {
+                                    @Html.TextBoxFor(m => passportValidity, new { @class = "form-control frm-date-wo-time", @name = "PassportValidity", @id = "PassportValidity" })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => passportValidity, new { @class = "form-control", @name = "PassportValidity", @id = "PassportValidity" })
+                                }
+                                @Html.Hidden("hPassportValidity", Model.PassportValidity?.Ticks ?? -1, new { id = "hPassportValidity" })
+
+                                <div id="datetimepicker12"></div>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.MedicalCertificate</label> (<span>2mb max</span>):
+                            @if (Model.CanApproveMedicalCertificate && hasAdminPermission)
+                            {
+                                @Html.CheckBoxFor(m => m.MedicalCertificate)
+                                @Html.ValidationMessageFor(m => m.MedicalCertificate)
+                            }
+                            else
+                            {
+                                <input type="checkbox" @(Model.MedicalCertificate ? "checked" : "") readonly="readonly" disabled="disabled" />
+                            }
+                            <div class="row" style="margin:0px">
+                                @if ((isThisTennis || isThisMartialArts || isThisBicycle || isThisRowing) || ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                {
+                                    <div class="form-group col-sm-4 btn-file-glyph">
+                                        <span class="glyphicon glyph-btn glyphicon-upload">
+                                            <input type="file" name="MedicalCertificateFile" data-val="true" data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF)$"
+                                                   data-val-regex="@Messages.SelectValidImage" accept="image/*, application/pdf">
+                                        </span>
+                                        <div class="row">
+                                            @Html.ValidationMessage("MedicalCertificateFile")
+                                            <span id="MedicalCertificateFileName"></span>
+                                        </div>
+                                    </div>
+                                }
+                                @{
+                                    var medicalCertFiles = Model.PlayerFiles.Where(x => x.FileType == (int)PlayerFileType.MedicalCertificate && x.IsArchive);
+                                    var medicalCertFile = Model.PlayerFiles.FirstOrDefault(x => x.FileType == (int)PlayerFileType.MedicalCertificate && !x.IsArchive);
+
+                                    if (medicalCertFile != null)
+                                    {
+                                        <div class="form-group col-sm-4" id="viewMedicalFile">
+                                            <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                                  onclick="window.open('@(GlobVars.ContentPath + "/players/" + medicalCertFile.FileName)')">
+                                            </span>
+                                        </div>
+                                        if (ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                        {
+                                            <div class="form-group col-sm-4" id="removeMedicalFile">
+                                                <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                                <input type="hidden" name="RemoveMedicalCertificateFile" value="false" />
+                                            </div>
+                                        }
+                                    }
+                                    if (Model.IsIndividualSection)
+                                    {
+                                        <select class="form-control" id="change_archive_cert" onchange="changeArchiveCert()">
+                                            <option value="">@Messages.OpenArchivedCertifications</option>
+                                            @foreach (var archivedCert in medicalCertFiles)
+                                            {
+                                                <option value="@archivedCert.FileName">@archivedCert.DateCreated</option>
+                                            }
+                                        </select>
+                                    }
+                                }
+                            </div>
+
+                            <label class="control-label">@(isThisTennis || isThisBicycle ? Messages.ValidityOfMedicalExamination : Messages.MedExamDate):</label>
+                            @{
+                                var mdate = Model.MedExamDate?.ToString("dd/MM/yyyy") ?? "";
+                            }
+                            @if (ViewBag.CantChangeIfAccepted == false || isThisRowing)
+                            {
+                                <input type="text" id="@nameof(PlayerFormView.MedExamDate)" name="@nameof(PlayerFormView.MedExamDate)" class="form-control frm-date-wo-time" value="@mdate" />
+                            }
+                            else
+                            {
+                                <input type="text" id="@nameof(PlayerFormView.MedExamDate)" name="@nameof(PlayerFormView.MedExamDate)" class="form-control" value="@mdate" disabled />
+                            }
+
+                        </div>
+                        @if (!isThisGymnastic && !isThisRowing)
+                        {
+                            <div class="col-sm-3 form-group">
+                                <label class="control-label">@Messages.Insurance</label> (<span>2mb max</span>):
+                                @Html.CheckBoxFor(m => m.Insurance)
+                                @Html.ValidationMessageFor(m => m.Insurance)
+                                <div class="row">
+                                    @if (isThisTennis || ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                    {
+                                        <div class="form-group col-sm-4 btn-file-glyph">
+                                            <span class="glyphicon glyphicon-upload glyph-btn">
+                                                <input type="file" name="InsuranceFile" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG)$"
+                                                       data-val-regex="@Messages.SelectValidImage" accept="image/*">
+                                            </span>
+                                            <div class="row">
+                                                @Html.ValidationMessage("InsuranceFile")
+                                                <span id="InsuranceFileName"></span>
+                                            </div>
+                                        </div>
+                                    }
+                                    @{
+                                        var insuranceFile = Model.PlayerFiles.FirstOrDefault(x => x.FileType == (int)PlayerFileType.Insurance);
+                                        if (insuranceFile != null)
+                                        {
+                                            <div class="form-group col-sm-4" id="viewInsuranceFile">
+                                                <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                                      onclick="window.open('@(GlobVars.ContentPath + "/players/" + insuranceFile.FileName)')">
+                                                </span>
+                                            </div>
+                                            if (ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                            {
+                                                <div class="form-group col-sm-4" id="removeInsuranceFile">
+                                                    <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                                    <input type="hidden" name="RemoveInsuranceFile" value="false" />
+                                                </div>
+                                            }
+                                        }
+                                    }
+                                </div>
+                                <label id="insuranceErrorLabel" class="control-label" style="display:none; color:red;">@Messages.InsuranceFileRequired</label>
+                                <label class="control-label">@Messages.InsuranceTypes<span class="requiredstar"></span>:</label>
+                                @Html.DropDownList("InsuranceTypeId", Model.InsuranceTypesList, new { @class = "form-control", @id = "InsuranceTypeId" })
+                                @Html.ValidationMessage("InsuranceTypeId")
+                                @if (!isThisAthletics)
+                                {
+                                    <label class="control-label">@Messages.DateOfInsuranceValidity:</label>
+
+                                    if (ViewBag.CantChangeIfAccepted == false)
+                                    {
+                                        @Html.TextBoxFor(m => m.DateOfInsurance, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                                    }
+                                    else
+                                    {
+                                        @Html.TextBoxFor(m => m.DateOfInsurance, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date", disabled = "disabled" })
+                                    }
+                                }
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="row">
+                        <div class="form-group col-sm-3">
+                            @if (isThisGymnastic)
+                            {
+                                <label class="control-label">@Messages.GymnastStatement</label><span> (2mb max):</span>
+                            }
+                            else if (string.Equals(Model.Section?.Alias, GamesAlias.Swimming, StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                <label class="control-label">@Messages.UnionRegistrationForm</label><span> (2mb max):</span>
+                            }
+                            else if (isThisBicycle)
+                            {
+                                <label class="control-label">@Messages.RegistrationFormSigned</label><span> (2mb max):</span>
+                            }
+                            else if (isWaterpolo)
+                            {
+                                <label class="control-label">@Messages.NewPlayerStatement</label><span> (2mb max):</span>
+                            }
+                            else
+                            {
+                                <label class="control-label">@Messages.ParentStatement</label><span> (2mb max):</span>
+                            }
+                            <div class="row">
+                                @if (ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                {
+                                    <div class="form-group col-sm-4 btn-file-glyph">
+                                        <span class="glyphicon glyph-btn glyphicon-upload">
+                                            <input type="file" name="ParentStatementFile" data-val="true" data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|png|PNG|)$"
+                                                   data-val-regex="@Messages.SelectValidImage" accept="image/*, application/pdf">
+                                        </span>
+                                        <div class="row">
+                                            @Html.ValidationMessage("ParentStatementFile")
+                                            <span id="ParentStatementFileName"></span>
+                                        </div>
+                                    </div>
+                                }
+                                @{
+                                    var parentStatement = Model.PlayerFiles.FirstOrDefault(x => x.FileType == (int)PlayerFileType.ParentStatement && x.IsArchive != true);
+                                    if (parentStatement != null)
+                                    {
+                                        <div class="form-group col-sm-4" id="viewParentStatementFile">
+                                            <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                                  onclick="window.open('@(GlobVars.ContentPath + "/players/" + parentStatement.FileName)')">
+                                            </span>
+                                        </div>
+                                        if (ViewBag.CantChangeIfAccepted == false && !Model.IsReadOnly)
+                                        {
+                                            <div class="form-group col-sm-4" id="removeParentStatementFile">
+                                                <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                                <input type="hidden" name="RemoveParentStatementFile" value="false" />
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.PersonalCoach:</label>
+                            @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true || ViewBag.IsClubManager == true)
+                            {
+                                @Html.DropDownListFor(m => m.PersonalCoachId, Model.PersonalCoachesList, new { @class = "form-control", @id = "personalCoachId" })
+                            }
+                            else
+                            {
+                                @Html.DropDownListFor(m => m.PersonalCoachId, Model.PersonalCoachesList, new { @class = "form-control", disabled = "disabled" })
+                            }
+                            @Html.ValidationMessageFor(m => m.PersonalCoachId)
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        @if (!isThisGymnastic && !isThisRowing && !isThisBicycle && !isThisClimbing)
+                        {
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.Heigth:</label>
+                                @Html.TextBoxFor(m => m.Height, new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.Height)
+                            </div>
+                        }
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.Gender<span class="requiredstar"></span>:</label>
+                            @if (!isThisTennis)
+                            {
+                                if (ViewBag.NetBall)
+                                {
+                                    @Html.DropDownListFor(m => m.GenderId, gendersList, new { @class = "form-control", disabled = "disabled" })
+                                }
+                                else
+                                {
+                                    if (isThisAthletics && User.IsInAnyRole(AppRole.Players))
+                                    {
+                                        gendersList = gendersList.FindAll(g => g.Value == Model.GenderId.ToString());
+                                    }
+                                    @Html.DropDownListFor(m => m.GenderId, gendersList, new { @class = "form-control" })
+                                }
+                            }
+                            else
+                            {
+                                if (hasAdminPermission)
+                                {
+                                    @Html.DropDownListFor(m => m.GenderId, gendersList, new { @class = "form-control" })
+                                }
+                                else
+                                {
+                                    @Html.DropDownListFor(m => m.GenderId, gendersList, new { @class = "form-control", disabled = "disabled" })
+                                }
+                            }
+                            @Html.ValidationMessageFor(m => m.GenderId)
+                        </div>
+                        @if (isThisAthletics || isThisSwimming)
+                        {
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.ArgometricTestValidity:</label>
+                                @Html.TextBoxFor(m => m.ArgometricTestValidity, "{0:dd/MM/yyyy}", new { @class = "form-control" })
+                            </div>
+                        }
+                        @if ((string.Equals(Model.Section?.Alias, GamesAlias.Athletics, StringComparison.CurrentCultureIgnoreCase)))
+                        {
+                            <div class="col-sm-3">
+                                <label class="control-label">@Messages.AthleteNumber:</label>
+                                @if (!Model.IsReadOnly)
+                                {
+                                    @Html.TextBoxFor(m => m.AthleteNumber, new { @class = "form-control", type = "number", min = "1" })
+                                    @Html.ValidationMessageFor(m => m.AthleteNumber)
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.AthleteNumber, new { @class = "form-control", @readonly = "readonly", type = "number", min = "1" })
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    @if (!isThisGymnastic && !isThisRowing && !isThisBicycle)
+                    {
+                        <div class="row">
+                            @if (!isThisClimbing)
+                            {
+                                <div class="form-group col-sm-3">
+                                    <label class="control-label">@Messages.Weight:</label>
+                                    <div class="input-group">
+                                        @Html.TextBoxFor(m => m.Weight, new { @class = "form-control" })
+                                        <span class="input-group-btn" style="width: 50%">
+                                            @Html.DropDownListFor(m => m.WeightUnits, kgLbList, new { @class = "form-control" })
+                                        </span>
+                                    </div>
+                                    @Html.ValidationMessageFor(m => m.Weight)
+                                </div>
+                            }
+                            @if (!isThisAthletics && !isThisClimbing)
+                            {
+                                <div class="form-group col-sm-3">
+                                    <label class="control-label">@Messages.WeightDate:</label>
+                                    @Html.TextBoxFor(m => m.WeightDate, "{0:dd/MM/yyyy}", new { @class = "form-control" })
+                                    @Html.ValidationMessageFor(m => m.WeightDate)
+                                    <div id="datetimepickerWeight"></div>
+                                </div>
+                            }
+                            @if (!is38Union && !(string.Equals(Model.Section?.Alias, GamesAlias.Athletics, StringComparison.CurrentCultureIgnoreCase)))
+                            {
+
+                                <div class="form-group col-sm-3">
+                                    <label class="control-label">@(isThisMotorsport ? $"{Messages.CompetitiveNumber}:" : $"{Messages.PlayerCardNumber}:")</label>
+                                    @Html.TextBoxFor(m => m.IdentCard, new { @class = "form-control" })
+                                    @Html.ValidationMessageFor(m => m.IdentCard)
+                                </div>
+                            }
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.ShirtSize:</label>
+                                @Html.DropDownListFor(m => m.ShirtSize, shirtSizeList, new { @class = "form-control" })
+                            </div>
+                        </div>
+                    }
+                    @if (isThisAthletics)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label">@Messages.SubClub:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true || ViewBag.IsClubManager == true)
+                                {
+                                    @Html.DropDownListFor(x => x.AthleticTeamId, Model.AthleticTeams, Messages.Select, new { @class = "form-control" })
+                                }
+                                else
+                                {
+                                    @Html.DropDownListFor(x => x.AthleticTeamId, Model.AthleticTeams, Messages.Select, new { @class = "form-control", disabled = "disabled" })
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (isThisBicycle)
+                    {
+                        var check = (!(ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true || ViewBag.IsClubManager == true));
+                        var fileCheck = check && Model.IsApproved;
+                        var fileDis = fileCheck ? "disabled" : "";
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.FriendshipName<span class="requiredstar"></span>:</label><br />
+                                @Html.DropDownListFor(m => m.FriendshipTypeId, Model.FriendshipsList, Messages.Select, check ? new { @class = "form-control", disabled = "disabled" } as object : new { @class = "form-control" } as object)
+                                @Html.ValidationMessage("FriendshipTypeId")
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.FriendshipTypes<span class="requiredstar"></span>:</label>
+                                <div id="FriendshipPriceTypeContainter">
+                                    @Html.DropDownList("FriendshipPriceType", Model.FriendshipsTypeList, Messages.Select, check ? new { @class = "form-control", disabled = "disabled" } as object : new { @class = "form-control" } as object)
+                                    @Html.ValidationMessage("FriendshipPriceType")
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.SpecialClassificationFile</label> (<span>2mb max</span>):
+                                <div class="row">
+                                    @if (!fileCheck)
+                                    {
+                                        <text>
+                                            <div class="form-group col-sm-4 btn-file-glyph">
+
+                                                <span class="glyphicon glyphicon-upload glyph-btn">
+                                                    <input @fileDis type="file" name="SpecialClassificationFile" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|JPEG|jpeg|png|PNG|pdf|PDF|Pdf)$"
+                                                           data-val-regex="@Messages.SelectValidImage" accept="image/*">
+                                                </span>
+                                                <div class="row">
+                                                    @Html.ValidationMessage("SpecialClassificationFile")
+                                                    <span id="SpecialClassificationFileName"></span>
+                                                </div>
+                                            </div>
+                                        </text>
+                                    }
+                                    @{
+                                        var specClassFile = Model.PlayerFiles.FirstOrDefault(x => x.FileType == (int)PlayerFileType.SpecialClassificationFile);
+                                        if (specClassFile != null)
+                                        {
+                                            <div class="form-group col-sm-4" id="viewSpecialClassificationFile">
+                                                <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                                      onclick="window.open('@(GlobVars.ContentPath + "/players/" + specClassFile.FileName)')">
+                                                </span>
+                                            </div>
+                                            if (!fileCheck)
+                                            {
+                                                <text>
+                                                    <div class="form-group col-sm-4" id="removeSpecialClassificationFile">
+                                                        <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                                        <input type="hidden" name="RemoveSpecialClassificationFile" value="false" />
+                                                    </div>
+                                                </text>
+
+                                            }
+
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            @*<div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.Category</label>
+                                <input type="text" readonly="readonly" class="form-control" value="@Model.BicycleCategory" />
+                            </div>*@
+                        </div>
+                        check = check || Model.FriendshipTypeId == null;
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.RoadHeat</label><br />
+                                <div id="RoadDisciplineIdContainter">
+                                    @Html.DropDownList("RoadDisciplineId", Model.RoadDisciplines, Messages.Select, check ? new { @class = "form-control auditoriums-display auditoriumsSearchList", disabled = "disabled" } as object : new { @class = "form-control auditoriums-display auditoriumsSearchList" } as object)
+                                    @Html.ValidationMessage("RoadDisciplineId")
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.MountainHeat</label><br />
+                                <div id="MountaintDisciplineIdContainter">
+                                    @Html.DropDownList("MountaintDisciplineId", Model.MountainDisciplines, Messages.Select, check ? new { @class = "form-control auditoriums-display auditoriumsSearchList", disabled = "disabled" } as object : new { @class = "form-control auditoriums-display auditoriumsSearchList" } as object)
+                                    @Html.ValidationMessage("MountaintDisciplineId")
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.RoadCategory</label>
+                                <input type="text" readonly="readonly" class="form-control" value="@Model.BicycleRoadCategory" />
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.MountaintCategory</label>
+                                <input type="text" readonly="readonly" class="form-control" value="@Model.BicycleMountaintCategory" />
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.IsraelChampionshipCategory</label>
+                                <input type="text" readonly="readonly" class="form-control" value="@Model.BicycleIsrChampCategory" />
+                            </div>
+                        </div>
+                    }
+
+                    @if (string.Equals(Model.Section?.Alias, SectionAliases.Bicycle, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.RoadIronNumber:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                {
+                                    <div class="input-group" style="display:block">
+                                        @Html.TextBoxFor(m => m.RoadIronNumber, string.Empty, new { @class = "form-control", type = "number" })
+                                        @Html.ValidationMessageFor(m => m.RoadIronNumber)
+                                    </div>
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.RoadIronNumber, string.Empty, new { @class = "form-control", type = "number", disabled = "disabled" })
+                                }
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.MountainIronNumber:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                {
+                                    <div class="input-group" style="display:block">
+                                        @Html.TextBoxFor(m => m.MountainIronNumber, string.Empty, new { @class = "form-control", type = "number" })
+                                        @Html.ValidationMessageFor(m => m.MountainIronNumber)
+                                    </div>
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.MountainIronNumber, string.Empty, new { @class = "form-control", type = "number", disabled = "disabled" })
+                                }
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.VelodromeIronNumber:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                {
+                                    <div class="input-group" style="display:block">
+                                        @Html.TextBoxFor(m => m.VelodromeIronNumber, string.Empty, new { @class = "form-control", type = "number" })
+                                        @Html.ValidationMessageFor(m => m.VelodromeIronNumber)
+                                    </div>
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.VelodromeIronNumber, string.Empty, new { @class = "form-control", type = "number", disabled = "disabled" })
+                                }
+                            </div>
+                            <div class="form-group col-sm-3">
+
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true || ViewBag.IsClubManager == true)
+                                {
+                                    <label class="control-label">
+                                        @Html.CheckBoxFor(m => m.PaymentForUciId) @Messages.ForPayment
+                                    </label>
+                                    @Html.ValidationMessageFor(m => m.PaymentForUciId)
+
+                                }
+                                else
+                                {
+                                    <label class="control-label">
+                                        @Html.HiddenFor(m => m.PaymentForUciId)
+                                        @Html.CheckBoxFor(m => m.PaymentForUciId, new { disabled = "disabled" }) @Messages.ForPayment
+                                    </label>
+                                }
+
+
+                                <label class="control-label">@Messages.UciId:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                {
+                                    <div class="input-group" style="display:block">
+                                        @Html.TextBoxFor(m => m.UciId, string.Empty, new { @class = "form-control", type = "number" })
+                                        @Html.ValidationMessageFor(m => m.UciId)
+                                    </div>
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.UciId, string.Empty, new { @class = "form-control", type = "number", disabled = "disabled" })
+                                }
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true || ViewBag.IsClubManager == true)
+                                {
+                                    <label class="control-label">
+                                        @Html.CheckBoxFor(m => m.PaymentForChipNumber) @Messages.ForPayment
+                                    </label>
+                                    @Html.ValidationMessageFor(m => m.PaymentForChipNumber)
+
+                                }
+                                else
+                                {
+                                    <label class="control-label">
+                                        @Html.HiddenFor(m => m.PaymentForChipNumber)
+                                        @Html.CheckBoxFor(m => m.PaymentForChipNumber, new { disabled = "disabled" }) @Messages.ForPayment
+                                    </label>
+                                }
+
+                                <label class="control-label">@Messages.ChipNumber:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                {
+                                    <div class="input-group" style="display:block">
+                                        @Html.TextBoxFor(m => m.ChipNumber, string.Empty, new { @class = "form-control", type = "text" })
+                                        @Html.ValidationMessageFor(m => m.ChipNumber)
+                                    </div>
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.ChipNumber, string.Empty, new { @class = "form-control", type = "text", disabled = "disabled" })
+                                }
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.KitStatus:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                {                                   
+                                    
+                                    @Html.DropDownListFor(m => m.KitStatus, kitStatusList, new { @class = "form-control" })
+                                }
+                                else
+                                {
+                                    @Html.DropDownListFor(m => m.KitStatus, kitStatusList, new { @class = "form-control", disabled = "disabled" })
+                                }
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.TeamForUci:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                {
+                                    <div class="input-group" style="display:block">
+                                        @Html.TextBoxFor(m => m.TeamForUci, new { @class = "form-control"})
+                                        @Html.ValidationMessageFor(m => m.TeamForUci)
+                                    </div>
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.TeamForUci, string.Empty, new { @class = "form-control", disabled = "disabled" })
+                                }
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.HeatTypeForUci:</label>
+                                @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                {
+                                    @Html.DropDownListFor(m => m.HeatTypeForUciCard, heatTypeList, new { @class = "form-control" })
+                                }
+                                else
+                                {
+                                    @Html.DropDownListFor(m => m.HeatTypeForUciCard, heatTypeList, new { @class = "form-control", disabled = "disabled" })
+                                }
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.TotalPrice</label>
+                                <input type="text" readonly="readonly" class="form-control" value="@Model.FriendshipTotalPrice" />
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">&nbsp;</label>
+                                <br />
+                                @if (Model.FriendshipPayment?.IsPaid == true)
+                                {
+                                    <button type="button"
+                                            class="btn btn-primary"
+                                            disabled="disabled">
+                                        @Messages.AlreadyPaid
+                                    </button>
+
+                                    if (ViewBag.IsAdmin == true || ViewBag.IsUnionManager == true)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                id="discard-payment"
+                                                data-paymentid="@Model.FriendshipPayment.Id">
+                                            @Messages.DiscardPayment
+                                        </button>
+                                    }
+                                }
+                                else
+                                {
+                                    if (Model.FriendshipTeamPlayerId > 0)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-primary"
+                                                id="friendshipPayment-toPay"
+                                                data-id="@Model.FriendshipTeamPlayerId">
+                                            @Messages.ToPay
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <a disabled class="btn btn-primary">
+                                            @Messages.ToPay
+                                        </a>
+                                    }
+                                }
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">&nbsp;</label><br />
+                                <a href="@Url.Action("ExportPlayerUciCard", "Players", new { seasonId = Model.SeasonId, userId = Model.UserId })" target="_new" class="btn btn-info">
+                                    <i class="glyphicon glyphicon-export"></i>
+                                    @Messages.ExcelUci
+                                </a>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">&nbsp;</label><br />
+                                <a href="@Url.Action("UciCard", "Players", new { seasonId = Model.SeasonId, userId = Model.UserId })"
+                                   data-toggle="modal" data-target="#uciCardModal"
+                                   data-ajax-update="#uciCardModal_content"
+                                   data-ajax="true"
+                                   class="btn btn-primary">@Messages.UciCard</a>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">&nbsp;</label><br />
+                                <a href="@Url.Action("FriendshipCard", "Players", new { seasonId = Model.SeasonId, userId = Model.UserId })"
+                                   data-toggle="modal" data-target="#friendshipCardModal"
+                                   data-ajax-update="#friendshipCardModal_content"
+                                   data-ajax="true"
+                                   class="btn btn-primary">@Messages.FriendshipCard</a>
+                            </div>
+                        </div>
+                    }
+
+
+                    @if (is38Union)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.TrainingClubRelated:</label>
+                                <div>
+                                    @if (hasAdminPermission)
+                                    {
+                                        @Html.DropDownList("TrainingTeamsIds", Model.ListOfTrainingTeams, Messages.Select, new { @class = "form-control training-teams", multiple = "multiple" })
+                                    }
+                                    else
+                                    {
+                                        @Html.DropDownList("TrainingTeamsIds", Model.ListOfTrainingTeams, Messages.Select, new { @class = "form-control training-teams", multiple = "multiple", disabled = "disabled" })
+                                    }
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.TenicardValidity:</label>
+                                @if (hasAdminPermission)
+                                {
+                                    @Html.TextBoxFor(m => m.TenicardValidity, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.TenicardValidity, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date", disabled = "disabled" })
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (isThisSwimming)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.RankGym S:</label>
+                                <div>
+                                    @if (hasAdminPermission)
+                                    {
+                                        @Html.DropDownList("ClassS", Model.ClassSList, Messages.Select, new { @class = "form-control" })
+                                    }
+                                    else
+                                    {
+                                        @Html.DropDownList("ClassS", Model.ClassSList, Messages.Select, new { @class = "form-control", disabled = "disabled" })
+                                    }
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.RankGym SB:</label>
+                                <div>
+                                    @if (hasAdminPermission)
+                                    {
+                                        @Html.DropDownList("ClassSB", Model.ClassSBList, Messages.Select, new { @class = "form-control" })
+                                    }
+                                    else
+                                    {
+                                        @Html.DropDownList("ClassSB", Model.ClassSBList, Messages.Select, new { @class = "form-control", disabled = "disabled" })
+                                    }
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.RankGym SM:</label>
+                                <div>
+                                    @if (hasAdminPermission)
+                                    {
+                                        @Html.DropDownList("ClassSM", Model.ClassSMList, Messages.Select, new { @class = "form-control" })
+                                    }
+                                    else
+                                    {
+                                        @Html.DropDownList("ClassSM", Model.ClassSMList, Messages.Select, new { @class = "form-control", disabled = "disabled" })
+                                    }
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">
+                                    @Messages.Masters
+                                    @if (ViewBag.IsUnionManager != true && ViewBag.IsAdmin != true)
+                                    {
+                                        <input type="checkbox" @(Model.Masters ? "checked" : "" ) disabled="disabled" readonly="readonly" />
+                                    }
+                                    else
+                                    {
+                                        @Html.CheckBoxFor(x => x.Masters)
+                                    }
+                                </label>
+                            </div>
+                        </div>
+                    }
+                    @if (isThisGymnastic)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.InitialApprovalDate:</label>
+                                @if (hasAdminPermission)
+                                {
+                                    @Html.TextBoxFor(m => m.InitialApprovalDate, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.InitialApprovalDate, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date", @readonly="readonly" })
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    @if (isThisMotorsport)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.CompetitiveDriversNumber:</label>
+                                @Html.TextBoxFor(m => m.CompetitiveLicenseNumber, new { @class = "form-control" })
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.ValidityOfACompetitiveDrivingLicense:</label>
+                                @Html.TextBoxFor(m => m.LicenseValidity, "{0:dd/MM/yyyy}", new { @class = "form-control frm-date" })
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.LicenseLevel:</label>
+                                @Html.DropDownList("LicenseLevelId", Model.DriverLicenceTypeList, Messages.Select, new { @class = "form-control" })
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.LicenseFile:</label>
+                                <div class="row">
+                                    <div class="form-group col-sm-4 btn-file-glyph">
+                                        <span class="glyphicon glyph-btn glyphicon-upload">
+                                            <input type="file" name="DriverLicenseFile" data-val="true" data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|png|PNG)$"
+                                                   data-val-regex="@Messages.SelectValidFile" accept="image/*, application/pdf">
+                                        </span>
+                                        <div class="row">
+                                            @Html.ValidationMessage("DriverLicenseFile")
+                                            <span id="DriverLicenseFileName"></span>
+                                        </div>
+                                    </div>
+                                    @{
+                                        var driverLicenseFile = Model.PlayerFiles.FirstOrDefault(x => x.FileType == (int)PlayerFileType.DriverLicense);
+                                        if (driverLicenseFile != null)
+                                        {
+                                            <div class="form-group col-sm-4" id="viewDriverLicenseFile">
+                                                <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                                      onclick="window.open('@(GlobVars.ContentPath + "/players/" + driverLicenseFile.FileName)')">
+                                                </span>
+                                            </div>
+                                            <div class="form-group col-sm-4" id="removeDriverLicenseFile">
+                                                <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                                <input type="hidden" name="RemoveDriverLicenseFile" value="false" />
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row">
+                        @if (Model.IsSectionTeam && !isThisRowing)
+                        {
+                            if (isThisGymnastic && !Model.IsUkraineGymnasticUnion)
+                            {
+                                <div class="form-group col-sm-3">
+                                    <label class="control-label">@Messages.Disciplines:</label>
+                                    <div>
+                                        @Html.ListBox($"DisciplinesIds", disciplines, new { @class = "form-control disciplinesIds", name = "DisciplinesIds[]", @multiple = "multiple" })
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-3">
+                                    <label class="control-label">@Messages.Routes:</label>
+                                    <div>
+                                        <a id="listOfRoutes" class="btn btn-default">@Messages.OpenListOfRoutes</a>
+                                    </div>
+                                </div>
+                            }
+                            <!-- else
+                        {
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.AthleticsDisciplines:</label>
+                                <div>
+                                    @Html.DropDownList($"DisciplinesIds", disciplines, new { @class = "form-control disciplinesIds", name = "DisciplinesIds[]", @multiple = "multiple" })
+                                </div>
+                            </div>
+                        } -->
+
+                        }
+                    </div>
+
+                    @if (Model.IsHadicapEnabled)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.TestResults:</label>
+                                @Html.TextBoxFor(m => m.TestResults, new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.TestResults)
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.StartPlaying:</label>
+                                @Html.TextBoxFor(m => m.StartPlaying, "{0:dd/MM/yyyy}", new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.StartPlaying)
+                                <div id="datetimepickerStart"></div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.HandicapLevel:</label>
+                                @Html.TextBoxFor(m => m.HandicapLevel, new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.HandicapLevel)
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.CalculatedReduction:</label>
+                                <label id="lblCalculatedReduction" class="control-label"></label>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.TotalResult:</label>
+                                <label id="lblTotalResult" class="control-label"></label>
+                            </div>
+                        </div>
+                    }
+
+                    @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.BlockadePlayer:</label>
+                                @Html.CheckBoxFor(m => m.IsBlockade, new { id = "blockadePlayer" })
+                            </div>
+                            <div class="form-group col-sm-3" id="blockadeEndDate" style="display: none">
+                                <label class="control-label">@Messages.BlockadeEndDate:</label>
+                                @Html.TextBoxFor(m => m.BlockadeEndDate, new { @class = "form-control frm-date" })
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row">
+                        @if (!isThisTennis && !isThisAthletics && !isThisGymnastic && !isThisRowing && !isThisBicycle)
+                        {
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">
+                                    @Messages.Player_CompetitiveMember
+                                    @if (ViewBag.IsUnionManager != true && ViewBag.IsAdmin != true)
+                                    {
+                                        <input type="checkbox" @(Model.IsCompetitiveMember ? "checked" : "") disabled="disabled" readonly="readonly" />
+                                    }
+                                    else
+                                    {
+                                        @Html.CheckBoxFor(x => x.IsCompetitiveMember)
+                                    }
+                                </label>
+                            </div>
+                        }
+                    </div>
+
+                    @if ((isThisClimbing || isThisSwimming) && (ViewBag.IsUnionManager || ViewBag.IsAdmin || ViewBag.IsPlayer))
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-3">
+                                @if (ViewBag.IsUnionManager || ViewBag.IsAdmin)
+                                {
+                                    <label class="control-label">
+                                        @Messages.Player_NationalSportsman
+                                        @Html.CheckBoxFor(x => x.IsNationalSportsman)
+                                    </label>
+                                }
+                                else
+                                {
+                                    <label class="control-label">
+                                        @Messages.Player_NationalSportsman
+                                        @Html.CheckBoxFor(x => x.IsNationalSportsman, new { @disabled = "disabled" })
+
+                                    </label>
+
+                                }
+                            </div>
+                        </div>
+                        <div class="row" id="climbingPlayerData" style="display: none">
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.Player_ShoesSize:</label>
+                                @Html.TextBoxFor(m => m.ShoesSize,
+                                    ViewBag.isPlayer ? (object)new { @class = "form-control", @type = "number", @data_val = "true", @data_val_required = Messages.PropertyValueRequired }
+                                                            : (object)new { @class = "form-control", @type = "number" })
+                                @Html.ValidationMessageFor(m => m.ShoesSize)
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.ParentApprovalFile:</label>
+                                <div class="row">
+                                    <div class="form-group col-sm-4 btn-file-glyph">
+                                        <span class="glyphicon glyph-btn glyphicon-upload">
+                                            @{
+                                                object fileProps = new object();
+                                                var parentApprovalFile = Model.PlayerFiles.FirstOrDefault(x => x.FileType == (int)PlayerFileType.ParentApproval);
+                                                if (!ViewBag.IsPlayer || parentApprovalFile != null)
+                                                {
+
+                                                    fileProps = (object)new
+                                                    {
+                                                        type = "file",
+                                                        @class = "input-file",
+                                                        @data_val = "true",
+                                                        @data_val_regex_pattern = @"^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|png|PNG)$",
+                                                        data_val_regex = @Messages.SelectValidFile,
+                                                        @accept = "image/*, application/pdf"
+                                                    };
+                                                }
+                                                else
+                                                {
+                                                    if (parentApprovalFile == null)
+                                                    {
+                                                        fileProps = (object)new
+                                                        {
+                                                            type = "file",
+                                                            @class = "input-file",
+                                                            @data_val = "true",
+                                                            @data_val_regex_pattern = @"^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|png|PNG)$",
+                                                            data_val_regex = @Messages.SelectValidFile,
+                                                            data_val_required = @Messages.PropertyValueRequired,
+                                                            @accept = "image/*, application/pdf"
+                                                        };
+                                                    }
+
+                                                }
+                                            }
+                                            @Html.TextBox("ParentApprovalFile", null, fileProps)
+                                            @*<input type="file" id="ParentApprovalFile" name="ParentApprovalFile" data-val="true" data data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF|png|PNG)$"
+                                            data-val-regex="@Messages.SelectValidFile" accept="image/*, application/pdf">*@
+                                        </span>
+                                        <div class="row">
+                                            @Html.ValidationMessage("ParentApprovalFile")
+                                            <span id="ParentApprovalFileName"></span>
+                                        </div>
+                                    </div>
+                                    @{
+
+                                        if (parentApprovalFile != null)
+                                        {
+                                            <div class="form-group col-sm-4" id="viewParentApprovalFile">
+                                                <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                                      onclick="window.open('@(GlobVars.ContentPath + "/players/" + parentApprovalFile.FileName)')">
+                                                </span>
+                                            </div>
+                                            <div class="form-group col-sm-4" id="removeParentApprovalFile">
+                                                <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                                                <input type="hidden" name="RemoveParentApprovalFile" value="false" />
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.Player_ArmyDraftDate:</label>
+                                @Html.TextBoxFor(m => m.ArmyDraftDate, "{0:dd/MM/yyyy}", ViewBag.isPlayer ? (object)new { @class = "form-control", @data_val = "true", @data_val_required = Messages.PropertyValueRequired }
+                                                                                         : (object)new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.ArmyDraftDate)
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label class="control-label">@Messages.Player_MedicalInformation:</label>
+                                @Html.TextAreaFor(m => m.MedicalInformation, ViewBag.isPlayer ? (object)new { @class = "form-control", @data_val = "true", @data_val_required = Messages.PropertyValueRequired }
+                                                                                             : (object)new { @class = "form-control" })
+                                @Html.ValidationMessageFor(m => m.MedicalInformation)
+                            </div>
+                        </div>
+                    }
+                    @if (isThisClimbing)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label">@UIHelpers.GetAuditoriumCaption(Model.SectionAlias):</label>
+                                @Html.DropDownList("AuditoriumId", auditoriums, Messages.Select, new { @class = "form-control auditoriums-display auditoriumsSearchList" })
+                            </div>
+                        </div>
+                    }
+                    @if (isThisSwimming)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <label class="control-label">@Messages.MedicalInstitutes:</label>
+                                @Html.DropDownList("MedicalInstitutesId", medicalInstitutes, Messages.Select, new { @class = "form-control" })
+                            </div>
+                        </div>
+                    }
+                    @if (isThisBicycle)
+                    {
+                    <div class="row offset-3">
+                        <div class="form-group text-left col-sm-12">
+                               <button type="button" onclick="beforeSaveAsDraftSubmit();" class="btn btn-primary">@Messages.SaveAsDraft</button>
+                        </div>
+                    </div>
+                    }
+                    <div class="row offset-3">
+                        <div class="form-group text-left col-sm-12">
+
+                            @if (isThisBicycle)
+                            {
+                                <button type="button" onclick="beforeEditPlayerSubmit();" class="btn btn-success">@Messages.SaveForApproval</button>
+                            }
+                            else
+                            {
+                                <button type="button" onclick="beforeEditPlayerSubmit();" class="btn btn-primary">@Messages.Save</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="col-sm-10">
+                        <div class="form-group">
+                            <label class="control-label">@Messages.Image:</label> (<span>2mb max. (jpg, png)</span>)
+                            @Html.Editor("ImageFile", "ImageUpload", new { css = "validfile" })
+                            @Html.ValidationMessage("ImageFile")
+                            @{
+                                var imageFile = Model.PlayerFiles.FirstOrDefault(x => x.FileType == (int)PlayerFileType.PlayerImage);
+                                if (imageFile != null)
+                                {
+                                    string src = GlobVars.ContentPath + "/players/" + imageFile.FileName;
+                                    <img id="player-img" class="img-responsive img-thumbnail" src="@src" alt="" />
+                                }
+                                else if (!string.IsNullOrWhiteSpace(Model.Image))
+                                {
+                                    string src = GlobVars.ContentPath + "/players/" + Model.Image;
+                                    <img id="player-img" class="img-responsive img-thumbnail" src="@src" alt="" />
+                                }
+                            }
+                        </div>
+                    </div>
+                    @if (imageFile != null)
+                    {
+                        <div class="col-sm-2 btn" id="remove-photo">
+                            <span class="glyphicon glyphicon-remove glyph-btn offset-3"></span>
+                            <input type="hidden" id="remove-image" value="false" name="RemoveImage" />
+                        </div>
+                    }
+                    @if (string.Equals(Model.Section?.Alias, SectionAliases.MartialArts, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        <div class="col-sm-10">
+                            <div class="form-group">
+                                @Html.LabelFor(x => x.SportRank, $"{Messages.PlayerInfoRank}:", new { @class = "control-label" })
+                                @(Model.SportRank ?? Messages.PlayerInfoUnranked)
+                            </div>
+                        </div>
+                    }
+                    <div class="row">
+                        @if (!isThisTennis && !isThisAthletics && !isThisRowing)
+                        {
+                            <div class="col-sm-12 form-group">
+                                <label class="control-label">
+                                    @Messages.InvToNatTeam:
+                                </label>
+                                <table id="tbInvitement" class="table table-striped" style="margin-bottom: 0px;">
+                                    <thead>
+                                        <tr>
+                                            <td>@Messages.Activity_StartDate</td>
+                                            <td>@Messages.Activity_EndDate</td>
+                                            <td></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int j = 0; j < Model.NationalTeamInvitements.Count(); j++)
+                                        {
+                                            var item = Model.NationalTeamInvitements.ToList()[j];
+                                            <tr style="margin: 0 5px;">
+                                                <td>
+                                                    <div style="position: relative">
+                                                        <input type="text" name="NationalTeamInvitements[@(j)].StartDate" data-nameTpl="NationalTeamInvitements[0].StartDate" value="@(item.StartDate?.ToString(" dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style="position: relative">
+                                                        <input type="text" name="NationalTeamInvitements[@(j)].EndDate" data-nameTpl="NationalTeamInvitements[0].EndDate" value="@(item.EndDate?.ToString(" dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <a onclick="javascript:removePeriodRow(this);" class="btn btn-default">
+                                                        <i class="glyphicon glyphicon-remove"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            @if (User.IsInAnyRole(AppRole.Admins, AppRole.Workers) || User.HasTopLevelJob(JobRole.ClubManager) || User.HasTopLevelJob(JobRole.TeamManager))
+                                            {
+                                                <td colspan="4">
+                                                    <button type="button" class="btn btn-primary btnAddInvitement" onclick="btnAddInvitementHandler(this);" data-tableName="tbInvitement" data-propName="NationalTeamInvitements" id="btnAddInvitement">
+                                                        <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                                                    </button>
+                                                </td>
+                                            }
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+                @if (Model.PlayerTeams != null && Model.PlayerTeams.Count > 0)
+                {
+                    <div class="col-sm-3">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    @if (isThisGymnastic)
+                                    {
+                                        <th>@Messages.Discipline</th>
+                                    }
+                                    else if (isThisRowing)
+                                    {
+                                        <th>@Messages.Club</th>
+                                    }
+                                    else
+                                    {
+                                        <th>@Messages.Team</th>
+                                    }
+                                    <th>@Messages.UserAction</th>
+                                    <th>@Messages.ActivePlayer</th>
+                                    @if (!isThisGymnastic && !isThisAthletics && !isWaveSurfing && !isThisRowing && !isThisBicycle)
+                                    {
+                                        <th>@Messages.Activity_TrainingPlayer</th>
+                                    }
+                                    @if (!isWaterpolo && !isThisAthletics && !isThisRowing)
+                                    {
+                                        <th>@Messages.RetirementRequest</th>
+                                        <th>@Messages.RetirementApprove</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int ip = 0; ip < Model.PlayerTeams.Count; ip++)
+                                {
+                                    @Html.HiddenFor(x => x.PlayerTeams[ip].ClubId)
+                                    @Html.HiddenFor(x => x.PlayerTeams[ip].LeagueId)
+                                    <tr>
+                                        <td>@Model.PlayerTeams[ip].Title</td>
+                                        <td>@Model.PlayerTeams[ip].UserActionName</td>
+                                        <td>
+                                            @(ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true ?
+                                                                            Html.EditorFor(m => m.PlayerTeams[ip].IsActive, new { htmlAttributes = new { onclick = "setCheckValue(this)" } }) :
+                                                                            Html.EditorFor(m => m.PlayerTeams[ip].IsActive, new { htmlAttributes = new { disabled = "disabled" } }))
+                                            @Html.HiddenFor(m => m.PlayerTeams[ip].TeamId)
+                                        </td>
+                                        @if (!isThisGymnastic && !isThisAthletics && !isWaveSurfing && !isThisRowing)
+                                        {
+                                            <td>
+                                                @if (ViewBag.IsClubManager == true || ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                                                {
+                                                    @Html.CheckBoxFor(x => x.PlayerTeams[ip].IsTrainerPlayer)
+                                                }
+                                                else
+                                                {
+                                                    @Html.CheckBox("IsTrainerPlayer", Model.PlayerTeams[ip].IsTrainerPlayer, new { @readonly = "readonly", disabled = "disabled" })
+                                                }
+                                            </td>
+                                        }
+                                        @if (!isWaterpolo && !isThisAthletics && !isThisRowing)
+                                        {
+                                            <td>
+                                                <input type="checkbox"
+                                                       class="retirementCheckbox"
+                                                       value="@Model.PlayerTeams[ip].TeamId"
+                                                       @(Model.PlayerTeams[ip].RetirementRequest != null ? "checked disabled" : "")
+                                                       @(Model.PlayerTeams[ip].IsActive ? "" : "disabled") />
+
+                                                @if (Model.PlayerTeams[ip].RetirementRequest != null)
+                                                {
+                                                    var retReqInfo = Model.PlayerTeams[ip].RetirementRequest;
+                                                    var retirementInfoModalId = $"retirementRequestInfoModal-{Model.PlayerTeams[ip].TeamId}";
+
+                                                    <a href="#@retirementInfoModalId" data-toggle="modal" data-target="#@retirementInfoModalId">
+                                                        <span class="glyphicon glyphicon-info-sign"></span>
+                                                    </a>
+
+                                                    <div class="modal fade" id="@retirementInfoModalId" tabindex="-1" role="dialog" aria-labelledby="@($" {retirementInfoModalId}-Label")">
+                                                        <div class="modal-dialog" role="document">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <button type="button" class="close" data-dismiss="modal" aria-label="@Messages.Close">
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                    <h4 class="modal-title" id="@($" {retirementInfoModalId}-Label")">@Messages.RetirementRequest</h4>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <h4>@Messages.RetirementDateOfRequest: @retReqInfo.RequestDate.ToString("d")</h4>
+                                                                    <label>@Messages.RetirementReason:</label>
+                                                                    <blockquote>
+                                                                        <span>@retReqInfo.Reason</span>
+                                                                    </blockquote>
+                                                                    @if (!string.IsNullOrWhiteSpace(retReqInfo.DocumentFile))
+                                                                    {
+                                                                        <h4>
+                                                                            <a style="color: #337ab7" target="_blank" href="@($" {GlobVars.ContentPath}/players/{retReqInfo.DocumentFile}")">
+                                                                                @Messages.RetirementOpenDocument
+                                                                            </a>
+                                                                        </h4>
+                                                                    }
+                                                                </div>
+
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </td>
+                                        }
+                                        @if (!isWaterpolo && !isThisAthletics)
+                                        {
+                                            <td>
+                                                <input type="checkbox"
+                                                       class="approveRetirementCheckbox"
+                                                       value="@Model.PlayerTeams[ip].TeamId"
+                                                       @(Model.CanApproveRetirementRequests ? "" : "disabled")
+                                                       @(Model.PlayerTeams[ip].IsActive ? "" : "disabled")
+                                                       @(Model.PlayerTeams[ip].RetirementRequest == null ? "disabled" : "")
+                                                       @(Model.PlayerTeams[ip].RetirementRequest != null && Model.PlayerTeams[ip].RetirementRequest.Approved ? "checked disabled" : "") />
+
+                                                @if (Model.PlayerTeams[ip].RetirementRequest != null && Model.PlayerTeams[ip].RetirementRequest.Approved)
+                                                {
+                                                    var retReqInfo = Model.PlayerTeams[ip].RetirementRequest;
+                                                    var approvedRetirementInfoModalId = $"approvedRetirementRequestInfoModal-{Model.PlayerTeams[ip].TeamId}";
+
+                                                    <a href="#@approvedRetirementInfoModalId" data-toggle="modal" data-target="#@approvedRetirementInfoModalId">
+                                                        <span class="glyphicon glyphicon-info-sign"></span>
+                                                    </a>
+
+                                                    <div class="modal fade" id="@approvedRetirementInfoModalId" tabindex="-1" role="dialog" aria-labelledby="@($" {approvedRetirementInfoModalId}-Label")">
+                                                        <div class="modal-dialog" role="document">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <button type="button" class="close" data-dismiss="modal" aria-label="@Messages.Close">
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                    <h4 class="modal-title" id="@($" {approvedRetirementInfoModalId}-Label")">@Messages.RetirementApproveRequest</h4>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <h4>@Messages.RetirementApproveDate: @(retReqInfo.DateApproved?.ToString("d") ?? "")</h4>
+                                                                    <h4>@Messages.RetirementApproveRefundAmount: @retReqInfo.RefundAmount</h4>
+                                                                    <label>@Messages.RetirementApproveText:</label>
+                                                                    <blockquote>
+                                                                        <span>@retReqInfo.ApproveText</span>
+                                                                    </blockquote>
+                                                                </div>
+
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                <div class="col-sm-6">
+                    @if (hasAdminPermission && (Model.IsIndividualSection || Model.SectionAlias == GamesAlias.Tennis))
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-6">
+                                <div class="switch-toggle switch-candy">
+                                    <input id="week" name="view" type="radio" @(Model.IsApprovedByManager == true ? "checked" : "")>
+                                    <label for="week" onclick="approvePlayer(this, 1);">@Messages.Approve</label>
+
+                                    <input id="month" name="view" type="radio" @(Model.IsApprovedByManager == null ? "checked" : "")>
+                                    <label for="month" onclick="approvePlayer(this, 0);">@Messages.AwaitingApproval</label>
+
+                                    <input id="day" name="view" type="radio" @(Model.IsApprovedByManager == false ? "checked" : "")>
+                                    <label for="day" onclick="approvePlayer(this, -1);">@Messages.NotApproved</label>
+                                    <a></a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                    {
+                        if (!isThisAthletics && !isThisRowing && !isThisBicycle)
+                        {
+                            <div class="row">
+                                <div class="form-group col-sm-12">
+                                    <label class="control-label">@Messages.PenaltyForExclusion:</label>
+                                </div>
+                            </div>
+                            <div class="row" id="exclusionNumber">
+                                <div class="form-inline col-sm-12">
+                                    <label class="control-label">@Messages.SetNumberOfExclusionGames:</label>
+                                </div>
+                                <div class="col-sm-12">
+                                    @Html.TextBoxFor(m => m.NumberOfExclusion, string.Empty, new { @class = "form-control", type = "number", min = "1", id = "numberOfExclusion", style="display: inline;max-width: 190px;" })
+                                    @Html.DropDownList("leagueForExclusionId", leaguesOfSeason, new { @class = "form-control",style="max-width:160px;", id = "leagueForExclusionId", multiple = "multiple" })
+                                    <a id="btnPenalty" class="btn btn-primary">@Messages.AddNew</a>
+                                </div>
+                                <div class="form-inline col-sm-12" id="penaltyTable">
+                                    @Html.Action("PenaltyTable", "Players", new { id = Model.UserId, seasonId = Model.SeasonId })
+                                </div>
+                            </div>
+                        }
+                    }
+                    @if (Model.RegistrationsHistory?.Any() == true)
+                    {
+                        <table class="table table-bordered">
+                            <caption>@Messages.Registrations:</caption>
+                            <thead>
+                                <tr>
+                                    <th>@Messages.Season</th>
+                                    <th>@Messages.Date</th>
+                                    @if (Model.RegistrationsHistory.Any(x => !string.IsNullOrWhiteSpace(x.ActivityName)))
+                                    {
+                                        <th>@Messages.Activity_Name</th>
+                                    }
+                                    @if (isWaveSurfing)
+                                    {
+                                        <th>@Messages.Category</th>
+                                    }
+                                    else if (isThisRowing)
+                                    {
+                                        <th>@Messages.Club</th>
+                                    }
+                                    else if (isThisGymnastic)
+                                    {
+                                        <th>@Messages.Discipline</th>
+                                    }
+                                    else
+                                    {
+                                        <th>@Messages.Team</th>
+                                    }
+                                    @if (!Model.IsIndividualSection)
+                                    {
+                                        <th>@Messages.League</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => !string.IsNullOrEmpty(x.UserActionName)))
+                                    {
+                                        <th>@Messages.UserAction</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.RegistrationPaid > 0))
+                                    {
+                                        <th>@Messages.Activity_BuildForm_RegistrationPaid</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.InsurancePaid > 0))
+                                    {
+                                        <th>@Messages.Activity_BuildForm_InsurancePaid</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.TenicardPaid > 0))
+                                    {
+                                        <th>@Messages.Activity_Tenicard_Paid</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.ParticipationPaid > 0))
+                                    {
+                                        <th>@Messages.TeamDetails_ParticipationPrice_Paid</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.MembersFeePaid > 0))
+                                    {
+                                        <th>@Messages.Activity_MembersFeePaid</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.HandlingFeePaid > 0))
+                                    {
+                                        <th>@Messages.Activity_HandlingFeePaid</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.CustomPrices?.Any() == true))
+                                    {
+                                        <th>@Messages.Activity_CustomPrices_Paid</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.CardComInvoiceNumber != null))
+                                    {
+                                        <th>@Messages.Activity_Status_CardComInvoiceNumber</th>
+                                    }
+                                    @if (Model.RegistrationsHistory.Any(x => x.CardComNumberOfPayments != null))
+                                    {
+                                        <th>@Messages.Activity_Status_CardComNumberOfPayments</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var reg in Model.RegistrationsHistory)
+                                {
+                                    <tr>
+                                        <td>@reg.SeasonName</td>
+                                        <td>@reg.ApprovalDate</td>
+                                        @if (Model.RegistrationsHistory.Any(x => !string.IsNullOrWhiteSpace(x.ActivityName)))
+                                        {
+                                            <td>@reg.ActivityName</td>
+                                        }
+                                        <td>@reg.TeamName</td>
+                                        @if (!Model.IsIndividualSection)
+                                        {
+                                            <td>@reg.LeagueName</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => !string.IsNullOrEmpty(x.UserActionName)))
+                                        {
+                                            <td>@reg.UserActionName</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.RegistrationPaid > 0))
+                                        {
+                                            <td>@reg.RegistrationPaid</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.InsurancePaid > 0))
+                                        {
+                                            <td>@reg.InsurancePaid</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.TenicardPaid > 0))
+                                        {
+                                            <td>@reg.TenicardPaid</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.ParticipationPaid > 0))
+                                        {
+                                            <td>@reg.ParticipationPaid</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.MembersFeePaid > 0))
+                                        {
+                                            <td>@reg.MembersFeePaid</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.HandlingFeePaid > 0))
+                                        {
+                                            <td>@reg.HandlingFeePaid</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.CustomPrices?.Any() == true))
+                                        {
+                                            <td>
+                                                <a tabindex="0"
+                                                   role="button"
+                                                   class="customPrices-paid"
+                                                   style="cursor: pointer; color: #0089ff; text-decoration: underline">
+                                                    @(reg.CustomPrices?.Sum(x => x?.Paid ?? 0) ?? 0)
+                                                </a>
+                                                <div class="customPrices-paid-content hide">
+                                                    @if (reg.CustomPrices?.Any() == true)
+                                                    {
+                                                        foreach (var customPrice in reg.CustomPrices)
+                                                        {
+                                                            <div>
+                                                                @(Model.Culture != CultEnum.He_IL ? customPrice.TitleEng : customPrice.TitleHeb): @customPrice.Paid
+                                                            </div>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <i>@Messages.Activity_CustomPrices_Paid_NoData</i>
+                                                    }
+                                                </div>
+                                            </td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.CardComInvoiceNumber != null))
+                                        {
+                                            <td>@reg.CardComInvoiceNumber</td>
+                                        }
+                                        @if (Model.RegistrationsHistory.Any(x => x.CardComNumberOfPayments != null))
+                                        {
+                                            <td>@reg.CardComNumberOfPayments</td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+
+                </div>
+                <div class="col-sm-6">
+                    @if (Model.PlayerHistories != null && Model.PlayerHistories.Count > 0)
+                    {
+                        <table class="table table-bordered">
+                            <caption>@Messages.PlayerHistory:</caption>
+                            <thead>
+                                <tr>
+                                    <th>@Messages.OldTeam</th>
+                                    <th>@Messages.Team</th>
+                                    <th>@Messages.Seasons</th>
+                                    <th>@Messages.Date</th>
+                                    <th>@Messages.UserAction</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var history in Model.PlayerHistories)
+                                {
+                                    <tr>
+                                        <td>@history.OldTeam</td>
+                                        <td>@history.Team</td>
+                                        <td>@history.SeasonName</td>
+                                        <td>@history.Date.ToString(Messages.DateFormat)</td>
+                                        <td>@history.UserActionName</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+
+                </div>
+                <!--
+                <div class="col-sm-6">
+                    @if (Model.PlayersPenaltiesHistory != null && Model.PlayersPenaltiesHistory.Any())
+                    {
+                        <table class="table table-bordered">
+                            <caption>@Messages.PenaltyForExclusion:</caption>
+                            <thead>
+                                <tr>
+                                    <th>@Messages.DateTime</th>
+                                    <th>@Messages.Team</th>
+                                    <th>@Messages.NumberOfGames</th>
+                                    <th>@Messages.UserAction</th>
+                                    <th>@Messages.Ended</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var history in Model.PlayersPenaltiesHistory)
+                                {
+                                    <tr>
+                                        <td>@history.DateOfExclusion</td>
+                                        <td>@history.TeamName</td>
+                                        <td>@history.ExclusionNumber</td>
+                                        <td>@history.UserActionName</td>
+                                        <td>@UIHelpers.GetYesNoCaption(history.IsEnded)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+
+                </div>
+                -->
+                <div class="col-sm-6">
+                    @if (Model.TeamRetirements?.Any() == true)
+                    {
+                        <table class="table table-bordered">
+                            <caption>@Messages.Player_TeamRetirements:</caption>
+                            <thead>
+                                <tr>
+                                    <th>@Messages.RetirementApproveDate</th>
+                                    <th>@Messages.RetirementApprovedBy</th>
+                                    <th>@Messages.RetirementReason</th>
+                                    <th>@Messages.Team</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var retirement in Model.TeamRetirements)
+                                {
+                                    <tr>
+                                        <td>@retirement.DateApproved</td>
+                                        <td>@(retirement.ApproveUser?.FullName)</td>
+                                        <td>@retirement.Reason</td>
+                                        <td>@(retirement.Team.TeamsDetails.FirstOrDefault(x => x.SeasonId == Model.SeasonId)?.TeamName ?? retirement.Team.Title)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+
+                </div>
+                <div class="col-sm-6">
+                    @if (ViewBag.IsUnionManager == true || ViewBag.IsAdmin == true)
+                    {
+                        if (Model.BlockadeHistory?.Any() == true)
+                        {
+                            <table class="table table-bordered">
+                                <caption>
+                                    @Messages.BlockadeHistory:
+                                </caption>
+                                <thead>
+                                    <tr>
+                                        <th>@Messages.Season</th>
+                                        <th>@Messages.StartDate</th>
+                                        <th>@Messages.EndDate</th>
+                                        <th>@Messages.UserAction</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var blockade in Model.BlockadeHistory)
+                                    {
+                                        <tr>
+                                            <td>@blockade.SeasonName</td>
+                                            <td>@blockade.StartDate</td>
+                                            <td>@blockade.EndDate</td>
+                                            <td>@blockade.UserActionName</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    }
+
+                </div>
+
+            </div>
+            @Html.HiddenFor(m => m.UserId)
+            @Html.HiddenFor(m => m.CurrentTeamId)
+            @Html.HiddenFor(m => m.ClubId)
+            @Html.HiddenFor(m => m.BasketballFiveLevelReduction)
+            @Html.HiddenFor(m => m.SaveAsDraft)
+        </form>
+
+        <div class="modal fade" id="retirementModal" tabindex="-1" role="dialog" aria-labelledby="retirementModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="retirementModalLabel">@Messages.RetirementRequest</h4>
+                    </div>
+
+                    @Html.Action("TeamRetirement", "Players")
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="retirementApproveModal" tabindex="-1" role="dialog" aria-labelledby="retirementApproveModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="retirementApproveModalLabel">@Messages.RetirementApproveRequest</h4>
+                    </div>
+                    @Html.Action("ApproveRetirement", "Players")
+                </div>
+            </div>
+        </div>
+        @if (string.Equals(Model.Section?.Alias, SectionAliases.Bicycle, StringComparison.CurrentCultureIgnoreCase))
+        {
+            @*<div class="modal fade" id="friendshipCardModal" tabindex="-1" role="dialog" aria-labelledby="friendshipCardModalLabel">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title" id="friendshipCardModalLabel">@Messages.FriendshipCard</h4>
+                        </div>
+                        <div id="friendshipCardModal_content">
+                        </div>
+                    </div>
+                </div>
+            </div>*@
+            <div class="modal fade" id="friendshipCardModal" role="dialog">
+                <div class="modal-dialog" style="width:max-content">
+                    <div class="modal-content" id="friendshipCardModal_content">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="uciCardModal" role="dialog">
+                <div class="modal-dialog" style="width:max-content">
+                    <div class="modal-content" id="uciCardModal_content">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="friendshipPaymentDialog" tabindex="-1" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content" id="friendshipPaymentDialog-content">
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="modal fade" id="routeRanks" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="routeRanks_frm">
+                <div class="modal-header">
+                    <button type="button" class="close close-routes-modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+                    <h4 class="modal-title">@Messages.Routes @Messages.Settings.ToLowerInvariant()</h4>
+                </div>
+                <div class="modal-body">
+                    <div>@Messages.Individual:</div>
+                    <div id="routeRanks_frm_individual"></div>
+                    <div class="route-rank-for-team">@Messages.Team:</div>
+                    <div class="route-rank-for-team" id="routeRanks_frm_team"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default close-routes-modal">@Messages.Close</button>
+
+                    <a id="saveRouteMainBtn" style="display: none;" class="btn btn-primary">@Messages.Save</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="achievements">
+        @if (string.Equals(Model.Section?.Alias, SectionAliases.MartialArts, StringComparison.CurrentCultureIgnoreCase)
+        || string.Equals(Model.Section?.Alias, SectionAliases.Basketball, StringComparison.CurrentCultureIgnoreCase)
+        || string.Equals(Model.Section?.Alias, SectionAliases.Tennis, StringComparison.CurrentCultureIgnoreCase)
+        || Model.IsIndividualSection)
+        {
+            <script>
+                $(document).ready(function () {
+                    $.ajax({
+                        url: "@Html.Raw(Url.Action("Achievements", "Players", new { id = Model.UserId, seasonId = Model.SeasonId, leagueId = Model.LeagueId, clubId = Model.ClubId, teamId = Model.CurrentTeamId }))",
+                        type: "GET",
+                        success: function (data) {
+                            $("#achievements").html(data);
+                        }
+                    });
+                });
+            </script>
+        }
+    </div>
+    
+    @if (string.Equals(Model.Section?.Alias, SectionAliases.Bicycle, StringComparison.InvariantCultureIgnoreCase))
+    {
+        <div class="tab-pane fade" id="friendshipPayments">
+            @Html.Partial("_TabLoader", new TabLoaderParams
+            {
+                ActionUrl = Url.Action("GetFriendshipPayments", "Players",
+                    new { userId = Model.UserId }),
+                DataElementId = "friendshipPayments",
+            })
+        </div>
+    }
+
+</div>
+
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/css-toggle-switch@latest/dist/toggle-switch.css" />
+
+
+@if (isThisGymnastic)
+{
+    <script>
+        $("#listOfRoutes").click(function () {
+            var disciplinesIds = $(".disciplinesIds").val();
+            if (disciplinesIds === null) {
+                /**/
+                alert("@Messages.NoDisciplines");
+                /**/
+            }
+            else {
+
+                window.routesLoaded = 0;
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Players/GetPlayersRanksTable",
+                    data: {
+                        userId: $("#UserId").val(),
+                        disciplineIds: disciplinesIds
+                    },
+                    success: function (data) {
+                        $('#routeRanks_frm_individual').html(data);
+
+                        $.ajax({
+                            type: "POST",
+                            url: "/Players/GetTeamsRanksTable",
+                            data: {
+                                teamId: $("#CurrentTeamId").val(),
+                                userId: $("#UserId").val(),
+                                disciplineIds: disciplinesIds
+                            },
+                            success: function (data) {
+                                $('#routeRanks_frm_team').html(data);
+
+                                $('#routeRanks').modal('show');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+}
+<script>
+    $.ajax({
+        url: '/Admin/GetSeasonFromUrl',
+        type: 'POST',
+        dataType: 'JSON',
+        data: { seasonId: @Model.SeasonId },
+        success: function (name) {
+            $('.currentSeasonFromUrl').text(name);
+        }
+    });
+
+    $("#friendshipPayment-toPay").on("click",
+        function () {
+            var payButton = $(this);
+
+            payButton.attr("disabled", true);
+
+            $.post("@Url.Action("CreateFriendshipPaymentDialog", "OfficeGuy")",
+                { teamPlayersIds: [payButton.data("id")] },
+                function(data) {
+                    payButton.attr("disabled", false);
+
+                    $("#friendshipPaymentDialog-content").html(data);
+                    $("#friendshipPaymentDialog").modal("show");
+                });
+        });
+    $("#friendshipPaymentDialog").on("click",
+        "#friendshipPayment-to-officeguy",
+        function () {
+            $(this).prop("disabled", true);
+
+            $.post("@Url.Action("BicycleFriendshipMultiple", "OfficeGuy")",
+                { teamPlayersIds: [$("#friendshipPayment-toPay").data("id")] },
+                function(data) {
+                    window.open(data.url, "_blank");
+                    $("#friendshipPaymentDialog").modal("hide");
+                });
+        });
+    $("#friendshipPaymentDialog").on("friendshipPayment:completed", function() {
+        setTimeout(function() {
+            location.reload();
+        }, 2000);
+    });
+
+    function beforeSaveAsDraftSubmit() {
+        $('[name=SaveAsDraft]').val(true);
+        submitPlayerForm();
+    }
+
+    function beforeEditPlayerSubmit() {
+        $('[name=SaveAsDraft]').val(false);  
+        submitPlayerForm();
+    }
+
+    function submitPlayerForm() {
+        $("#TrainingTeamsIds").removeAttr("disabled");
+        $("#IsNationalSportsman").removeAttr("disabled");
+        $("#playerform").submit();
+    }
+
+    function isEmpty(str) {
+        return (!str || 0 === str.length);
+    }
+    function makeFullName() {
+        var firstName = $("#FirstName").val();
+        var lastName = $("#LastName").val();
+        var fullName = firstName + " " + lastName;
+        $("#FullName").val(fullName);
+    }
+
+    function changeArchiveCert() {
+        var selectBox = document.getElementById("change_archive_cert");
+        var selectedValue = selectBox.options[selectBox.selectedIndex].value;
+        if(selectedValue != "")
+            window.open('@(GlobVars.ContentPath + "/players/")' + selectedValue);
+    }
+    function joinFirstAndLastNames() {
+        var fullName = $("#FullName").val();
+        var lastName = "";
+        var firstName = "";
+        var splittedFullName = fullName.split(" ");
+        if (splittedFullName.length) {
+            if (splittedFullName.length > 1) {
+                lastName = splittedFullName[splittedFullName.length - 1];
+                for (var i = 0; i < splittedFullName.length - 1; i++) {
+                    firstName += splittedFullName[i];
+                    if (!isEmpty(splittedFullName[i + 1] && splittedFullName[i + 1] !== lastName)) {
+                        firstName += " ";
+                    }
+                }
+            }
+            else if (splittedFullName.length == 1) {
+                firstName = splittedFullName[splittedFullName.length - 1];
+            }
+        }
+        $("#FirstName").val(firstName);
+        $("#LastName").val(lastName);
+    }
+
+    $("#FirstName,#LastName").on("change", function () {
+        makeFullName();
+    });
+    $("#FullName").on("change", function () {
+        joinFirstAndLastNames();
+    });
+
+    $("#btnPenalty").click(function() {
+        $.ajax({
+            url: "/Players/CreatePenalty",
+            type: "POST",
+            data: {
+                userId: "@Model.UserId",
+                exclusionNumber: $("#numberOfExclusion").val(),
+                seasonId: "@Model.SeasonId",
+                leagueForExclusionIds: $("#leagueForExclusionId").val()
+            },
+            success: function(data) {
+                $("#penaltyTable").html(data);
+            }
+        });
+    });
+
+    $("#discard-payment").on("click",
+        function () {
+            var button = $(this);
+
+            if (confirm(window.Resources.Messages.BicycleFriendshipPayment_DiscardConfirmation)) {
+                $.post('@Url.Action("DiscardBicycleFriendshipPayment", "OfficeGuy")', { id: button.data("paymentid") })
+                    .done(function() {
+                        location.reload();
+                    });
+            }
+        });
+
+    function checkBlockadeStatus() {
+        var isPlayerBlockaded = $("#blockadePlayer").is(':checked');
+        if (isPlayerBlockaded) {
+            $("#blockadeEndDate").show();
+        } else {
+            $("#blockadeEndDate").hide();
+        }
+    }
+
+    function checkNationalSportsmanStatus() {
+        var isNationalSportsman = $("#IsNationalSportsman").is(':checked');
+        if (isNationalSportsman) {
+            $("#climbingPlayerData").show();
+        } else {
+            $("#climbingPlayerData").hide();
+        }
+    }
+
+    function checkParentApprovalFile() {
+        var fileExist = false;
+
+        if (typeof ($('input[name="RemoveParentApprovalFile"]').val()) !== undefined) {
+            fileExist = $('input[name="RemoveParentApprovalFile"]').val() === "false";
+        }
+
+
+        if (fileExist) {
+            $("#ParentApprovalFile").rules("remove", "required")
+        }
+        else {
+            $("#ParentApprovalFile").rules("add", {
+                required: true,
+                messages: {
+                    required: "@Messages.PropertyValueRequired",
+                }
+            });
+        }
+
+    }
+
+    function checkFriendshipDropdown() {
+        var val = $("#FriendshipTypeId").val();
+        console.log("Check!");
+        console.log(val);
+        var check = "@ViewBag.IsUnionManager" == "True" || "@ViewBag.IsAdmin" == "True" || "@ViewBag.IsClubManager" == "True";
+        if ((val == null || val == "" || val == 0) || !check) {
+            $("#FriendshipPriceType").attr("disabled", true);
+            $("#RoadDisciplineId").attr("disabled", true);
+            $("#MountaintDisciplineID").attr("disabled", true);
+        }
+        else {
+            $("#FriendshipPriceType").removeAttr("disabled");
+            $("#RoadDisciplineId").removeAttr("disabled");
+            $("#MountaintDisciplineID").removeAttr("disabled");
+        }
+    }
+
+    function foreignToUpper(id) {
+        var val = $("#" + id).val();
+        $("#" + id).val(val.toUpperCase());
+    }
+
+    function disableAllInputs() {
+        $("a").attr('disabled', true);
+        $(".btn").attr('disabled', true);
+        $("input").attr('disabled', true);
+        $("select").attr('disabled', true);
+        $("span").attr('disabled', true);
+    }
+
+    $(document).ready(function () {
+    /**/
+        var isSectionBicycle = '@isThisBicycle' === 'True';
+        if ('@ViewBag.IsUnionviewer' === 'True' || '@ViewBag.IsUnionClubManagerUnderPastSeason' === 'True') {
+            /**/
+            disableAllInputs();
+        }
+
+        if ('@ViewBag.IsPlayer' === 'True' && isSectionBicycle && '@ViewBag.IsClubManager' != 'True') {
+            disableAllInputs();
+
+            $(".glyphicon-remove").hide();
+            $(".btn-file-glyph").hide();
+        }
+
+        $(".customPrices-paid").popover({
+            container: 'body',
+            html: true,
+            content: function () {
+                return $(this).next('.customPrices-paid-content').html();
+            },
+            trigger: "focus",
+            /**/
+            title: "@Messages.Activity_CustomPrices_Paid"
+            /**/
+        });
+
+        $("#InsuranceTypeId").on("change", function () {
+            var selVal = $("#InsuranceTypeId").val();
+            if (selVal == "5") {
+                $("#insuranceErrorLabel").show();
+            }
+            else {
+                $("#insuranceErrorLabel").hide();
+            }
+        });
+
+        checkBlockadeStatus();
+
+
+        @if(ViewBag.IsPlayer)
+        {
+            <text>
+        var isPlayerRole = true;
+            </text>
+        }
+        else
+        {
+            <text>
+        var isPlayerRole = false;
+            </text>
+        }
+
+        @if(isThisClimbing || isThisSwimming)
+        {
+            <text>
+        checkNationalSportsmanStatus();
+            </text>
+        }
+
+        cmn.initDateTimePickers();
+        /**/
+        var userHandicapLevel = '@Model.HandicapLevel';
+        /**/
+
+        $(".retirementCheckbox").on("change",
+            function (e) {
+                if (e.target.checked) {
+                    $("#retirementModal #RetirementTeamId").val(e.target.value);
+                    $('#retirementModal').modal();
+                }
+            });
+
+        $(".approveRetirementCheckbox").on("change",
+            function (e) {
+                if (e.target.checked) {
+                    $("#retirementApproveModal #ApproveTeamId").val(e.target.value);
+                    $('#retirementApproveModal').modal();
+                }
+            });
+
+        calculateUserHandicapLevel(userHandicapLevel);
+
+        $('#HandicapLevel').on('keyup',
+            function () {
+                var handicapLevel = $(this).val();
+
+                if (handicapLevel >= 1 && handicapLevel <= 9999) {
+                    calculateUserHandicapLevel(handicapLevel);
+                } else {
+                    $('#lblCalculatedReduction').text('');
+                    $('#lblTotalResult').text('');
+                }
+            });
+
+        $('#GenderId').on('change',
+            function () {
+                calculateUserHandicapLevel();
+            });
+
+        $('#StartPlaying').on('change',
+            function () {
+                calculateUserHandicapLevel();
+            });
+
+        $('#remove-photo').on('click',
+            function () {
+                var playerImg = $('#player-img')[0];
+                playerImg.style.visibility = 'hidden';
+                var removeImg = $('#remove-image')[0];
+                removeImg.value = 'true';
+            });
+
+        $("#removeInsuranceFile").on('click',
+            function () {
+                $('input[name="RemoveInsuranceFile"]').val('true');
+                $('#viewInsuranceFile').css("visibility", "hidden");
+                $('#removeInsuranceFile').css("visibility", "hidden");
+            });
+
+        $("#removeMedicalFile").on('click',
+            function () {
+                $('input[name="RemoveMedicalCertificateFile"]').val('true');
+                $('#viewMedicalFile').css("visibility", "hidden");
+                $('#removeMedicalFile').css("visibility", "hidden");
+            });
+        $("#removeParentStatementFile").on('click',
+            function () {
+                $('input[name="RemoveParentStatementFile"]').val('true');
+                $('#viewParentStatementFile').css("visibility", "hidden");
+                $('#removeParentStatementFile').css("visibility", "hidden");
+            });
+        $("#removeIDFile").on('click',
+            function () {
+                $('input[name="RemoveIDFile"]').val('true');
+                $('#viewIDFile').css("visibility", "hidden");
+                $('#removeIDFile').css("visibility", "hidden");
+            });
+        $("#removePassportFile").on('click',
+            function () {
+                $('input[name="RemovePassportFile"]').val('true');
+                $('#viewPassportFile').css("visibility", "hidden");
+                $('#removePassportFile').css("visibility", "hidden");
+            });
+        $("#removeDriverLicenseFile").on('click',
+            function () {
+                $('input[name="RemoveDriverLicenseFile"]').val('true');
+                $('#viewDriverLicenseFile').css("visibility", "hidden");
+                $('#removeDriverLicenseFile').css("visibility", "hidden");
+            });
+        $("#removeParentApprovalFile").on('click',
+            function () {
+                $('input[name="RemoveParentApprovalFile"]').val('true');
+                $('#viewParentApprovalFile').css("visibility", "hidden");
+                $('#removeParentApprovalFile').css("visibility", "hidden");
+                if (isPlayerRole)
+                    $("#ParentApprovalFile").rules("add", {
+                        required: true,
+                        messages: {
+                            required: "@Messages.PropertyValueRequired",
+                        }
+                    });
+            });
+        $("#ParentApprovalFile").on('change',
+            function () {
+                $('input[name="RemoveParentApprovalFile"]').val('false');
+            });
+        $("#removeSpecialClassificationFile").on('click',
+            function () {
+                var check = "@ViewBag.Is"
+                $('input[name="RemoveSpecialClassificationFile"]').val('true');
+                $('#viewSpecialClassificationFile').css("visibility", "hidden");
+                $('#removeSpecialClassificationFile').css("visibility", "hidden");
+            });
+        var multiAttr = {
+            numberDisplayed: 1,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        };
+        $(".auditoriumsSearchList").multiselect(multiAttr);
+
+        checkFriendshipDropdown();
+        $("#FriendshipPriceType").multiselect(multiAttr);
+        $("#FriendshipTypeId").multiselect({
+            numberDisplayed: 1,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            onChange: function () {
+                var friendshipTypeId = $("#FriendshipTypeId").val();
+                console.log("UPD " + friendshipTypeId);
+                $.ajax({
+                    type: "POST",
+                    url: "/Prices/GetFriendshipPricesTypes",
+                    data: {
+                        friendshipTypeId: friendshipTypeId,
+                        userId: "@Model.UserId",
+                        seasonId: "@Model.SeasonId"
+                    },
+                    success: function (data) {
+                        var result = data.Data;
+                        var s = $('<select />');
+                        for (var i = 0; i < result.length; i++) {
+                            var val = result[i];
+                            if (val.Value == null) {
+                                //setting value of --select-- to -1 instead if null - reload of dropdown from js -> bug when submitting, with -1 works fine (change when discover solution)
+                                $('<option />', { value: -1, text: val.Text }).appendTo(s);
+                            }
+                            else
+                                $('<option />', { value: val.Value, text: val.Text }).appendTo(s);
+                        }
+                        s.attr("id", "FriendshipPriceType");
+                        s.attr("name", "FriendshipPriceType")
+                        s.attr("class", "form-control");
+                        if (friendshipTypeId == null || friendshipTypeId == "") {
+                            s.attr("disabled", true);
+                        }
+
+                        $("#FriendshipPriceTypeContainter").empty();
+                        $("#FriendshipPriceTypeContainter").append(s);
+                        $("#FriendshipPriceType").multiselect(multiAttr);
+
+
+                    }
+                });
+                      $.ajax({
+                type: "POST",
+                url: "/TeamPlayers/GetRoadHeatsByUserId",
+                data: {
+                    friendshipTypeId: friendshipTypeId,
+                    userId: "@Model.UserId",
+                    seasonId: "@Model.SeasonId"
+                },
+                success: function (data) {
+                    var result = data.Data;
+                    var s = $('<select />');
+                    for (var i = 0; i < result.length; i++) {
+                        var val = result[i];
+                        if (val.Value == null) {
+                        //setting value of --select-- to -1 instead if null - reload of dropdown from js -> bug when submitting, with -1 works fine (change when discover solution)
+                        $('<option />', { value: -1, text: val.Text }).appendTo(s);
+                    }
+                    else
+                        $('<option />', { value: val.Value, text: val.Text }).appendTo(s);
+                    }
+                    s.attr("id", "RoadDisciplineId");
+                    s.attr("name", "RoadDisciplineId")
+                    s.attr("class", "form-control");
+                    if (friendshipTypeId == null || friendshipTypeId == "") {
+                        s.attr("disabled", true);
+                    }
+
+                    $("#RoadDisciplineIdContainter").empty();
+                    $("#RoadDisciplineIdContainter").append(s);
+                    $("#RoadDisciplineId").multiselect(multiAttr);
+                }
+            });
+            $.ajax({
+                type: "POST",
+                url: "/TeamPlayers/GetMountainHeatsByUserId",
+                data: {
+                    friendshipTypeId: friendshipTypeId,
+                    userId: "@Model.UserId",
+                    seasonId: "@Model.SeasonId"
+                },
+                success: function (data) {
+                    var result = data.Data;
+                    var s = $('<select />');
+                    for (var i = 0; i < result.length; i++) {
+                        var val = result[i];
+                        if (val.Value == null) {
+                        //setting value of --select-- to -1 instead if null - reload of dropdown from js -> bug when submitting, with -1 works fine (change when discover solution)
+                        $('<option />', { value: -1, text: val.Text }).appendTo(s);
+                    }
+                    else
+                        $('<option />', { value: val.Value, text: val.Text }).appendTo(s);
+                    }
+                    s.attr("id", "MountaintDisciplineId");
+                    s.attr("name", "MountaintDisciplineId")
+                    s.attr("class", "form-control");
+                    if (friendshipTypeId == null || friendshipTypeId == "") {
+                        console.log("disabled");
+                        s.attr("disabled", true);
+                    }
+
+                    $("#MountaintDisciplineIdContainter").empty();
+                    $("#MountaintDisciplineIdContainter").append(s);
+                    $("#MountaintDisciplineId").multiselect(multiAttr);
+                }
+            });
+
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+
+        $(".disciplinesIds").multiselect({
+            numberDisplayed: 1,
+            onChange: function(option, checked, select) {
+                var disciplinesSelected = $(".disciplinesIds :selected").length;
+
+                if (disciplinesSelected === 0) {
+                    /**/
+                    alert("@(Messages.PlayerDisciplines_AtLeastOneShouldBeSelected)");
+                    /**/
+
+                    $(".disciplinesIds").multiselect("select", option.val());
+                }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+        $(".training-teams").multiselect({
+            numberDisplayed: 1,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+        $("#leagueForExclusionId").multiselect({
+            includeSelectAllOption: true,
+            selectAllText: '@Messages.SelectAllPlayers',
+            buttonText: function (options, select) {
+                return '@Messages.Select';
+            },
+        });
+        
+
+        changeNum();
+    });
+
+    function setCheckValue(chk) {
+        $("input[name='" + chk.name + "'][type='hidden']").val(chk.checked);
+    }
+
+    $("#blockadePlayer").click(function () {
+        checkBlockadeStatus();
+    });
+
+    $("#IsNationalSportsman").click(function () {
+        checkNationalSportsmanStatus();
+    });
+
+
+        function approvePlayer(element, check) {
+            $.ajax({
+                type: "POST",
+                url: "/Players/UpdatePlayerApproval",
+                data: {
+                    userId: "@Model.UserId",
+                    seasonId: "@Model.SeasonId",
+                    'approval': check
+                },
+                success: function (data) {
+
+                }
+            });
+
+        }
+
+
+
+    function calculateUserHandicapLevel(handicapLevel) {
+        /**/
+        var numberOfTeamsUserPlays = '@Model.PlayerTeams.Count';
+        /**/
+        /**/
+        var is31Union = '@is31Union' == 'True';
+        /**/
+        var calculatedReduction = 0;
+        var totalResult;
+        var WOMAN_GENDER_ID = 0;
+        var basketballFiveReduction = $("#BasketballFiveLevelReduction").val();
+
+        if (handicapLevel == undefined) {
+            totalResult = $('#HandicapLevel').val();
+        } else {
+            totalResult = handicapLevel;
+        }
+        var isFiveBasketballReduction = totalResult === "5.00" || totalResult === "5" && basketballFiveReduction !== "";
+        if (isFiveBasketballReduction) {
+            calculatedReduction = Number(basketballFiveReduction);
+            totalResult -= calculatedReduction;
+
+            renderBasketballFiveHandicapHandicapLevel();
+        }
+        else {
+            function reduceHandicapPointsByUserAge() {
+                var userBirthDate = convertToDateTime($("#BirthDay").val());
+                var userAge = calculateAge(userBirthDate);
+
+                if (userAge < 19) {
+                    calculatedReduction += 1;
+                    totalResult -= 1;
+                    return true;
+                } else if ((userAge >= 19 && userAge <= 24) &&
+                    numberOfTeamsUserPlays < 2 && !is31Union) {
+                    calculatedReduction += 1;
+                    totalResult -= 1;
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            function reduceHandicapPointsByUserGender() {
+                var genderId = $('#GenderId').val();
+
+                if (genderId == WOMAN_GENDER_ID &&
+                    numberOfTeamsUserPlays < 2) {
+                    calculatedReduction += 1.5;
+                    totalResult -= 1.5;
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            function reduceHandicapPointsByUserActiveTime() {
+                var threeYears = 3 * 365 * 24 * 60 * 60 * 1000;
+                var played = Date.now() - Date.parse($("#StartPlaying").val());
+                var isPlayereInTeamLessThan3year = played < threeYears;
+
+                if (isPlayereInTeamLessThan3year && numberOfTeamsUserPlays < 2 && !is31Union) {
+                    calculatedReduction += 1;
+                    totalResult -= 1;
+                }
+            }
+
+            var isReducedByUserGender = reduceHandicapPointsByUserGender();
+            var isReducedByUserAge = !isReducedByUserGender ? reduceHandicapPointsByUserAge() : true;
+
+            if (!isReducedByUserAge && !isReducedByUserAge) {
+                reduceHandicapPointsByUserActiveTime();
+            }
+
+            renderUserHandicapLevel();
+        }
+
+        function renderUserHandicapLevel() {
+            $('#lblCalculatedReduction').text(calculatedReduction);
+            $('#lblTotalResult').text(totalResult >= 0 ? totalResult : 0);
+        }
+
+        function renderBasketballFiveHandicapHandicapLevel() {
+            $('#lblCalculatedReduction').text(basketballFiveReduction);
+            $('#lblTotalResult').text(totalResult >= 0 ? totalResult : 0);
+        }
+    }
+
+    function calculateAge(birthday) {
+        var ageDifMs = Date.now() - birthday.getTime();
+        var ageDate = new Date(ageDifMs);
+        return Math.abs(ageDate.getUTCFullYear() - 1970);
+    }
+
+    function convertToDateTime(dateString) {
+        var dateArray = dateString.split("/");
+        return new Date(dateArray[2], dateArray[1] - 1, dateArray[0]);
+    }
+
+    $(function () {
+        $('#playerform').validateBootstrap(true);
+        $('#WeightDate').datetimepicker({
+            format: 'd/m/Y',
+            closeOnDateSelect: true,
+            timepicker: false,
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+        $('#StartPlaying').datetimepicker({
+            format: 'd/m/Y',
+            closeOnDateSelect: true,
+            timepicker: false,
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+        $('#ArgometricTestValidity').datetimepicker({
+            format: 'd/m/Y',
+            closeOnDateSelect: true,
+            timepicker: false,
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+        $('#ArmyDraftDate').datetimepicker({
+            format: 'd/m/Y',
+            closeOnDateSelect: true,
+            timepicker: false,
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+    });
+
+    //Add invitement to the national team feature
+    function btnAddInvitementHandler(that) {
+        var tableName = $(that).attr("data-tableName");
+        var propName = $(that).attr("data-propName");
+
+        var row = AddForm(propName, tableName);
+
+        $('#' + tableName + ' > tbody').append(row);
+        cmn.initDateTimePickers();
+
+        updateIndex(tableName);
+    }
+
+    function AddForm(propName, tableName) {
+        var row = '';
+        row += '<tr>';
+        row += '   <td>';
+        row += '       <div style="position: relative">';
+        row += '           <input type="text" name="' +
+            propName +
+            '[0].StartDate" data-nameTpl="' +
+            propName +
+            '[0].StartDate" value="" class="form-control frm-date-wo-time" />';
+        row += '       </div>';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <div style="position: relative">';
+        row += '           <input type="text" name="' +
+            propName +
+            '[0].EndDate" data-nameTpl="' +
+            propName +
+            '[0].EndDate" value="" class="form-control frm-date-wo-time" />';
+        row += '       </div>';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <a onclick="javascript:removePeriodRow(this,\'' +
+            tableName +
+            '\');" class="btn btn-default"><i class="glyphicon glyphicon-remove"></i></a>';
+        row += '   </td>';
+        row += '</tr>';
+
+        return row;
+    }
+
+    function updateIndex(tableName) {
+        $('#' + tableName + ' > tbody > tr').each(function (ind, el) {
+
+            $('input', el).each(function (iInd, iEl) {
+                $(iEl).attr('name', $(iEl).attr("data-nameTpl").replace("[0]", "[" + ind + "]"));
+            });
+
+        });
+    }
+
+    function removePeriodRow(that, tableName) {
+        $(that).closest("tr").remove();
+        updateIndex(tableName);
+    }
+
+    function changeNum() {
+        var selected = $("input:radio.numsRadio:checked").val();
+        switch (selected) {
+        case "Id":
+            $("#passportNumDiv").hide();
+            $("#identNumDiv").show();
+            break;
+        case "Passport":
+            $("#identNumDiv").hide();
+            $("#passportNumDiv").show();
+            break;
+        }
+    }
+
+    $(".numsRadio").change(function () {
+        changeNum();
+    });
+
+
+function checkIdValidation() {
+    var element = $("#identNumDiv input[type=text]");
+    var value = element.val();
+    if (LegalTz(value)) {
+        $(`#idCheckValidationButton`).val("@Messages.ValidRaw");
+        $(`#idCheckValidationButton`).css("color", "green");
+    } else {
+        $(`#idCheckValidationButton`).val("@Messages.Invalid");
+        $(`#idCheckValidationButton`).css("color", "red");
+    }
+}
+
+
+function LegalTz(num) {
+        var tot = 0;
+        var tz = new String(num);
+        if (tz.length < 9) {
+            return false;
+        }
+        for (i=0; i<8; i++)
+            {
+                x = (((i%2)+1)*tz.charAt(i));
+                if (x > 9)
+                    {
+                    x =x.toString();
+                    x=parseInt(x.charAt(0))+parseInt(x.charAt(1))
+                    }
+            tot += x;
+            }
+        
+    if ((tot+parseInt(tz.charAt(8)))%10 == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+</script>

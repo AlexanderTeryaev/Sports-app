@@ -1,0 +1,86 @@
+﻿@model Tuple<ActivityRegistrationsStatusModel, ActivityRegistrationItem>
+
+@{
+    var reg = Model.Item2;
+    var activityStatus = Model.Item1;
+}
+
+<td data-sort="@reg.PlayerFirstName">
+    @if (reg.IsTrainerPlayer)
+    {
+        <b>@Messages.Player_TrainerIndicator</b>
+    }
+    @if (reg.IsEscortPlayer)
+    {
+        <b>@Messages.Player_EscortIndicator</b>
+    }
+
+    @if (activityStatus.CanEdit)
+    {
+        <a href="#"
+           class="x-editable"
+           data-x-ed-type="text"
+           data-x-ed-url="@Url.Action("EditPlayerData", "Activity")"
+           data-x-ed-pk="@reg.UserId"
+           data-x-ed-name="@nameof(reg.PlayerFirstName)"
+           data-x-ed-title="@Messages.Activity_Status_Edit_EnterPlayerFirstName">
+            @reg.PlayerFirstName
+        </a>
+    }
+    else
+    {
+        @reg.PlayerFirstName
+    }
+    <a class="glyphicon glyphicon-new-window action-link"
+       href="@Url.Action("Edit", "Players",
+                 new
+                 {
+                     id = reg.UserId,
+                     seasonId = activityStatus.Activity.SeasonId,
+                     leagueId = reg.LeagueId,
+                     clubId = reg.ClubId,
+                     teamId = reg.TeamId
+                 })"
+       target="_blank"></a>
+    @Html.Partial("Status/Common/_PlayerLockedSign",
+        new Tuple<ActivityRegistrationItem, bool>(reg, activityStatus.CanLockUnlockPlayers))
+    @Html.Partial("Status/Common/_PlayerRegisteredMoreThanOnce", reg.RegisteredMoreThanOnce)
+</td>
+
+<td data-sort="@reg.PlayerLastName">
+    @if (activityStatus.CanEdit)
+    {
+        <a href="#"
+           class="x-editable"
+           data-x-ed-type="text"
+           data-x-ed-url="@Url.Action("EditPlayerData", "Activity")"
+           data-x-ed-pk="@reg.UserId"
+           data-x-ed-name="@nameof(reg.PlayerLastName)"
+           data-x-ed-title="@Messages.Activity_Status_Edit_EnterPlayerLastName">
+            @reg.PlayerLastName
+        </a>
+    }
+    else
+    {
+        @reg.PlayerLastName
+    }
+</td>
+
+<td data-sort="@reg.PlayerMiddleName">
+    @if (activityStatus.CanEdit)
+    {
+        <a href="#"
+           class="x-editable"
+           data-x-ed-type="text"
+           data-x-ed-url="@Url.Action("EditPlayerData", "Activity")"
+           data-x-ed-pk="@reg.UserId"
+           data-x-ed-name="@nameof(reg.PlayerMiddleName)"
+           data-x-ed-title="@Messages.Activity_Status_Edit_EnterPlayerMiddleName">
+            @reg.PlayerMiddleName
+        </a>
+    }
+    else
+    {
+        @reg.PlayerMiddleName
+    }
+</td>

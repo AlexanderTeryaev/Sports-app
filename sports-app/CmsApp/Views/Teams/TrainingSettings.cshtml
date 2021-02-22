@@ -1,0 +1,250 @@
+﻿@model TrainingSettingForm
+
+<script src="~/Scripts/jquery.validate.js"></script>
+<script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+<link href="~/Content/css/jquery.timesetter.css" rel="stylesheet" />
+<script src="~/Content/js/jquery.timesetter.js"></script>
+<script src="~/Scripts/jquery.tablesorter.min.js"></script>
+<link href="~/Content/css/tablesorter.css" rel="stylesheet" />
+@{
+    bool isHebrew = Request.IsHebrew();
+}
+<div class="form-control-box">
+    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6" id="left-settings">
+        @using (Ajax.BeginForm("SaveTrainingDaySettings", "Teams", new AjaxOptions { HttpMethod = "POST", OnSuccess = "test" }))
+        {
+            <div class="table-grid" style="float: left">
+                <table border="1" cellpadding="0" bordercolor="#ddd" width="100%">
+                    <tbody>
+                        <tr>
+                            <td><div class="label-text"><label for="Auditorium">@Messages.Choose @UIHelpers.GetAuditoriumCaption(ViewBag.Section)</label></div></td>
+                            <td>
+                                <div class="select-input">
+                                    @Html.DropDownListFor(model => model.ChooseAuditorium, Model.auditoriumData, new { @class = "form-control" })
+                                    <label id="errorMessage" style="color:red;font-size: 12px;font-weight: normal;"></label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="TrainingDays">@Messages.TrainingDays:</label></div></td>
+                            <td>
+                                <div class="radio-input">
+                                    @Html.RadioButtonFor(model => model.TrainingDays, "Sunday", new { @class = "radiobtnTrainingDays", @checked = "checked" })@Messages.Sunday
+                                    @Html.RadioButtonFor(model => model.TrainingDays, "Monday", new { @class = "radiobtnTrainingDays" })@Messages.Monday
+                                    @Html.RadioButtonFor(model => model.TrainingDays, "Tuesday", new { @class = "radiobtnTrainingDays" })@Messages.Tuesday
+                                    @Html.RadioButtonFor(model => model.TrainingDays, "Wednesday", new { @class = "radiobtnTrainingDays" })@Messages.Wednesday
+                                    @Html.RadioButtonFor(model => model.TrainingDays, "Thursday", new { @class = "radiobtnTrainingDays" })@Messages.Thursday
+                                    @Html.RadioButtonFor(model => model.TrainingDays, "Friday", new { @class = "radiobtnTrainingDays" })@Messages.Friday
+                                    @Html.RadioButtonFor(model => model.TrainingDays, "Saturday", new { @class = "radiobtnTrainingDays" })@Messages.Saturday
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="TrainingHours">@Messages.TrainingHours:</label></div></td>
+                            <td>
+                                <div class="select-input row">
+                                    <div class="col-md-5" id="startTimeDiv">
+                                        <div class="label-text" id="starttimelabel" style="float: left;padding: 10px;"><label for="hdnStartTime">@Messages.StartTime</label></div>
+                                        @Html.HiddenFor(model => model.StartTime, new { data_format = "HH:mm ", id = "hdnStartTime" })
+                                        <div class="StartingTime"></div>
+                                    </div>
+                                    <div class="col-md-5" id="endTimeDiv">
+                                        <div class="label-text" id="endtimelabel" style="float: left;padding: 10px;"><label for="hdnEndTime">@Messages.EndTime</label></div>
+                                        @Html.HiddenFor(model => model.EndTime, new { data_format = "HH:mm", id = "hdnEndTime" })
+                                        <div class="EndTime"></div>
+                                    </div>
+                                    <div style="clear:both;"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <div class="save-btn">
+                                    <input class="btn btn-primary" id="btnSubmit" type="submit" value="@Messages.Save" />
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="grid" style="float:left; width:100%; margin:15px 0 0" class="auditoriumName">
+                    @Html.Partial("_TrainingTeams", Model)
+                </div>
+            </div>
+
+            @Html.HiddenFor(Model => Model.TeamID)
+            @Html.HiddenFor(Model => Model.clubId)
+            @Html.HiddenFor(Model => Model.seasonId)
+        }
+        @using (Html.BeginForm("GenerateTraining", "Teams", new { clubId = Model.clubId, seasonId = Model.seasonId },
+            FormMethod.Post, new { id = "trainingForm" }))
+        {
+            <div class="table-grid" style="float: left;margin-right: 10px;" id="generate-settings">
+                <table border="0" cellpadding="0" bordercolor="#ddd" width="100%">
+                    <tbody>
+                        <tr>
+                            <td style="width:80%;">
+                                <div class="select-input row">
+                                    <div class="form-group col-md-6">
+                                        @Html.LabelFor(m => m.StartDate, Messages.StartDate):
+                                        @Html.TextBoxFor(m => m.StartDate, new { @class = "form-control date-time-generate" })
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        @Html.LabelFor(m => m.EndDate, Messages.EndDate):
+                                        @Html.TextBoxFor(m => m.EndDate, new { @class = "form-control date-time-generate" })
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="generate-btn">
+                                    <input class="btn btn-primary" id="gnrtButton" type="button" value="@Messages.Generate" />
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            @Html.HiddenFor(Model => Model.TeamID)
+        }
+
+
+    </div>
+    <div class="col-sm-6">
+        @using (Ajax.BeginForm("SaveTrainingSettings", "Teams", null, new AjaxOptions { HttpMethod = "POST" }))
+        {
+            <div class="table-grid tblTrainingSettings">
+                <table border="1" cellpadding="0" bordercolor="#ddd" width="100%">
+                    <tbody>
+                        <tr>
+                            <td><div class="label-text"><label for="DurationTrainingHours">@Messages.DurationOfTraining</label></div></td>
+                            <td>
+                                <div class="select-input" style="height: 33px;">
+                                    @Html.TextBoxFor(model => model.DurationTraining, new { @class = "form-control number" })
+                                    <label id="errorMessageDuration_TrainingSettings" style="color:red;font-size: 12px;font-weight: normal;"></label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="ConsiderationOfHolidays">@Messages.ConsiderationOfHolidays</label></div></td>
+                            <td>
+                                <div class="select-input col-sm-1">
+                                    @Html.CheckBoxFor(model => model.ConsiderationHolidays, new { @class = "form-control" })
+                                </div>
+                                <div class="col-sm-8">
+                                    <select class="form-control valid">
+                                        <option value="0">Israel</option>
+                                    </select>
+                                </div>
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="don't embed a training on the same day of a game">@Messages.NotEmbedTrainingSameDay</label></div></td>
+                            <td><div class="select-input"> @Html.CheckBoxFor(model => model.TrainingSameDay, new { @class = "form-control" })</div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="don't embed a training on the following day of a game">@Messages.NotEmbedTrainingFollowingDay</label></div></td>
+                            <td><div class="select-input">@Html.CheckBoxFor(model => model.TrainingFollowDay, new { @class = "form-control" })</div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="AddTraining">@Messages.AddTrainingDayBeforeGame</label></div></td>
+                            <td><div class="select-input"> @Html.CheckBoxFor(model => model.TrainingBeforeGame, new { @class = "form-control" })</div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="AddTraining">@Messages.NumberOfTrainings</label></div></td>
+                            <td>
+                                <div class="select-input" style="height: 33px;">
+                                    @Html.DropDownListFor(model => model.MinNumTrainingDays, new List<SelectListItem>
+                                                    {   new SelectListItem{ Text=" Select", Value = "" },
+                                                        new SelectListItem{ Text=" 1", Value = "1" },
+                                                        new SelectListItem{ Text="2", Value = "2" },
+                                                        new SelectListItem{ Text="3", Value = "3" },
+                                                        new SelectListItem{ Text="4", Value = "4" },
+                                                        new SelectListItem{ Text="5", Value = "5" },
+                                                        new SelectListItem{ Text="6", Value = "6" },
+                                                        new SelectListItem{ Text="7", Value = "7" },
+                                                    }, new { @class = "form-control" })
+                                    <label id="errorMessage_TrainingSettings" style="color:red;font-size: 12px;font-weight: normal;"></label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="NoTwoTraining">@Messages.DontLet2TrainingsOnSameDay</label></div></td>
+                            <td><div class="select-input"> @Html.CheckBoxFor(model => model.NoTwoTraining, new { @class = "form-control" })</div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="label-text"><label for="dayAfterDay">@Messages.DontSetDayAfterDayTrainings</label></div></td>
+                            <td><div class="select-input"> @Html.CheckBoxFor(model => model.DontSetDayAfterDay, new { @class = "form-control" })</div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <div class="save-btn">
+                                    @if (Model.Id == 0)
+                                    {
+                                        <input class="btn btn-primary" id="btnSubmit_TrainingSettings" type="submit" value="@Messages.Save" />
+                                    }
+                                    else
+                                    {
+                                        <input class="btn btn-primary" id="btnSubmit_TrainingSettings" type="submit" value="@Messages.Update" />
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            @Html.HiddenFor(Model => Model.TeamID)
+            @Html.HiddenFor(Model => Model.clubId)
+            @Html.HiddenFor(Model => Model.seasonId)
+        }
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $(".nav-tabs a").click(function () {
+            $(this).tab('show');
+        });
+        if ('@(TempData["ShowTrainings"])' == 'True') {
+            $('.nav-tabs a[href="#teamTrainings"]').tab('show');
+            $("#trainngSettings")[0].className = "tab-pane fade";
+            setTimeout(function () {
+                $("#trainngSettings")[0].className = "tab-pane fade";
+            }, 500);
+        }
+        if ('@ViewBag.IsBlocked' == 'True') {
+            $('#left-settings, #generate-settings').find('input, textarea, button, select').attr('disabled', 'disabled');
+            $('#startTimeDiv, #endTimeDiv').hide();
+        }
+        if ("@isHebrew" == "True") {
+                $("#starttimelabel, #endtimelabel").css('float', 'right');
+        }
+    });
+
+    $(".date-time-generate").datetimepicker({
+        format: 'd/m/Y H:i',
+        formatTime: 'H:i',
+        formatDate: 'd/m/Y',
+        step: 15,
+        closeOnDateSelect: false,
+        closeOnTimeSelect: true,
+        onChangeDateTime: function () {
+            $(this).data("input").trigger("changedatetime.xdsoft");
+        }
+    });
+
+    $("#gnrtButton").click(function (e) {
+        debugger;
+        var rowCount = $('#tblTrainningSchedule tr').length - 1;
+        var minTrainingValues = $('#MinNumTrainingDays option:selected').val();
+        if (rowCount > minTrainingValues) {
+            alert("Generated number of training is bigger than count of trainings per week!");
+            e.preventDefault();
+            return false;
+        } else if (rowCount < minTrainingValues) {
+            alert("Generated number of training is less than count of trainings per week!");
+            e.preventDefault();
+            return false;
+        } else {
+            $("#trainingForm")[0].submit();
+        }
+    });
+</script>

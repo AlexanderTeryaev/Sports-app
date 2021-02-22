@@ -1,0 +1,221 @@
+﻿@model IEnumerable<DataService.DTO.TennisPositionSettingsDto>
+<table class="table table-bordered" id="pointsdata">
+    <thead>
+        <tr>
+            <th width="25.5%">@Messages.Rank</th>
+            <th width="25.5%">@Messages.Points</th>
+            @if(ViewBag.IsBicycle != true)
+            { 
+                <th width="25.5%">@Messages.PointsForPairs</th>
+            }
+            <th width="10%"></th>
+            <th width="10%"></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr></tr>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var setting in Model)
+            {
+                <tr>
+                    <td>@Html.TextBox("Rank", setting.Rank, new { @class = "form-control", @type = "number", min = 0 })</td>
+                    <td>@Html.TextBox("Points", setting.Points, new { @class = "form-control", @type = "number", min = 0 })</td>
+                    @if (ViewBag.IsBicycle != true)
+                    {
+                        <td>@Html.TextBox("PointsForPairs", setting.PointsForPairs, new { @class = "form-control", @type = "number", min = 0 })</td>
+                    }
+                    <td>
+                        <a class="btn btn-primary updatesettings" data-id="@setting.Id">
+                            <span class="fa fa-save" id="update_@setting.Id"></span>
+                            <span style="display:none" class="fa fa-spin fa-spinner" id="loading_@setting.Id"></span>
+                        </a>
+                    </td>
+                    <td>
+                        <a class="deletesettings"
+                           @*data-ajax-confirm="@Messages.DeleteConfirm"*@
+                           data-id="@setting.Id">
+                            <span class="@AppCss.Delete" id="delete_@setting.Id"></span>
+                        </a>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+    <tfoot>
+        @using (Ajax.BeginForm("CreateTennisPointSettings", new { levelId = ViewBag.LevelId, seasonId = ViewBag.SeasonId },
+                new AjaxOptions { UpdateTargetId = "point-settings", HttpMethod = "POST", OnBegin = "beginFunction", OnSuccess = "successFunction" },
+                new { id = "pointsettingsform" }))
+        {
+        <tr>
+            <td>
+                <input id="Rank" name="Rank" type="number" min="0" class="form-control" form="pointsettingsform" required />
+                @Html.ValidationMessage("Rank")
+            </td>
+            <td>
+                <input id="Points" name="Points" type="number" class="form-control" form="pointsettingsform" required />
+                @Html.ValidationMessage("Points")
+            </td>
+            @if (ViewBag.IsBicycle != true)
+            {
+                <td>
+                    <input id="PointsForPairs" name="PointsForPairs" type="number" class="form-control" form="pointsettingsform" required />
+                    @Html.ValidationMessage("PointsForPairs")
+                </td>
+            }
+            <td colspan="2">
+                <button type="submit" class="btn btn-primary" style="min-width:125px;" form="pointsettingsform">
+                    <span id="maininfosettings">@Messages.AddNew</span>
+                    <span style="display:none" class="fa fa-spin fa-spinner" id="settingsformspinner"></span>
+                </button>
+            </td>
+        </tr>
+        }
+    </tfoot>
+</table>
+
+<script>
+
+    var isBicycle = "@ViewBag.IsBicycle" == "True";
+
+        function beginFunction() {
+            $("#maininfosettings").hide();
+            $("#settingsformspinner").show();
+
+        }
+    function successFunction(data) {
+        var pointsForPairsTD = "";
+        if (!isBicycle) {
+            pointsForPairsTD = $('<td>')
+                .append($('<input>')
+                    .attr('class', 'form-control')
+                    .attr('id', 'PointsForPairs')
+                    .attr('min', '0')
+                    .attr('name', 'PointsForPairs')
+                    .attr('type', 'number')
+                    .attr('value', data.Data.PointsForPairs)
+                )
+                .append($('</td>'));                
+        }
+            
+            $("#maininfosettings").show();
+            $("#settingsformspinner").hide();
+            $('#pointsdata > tbody tr:last').after($('<tr>')
+                .append($('<td>')
+                    .append($('<input>')
+                        .attr('class', 'form-control')
+                        .attr('id', 'Rank')
+                        .attr('min', '0')
+                        .attr('name', 'Rank')
+                        .attr('type', 'number')
+                        .attr('value', data.Data.Rank)
+                    )
+                    .append($('</td>'))
+                )
+                .append($('<td>')
+                    .append($('<input>')
+                        .attr('class', 'form-control')
+                        .attr('id', 'Points')
+                        .attr('min', '0')
+                        .attr('name', 'Points')
+                        .attr('type', 'number')
+                        .attr('value', data.Data.Points)
+                    )
+                    .append($('</td>'))
+            )
+
+                .append(pointsForPairsTD
+                )
+                .append($('<td>')
+                    .append($('<a>')
+                        .attr('class', 'btn btn-primary updatesettings')
+                        .attr('data-id', data.Data.Id)
+                        .attr('id', 'updatePointBtn_' + data.Data.Id)
+                        .append($('<span>')
+                            .attr('class', 'fa fa-save')
+                            .attr('id', 'update_' + data.Data.Id)
+                        )
+                        .append($('</span>'))
+                        .append($('<span>')
+                            .attr('style', 'display:none')
+                            .attr('class', 'fa fa-spin fa-spinner')
+                            .attr('id', 'loading_' + data.Data.Id)
+                        )
+                        .append($('</span>'))
+                    )
+                    .append($('</a>'))
+                    .append($('</td>'))
+                )             
+                .append($('<td>')
+                    .append($('<a>')
+                        .attr('class', 'deletesettings')
+                        .attr('data-id', data.Data.Id)
+                        .attr('id', 'deletePointBtn_' + data.Data.Id)
+                        .append($('<span>')
+                            .attr('class', '@AppCss.Delete')
+                            .attr('id', 'delete_' + data.Data.Id)
+                        )
+                        .append($('</span>'))
+                    )
+                    .append($('</a>'))
+                .append($('</td>'))
+                )
+                .append($('</tr>')));
+
+                $('#updatePointBtn_' + data.Data.Id).on("click", updatePointSettings)
+                $('#deletePointBtn_' + data.Data.Id).on("click", deletePointSettings)
+                //$(this).find("#pointsdata").reset();
+            return false;
+            }
+
+        $(document).ready(function () {
+            console.log("ready!");
+            $(".deletesettings").on("click", deletePointSettings);
+            $(".updatesettings").on("click", updatePointSettings);
+        });
+
+        function updatePointSettings() {
+            var rank = $(this).closest("tr").find("#Rank").val();
+            var points = $(this).closest("tr").find("#Points").val();
+            var pointsForPairs = $(this).closest("tr").find("#PointsForPairs").val();
+            var id = $(this).attr("data-id");
+            $.ajax({
+                url: "/Unions/UpdateTennisPointSettings/",
+                type: "POST",
+                data: {
+                    levelId: "@ViewBag.LevelId",
+                    seasonId: "@ViewBag.SeasonId",
+                    id: id,
+                    rank: rank,
+                    points: points,
+                    pointsForPairs: pointsForPairs
+                },
+                beforeSend: function () {
+                    $("#loading_" + id).show();
+                    $("#update_" + id).hide();
+                },
+                success: function (data) {
+                    $("#point-settings").html(data);
+                    $("#loading_" + id).hide();
+                    $("#update_" + id).show();
+                }
+            });
+        }
+
+        function deletePointSettings() {
+            if (window.confirm('@Messages.DeleteConfirm')) {
+                var id = $(this).attr("data-id");
+                var row = $(this).parents("tr");
+                $.ajax({
+                    url: "/Unions/DeleteTennisPointSettings/",
+                    type: "POST",
+                    data: {
+                        id: id
+                    },
+                    success: function (data) {
+                        row.remove();
+                    }
+                });
+            }
+        }
+</script>

@@ -1,0 +1,46 @@
+﻿@model TeamStandingsModel
+
+@foreach (var club in Model.ClubStandings)
+{
+    Html.RenderPartial("Standings", club);
+}
+
+@if (Model.Leagues.Count > 0)
+{
+    <div class="row col-sm-12">
+        @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+        {
+            if (Model.SectionAlias == GamesAlias.Tennis)
+            {
+                <a href="@GlobVars.SiteUrl/LeagueTable/TennisLeagueDetails?id=@Model.Leagues[0].Id&seasonId=@Model.SeasonId" target="_blank" class="btn btn-info view">@Messages.ExternalLink</a>
+            }
+            else
+            {
+                <a href="@GlobVars.SiteUrl/LeagueTable/Index?id=@Model.Leagues[0].Id&seasonId=@Model.SeasonId&union=@Model.Leagues[0].UnionId" target="_blank" class="btn btn-info export">@Messages.ExternalLink</a>
+            }
+            if (Model.SectionAlias == GamesAlias.NetBall)
+            {
+                <a href="#" id="extTblBtn" class="btn btn-info" onclick="$('.extendedTable').toggle()" style="margin-right:5px; margin-left:5px;">@Messages.ExtendedTable</a>
+            }
+        }
+    </div>
+}
+
+
+
+@foreach (var league in Model.Leagues)
+{
+    if (Model.SectionAlias == GamesAlias.Tennis)
+    {
+        <div class="row col-sm-12">
+             @Html.Action("TennisLeagueDetails", "LeagueRank", new { id = league.Id, seasonId = Model.SeasonId, unionId = league.UnionId })
+        </div>
+    }
+    else
+    {
+        <div class="row col-sm-12">
+            <h3>@Html.Label(league.Name)</h3>
+        </div>
+        @Html.Action("Details", "LeagueRank", new { id = league.Id, seasonId = Model.SeasonId, unionId = league.UnionId })
+    }
+}

@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="@(Messages.Direction)" style="display: none;">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Loglig - Registration status</title>
+    @Styles.Render("~/content/style/css")
+    <link href="~/Scripts/datetimepicker/jquery.datetimepicker.min.css" rel="stylesheet" />
+    @Scripts.Render("~/bundles/js", "~/Resources/Messages.js")
+    <script src="~/Scripts/datetimepicker/jquery.datetimepicker.full.min.js"></script>
+    @RenderSection("header", required: false)
+    <script src="~/Scripts/pages/commonLib.js"></script>
+    <script>
+        $(function () {
+
+            $.ajax({
+                url: '/Admin/GetCurrentSeason',
+                type: 'GET',
+                dataType: 'JSON',
+                data: {},
+                success: function (name) {
+                    $('.currentSeason').text(name);
+                }
+            });
+
+            cmsMainLib.init('@Messages.Lang');
+
+            $.datetimepicker.setLocale('@Messages.Lang');
+
+            $(".frm-date").datetimepicker({
+                format: 'd/m/Y H:i',
+                formatTime: 'H:i',
+                formatDate: 'd/m/Y',
+                dayOfWeekStart: @Messages.DateTimePicker_StartOfWeek,
+
+                @*@if (Messages.Lang == "he")
+                    {
+                        <text>
+                // 30/07/16 10:02
+                format: 'd/m/Y H:i',
+                formatTime: 'H:i',
+                formatDate: 'd/m/Y',
+                </text>
+                    }
+                else
+                {
+                    <text>
+                // 30/07/16 10:02
+                format: 'm/d/Y H:i',
+                formatTime: 'H:i',
+                formatDate: 'm/d/Y',
+                </text>
+                }*@
+                step: 15,
+                closeOnDateSelect: true,
+                onChangeDateTime: function () {
+                    $(this).data("input").trigger("changedatetime.xdsoft");
+                }
+            });
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                localStorage.setItem('lastTab', $(this).attr('href'));
+            });
+            var lastTab = localStorage.getItem('lastTab');
+            if (lastTab) {
+                $('[href="' + lastTab + '"]').tab('show');
+            }
+        });
+    </script>
+    <link rel="icon" href="~/Content/images/favicon.ico" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body style="padding-top: 5px;">
+
+    <h4 id="activity-status-title"></h4>
+
+    @RenderBody()
+
+    @Html.Partial("_ConfirmAlert")
+    @Html.Partial("_LoadingDialog")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

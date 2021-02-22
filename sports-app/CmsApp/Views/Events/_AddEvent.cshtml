@@ -1,0 +1,114 @@
+﻿@using AppModel
+@model CmsApp.Models.EventForm
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    @if (Model.LeagueId.HasValue)
+    {
+        <h4 class="modal-title">@Messages.AddEventToLeague @Model.LeagueName </h4>
+    }
+    else if (Model.ClubId.HasValue)
+    {
+        <h4 class="modal-title">@Messages.AddEventToClub @Model.ClubName </h4>
+    }
+    else
+    {
+        <h4 class="modal-title">@Messages.AddEventToUnion @Model.UnionName </h4>
+    }
+</div>
+
+@using (Ajax.BeginForm("AddEvent", null,
+                                    new AjaxOptions {
+                                        UpdateTargetId = "event_list",
+                                        OnComplete = "evList.hideModalDialog()",
+
+                                    },
+                                    new { id = "neweventform", enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+
+<div class="modal-body">
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    @Html.HiddenFor(model => model.EventId)
+    @Html.HiddenFor(model => model.LeagueId)
+    @Html.HiddenFor(model => model.ClubId)
+    @Html.HiddenFor(model => model.UnionId)
+
+    <div class="form-group">
+        <label class="control-label">@Messages.Event:</label>
+        @Html.EditorFor(model => model.Title, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(model => model.Title, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">@Messages.Date:</label>
+        <input type='text' name='EventTime' value='@Model.EventTime.ToString("dd/MM/yyyy HH:mm")' class="form-control frm-date required" />
+        @*@Html.EditorFor(model => model.EventTime.ToString("dd/MM/yyyy HH:mm"), new { htmlAttributes = new { @class = "form-control frm-date" } })*@
+        @Html.ValidationMessageFor(model => model.EventTime, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">@Messages.Place:</label>
+        @Html.EditorFor(model => model.Place, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(model => model.Place, "", new { @class = "text-danger" })
+    </div>
+    @if (Model.UnionId.HasValue)
+    {
+        <div class="form-group">
+            <label class="control-label">@Messages.Description:</label>
+            @Html.TextAreaFor(model => model.Description, new { @class = "form-control" })
+            @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
+        </div>
+        <div class="form-group">
+            <label class="control-label">@Messages.Image:</label> (<span>@Messages.Max2MB</span>)
+            @Html.Editor("ImageFile", "ImageUpload", new { css = "validfile" })
+            @Html.ValidationMessage("ImageFile")
+        </div>
+    }
+</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        <button id="savebtn" class="btn btn-primary">@Messages.Save</button>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        var frm = $('#neweventform');
+        frm.validateBootstrap(true);
+
+        $('#savebtn', frm).click(function () {
+            return true;
+        });
+
+        cmn.initDateTimePickers();
+
+        window.addEventListener("submit", function (e) {
+            var form = e.target;
+            if (form.getAttribute("enctype") === "multipart/form-data") {
+                if (form.dataset.ajax) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    var xhr = new XMLHttpRequest();
+                    xhr.open(form.method, form.action);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            if (form.dataset.ajaxUpdate) {
+                                var updateTarget = document.querySelector(form.dataset.ajaxUpdate);
+                                if (updateTarget) {
+                                    updateTarget.innerHTML = xhr.responseText;
+                                }
+                                evList.documentReady()
+                            }
+                        }
+                    };
+                    xhr.send(new FormData(form));
+                }
+            }
+        }, true);
+    });
+</script>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

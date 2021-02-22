@@ -1,0 +1,737 @@
+﻿@model ActivityModel
+
+@{
+
+    var activityTypeList = new List<SelectListItem>
+    {
+        new SelectListItem {Text = Messages.Activity_Type_Group, Value = ActivityType.Group},
+        new SelectListItem {Text = Messages.Activity_Type_Personal, Value = ActivityType.Personal}
+    };
+
+    if (Model.UnionId != null)
+    {
+        activityTypeList.Add(new SelectListItem { Text = Messages.Activity_Type_UnionClub, Value = ActivityType.Club });
+        activityTypeList.Add(new SelectListItem{Text = Messages.Activity_Type_UnionPersonalClub, Value = ActivityType.UnionPlayerToClub});
+    }
+
+    var actityType = new SelectList(activityTypeList, nameof(SelectListItem.Value), nameof(SelectListItem.Text), Model.Type);
+
+    var formPaymentList = new List<SelectListItem>
+    {
+        new SelectListItem {Text = "Fixed", Value = ActivityFormPaymentType.Fixed},
+        new SelectListItem {Text = "By periods", Value = ActivityFormPaymentType.Periods}
+    };
+
+    var formPayment = new SelectList(formPaymentList, nameof(SelectListItem.Value), nameof(SelectListItem.Text), Model.FormPayment);
+}
+
+
+<!-- Modal -->
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <h4 class="modal-title">@(Model.ActivityId == 0 ? Messages.AddNew : Model.Name)</h4>
+</div>
+
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+
+@using (Ajax.BeginForm("Edit", null,
+    new AjaxOptions {UpdateTargetId = "activityform_pl", OnSuccess = ""},
+    new {id = "activityform", autocomplete = "off"}))
+{
+    @Html.HiddenFor(m => m.ActivityId)
+    @Html.HiddenFor(m => m.UnionId)
+    @Html.HiddenFor(m => m.ClubId)
+    @Html.HiddenFor(m => m.SeasonId)
+    @Html.HiddenFor(m => m.BranchId)
+
+
+    <div class="modal-body">
+    <div class="form-group col-sm-12">
+        <label class="control-label">@Messages.Activity_Name:</label>
+        @Html.TextBoxFor(m => m.Name, new {@class = "form-control"})
+        @Html.ValidationMessageFor(m => m.Name)
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">@Messages.Activity_Description:</label>
+        @Html.TextBoxFor(m => m.Description, new {@class = "form-control"})
+        @Html.ValidationMessageFor(m => m.Description)
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">@Messages.Activity_Type:</label>
+        @Html.DropDownListFor(m => m.Type, actityType, new {@class = "form-control"})
+        @Html.ValidationMessageFor(m => m.Type)
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.Activity_StartDate:</label>
+        <div style="position: relative">
+            <input type="text" name="StartDate" value="@(Model.StartDate.HasValue ? Model.StartDate.Value.ToString("dd/MM/yyyy") : "")" class="form-control frm-date-wo-time"/>
+        </div>
+        @Html.ValidationMessageFor(m => m.StartDate)
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.Activity_EndDate:</label>
+        <div style="position: relative">
+            <input type="text" name="EndDate" value="@(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("dd/MM/yyyy") : "")" class="form-control frm-date-wo-time"/>
+        </div>
+        @Html.ValidationMessageFor(m => m.EndDate)
+    </div>
+    <div class="form-group col-sm-6">
+        <label class="control-label">@Messages.Activity_DefaultLanguage:</label>
+        <div class="default-language">
+            <p>
+                @Html.RadioButtonFor(x => x.DefaultLanguage, "he")
+                <label class="flag-he"></label>
+            </p>
+            <p>
+                @Html.RadioButtonFor(x => x.DefaultLanguage, "en") 
+                <label class="flag-en"></label>
+            </p>
+            <p>
+                @Html.RadioButtonFor(x => x.DefaultLanguage, "uk") 
+                <label class="flag-ua"></label>
+            </p>
+        </div>
+    </div>
+    @if (Model.IsAutomatic != true)
+    {
+        switch (Model.ActivityFormType)
+        {
+            case ActivityFormType.CustomPersonal:
+                @Html.Partial("ActivitySettings/_UnionCustomPersonalSettings", Model)
+                break;
+
+            case ActivityFormType.CustomGroup:
+                @Html.Partial("ActivitySettings/_UnionCustomGroupSettings", Model)
+                break;
+
+            case ActivityFormType.ClubCustomPersonal:
+                @Html.Partial("ActivitySettings/_ClubCustomPlayerSettings", Model)
+                break;
+
+            case ActivityFormType.DepartmentClubCustomPersonal:
+                @Html.Partial("ActivitySettings/_DepartmentClubCustomPlayerSettings", Model)
+                break;
+        }
+    }
+    @if (Model.IsAutomatic == true)
+    {
+        switch (Model.ActivityFormType)
+        {
+            case ActivityFormType.PlayerRegistration:
+                @Html.Partial("ActivitySettings/_UnionPersonalSettings", Model)
+                break;
+
+            case ActivityFormType.ClubPlayerRegistration:
+                @Html.Partial("ActivitySettings/_ClubPlayerSettings", Model)
+                break;
+
+            case ActivityFormType.DepartmentClubPlayerRegistration:
+                @Html.Partial("ActivitySettings/_DepartmentClubPlayerSettings", Model)
+                break;
+
+            case ActivityFormType.UnionClub:
+                @Html.Partial("ActivitySettings/_UnionClubSettings", Model)
+                break;
+
+            case ActivityFormType.UnionPlayerToClub:
+                @Html.Partial("ActivitySettings/_UnionPlayerToClubSettings", Model)
+                break;
+        }
+    }
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.ByBenefactor) @Messages.Activity_ByBenefactor
+        </label>
+        @Html.ValidationMessageFor(m => m.ByBenefactor)
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.AttachDocuments) @Messages.Activity_AttachDocuments
+        </label>
+        @Html.ValidationMessageFor(m => m.AttachDocuments)
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.MedicalCertificate) @Messages.Activity_MedicalCertificate
+        </label>
+        @Html.ValidationMessageFor(m => m.MedicalCertificate)
+    </div>
+    <div class="form-group col-sm-12">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.InsuranceCertificate) @Messages.Activity_InsuranceCertificate
+        </label>
+        @Html.ValidationMessageFor(m => m.InsuranceCertificate)
+    </div>
+
+    <div class="form-group col-sm-12 well">
+        <label class="control-label">
+            @Html.CheckBoxFor(m => m.CustomPricesEnabled, new {@class = "enable-customPrices"}) @Messages.Activity_EnableCustomPrices
+        </label>
+        
+        <button type="button" class="btn btn-info btn-xs manage-customPrices" data-toggle="modal" data-target="#customPrices-modal" style="display: @(Model.CustomPricesEnabled ? "inline" : "none")">
+            <i class="glyphicon glyphicon-tasks"></i>
+            @Messages.Activity_CustomPrices_ManagePrices
+        </button>
+        
+        <div>
+            <label id="customprices-restrict-one" style="display: @(Model.CustomPricesEnabled ? "block" : "none");" class="control-label">
+                @Html.CheckBoxFor(m => m.RestrictCustomPricesToOneItem) @Messages.Activity_CustomPrices_RestrictToOneItem
+            </label>
+        </div>
+        <div>
+            <label id="customprices-restrict-none" style="display: @(Model.CustomPricesEnabled ? "block" : "none");" class="control-label">
+                @Html.CheckBoxFor(m => m.AllowNoCustomPricesSelected) @Messages.Activity_CustomPrices_AllowNoPricesSelected
+            </label>
+        </div>
+
+        @Html.Partial("_ManageCustomPrices", Model)
+    </div>
+    
+    <div class="form-group col-sm-12">
+        <label class="control-label">@Messages.Activity_RedirectLinkOnSuccess:</label>
+        @Html.TextBoxFor(m => m.RedirectLinkOnSuccess, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.RedirectLinkOnSuccess)
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">@Messages.Activity_ActivityManager:</label>
+        <div class="clearfix"></div>
+        @if (ViewBag.IsReadOnly != true)
+        {
+            <div class="row">
+                <div class="col-sm-9">
+                    <select name="selActivityManager" class="form-control">
+                        @for (int i = 0; i < Model.UnionManager.Count; i++)
+                        {
+                            <option value="@(Model.UnionManager[i].Value)">@(Model.UnionManager[i].Text)</option>
+                        }
+                    </select>
+                </div>
+                <button type="button" onclick="addActivityManager();" class="btn btn-primary col-sm-3">
+                    <i class="fa fa-plus"></i> @Messages.AddNew</button>
+            </div>
+            <div class="clearfix"></div>
+        }
+        <ul id="ulActivityManager">
+            @for (int i = 0; i < Model.ActivityManager.Count; i++)
+            {
+                <text>
+                    <li data-user-id="@(Model.ActivityManager[i].UserId)">
+                        @(Model.ActivityManager[i].UserName)
+                        @if (ViewBag.IsReadOnly != true)
+                        {
+                            <a class="btn btn-primary" onclick="deleteActivityManager(this);">
+                                <i class="fa fa-remove"></i>
+                            </a>
+                        }
+                        <input type="hidden" name="ActivityManager[@(i)].UserId" data-nameTpl="ActivityManager[0].UserId" value="@(Model.ActivityManager[i].UserId)"/>
+                    </li>
+                </text>
+            }
+        </ul>
+        @Html.ValidationMessageFor(m => m.ActivityManager)
+    </div>
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">@Messages.Activity_ActivityViewer:</label>
+        <div class="clearfix"></div>
+        @if (ViewBag.IsReadOnly != true)
+        {
+            <div class="row">
+                <div class="col-sm-9">
+                    <select name="selActivityViewer" class="form-control">
+                        @for (int i = 0; i < Model.UnionManager.Count; i++)
+                        {
+                            <option value="@(Model.UnionManager[i].Value)">@(Model.UnionManager[i].Text)</option>
+                        }
+                    </select>
+                </div>
+                <button type="button" onclick="addActivityViewer();" class="btn btn-primary col-sm-3">
+                    <i class="fa fa-plus"></i> @Messages.AddNew</button>
+            </div>
+            <div class="clearfix"></div>
+        }
+        <ul id="ulActivityViewer">
+            @for (int i = 0; i < Model.ActivityViewer.Count; i++)
+            {
+                <text>
+                    <li data-user-id="@(Model.ActivityViewer[i].UserId)">
+                        @(Model.ActivityViewer[i].UserName)
+                        @if (ViewBag.IsReadOnly != true)
+                        {
+                            <a class="btn btn-primary" onclick="deleteActivityViewer(this);">
+                                <i class="fa fa-remove"></i>
+                            </a>
+                        }
+                        <input type="hidden" name="ActivityViewer[@(i)].UserId" data-nameTpl="ActivityViewer[0].UserId" value="@(Model.ActivityViewer[i].UserId)"/>
+                    </li>
+                </text>
+            }
+        </ul>
+        @Html.ValidationMessageFor(m => m.ActivityViewer)
+    </div>
+
+    @if (Model.IsAutomatic == true && Model.Type == ActivityType.Personal)
+    {
+        <div class="form-group col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">@Messages.Activity_SecondTeamRegistration</h3>
+                </div>
+                <div class="panel-body">
+                    @Html.LabelFor(x => x.SecondTeamRegistrationDiscountAmount, Messages.Activity_SecondTeamRegistration_DiscountAmount)
+                    @if (ViewBag.IsReadOnly == true)
+                    {
+                        @Html.TextBoxFor(x => x.SecondTeamRegistrationDiscountAmount, new {@class = "form-control", @readonly = "readonly", disabled = "disabled"})
+
+                        @Html.CheckBoxFor(x => x.SecondTeamRegistrationNoInsurancePayment, new {@readonly = "readonly", disabled = "disabled"})
+                    }
+                    else
+                    {
+                        @Html.TextBoxFor(x => x.SecondTeamRegistrationDiscountAmount, new {@class = "form-control"})
+
+                        @Html.CheckBoxFor(x => x.SecondTeamRegistrationNoInsurancePayment)
+                    }
+
+                    @Html.LabelFor(x => x.SecondTeamRegistrationNoInsurancePayment, Messages.Activity_SecondTeamRegistration_NoInsurancePayment)
+                </div>
+            </div>
+        </div>
+    }
+    @if (Model.ClubId != null)
+    {
+        <div class="form-group col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">@Messages.Activity_BrotherRegistrationDiscount</h3>
+                </div>
+                <div class="panel-body">
+                    @if (ViewBag.IsReadOnly == true)
+                    {
+                        @Html.CheckBoxFor(x => x.EnableBrotherDiscount, new { @readonly = "readonly", disabled = "disabled" })
+                    }
+                    else
+                    {
+                        @Html.CheckBoxFor(x => x.EnableBrotherDiscount)
+                    }
+                    @Html.LabelFor(x => x.EnableBrotherDiscount, Messages.Activity_EnableBrotherRegistrationDiscount)
+
+                    <div id="brother-discount-amount" class="well well-sm" style="display: @(Model.EnableBrotherDiscount ? "block" : "none")">
+                        @Html.LabelFor(x => x.BrotherDiscountAmount, Messages.Activity_BrotherRegistrationDiscount_Amount)
+                        @if (ViewBag.IsReadOnly == true)
+                        {
+                            @Html.TextBoxFor(x => x.BrotherDiscountAmount, new { @class = "form-control", @readonly = "readonly", disabled = "disabled" })
+                            @Html.CheckBoxFor(x => x.BrotherDiscountInPercent, new { @readonly = "readonly", disabled = "disabled" })
+                        }
+                        else
+                        {
+                            @Html.TextBoxFor(x => x.BrotherDiscountAmount, new { @class = "form-control" })
+                            @Html.CheckBoxFor(x => x.BrotherDiscountInPercent)
+                        }
+                        @Html.LabelFor(x => x.BrotherDiscountInPercent, Messages.Activity_BrotherRegistrationDiscount_InPercent)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    }
+    </div>
+    <div class="clearfix"></div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        @if (ViewBag.IsReadOnly != true)
+        {
+            <button type="submit" class="btn btn-primary">@Messages.Save</button>
+        }
+    </div>
+}
+@if (ViewBag.Saved == true)
+{
+    <text>
+        <script type="text/javascript">
+            reload();
+        </script>
+    </text>
+}
+
+<script type="text/javascript">
+
+    @if (Model.IsAutomatic != true && Model.UnionId != null && Model.ClubId == null)
+    {
+        <text>
+    $("#Type").change(function() {
+        var selectedValue = $(this).val();
+
+        if (selectedValue === "personal") {
+            $("#custom-personal-settings").show();
+            $("#custom-group-settings").hide();
+            //$("#payment-options").hide();
+        } else {
+            $("#custom-personal-settings").hide();
+            $("#custom-group-settings").show();
+            //$("#payment-options").show();
+        }
+            });
+
+    $(".restrict-leagues:visible").change(function() {
+        if ($(this).is(":checked")) {
+            $(".restrict-leagues-dropdown:visible").multiselect("enable");
+        } else {
+            $(".restrict-leagues-dropdown:visible").multiselect("disable");
+        }
+    });
+        </text>
+    }
+
+    $(".enable-customPrices").change(function() {
+        if (this.checked) {
+            $(".manage-customPrices").show();
+            $("#customprices-restrict-one").show();
+            $("#customprices-restrict-none").show();
+        } else {
+            $(".manage-customPrices").hide();
+            $("#customprices-restrict-one").hide();
+            $("#customprices-restrict-none").hide();
+        }
+    });
+
+    $("#AllowEscortRegistration").change(function() {
+        if (this.checked) {
+            $("#escort-discount-settings").show();
+        } else {
+            $("#escort-discount-settings").hide();
+        }
+    });
+
+    $("#EnableBrotherDiscount").change(function() {
+        if (this.checked) {
+            $("#brother-discount-amount").show();
+        } else {
+            $("#brother-discount-amount").hide();
+        }
+    });
+
+    $("select[multiple].restrict-leagues-dropdown").multiselect({
+        includeSelectAllOption: true,
+        selectAllJustVisible: false,
+        numberDisplayed: 1,
+
+        onChange: handleSelectedLeagues,
+        onSelectAll: handleSelectedAllLeagues,
+        onDeselectAll: handleDeselectAllLeagues,
+
+        onDropdownHide: function (element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    function handleDeselectAllLeagues() {
+        $("#RestrictedLeaguesJson").val("");
+    }
+
+    function handleSelectedAllLeagues() {
+        handleSelectedLeagues(true);
+    }
+
+    function handleSelectedLeagues(selectAll) {
+        var leagues;
+
+        if (selectAll === true) {
+            leagues = $("select[multiple].restrict-leagues-dropdown option");
+        } else {
+            leagues = $("select[multiple].restrict-leagues-dropdown option:selected");
+        }
+
+        var selected = [];
+        $(leagues).each(function(index, league) {
+            selected.push($(this).val());
+        });
+
+        $("#RestrictedLeaguesJson").val(JSON.stringify(selected));
+    }
+
+    $("select[multiple].restrict-schools-dropdown").multiselect({
+        //includeSelectAllOption: true,
+        numberDisplayed: 1,
+        onChange: function(element, checked) {
+            var schools = $("select[multiple].restrict-schools-dropdown option:selected");
+            var selected = [];
+            $(schools).each(function(index, school) {
+                selected.push($(this).val());
+            });
+
+            $("#RestrictedSchoolsJson").val(JSON.stringify(selected));
+
+            ReloadTeams(selected);
+        },
+        onInitialized: function() {
+            var schools = $("select[multiple].restrict-schools-dropdown option:selected");
+            var selected = [];
+            $(schools).each(function(index, school) {
+                selected.push($(this).val());
+            });
+
+            ReloadTeams(selected);
+        },
+        onDropdownHide: function(element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    $("select[multiple].restrict-teams-dropdown").multiselect({
+        enableClickableOptGroups: true,
+        enableCollapsibleOptGroups: true,
+        includeSelectAllOption: true,
+        selectAllJustVisible: false,
+        enableFiltering: true,
+        numberDisplayed: 1,
+
+        onChange: handleSelectedTeams,
+        onSelectAll: handleSelectedAllTeams,
+        onDeselectAll: handleDeselectAllTeams,
+        onDropdownHide: function(element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    function handleDeselectAllTeams() {
+        $("#RestrictedTeamsJson").val("");
+    }
+
+    function handleSelectedAllTeams() {
+        handleSelectedTeams(true);
+    }
+
+    function handleSelectedTeams(selectAll) {
+        var teams;
+
+        if (selectAll === true) {
+            teams = $("select[multiple].restrict-teams-dropdown option");
+        } else {
+            teams = $("select[multiple].restrict-teams-dropdown option:selected");
+        }
+
+        var selected = [];
+        $(teams).each(function(index, team) {
+            selected.push($(this).val());
+        });
+
+        $("#RestrictedTeamsJson").val(JSON.stringify(selected));
+    }
+
+    function ReloadTeams(schools) {
+        var teamsDropdown = $("select[multiple].restrict-teams-dropdown");
+
+        if (teamsDropdown.length > 0) {
+            $.ajax({
+                    url: "/Activity/GetSelectTeamsDropdown",
+                    data: { activityId: "@Model.ActivityId", schools: schools },
+                    traditional: true
+                })
+                .done(function(data) {
+                    teamsDropdown.multiselect("dataprovider", data);
+                    handleSelectedTeams();
+                });
+        }
+    }
+
+    $("#activityform").on("shown.bs.modal", ".modal", function () {
+        $(".modal").animate({ scrollTop: 0 }, 500, "swing");
+        //$(".modal").modal("handleUpdate");
+    });
+
+    $('#activityform').validateBootstrap(true);
+
+    @if (ViewBag.Saved == true)
+    {
+        <text>
+            alert('@Messages.DataSavedSuccess');
+
+            //$("#activitiesview").load(Url.Action("List", "Activity", new { unionId = Model.UnionId, seasonId = Model.SeasonId }));
+
+            reload();
+
+        </text>
+    }
+
+    function addActivityManager() {
+
+        var value = $('[name="selActivityManager"]').val();
+        if (value.length > 0) {
+
+            if ($('[data-nameTpl="ActivityManager[0].UserId"][value="' + value + '"]').length == 0) {
+                var userName = $('[name="selActivityManager"] option:selected').text();
+
+                var li = '';
+                li += '<li data-user-id="' + value + '">';
+                li += '    ' + userName;
+                li +=
+                    '    <a class="btn btn-primary" onclick="deleteActivityManager(this)"><i class="fa fa-remove"></i></a>';
+                li +=
+                    '    <input type="hidden" name="ActivityManager[0].UserId" data-nameTpl="ActivityManager[0].UserId" value="' +
+                    value +
+                    '" />';
+                li += '</li>';
+
+                $('#ulActivityManager').append(li);
+
+                updatePriceIndex();
+            }
+        }
+    }
+
+    function addActivityViewer() {
+
+        var value = $('[name="selActivityViewer"]').val();
+        if (value.length > 0) {
+
+            if ($('[data-nameTpl="ActivityViewer[0].UserId"][value="' + value + '"]').length == 0) {
+                var userName = $('[name="selActivityViewer"] option:selected').text();
+
+                var li = '';
+                li += '<li data-user-id="' + value + '">';
+                li += '    ' + userName;
+                li +=
+                    '    <a class="btn btn-primary" onclick="deleteActivityViewer(this)"><i class="fa fa-remove"></i></a>';
+                li +=
+                    '    <input type="hidden" name="ActivityViewer[0].UserId" data-nameTpl="ActivityViewer[0].UserId" value="' +
+                    value +
+                    '" />';
+                li += '</li>';
+
+                $('#ulActivityViewer').append(li);
+
+                updatePriceIndex();
+            }
+        }
+    }
+
+    function deleteActivityManager(that) {
+
+        $(that).parent().remove();
+
+        updatePriceIndex();
+    }
+
+    function deleteActivityViewer(that) {
+
+        $(that).parent().remove();
+
+        updatePriceIndex();
+    }
+
+    function removePeriodRow(that) {
+        $(that).closest("tr").remove();
+        updatePriceIndex();
+    }
+
+    (function () {
+        $("#activityedit").modal("handleUpdate");
+        cmn.initDateTimePickers();
+
+        $('[name="FormPayment"]').on('change',
+            function() {
+                //debugger;
+                if ($('[name="FormPayment"]').val() == '@(ActivityFormPaymentType.Fixed)') {
+                    $('.tbFormPayment_Fixed').show();
+                    $("#tbFormPayment_Period").hide();
+                } else {
+                    $('.tbFormPayment_Fixed').hide();
+                    $("#tbFormPayment_Period").show();
+                }
+            });
+
+        $("#btnAddFormPayment").click(function() {
+            var row = '';
+            row += '<tr>';
+            row += '   <td>';
+            row += '       <div style="position: relative">';
+            row +=
+                '           <input type="text" name="ActivitiesPrices[0].StartDate" data-nameTpl="ActivitiesPrices[0].StartDate" value="" class="form-control frm-date-wo-time" />';
+            row += '       </div>';
+            row += '   </td>';
+            row += '   <td>';
+            row += '       <div style="position: relative">';
+            row +=
+                '           <input type="text" name="ActivitiesPrices[0].EndDate" data-nameTpl="ActivitiesPrices[0].EndDate" value="" class="form-control frm-date-wo-time" />';
+            row += '       </div>';
+            row += '   </td>';
+            row += '   <td>';
+            row +=
+                '       <input type="text" name="ActivitiesPrices[0].Price" data-nameTpl="ActivitiesPrices[0].Price" class="form-control" />';
+            row += '   </td>';
+            row += '   <td>';
+            row +=
+                '       <input type="text" name="ActivitiesPrices[0].PaymentDescription" data-nameTpl="ActivitiesPrices[0].PaymentDescription" class="form-control" />';
+            row += '   </td>';
+            row += '   <td>';
+            row +=
+                '       <a onclick="javascript:removePeriodRow(this);" class="btn btn-default"><i class="glyphicon glyphicon-remove"></i></a>';
+            row += '   </td>';
+            row += '</tr>';
+
+            $('#tbFormPayment_Period > tbody').append(row);
+            cmn.initDateTimePickers();
+
+            updatePriceIndex();
+        });
+
+    })();
+
+
+    function updatePriceIndex() {
+        $('#tbFormPayment_Period > tbody > tr').each(function(ind, el) {
+
+            $('input', el).each(function(iInd, iEl) {
+                $(iEl).attr('name', $(iEl).attr("data-nameTpl").replace("[0]", "[" + ind + "]"));
+            });
+
+        });
+
+        $('#ulActivityManager > li').each(function(ind, el) {
+            var $input = $(el).find('input');
+            $input.attr('name', $input.attr("data-nameTpl").replace("[0]", "[" + ind + "]"));
+        });
+
+        $('#ulActivityViewer > li').each(function(ind, el) {
+            var $input = $(el).find('input');
+            $input.attr('name', $input.attr("data-nameTpl").replace("[0]", "[" + ind + "]"));
+        });
+    }
+
+    function DoAllReadOnly() {
+        $('#activityedit input[type="text"]').attr("readonly", "readonly");
+        $('#activityedit input[type="checkbox"]').attr("readonly", "readonly");
+        $('#activityedit input[type="checkbox"]').attr("disabled", "disabled");
+        $('#activityedit select').attr("readonly", "readonly");
+        $('#activityedit select').attr("disabled", "disabled");
+    }
+
+    @if (ViewBag.IsReadOnly == true)
+    {
+        <text>
+    DoAllReadOnly();
+        </text>
+    }
+
+
+</script>

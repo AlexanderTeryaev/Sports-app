@@ -1,0 +1,28 @@
+﻿
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.Activity_ExportForm_Title</h4>
+</div>
+
+<div id="editplayerformbody">
+    <div class="row">
+        <div class="col-md-12">
+
+            @if (ViewBag.ExportResult == true)
+            {
+                <div class="alert alert-success">
+                    @Messages.Activity_ExportForm_SuccessResult - <a class="text-danger" href="@Url.Action("DownloadExportFile", "Activity")">@Messages.Download</a>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-danger">@Messages.Activity_ExportForm_ErrorResult</div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+</div>

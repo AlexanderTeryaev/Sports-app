@@ -1,0 +1,640 @@
+﻿@model TournamentsPDF
+@{
+    int errId = TempData["ErrId"] != null ? (int)TempData["ErrId"] : 0;
+
+    string tournamentValue, leagueValue, teamsValue, createValue, exportValue, tooltip, move, exportImgs, importPic, import, downloadForm, addTournament = string.Empty;
+    UIHelpers.GetButtonCaption(Model.Section, out downloadForm, out import, out importPic, out exportImgs, out move, out tooltip);
+    UIHelpers.GetUnionClubInfoCaption(Model.Section, out tournamentValue, out leagueValue, out teamsValue, out createValue, out exportValue, out addTournament);
+    var leaguesStats = ViewBag.LeaguePlayersCount != null ? ViewBag.LeaguePlayersCount as Dictionary<int, int> : new Dictionary<int, int>();
+    var gymnasticLeagueStats = ViewBag.GymnasticLeaguePlayersCount != null ? ViewBag.GymnasticLeaguePlayersCount as Dictionary<int, int> : new Dictionary<int, int>();
+
+}
+
+<form id="detailsform" method="post" data-targetid="Leagues" action="@Url.Action("Leagues")" autocomplete="off" enctype="multipart/form-data">
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) || User.HasTopLevelJob(JobRole.ClubManager))
+    {
+        if (ViewBag.JobRole != JobRole.RefereeAssignment)
+        {
+            <a href="@Url.Action("Create", "Leagues", new { unionId = Model.UnionId, disciplineId = Model.DisciplineId, clubId = Model.ClubId, et = Model.Et, seasonId = Model.SeasonId })"
+               class="btn btn-primary"
+               data-target="#newleague"
+               data-toggle="modal">
+                @if (Model.Et == TournamentsPDF.EditType.TmntSectionClub || Model.Et == TournamentsPDF.EditType.TmntUnionClub)
+                {
+                    if (Model.Section == SectionAliases.Gymnastic || Model.Section == GamesAlias.WaveSurfing)
+                    {
+                        @Messages.CreateCompetition
+                    }
+                    else
+                    {
+                        @Messages.AddTournament
+                    }
+                }
+                else if (Model.Et == TournamentsPDF.EditType.LgUnion)
+                {
+                    if (Model.Section == SectionAliases.Gymnastic || Model.Section == GamesAlias.WaveSurfing)
+                    {
+                        @Messages.CreateCompetition
+                    }
+                    else
+                    {
+                        @Messages.CreateLeague
+                    }
+                }
+                else if (Model.Et == TournamentsPDF.EditType.TmntUnion)
+                {
+                    if (Model.Section == SectionAliases.Gymnastic || Model.Section == GamesAlias.WaveSurfing)
+                    {
+                        @Messages.CreateCompetition
+                    }
+                    else
+                    {
+                        @Messages.CreateTournament
+                    }
+                }
+
+            </a>
+        }
+        if (Model.UnionId != 36)
+        {
+            <a class="btn btn-info export" href="@Url.Action("ExportReferees", new { id = Model.UnionId, seasonId = Model.SeasonId })" style="float:left" ;>
+                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportReferees
+            </a>
+        }
+
+    }
+    @if (Model.UnionId != 36)
+    {
+        <a class="btn btn-info export" href="@Url.Action("DownloadExcel", "Unions", new { unionId = Model.UnionId, clubId = Model.ClubId })"
+           data-toggle="tooltip" title="@tooltip" style="float:left; margin-left:5px;">
+            <i href="#" class="glyphicon glyphicon-open"></i> @downloadForm
+        </a>
+    }
+    @if (Model.UnionId != 36)
+    {
+        if (ViewBag.LeaguesTab == true)
+        {
+            <a class="btn btn-info btn-edit export" onclick="downloadExcel(@Model.UnionId,@Model.SeasonId,'players', @(Model.Section == GamesAlias.Tennis ? "true" :"false"),this)" style="float:left; margin-left:5px;">
+                <i class="glyphicon glyphicon-export"></i>
+                @Messages.ExportToExcel
+                <i class="fa fa-spin fa-spinner exportloading" style="display: none;"></i>
+            </a>
+            <a class="btn btn-info btn-edit export" onclick="downloadExcel(@Model.UnionId,@Model.SeasonId,'teams', @(Model.Section == GamesAlias.Tennis ? "true" :"false"),this)" style="float:left; margin-left:5px;">
+                <i class="glyphicon glyphicon-export"></i>
+                @Messages.ExportToExcel - @Messages.Teams
+                <i class="fa fa-spin fa-spinner exportloading_teams" style="display: none;"></i>
+            </a>
+            if (ViewBag.JobRole != JobRole.RefereeAssignment)
+            {
+                <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayers", "Players", new { formName = "union", unionId = Model.UnionId, clubId = Model.ClubId, seasonId = Model.SeasonId })"
+                   data-target="#playerimportform"
+                   data-toggle="modal">
+                    <i class="glyphicon glyphicon-save"></i> @import
+                </a>
+            }
+            <a class="btn btn-info btn-edit export" onclick="exportPlayersImagesFromUnion(this)" style="float:left; margin-left:5px;">
+                <i class="glyphicon glyphicon-save"></i> @exportImgs
+                <i class="fa fa-spin fa-spinner" id="spinner" style="display:none"></i>
+            </a>
+            if (ViewBag.JobRole != JobRole.RefereeAssignment)
+            {
+                <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayersImage", "Players", new { seasonId = Model.SeasonId })"
+                   data-target="#playerimportimageform"
+                   data-toggle="modal">
+                    <i class="glyphicon glyphicon-save"></i> @importPic
+                </a>
+            }
+        }
+        else
+        {
+            if (ViewBag.JobRole != JobRole.RefereeAssignment)
+            {
+                <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayers", "Players", new { formName = "union", unionId = Model.UnionId, clubId = Model.ClubId, seasonId = Model.SeasonId })"
+                   data-target="#playerimportform"
+                   data-toggle="modal">
+                    <i class="glyphicon glyphicon-save"></i> @import
+                </a>
+                <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayersImage", "Players", new { seasonId = Model.SeasonId })"
+                   data-target="#playerimportimageform"
+                   data-toggle="modal">
+                    <i class="glyphicon glyphicon-save"></i> @importPic
+                </a>
+            }
+        }
+    }
+
+    @if (!Model.IsIndividual || Model.Section == SectionAliases.Tennis)
+    {
+        <a class="btn btn-info btn-edit export" onclick="downloadSummaryReport(@Model.UnionId,@Model.SeasonId,'players', @(Model.Section == GamesAlias.Tennis ? "true" :"false"), this)" style="float:left; margin-left:5px;">
+            <i class="glyphicon glyphicon-export"></i>
+            @Messages.ExportToExcel @Messages.SummaryReport
+            <i class="fa fa-spin fa-spinner exportsummaryreportloading" style="display: none;"></i>
+        </a>
+    }
+   
+    @if (Model.Et == TournamentsPDF.EditType.TmntUnion)
+    {
+        if (string.Equals(Model.Section, SectionAliases.Netball, StringComparison.CurrentCultureIgnoreCase) &&
+            (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) || String.Equals(ViewBag.JobRole, JobRole.Unionviewer, StringComparison.OrdinalIgnoreCase)))
+        {
+            <p>
+                @Html.HiddenFor(m => m.Pdf1)
+                @Html.HiddenFor(m => m.Pdf2)
+                @Html.HiddenFor(m => m.Pdf3)
+                @Html.HiddenFor(m => m.Pdf4)
+                @{
+                    string pdf1Hidden = Model.Pdf1 == null ? "hidden" : "";
+                    string pdf2Hidden = Model.Pdf2 == null ? "hidden" : "";
+                    string pdf3Hidden = Model.Pdf3 == null ? "hidden" : "";
+                    string pdf4Hidden = Model.Pdf4 == null ? "hidden" : "";
+                }
+                <div class="row">
+                    <div class="col-sm-3">
+                        <label for="PDF1_file" class="control-label">@Messages.Union_Eilat_Catchball_Document1</label> (<span>2mb</span>)
+                        <span id="Pdf1_anchor" @pdf1Hidden>
+                            <a href="@Url.Action("ShowGlobalDoc", "Unions", new { name = Model.Pdf1 })" target="_blank">@Messages.Union_Eilat_Catchball_Document1_Show</a>
+                        </span>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="PDF2_file" class="control-label">@Messages.Union_Eilat_Catchball_Document2</label> (<span>2mb</span>)
+                        <span id="Pdf2_anchor" @pdf2Hidden>
+                            <a href="@Url.Action("ShowGlobalDoc", "Unions", new { name = Model.Pdf2 })" target="_blank">@Messages.Union_Eilat_Catchball_Document2_Show</a>
+                        </span>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="PDF3_file" class="control-label">@Messages.Union_Eilat_Catchball_Document3</label> (<span>2mb</span>)
+                        <span id="Pdf3_anchor" @pdf3Hidden>
+                            <a href="@Url.Action("ShowGlobalDoc", "Unions", new { name = Model.Pdf3 })" target="_blank">@Messages.Union_Eilat_Catchball_Document3_Show</a>
+                        </span>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="PDF4_file" class="control-label">@Messages.Union_Eilat_Catchball_Document4</label> (<span>2mb</span>)
+                        <span id="Pdf4_anchor" @pdf4Hidden>
+                            <a href="@Url.Action("ShowGlobalDoc", "Unions", new { name = Model.Pdf4 })" target="_blank">@Messages.Union_Eilat_Catchball_Document4_Show</a>
+                        </span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-3 form-group">
+                        <span class="btn btn-default btn-file col-sm-8">
+                            <span>@Messages.AddFile</span>
+                            <input type="file" id="PDF1_file" name="PDF1_file" data-val="true" data-val-regex-pattern="^.*\.(pdf|PDF)$" data-val-regex="@string.Format(Messages.SelectValidFile, "PDF")" accept="application/pdf" />
+                        </span>
+                        <span title="Remove file" class="btn btn-default col-sm-4" onclick="javascript:clearFile(1)">
+                            <i class="glyphicon glyphicon-remove"></i>
+                        </span>
+                        @Html.ValidationMessage("DocFile")
+                    </div>
+                    <div class="col-sm-3 form-group">
+                        <span class="btn btn-default btn-file col-sm-8">
+                            <span>@Messages.AddFile</span>
+                            <input type="file" id="PDF2_file" name="PDF2_file" data-val="true" data-val-regex-pattern="^.*\.(pdf|PDF)$" data-val-regex="@string.Format(Messages.SelectValidFile, "PDF")" accept="application/pdf" />
+                        </span>
+                        <span title="Remove file" class="btn btn-default col-sm-4" onclick="javascript:clearFile(2)">
+                            <i class="glyphicon glyphicon-remove"></i>
+                        </span>
+                        @Html.ValidationMessage("DocFile")
+                    </div>
+                    <div class="col-sm-3 form-group">
+                        <span class="btn btn-default btn-file col-sm-8">
+                            <span>@Messages.AddFile</span>
+                            <input type="file" id="PDF3_file" name="PDF3_file" data-val="true" data-val-regex-pattern="^.*\.(pdf|PDF)$" data-val-regex="@string.Format(Messages.SelectValidFile, "PDF")" accept="application/pdf" />
+                        </span>
+                        <span title="Remove file" class="btn btn-default col-sm-4" onclick="javascript:clearFile(3)">
+                            <i class="glyphicon glyphicon-remove"></i>
+                        </span>
+                        @Html.ValidationMessage("DocFile")
+                    </div>
+                    <div class="col-sm-3 form-group">
+                        <span class="btn btn-default btn-file col-sm-8">
+                            <span>@Messages.AddFile</span>
+                            <input type="file" id="PDF4_file" name="PDF4_file" data-val="true" data-val-regex-pattern="^.*\.(pdf|PDF)$" data-val-regex="@string.Format(Messages.SelectValidFile, "PDF")" accept="application/pdf" />
+                        </span>
+                        <span title="Remove file" class="btn btn-default col-sm-4" onclick="javascript:clearFile(4)">
+                            <i class="glyphicon glyphicon-remove"></i>
+                        </span>
+                        @Html.ValidationMessage("DocFile")
+                    </div>
+                </div>
+                @if (TempData["Saved"] != null)
+                {
+                    <span class="text-success">@Messages.DataSavedSuccess</span>
+                }
+                <button class="btn btn-primary">@Messages.Save</button>
+                <br>
+            </p>
+        }
+    }
+
+    <table class="table table-bordered offset-3">
+        <thead>
+            <tr>
+                <th></th>
+                @if (Model.Section == GamesAlias.MartialArts)
+                {
+                    <th>@Messages.StartDate</th>
+                }
+                <th>@Messages.Name</th>
+                @if (Model.Section != GamesAlias.MartialArts)
+                {
+                    <th>
+                        @if (Model.Section == SectionAliases.Gymnastic)
+                        {
+                            @Messages.RegisteredGymnastics
+                        }
+                        else if (Model.Section == GamesAlias.WaveSurfing)
+                        {
+                            @Messages.NumberOfTeams.Replace(Messages.Teams, Messages.Categories)
+                        }
+                        else
+                        {
+                            @Messages.NumberOfTeams
+                        }
+                    </th>
+                }
+                <th>@Messages.Ages</th>
+                <th>@Messages.Gender</th>
+                @if (!Model.IsIndividual && Model.Section != SectionAliases.Gymnastic)
+                {
+                    <th>@LangHelper.GetPlayerCaption(Model.Section, true)</th>
+                }
+                <th>
+                    @exportValue
+                    @Html.CheckBox("expCheckMain", false, new { id = "expCheckMain" })
+                </th>
+                @if (Model.Section == SectionAliases.Gymnastic)
+                {
+                    <th>@Messages.ClubCompetition</th>
+                }
+                @if (Model.Section == SectionAliases.Tennis)
+                {
+                    <th>
+                        <button class="btn btn-primary" id="markProducePayment" type="button" onclick="markProducePaymentFunc();">
+                            <i class="glyphicon glyphicon-export"></i>
+                            <span class="fa fa-spin fa-spinner" style="display:none"></span> @Messages.ProduceReport
+                        </button>
+                    </th>
+                }
+                @if (!Model.IsIndividual || Model.Section == SectionAliases.Tennis)
+                {
+                    <th>
+                        @Messages.SummaryReport
+                        @Html.CheckBox("summaryReportCheckMain", false, new { id = "summaryReportCheckMain" })
+                    </th>
+                }
+                @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+                {
+                    <th></th>
+                }
+            </tr>
+        </thead>
+        <tbody class="sortable-leagues">
+            @{
+                var leaguesList = Model.listLeagues;
+                if (Model.Section == GamesAlias.MartialArts)
+                {
+                    leaguesList = Model.listLeagues.OrderByDescending(l => l.LeagueStartDate ?? DateTime.MinValue).ToList();
+                }
+            }
+            @foreach (var m in leaguesList)
+            {
+                @Html.HiddenFor(x => x.UnionId)
+            <tr data-id="@m.LeagueId">
+                <td>
+                    @if (Model.IsDepartment)
+                    {
+                        <a class="@AppCss.Edit league-details" href="@Url.Action("Edit", "Leagues", new {id = m.LeagueId, seasonId = m.SeasonId, departmentId = Model.ClubId })"></a>
+                    }
+                    else
+                    {
+                        <a class="@AppCss.Edit league-details" href="@Url.Action("Edit", "Leagues", new {id = m.LeagueId, seasonId = m.SeasonId })"></a>
+                    }
+                </td>
+                @if (Model.Section == GamesAlias.MartialArts)
+                {
+                    <td>
+                        @if (m.LeagueStartDate != null)
+                        {
+                            @m.LeagueStartDate.Value.ToString("dd/MM/yyyy")
+                        }
+                    </td>
+                }
+                <td>
+                    @m.Name
+                </td>
+                @if (Model.Section != GamesAlias.MartialArts)
+                {
+                    <td>
+                        @if (Model.Section == SectionAliases.Gymnastic)
+                        {
+                            @(gymnasticLeagueStats.ContainsKey(m.LeagueId) ? gymnasticLeagueStats[m.LeagueId] : 0)
+                        }
+
+                        else if (Model.Section == SectionAliases.Tennis)
+                        {
+                            @m.TeamRegistrations.Count(c => !c.IsDeleted && c.SeasonId == m.SeasonId && !c.Team.IsArchive)
+                        }
+                        else
+                        {
+                            @m.LeagueTeams.Count()
+                        }
+                    </td>
+                }
+                <td>@(m.Age?.Title)</td>
+                <td>@LangHelper.GetGender(m.Gender?.TitleMany)</td>
+                @if (!Model.IsIndividual && Model.Section != SectionAliases.Gymnastic)
+                {
+                    <td>@(leaguesStats.ContainsKey(m.LeagueId) ? leaguesStats[m.LeagueId] : 0)</td>
+                }
+                @if (!Model.IsIndividual || Model.Section == SectionAliases.Tennis) { 
+                    <td>@Html.CheckBox("exportCheck", new { @class = "expCheck", data_id = m.LeagueId })</td>
+                }
+                @if (Model.Section == SectionAliases.Tennis)
+                {
+                    <th><input type="checkbox" class="PaymentProductionLeagueCheckbox" data-leagueId="@m.LeagueId" /></th>
+                }
+                <td>@Html.CheckBox("summaryReportCheck", new { @class = "summaryReportCheck", data_id = m.LeagueId })</td>
+                @if (Model.Section == SectionAliases.Gymnastic)
+                {
+                    <td>@Html.CheckBox("clubCheck", new { @class = "clubCheck", data_id = m.LeagueId, status = m.IsClubCompetition })</td>
+                }
+                @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && ViewBag.JobRole != JobRole.RefereeAssignment)
+                {
+                    <td>
+                        <a href="@Url.Action("DeleteLeagues", new {id = m.LeagueId})" class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#leagues"
+                           data-ajax="true"></a>
+                    </td>
+                }
+            </tr>
+
+            }
+        </tbody>
+    </table>
+
+</form>
+
+<div class="modal fade" id="playerimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playerexportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playerimportimageform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportimageform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playerexportimagesform_u" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportimagesform_u_pl"></div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $('.clubCheck').each(function () {
+            if ($(this).attr('status') == 1) {
+                $(this).prop('checked', true);
+            } else {
+                $(this).prop('checked', false);
+            }
+        });
+
+        if (@errId != 0) {
+            alert('@Messages.DeleteTeamsFirst');
+        }
+    });
+
+    function activateTab(tab) {
+        $('.nav-tabs a[href="#' + tab + '"]').tab('show');
+    };
+
+    function clearFile(num) {
+        $('#Pdf' + num).val(null);
+        $('#Pdf' + num + '_anchor').hide();
+    }
+
+    // Return a helper with preserved width of cells
+    var fixHelper = function (e, ui) {
+        ui.children().each(function () {
+            $(this).width($(this).width());
+        });
+        return ui;
+    };
+
+    $("#expCheckMain").change(function () {
+        $(".expCheck").prop('checked', $(this).prop("checked"));
+    });
+
+    $('.clubCheck').change(function () {
+        console.log($(this).prop('checked'));
+
+        $.ajax({
+            type: "POST",
+            url: "/Leagues/ChangeClubCompetitionStatus",
+            data: {
+                leagueId: $(this).attr("data-id"),
+                value: $(this).prop('checked') == true ? 1 : 0
+            }
+        });
+    });
+
+    $("#summaryReportCheckMain").change(function () {
+        $(".summaryReportCheck").prop('checked', $(this).prop("checked"));
+    });
+
+    function downloadExcel(unionId,seasonId,target, isTennis, element) {
+        var leaguesIds = [];
+        $(".expCheck:checked").each(function (e, elem) {
+            leaguesIds.push(($(elem).attr("data-id")));
+        });
+        var export_url = "/TeamPlayers/ExportList";
+        if (target == 'teams') {
+            export_url = "/TeamPlayers/ExportTeamsList";
+        }
+        if (isTennis) {
+            export_url = "/TeamPlayers/ExportTennisList";
+            if (target == 'teams') {
+                export_url = "/TeamPlayers/ExportTennisTeamsList";
+            }
+        }
+        if (leaguesIds.length > 0) {
+            $.ajax({
+                type: "POST",
+                url: export_url,
+                data: {
+                    unionId: unionId,
+                    leaguesIds: leaguesIds,
+                    seasonId: seasonId,
+                    tab: "union"
+                },
+                beforeSend: function () {    
+                    if (target == 'teams') {
+                        $(".exportloading_teams").show();
+                    } else {
+                        $(".exportloading").show();
+                    }
+                },
+                complete: function () {
+                    if (target == 'teams') {
+                        $(".exportloading_teams").hide();
+                    } else {
+                        $(".exportloading").hide();
+                    }
+                },
+                success: function (data) {
+                    var parent = $(element).parent().parent();
+                    $("#playerexportform_pl", parent).html(data)
+                    $("#playerexportform", parent).modal('show');
+
+                }
+            });
+        }
+        else {
+            alert('@Messages.UnionPlayersExport_Error');
+        }
+    }
+
+    function downloadSummaryReport(unionId,seasonId,target, isTennis, element) {
+        var leaguesIds = [];
+        $(".summaryReportCheck:checked").each(function (e, elem) {
+            leaguesIds.push(($(elem).attr("data-id")));
+        });
+        if (leaguesIds.length > 0) {
+            $.ajax({
+                type: "POST",
+                url: "/TeamPlayers/ExportSummaryReport",
+                data: {
+                    unionId: unionId,
+                    leaguesIds: leaguesIds,
+                    seasonId: seasonId,
+                    tab: "union"
+                },
+                beforeSend: function () {    
+                    $(".exportsummaryreportloading").show();
+                },
+                complete: function () {
+                    $(".exportsummaryreportloading").hide();
+                },
+                success: function (data) {
+                    var parent = $(element).parent().parent();
+                    $("#playerexportform_pl", parent).html(data);
+                    $("#playerexportform", parent).modal('show');
+
+                }
+            });
+        }
+        else {
+            alert('@Messages.UnionPlayersExport_Error');
+        }
+    }
+
+    function exportPlayersImagesFromUnion(element) {
+            var leaguesIds = [];
+            $(".expCheck:checked").each(function (e, elem) {
+                leaguesIds.push(($(elem).attr("data-id")));
+            });
+            if (leaguesIds.length > 0) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Players/ImgsServerCheck",
+                    data: {
+                        unionId: @(Model.UnionId?.ToString() ?? "undefined"),
+                        leaguesIds: leaguesIds,
+                        seasonId: @Model.SeasonId,
+                        pageType: "@PageType.Union"
+                    },
+                    beforeSend: function() {
+                        $("#spinner").show();
+                    }
+                }).done(function (data) {
+                    var parent = $(element).parent().parent();
+                    $("#playerexportimagesform_u_pl", parent).html(data);
+                    $("#playerexportimagesform_u", parent).modal('show');
+                    $("#spinner", parent).hide();
+                });
+        }
+        else {
+            alert('@Messages.UnionPlayersExport_Error');
+        }
+    };
+
+    $(function () {
+        $('.sortable-leagues').sortable({
+            items: "tr",
+            cursor: 'move',
+            helper: fixHelper,
+            update: function (event, ui) {
+
+                var ids = [];
+                var childs = event.target.children;
+
+                $.each(childs, function (key, elem) {
+                    var id = $(elem).attr('data-id');
+                    ids.push(id);
+                });
+
+                //console.log(array);
+                var postData = {
+                    unionId: '@Model.UnionId',
+                    isEilatTournament: @((int)Model.Et) > 0 ? true : false,
+                    ids: ids,
+                    seasonId: $('#ddlSeasons').val()
+                }
+                $.ajax({
+                    url: '@Url.Action("ChangeOrder", "Unions")',
+                    data: postData,
+                    type: 'POST',
+                    dataType: 'json',
+                    success: function (result) {
+                        if (result.Success) {
+                            console.log('Order updated');
+                        } else {
+                            console.log('Order not updated');
+                        }
+                    }
+                })
+            }
+        }).disableSelection();
+    });
+
+    function markProducePaymentFunc() {
+        var leagues = [];
+        $(".PaymentProductionLeagueCheckbox").each(function (index, element) {
+            var $this = $(element);
+            var isChecked = $this.is(":checked");
+            if (isChecked) {
+                leagues.push($this.attr("data-leagueId"));
+            }
+        });
+        if (leagues.length == 0) {
+            alert("No Leagues Chosen for report.");
+        } else
+        {
+            $("#markProducePayment").prop('disabled', true);
+            $("#markProducePayment > .fa-spinner").show();
+            $.ajax({
+                type: "POST",
+                url: "/Players/ProduceReportsForLeague",
+                data: {
+                    'leagues': leagues,
+                    'seasonId': '@(Model.SeasonId)'
+                },
+                success: function (data) {
+                    $("#markProducePayment").prop('disabled', false);
+                    $("#markProducePayment > .fa-spinner").hide();
+                }
+            });
+        }
+        
+    }
+</script>

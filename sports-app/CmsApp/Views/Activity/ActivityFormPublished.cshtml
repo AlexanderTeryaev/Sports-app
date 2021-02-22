@@ -1,0 +1,221 @@
+﻿@model ActivityFormPublish
+
+@{
+    ViewBag.Title = "ActivityFormPublish";
+    Layout = "~/Views/Shared/_ActivityFormPublishLayout.cshtml";
+}
+
+@if (Model.Culture == CultEnum.He_IL)
+{
+    @Styles.Render("~/content/style/rtl")
+}
+@if (Model.Culture == CultEnum.He_IL)
+{
+    @Scripts.Render("~/bundles/js/he")
+}
+
+<div id="buildForm" class="activity-build-form published-form well" 
+     data-activity="@Model.ActivityId" 
+     data-restrictcustompricestoone="@Model.RestrictCustomPricesToOne"
+     data-donotrestrictcustomprices="@Model.DoNotRestrictCustomPrices"
+     data-alternativeplayeridentity="@Model.AlternativePlayerIdentity"
+     data-forbidtochangenameforexistingplayers="@Model.ForbidToChangeNameForExistingPlayers">
+    <div class="flags">
+        <a href="@Url.Action("Form", "Activity", new { id = Model.ActivityId, lang = "en"})" class="flag-en" title="english"></a>
+        <a href="@Url.Action("Form", "Activity", new { id = Model.ActivityId, lang = "he"})" class="flag-he" title="עברית"></a>
+        <a href="@Url.Action("Form", "Activity", new { id = Model.ActivityId, lang = "uk"})" class="flag-ua" title="український"></a>
+    </div>
+
+    @using (Html.BeginForm("Form", "Activity", FormMethod.Post, new {enctype = "multipart/form-data"}))
+    {
+        <div id="buildForm-header" class="header published">
+            <div>
+                <img id="img-upload" alt="" src="@($"{GlobVars.ContentPath}/activityforms/{Model.Image}")"/>
+            </div>
+            <h2 id="activityName">@Model.FormName</h2>
+            <h4 id="activityDescription">@Model.FormDescription</h4>
+            <!--    <h4 id="activityEndDate">@Messages.Activity_EndDate: @(Model.ActivityEndDate?.ToString("d"))</h4>  -->
+        </div>
+
+        <div class="loader loader-overlay" style="display: none">
+            <svg class="circular" viewBox="25 25 50 50">
+                <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"/>
+            </svg>
+        </div>
+
+        <div id="buildForm-body" class="body published">
+            @Html.Raw(Model.Body)
+        </div>
+
+        <div id="noquantity-warning" class="alert alert-warning" style="display: none;" role="alert">
+            <i class="glyphicon glyphicon-warning-sign"></i>
+            @Messages.Activity_CustomPrices_NoQuantitySelected
+        </div>
+
+        <div id="maxquantity-warning" class="alert alert-warning" style="display: none;" role="alert">
+            <i class="glyphicon glyphicon-warning-sign"></i>
+            @Messages.Activity_CustomPrices_OnlyOneQuantityAllowed
+        </div>
+
+        <div class="footer">
+            <button id="submitActivityForm" type="submit" class="btn btn-primary">@Messages.Send</button>
+        </div>
+        <footer>
+            <div class="pull-left bot-title">Powered By</div>
+            <img src="@Url.Content("~/content/images/logo.png")" class="pull-left bot-logo" alt="Powered By LogLig"/>
+            <div class="clearfix"></div>
+            <div style="margin: 5px;">
+                <p>@Messages.ForSupport<a href="mailto:info@loglig.com">info@loglig.com</a></p>
+            </div>
+            @if (Model.UnionId == 52)
+            { 
+            <div class="pull-left">
+            <img src="@Url.Content("~/content/images/LiqpayMethods.jpg")" class="pull-left liqpay" alt="Liqpay" />
+            </div>
+            }
+            <div class="clearfix"></div>
+        </footer>
+    }
+</div>
+
+<div class="modal fade published-activity-form" id="selectTeamModal" tabindex="-1" role="dialog" aria-labelledby="selectTeamModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="selectTeamModalLabel">@Messages.Activity_BuildForm_SelectTeamModal</h4>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-pills nav-stacked">
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade published-activity-form" id="selectClubModal" tabindex="-1" role="dialog" aria-labelledby="selectClubModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="selectClubModalLabel">@Messages.Activity_BuildForm_SelectClubModal</h4>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-pills nav-stacked">
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade published-activity-form" id="restartPaymentModal" tabindex="-1" role="dialog" aria-labelledby="restartPaymentModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="restartPaymentModalLabel">@Messages.Activity_RestartPaymentModal_Title</h4>
+            </div>
+            <div class="modal-body">
+                @Html.Raw(Messages.Activity_RestartPaymentModal_Body)
+            </div>
+        </div>
+    </div>
+</div>
+
+@Scripts.Render("~/Content/js/activityFormPublishedCommon.js")
+
+@switch (Model.FormType)
+{
+    case ActivityFormType.TeamRegistration:
+        @Scripts.Render("~/Content/js/activityTeamsFormPublished.js")
+        break;
+
+    case ActivityFormType.PlayerRegistration:
+        @Scripts.Render("~/Content/js/activityPlayersFormPublished.js")
+        break;
+
+    case ActivityFormType.UnionPlayerToClub:
+        @Scripts.Render("~/Content/js/activityUnionPlayerToClubFormPublished.js")
+        break;
+
+    case ActivityFormType.ClubPlayerRegistration:
+        @Scripts.Render("~/Content/js/activityClubPlayersFormPublished.js")
+        break;
+
+    case ActivityFormType.ClubCustomPersonal:
+        @Scripts.Render("~/Content/js/activityClubCustomPlayersFormPublished.js")
+        break;
+
+    case ActivityFormType.DepartmentClubPlayerRegistration:
+        @Scripts.Render("~/Content/js/activityDepartmentClubPlayersFormPublished.js")
+        break;
+
+    case ActivityFormType.DepartmentClubCustomPersonal:
+        @Scripts.Render("~/Content/js/activityDepartmentClubCustomPlayersFormPublished.js")
+        break;
+
+    case ActivityFormType.CustomPersonal:
+        @Scripts.Render("~/Content/js/activityUnionCustomPersonalFormPublished.js")
+        break;
+
+    case ActivityFormType.CustomGroup:
+        @Scripts.Render("~/Content/js/activityUnionCustomTeamsFormPublished.js")
+        break;
+
+    case ActivityFormType.UnionClub:
+        @Scripts.Render("~/Content/js/activityUnionClubsFormPublished.js")
+        break;
+}
+
+<script>
+    @* Server side variables are used here, so that's why it's not in publishedCommon.js :(
+        I hope that in one day I'll move it to proper place...
+        *@
+    $(document).ready(function () {
+        $(".date-input:not([readonly])").datetimepicker({
+            dayOfWeekStart: window.Resources.Messages.DateTimePicker_StartOfWeek,
+            format: "d/m/Y",
+            closeOnDateSelect: true,
+            timepicker: false,
+            scrollInput: false
+        });
+
+        $.get("/Activity/GetActivityFormReadOnlyFiles/" + @Model.ActivityId,
+            function(data) {
+                $.each(data,
+                    function(index, item) {
+                        var control = $("#readonly-file-" + item.PropertyName);
+
+                        control.prop("href", item.FilePath);
+                    });
+            });
+    });
+
+    $("input[type='file']").on("change",
+        function () {
+            $("#buildForm form").valid();
+
+            if (this.files[0].size > @(GlobVars.MaxFileSize*1000)) {
+                alert("@string.Format(Messages.FileSize_Error_WithLimit, GlobVars.MaxFileSize / 1000)");
+
+                $(this).val("");
+            }
+
+            var fileName = $(this).val();
+            var parts = fileName.split(".");
+            var fileExt = parts[parts.length - 1];
+
+            switch (fileExt.toLowerCase()) {
+                @foreach (var ext in GlobVars.ValidImages)
+                {
+                    <text>case "@ext.Replace(".", String.Empty)":</text>
+                }
+                return;
+
+            case "xls":
+            case "xlsx":
+                return;
+
+            default:
+                $(this).val("");
+                alert("@string.Format(Messages.SelectValidFile, string.Join(", ", GlobVars.ValidImages.Union(new []{".xls", ".xlsx"})))");
+            }
+        });
+</script>

@@ -1,0 +1,715 @@
+﻿@model LeagueStatisticsViewModel
+<div class="row offset-3" id="sections_pl">
+    <div class="row offset-2">
+        @if (Model.Points != null && Model.Points.Any())
+        {
+            var bestPlayer = Model.Points.FirstOrDefault();
+            <div class="col-sm-3" id="ptsDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="3"><h4>@Messages.Total @Messages.Points.ToLowerInvariant()</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Points.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive pts">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Points[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Points[i].PlayerFullName</td>}
+                                        <td>@Model.Points[i].CategoryPoints</td>
+                                        <td>@Model.Points[i].PercentageValue</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Points[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Points[i].PlayerFullName</td>}
+                                        <td>@Model.Points[i].CategoryPoints</td>
+                                        <td>@Model.Points[i].PercentageValue</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.Points.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" align="center">
+                                        <a onclick="showAllPlayers('pts')" id="showAll_pts" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "@Messages.Points.ToLowerInvariant()"
+            </div>
+        }
+        @if (Model.Rebounds != null && Model.Rebounds.Any())
+        {
+            var bestPlayer = Model.Rebounds.FirstOrDefault();
+            <div class="col-sm-3" id="rebDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="3"><h4>@Messages.Total @Messages.Rebounds.ToLowerInvariant()</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Rebounds.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive reb">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Rebounds[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Rebounds[i].PlayerFullName</td>}
+                                        <td>@Model.Rebounds[i].CategoryPoints</td>
+                                        <td>@Model.Rebounds[i].PercentageValue</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Rebounds[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Rebounds[i].PlayerFullName</td>}
+                                        <td>@Model.Rebounds[i].CategoryPoints</td>
+                                        <td>@Model.Rebounds[i].PercentageValue</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.Rebounds.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" align="center">
+                                        <a onclick="showAllPlayers('reb')" id="showAll_reb" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "@Messages.Rebounds.ToLowerInvariant()"
+            </div>
+        }
+        @if (Model.Assists != null && Model.Assists.Any())
+        {
+            var bestPlayer = Model.Assists.FirstOrDefault();
+            <div class="col-sm-3" id="astDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="3"><h4>@Messages.Total @Messages.Assists.ToLowerInvariant()</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Assists.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive ast">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Assists[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Assists[i].PlayerFullName</td>}
+                                        <td>@Model.Assists[i].CategoryPoints</td>
+                                        <td>@Model.Assists[i].PercentageValue</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Assists[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Assists[i].PlayerFullName</td>
+                                        }
+                                        <td>@Model.Assists[i].CategoryPoints</td>
+                                        <td>@Model.Assists[i].PercentageValue</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.Assists.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" align="center">
+                                        <a onclick="showAllPlayers('ast')" id="showAll_ast" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "@Messages.Assists.ToLowerInvariant()"
+            </div>
+        }
+        @if (Model.Blocks != null && Model.Blocks.Any())
+        {
+            var bestPlayer = Model.Blocks.FirstOrDefault();
+            <div class="col-sm-3" id="blkDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="3"><h4>@Messages.Total @Messages.Blocks.ToLowerInvariant()</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Blocks.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive blk">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Blocks[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Blocks[i].PlayerFullName</td>}
+                                        <td>@Model.Blocks[i].CategoryPoints</td>
+                                        <td>@Model.Blocks[i].PercentageValue</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Blocks[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Blocks[i].PlayerFullName</td>}
+                                        <td>@Model.Blocks[i].CategoryPoints</td>
+                                        <td>@Model.Blocks[i].PercentageValue</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.Blocks.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" align="center">
+                                        <a onclick="showAllPlayers('blk')" id="showAll_blk" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "@Messages.Blocks.ToLowerInvariant()"
+            </div>
+        }
+    </div>
+    <div class="row offset-2">
+        @if (Model.Steals != null && Model.Steals.Any())
+        {
+            var bestPlayer = Model.Steals.FirstOrDefault();
+            <div style="margin-top:20px;" class="col-sm-3" id="stlDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="3"><h4>@Messages.Total @Messages.Steals.ToLowerInvariant()</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Steals.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive stl">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Steals[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Steals[i].PlayerFullName</td>}
+                                        <td>@Model.Steals[i].CategoryPoints</td>
+                                        <td>@Model.Steals[i].PercentageValue</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Steals[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Steals[i].PlayerFullName</td>}
+                                        <td>@Model.Steals[i].CategoryPoints</td>
+                                        <td>@Model.Steals[i].PercentageValue</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.Steals.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" align="center">
+                                        <a onclick="showAllPlayers('stl')" id="showAll_stl" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "@Messages.Steals.ToLowerInvariant()"
+            </div>
+        }
+        @if (Model.Turnovers != null && Model.Turnovers.Any())
+        {
+            var bestPlayer = Model.Turnovers.FirstOrDefault();
+            <div style="margin-top:20px;" class="col-sm-3" id="toDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="3"><h4>@Messages.Total @Messages.Turnovers.ToLowerInvariant()</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Turnovers.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive to">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Turnovers[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Turnovers[i].PlayerFullName</td>}
+                                        <td>@Model.Turnovers[i].CategoryPoints</td>
+                                        <td>@Model.Turnovers[i].PercentageValue</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.Turnovers[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.Turnovers[i].PlayerFullName</td>}
+                                        <td>@Model.Turnovers[i].CategoryPoints</td>
+                                        <td>@Model.Turnovers[i].PercentageValue</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.Turnovers.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" align="center">
+                                        <a onclick="showAllPlayers('to')" id="showAll_to" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "@Messages.Turnovers.ToLowerInvariant()"
+            </div>
+        }
+        @if (Model.FGPercent != null && Model.FGPercent.Any())
+        {
+            var bestPlayer = Model.FGPercent.FirstOrDefault();
+            <div style="margin-top:20px;" class="col-sm-3" id="fgPerDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="2"><h4>FG%</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.FGPercent.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive fgPer">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.FGPercent[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.FGPercent[i].PlayerFullName</td>}
+                                        <td>@String.Format("{0:0.0}", Model.FGPercent[i].PercentageValue)</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.FGPercent[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.FGPercent[i].PlayerFullName</td>}
+                                        <td>@String.Format("{0:0.0}", Model.FGPercent[i].PercentageValue)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.FGPercent.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2" align="center">
+                                        <a onclick="showAllPlayers('fgPer')" id="showAll_fgPer" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "FG%"
+            </div>
+        }
+        @if (Model.FTPercent != null && Model.FTPercent.Any())
+        {
+            var bestPlayer = Model.FTPercent.FirstOrDefault();
+            <div style="margin-top:20px;" class="col-sm-3" id="ftPerDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="2"><h4>FT%</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.FTPercent.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive ftPer">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.FTPercent[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.FTPercent[i].PlayerFullName</td>}
+                                        <td>@String.Format("{0:0.0}", Model.FTPercent[i].PercentageValue)</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.FTPercent[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.FTPercent[i].PlayerFullName</td>}
+                                        <td>@String.Format("{0:0.0}", Model.FTPercent[i].PercentageValue)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.FTPercent.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2" align="center">
+                                        <a onclick="showAllPlayers('ftPer')" id="showAll_ftPer" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "FT%"
+            </div>
+        }
+    </div>
+    <div class="row offset-2">
+        @if (Model.ThreePTPercent != null && Model.ThreePTPercent.Any())
+        {
+            var bestPlayer = Model.ThreePTPercent.FirstOrDefault();
+            <div style="margin-top:20px;" class="col-sm-3"></div>
+            <div style="margin-top:20px;" class="col-sm-3" id="3PtDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="2"><h4>3PT%</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.ThreePTPercent.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive 3Pt">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.ThreePTPercent[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.ThreePTPercent[i].PlayerFullName</td>}
+                                        <td>@String.Format("{0:0.0}", Model.ThreePTPercent[i].Percentage)</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.ThreePTPercent[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.ThreePTPercent[i].PlayerFullName</td>}
+                                        <td>@String.Format("{0:0.0}", Model.ThreePTPercent[i].PercentageValue)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.ThreePTPercent.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="2" align="center">
+                                        <a onclick="showAllPlayers('3Pt')" id="showAll_3Pt" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "3PT"
+            </div>
+        }
+        @if (Model.EFF != null && Model.EFF.Any())
+        {
+            var bestPlayer = Model.EFF.FirstOrDefault();
+            <div style="margin-top:20px;" class="col-sm-3" id="effDiv">
+                <div class="text-center">
+                    @if (!string.IsNullOrWhiteSpace(bestPlayer.PlayersImage))
+                    {
+                        <img class="img-responsive img-thumbnail" style="max-height: 75px; max-width: 75px" src="@($"{GlobVars.ContentPath}/players/{bestPlayer.PlayersImage}")" alt="" />
+                        <h5 style="color:#f45c0e">@bestPlayer.PlayerFullName</h5>
+                    }
+                </div>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td colspan="2"><h4>Eff</h4></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.EFF.Length; i++)
+                            {
+                                if (i > 4)
+                                {
+                                    <tr class="hideblemorefive eff">
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.EFF[i].PlayerFullName</i></td>
+                                        }
+                                        else
+                                        {
+                                            <td>@Model.EFF[i].PlayerFullName</td>
+                                        }
+                                        <td>@Model.EFF[i].CategoryPoints</td>
+                                        <td>@Model.EFF[i].PercentageValue</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        @if (i == 0)
+                                        {
+                                            <td><i style="color:#f45c0e">@Model.EFF[i].PlayerFullName</i></td> }
+                                        else
+                                        {
+                                            <td>@Model.EFF[i].PlayerFullName</td>
+                                        }
+                                        <td>@Model.EFF[i].CategoryPoints</td>
+                                        <td>@Model.EFF[i].PercentageValue</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                        @if (Model.EFF.Length > 5)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" align="center">
+                                        <a onclick="showAllPlayers('eff')" id="showAll_eff" class="btn btn-primary btn-block">@Messages.ShowAllPlayers</a>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                @Messages.NoStatisticsForThisCategory "EFF"
+            </div>
+        }
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $(".hideblemorefive").hide();
+    })
+
+    function showAllPlayers(classValue) {
+        if ($("#showAll_" + classValue).text() == '@Messages.ShowLessPlayers') {
+             $(".hideblemorefive." + classValue).hide();
+             $("#showAll_" + classValue).text('@Messages.ShowAllPlayers');
+        }
+        else {
+            $(".hideblemorefive." + classValue).show();
+            $("#showAll_" + classValue).text('@Messages.ShowLessPlayers');
+        }
+
+    }
+</script>

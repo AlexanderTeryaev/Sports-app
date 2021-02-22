@@ -1,0 +1,34 @@
+﻿@model PlayerTeamRetirementForm
+    
+
+@using (Html.BeginForm("TeamRetirement", "Players", FormMethod.Post, new {enctype = "multipart/form-data"}))
+{
+    @Html.HiddenFor(x => x.ClubId)
+    @Html.HiddenFor(x => x.LeagueId)
+    @Html.HiddenFor(x => x.SeasonId)
+    @Html.HiddenFor(x => x.TeamId)
+    @Html.HiddenFor(x => x.RetirementTeamId)
+
+    <div class="modal-body">
+        <div class="form-group">
+            <label class="control-label">@Messages.RetirementDateOfRequest: @DateTime.Now.ToString("d")</label>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label">@Messages.RetirementReason:</label>
+            @Html.TextAreaFor(x => x.Reason, new {@class = "form-control"})
+            @Html.ValidationMessageFor(x => x.Reason)
+        </div>
+
+        <div class="form-group">
+            <div class="btn btn-default btn-file">
+                <span>@Messages.RetirementDocument <small>(.jpg, 2mb max)</small></span>
+                <input type="file" name="RetirementDocument" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG)$" data-val-regex="@Messages.SelectValidImage" accept="image/*"/>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Cancel</button>
+        <button type="submit" class="btn btn-primary">@Messages.Send</button>
+    </div>
+}

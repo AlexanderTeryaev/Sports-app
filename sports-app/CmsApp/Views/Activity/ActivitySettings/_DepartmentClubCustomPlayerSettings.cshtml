@@ -1,0 +1,72 @@
+﻿@model ActivityModel
+
+<div id="select-schools" class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.RestrictSchools, new { @class = "restrict-schools" }) @Messages.Activity_SelectSchools:
+    </label>
+    <select multiple="multiple" @(!Model.RestrictSchools ? "disabled" : "") class="form-control restrict-schools-dropdown">
+        @foreach (var school in Model.Schools)
+        {
+            <option value="@school.Id" @(Model.RestrictedSchools.Any(x => x.Id == school.Id) ? "selected" : "")>@school.Name</option>
+        }
+    </select>
+    @Html.HiddenFor(x => x.RestrictedSchoolsJson)
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.DoNotAllowDuplicateRegistrations) @Messages.Activity_DoNotAllowDuplicateRegistrations
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowOnlyApprovedMembers) @Messages.Activity_AllowOnlyApprovedMembers
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.NoTeamRegistration) @Messages.Activity_NoTeamRegistration
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowNoInsurancePayment) @Messages.Activity_AllowNoInsurancePayment
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.AllowNoParticipationPayment) @Messages.Activity_AllowNoParticipationPayment
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.RegistrationPrice) @Messages.Activity_EnableRegistrationAndEquipmentPrice
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.InsurancePrice) @Messages.Activity_EnableInsurancePrice
+    </label>
+</div>
+
+<div class="form-group col-sm-12">
+    <label class="control-label">
+        @Html.CheckBoxFor(m => m.ParticipationPrice) @Messages.Activity_EnableParticipationPrice
+    </label>
+</div>
+
+<script>
+    $(".restrict-schools").change(function() {
+        if (this.checked) {
+            $(".restrict-schools-dropdown").multiselect("enable");
+        } else {
+            $(".restrict-schools-dropdown").multiselect("disable");
+        }
+    });
+</script>

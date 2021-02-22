@@ -1,0 +1,106 @@
+﻿@model PricesTabViewModel
+@{
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+    int errId = TempData["ErrId"] != null ? (int)TempData["ErrId"] : 0;
+}
+<h4>@Messages.ChipPrices</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>@Messages.FromAge</th>
+            <th>@Messages.ToAge</th>
+            <th>@Messages.Price</th>
+            <th colspan="1"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (ChipPriceViewModel chipPriceViewModel in Model.ChipPriceViewModelsList)
+        {
+            string frmid = "chipprices" + chipPriceViewModel.ChipId;
+            string updateBtn = "chipUpdate" + chipPriceViewModel.ChipId;
+
+            <tr>
+                <td>
+                    @chipPriceViewModel.ChipId
+                </td>
+
+                @using (Ajax.BeginForm("UpdateChipPrice", "Prices", new AjaxOptions { UpdateTargetId = "chip_prices_data" }, new { id = frmid }))
+                {
+                    <td>
+                        <span class="form-group">
+                            <input data-id ="@chipPriceViewModel.ChipId" type="number" name="FromAge" value="@chipPriceViewModel.FromAge" form="@frmid" class="form-control chipDetectChange" />
+                            @Html.ValidationMessage("FromAge")
+                        </span>
+                    </td>
+                    <td>
+                        <span class="form-group">
+                            <input data-id ="@chipPriceViewModel.ChipId" type="number" name="ToAge" value="@chipPriceViewModel.ToAge" form="@frmid" class="form-control chipDetectChange" />
+                            @Html.ValidationMessage("ToAge")
+                        </span>
+                    </td>
+                    <td>
+                        <span class="form-group">
+                            <input data-id ="@chipPriceViewModel.ChipId" type="number" name="Price" value="@chipPriceViewModel.Price" form="@frmid" class="form-control chipDetectChange" />
+                            @Html.ValidationMessage("Price")
+                        </span>
+                        <input type="hidden" name="ChipId" form="@frmid" value="@chipPriceViewModel.ChipId" />
+                        <input type="hidden" name="UnionId" form="@frmid" value="@ViewBag.UnionId" />
+                        <input type="hidden" name="SeasonId" form="@frmid" value="@ViewBag.SeasonId" />
+                    </td>
+                }
+
+                <td>
+                    <button id="@updateBtn" class="@AppCss.Save @(savedId == chipPriceViewModel.ChipId ? "btn-success" : null) btn" form="@frmid" disabled></button>
+                </td>
+                <td>
+                    <a href="@Url.Action("DeleteChipPrice", new { chipId = chipPriceViewModel.ChipId })" class="@AppCss.Delete"
+                       data-ajax-confirm="@Messages.DeleteConfirm"
+                       data-ajax-update="#chip_prices_data"
+                       data-ajax="true"></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="1"></td>
+            @using (Ajax.BeginForm("SaveChipPrice", "Prices", new AjaxOptions { UpdateTargetId = "chip_prices_data" }, new { id = "chipprices" }))
+            {
+                <td>
+                    <span class="form-group">
+                        @Html.TextBox("FromAge", null, new { @class = "form-control", placeholder = Messages.FromAge, form = "chipprices", type = "number" })
+                        @Html.ValidationMessage("FromAge")
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.TextBox("ToAge", null, new { @class = "form-control", placeholder = Messages.ToAge, form = "chipprices", type = "number" })
+                        @Html.ValidationMessage("ToAge")
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.TextBox("Price", null, new { @class = "form-control", placeholder = Messages.Price, form = "chipprices", type = "number" })
+                        @Html.ValidationMessage("Price")
+                    </span>
+                </td>
+                <input type="hidden" name="UnionId" form="chipprices" value="@ViewBag.UnionId" />
+                <input type="hidden" name="SeasonId" form="chipprices" value="@ViewBag.SeasonId" />
+            }
+            <td>
+                <button class="btn btn-primary" form="chipprices">@Messages.Save</button>
+            </td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    $(document).ready(function () {
+        $(".chipDetectChange").on("change", function () {
+            var id = $(this).attr("data-id");
+            $("#chipUpdate" + id).removeAttr("disabled");
+        });
+    });
+</script>

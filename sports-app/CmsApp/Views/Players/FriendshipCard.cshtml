@@ -1,0 +1,158 @@
+﻿@model FriendshipCardModel
+@{
+    Layout = "";
+    string srcPlayer = GlobVars.ContentPath + "/players/" + Model.PlayerImage;
+    string srcUnion = GlobVars.ContentPath + "/union/" + Model.UnionLogo;
+    var hiddenEng = Model.IsHebrew ? "hidden" : "";
+    var hiddenHeb = Model.IsHebrew ? "" : "hidden";
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9"><h4 class="modal-title">@Messages.FriendshipCard</h4></div><div class="pull-right" style="line-height:25px;">
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="row friendshipCardContent" id="friendshipCardPrint" style="margin-bottom:10px;">
+        <div class="col-sm-12">
+            <div class="row" id="cardHeader" style="padding-top: 5px;">
+
+                <div class="col-sm-3" id="unionLogoEng" @hiddenEng style="padding-right:0px !important">
+                    <img class="img-responsive" src="@srcUnion">
+                </div>
+                <div class="col-sm-4" id="playerImageHeb" style="height:76px" @hiddenHeb>
+                    @if (!string.IsNullOrEmpty(Model.PlayerImage))
+                    {
+                        <img id="player-img" class="img-responsive" src="@srcPlayer" alt="" style="max-height:100px">
+                    }
+                </div>
+                
+                <div class="col-sm-5" style="padding-right: 0px; padding-left: 5px">
+                    <p class="font-bold">@Model.UnionName</p>
+                    <p class="font-bold">@Model.UnionForeignName</p>
+                    <p class="">@Messages.Season: @Model.SeasonName</p>
+                </div>
+
+                <div class="col-sm-3" id="unionLogoHeb" @hiddenHeb style="padding-right:0px !important">
+                    <img class="img-responsive" src="@srcUnion">
+                </div>
+                <div class="col-sm-4" id="playerImageEng" style="height:76px" @hiddenEng>
+                    @if (!string.IsNullOrEmpty(Model.PlayerImage))
+                    {
+                        <img id="player-img" class="img-responsive" src="@srcPlayer" alt="">
+                    }
+                </div>
+
+            </div>
+            <div class="row font-bold marginTop20" id="cardMainContent">
+                <div class="col-sm-6" id="basicInfo">
+                    <p class="">@Messages.LastName: @Model.FirstName</p>
+                    <p class="">@Messages.FirstName: @Model.LastName</p>
+                    <p class="">@Messages.Gender: @Model.GenderName</p>
+                    <p class="">@Messages.IdentNum: @Model.IdentNum</p>
+                    <p class="">@Messages.BirthDay: @Model.BirthDay.Value.ToString("dd/MM/yyyy")</p>
+                </div>
+                <div class="col-sm-6" id="bicycleInfo">
+                    <p class="">@Messages.UciId: @Model.UciId</p>
+                    <p class="">@Messages.Team: @Model.ClubName</p>
+                    <p class="">@Messages.FCard_Mountain: @Model.MountainHeatName</p>
+                    <p class="">@Messages.FCard_Road: @Model.RoadHeatName</p>
+                </div>
+                <div class="col-sm-12 marginTop5">
+                    <p class="smallAndNoMargin text-center">@Messages.FriendshipIsSubjectToValidMedApproval</p>
+                </div>
+            </div>
+            <div class="row marginTop5" id="cardFooter" style="min-height:80px;">
+                <div class="col-sm-12">
+                    <p class="font-bold">
+                        @Model.ContentForFriendshipCard
+                    </p>
+                </div>                
+            </div>
+            <div class="row marginTop10" id="cardBottomFooter" style="border-top: 1px solid">
+                <div class="col-sm-6 text-center" id="bottomTextEng" @hiddenEng>
+                    <p class="paddingTop6">@Messages.PoweredByLogLig</p>
+                </div>
+                <div class="col-sm-6 text-center" id="bottomLogoEng" @hiddenEng>
+                    <img alt="Loglig Logo" src="/Content/loglig_design/img/img_logo.png" style="height:25px;" class="paddingTop6">
+                </div>
+                <div class="col-sm-6 text-center" id="bottomLogoHeb" @hiddenHeb>
+                    <img alt="Loglig Logo" src="/Content/loglig_design/img/img_logo.png" style="height:25px;" class="paddingTop6">
+                </div>
+                <div class="col-sm-6 text-center" id="bottomTextHeb" @hiddenHeb>
+                    <p class="paddingTop6">@Messages.PoweredByLogLig</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-info" onclick="printFriendshipCard()">@Messages.Print</button>
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+</div>
+
+@*<style>
+
+</style>*@
+
+<script>
+
+    var isHeb = "@Model.IsHebrew" == "True";
+
+    function printFriendshipCard(el) {
+
+        var divToPrint = document.getElementById('friendshipCardPrint');
+        console.log(el);
+        if (isHeb) {
+            divToPrint.setAttribute("dir", "rtl");
+            $("#unionLogoEng").show();
+            $("#unionLogoHeb").hide();
+            $("#playerImageEng").show();
+            $("#playerImageHeb").hide();
+            $("#bottomTextEng").show();
+            $("#bottomTextHeb").hide();
+            $("#bottomLogoEng").show();
+            $("#bottomLogoHeb").hide();
+            swapContent();
+        }
+        var wnd = window.open('', '@Messages.FriendshipCard', 'height=600, width=600');
+        wnd.document.write('<html><head><title></title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body><div class="container">');
+        @*wnd.document.write('<h3 style="text-align: center;">@Messages.RegistrationStatus @ViewBag.DisciplineName @ViewBag.CategoryName - @ViewBag.CompetitionName @ViewBag.CompetitionDate</h3>');*@
+        wnd.document.write(divToPrint.outerHTML);
+        wnd.document.write('</div></body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 1000);
+        if (isHeb) {
+            divToPrint.removeAttribute("dir");
+            $("#unionLogoEng").hide();
+            $("#unionLogoHeb").show();
+            $("#playerImageEng").hide();
+            $("#playerImageHeb").show();
+            $("#bottomTextEng").hide();
+            $("#bottomTextHeb").show();
+            $("#bottomLogoEng").hide();
+            $("#bottomLogoHeb").show();
+            swapContent();
+        }
+    }
+
+
+    function swapContent() {
+        var basic = $('#basicInfo').html();
+        var bicycle = $('#bicycleInfo').html();
+
+        $('#basicInfo').html(bicycle);
+        $('#bicycleInfo').html(basic);
+    }
+</script>

@@ -1,0 +1,41 @@
+﻿@model ActivityFormControlTemplateModel
+
+@{
+    var controlEnabled = (!Model.IsPublish || !Model.IsDisabled) && !Model.IsDisabledBySettings;
+}
+
+<div class="control custom-control custom-text-control @(controlEnabled ? "" : "hidden")" data-type="@ActivityFormControlType.CustomLink" data-canberemoved="@Model.CanBeRemoved" data-hasoptions="@Model.HasOptions" data-fieldnote="@Model.FieldNote" data-isdisabled="@Model.IsDisabled" data-isrequired="@Model.IsRequired" data-canberequired="@Model.CanBeRequired" data-canbedisabled="@Model.CanBeDisabled" @Model.GetDataAttributesForLabels() data-propertyname="@Model.PropertyName" data-isreadonly="@Model.IsReadOnly">
+    @if (controlEnabled)
+    {
+        if (!Model.IsPublish)
+        {
+            <label for="buildForm-body-@Model.PropertyName" class="control-label"></label>
+            <input id="buildForm-body-@Model.PropertyName" placeholder="@Messages.Activity_BuildForm_CustomField_Link_Description" value="@Model.LabelTextEn" name="@Model.PropertyName" type="text" class="form-control" data-val-required="@Messages.PropertyValueRequired" data-val="@(Model.IsRequired ? "true" : "false")" @(Model.IsReadOnly ? "readonly" : "") />
+        }
+        else
+        {
+            <div class="custom-text-value">
+                @{
+                    try
+                    {
+                        var absoluteUri = new UriBuilder(Model.LabelTextEn).Uri.AbsoluteUri;
+                        <a href="@(absoluteUri)" target="_blank" style="color: #337ab7; text-decoration: underline;">@Model.LabelTextEn</a>
+                    }
+                    catch (Exception)
+                    {
+                        <a href="" style="color: #ff0000; text-decoration: underline;">[INVALID URL]</a>
+                    }
+                }
+            </div>
+        }
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_ValidationMessage", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_RequiredSwitch", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_DisabledSwitch", Model)
+
+
+        @*@Html.Partial("ActivityForm/ControlTemplates/Common/_FieldNote", Model)*@
+        @Html.Partial("ActivityForm/ControlTemplates/Custom/_CustomControlOptions", Model)
+    }
+</div>

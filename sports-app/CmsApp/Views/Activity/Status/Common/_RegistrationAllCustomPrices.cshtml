@@ -1,0 +1,24 @@
+﻿@model Tuple<ActivityRegistrationsStatusModel, ActivityRegistrationItem>
+
+<td>
+    <i class="glyphicon glyphicon-info-sign registration-customprices"
+       style="cursor: pointer; font-size: 16px;">
+    </i>
+    <div class="registration-customprices-content hide">
+        @if (Model.Item2.CustomPrices?.Any() == true)
+        {
+            foreach (var customPrice in Model.Item2.CustomPrices)
+            {
+                var priceTitle = Model.Item1.Culture != CultEnum.He_IL ? customPrice.TitleEng : customPrice.TitleHeb;
+
+                <div>
+                    @priceTitle: @customPrice.Paid
+                </div>
+            }
+        }
+        else
+        {
+            <i>@Messages.NoDataFound</i>
+        }
+    </div>
+</td>

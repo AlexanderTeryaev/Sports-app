@@ -1,0 +1,575 @@
+﻿@model LoginForm
+@{
+    Layout = null;
+}
+<!-- ADDED BY YAIR - 29.09 - Loglig Design for login page-->
+<!-- Custom Fonts -->
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>לוגליג-מערכת ניהול לאגודות ספורט</title>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
+    <link href="~/Content/loglig_design/css/animate.min.css" rel="stylesheet" />
+    <link href="~/Content/loglig_design/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/loglig_design/css/creative.css" rel="stylesheet" />
+    <link href="~/Content/loglig_design/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="icon" href="~/Content/images/favicon.ico" />
+</head>
+<body>
+    <div id="page-top" class="landing-page">
+        <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="change-lenguege" href="">heb</a>
+                    <a class="change-lenguege" href="/Logineng" style="margin-left: 30px;">eng &nbsp; &nbsp; &nbsp;</a>
+                    <a class="navbar-brand page-scroll" href="#page-top" style="padding:8px"><img src="~/Content/loglig_design/img/img_logo.png"></a>
+                </div>
+
+                <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a class="page-scroll" href="#contact">יצירת קשר</a>
+                        </li>
+                        <li>
+                            <a class="page-scroll" href="/plan">הרשמה</a>
+                        </li>
+                        <li>
+                            <a class="page-scroll" href="#pricing">תוכניות</a>
+                        </li>
+                        <li>
+                            <a class="page-scroll" href="#portfolio">לקוחות</a>
+                        </li>
+                        <li>
+                            <a class="page-scroll" href="#services">כלים</a>
+                        </li>
+                        <li>
+                            <a class="page-scroll" href="#about">חזון</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- /.navbar-collapse -->
+            </div>
+            <!-- /.container-fluid -->
+        </nav>
+
+        <header>
+            <div class="header-content">
+                <div class="header-content-inner">
+                    <h1>לוגליג</h1>
+                    <h1>האפליקציה לאיגודים ומועדוני ספורט</h1>
+                    <hr>
+                    <p>מערכת חברתית משולבת אפליקציה לניהול איגודים ומועדוני ספורט</p>
+                </div>
+
+                @switch (Model.LoginAction)
+                {
+                    case LoginAction.ForgotPassword:
+                        @Html.Partial("_LoginForgotForm", Model as LoginForgotPasswordModel)
+                        break;
+
+                    case LoginAction.ResetPassword:
+                        @Html.Partial("_LoginResetForm", Model as LoginResetPasswordModel)
+                        break;
+
+                    default:
+                        @Html.Partial("_LoginForm", Model)
+                        break;
+                }
+            </div>
+        </header>
+        @if (!ViewData.ModelState.IsValid)
+        {
+        <div class="alert alert-warning" role="alert">
+            <span class="glyphicon glyphicon-ban-circle"></span>
+            @Html.ValidationMessage("LgnErr")
+        </div>
+        }
+
+        <section class="bg-primary" id="about">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2 text-center">
+                        <h2 class="section-heading">החזון שלנו</h2>
+                        <hr class="light">
+                        <p class="text-faded" style="font-weight:bold">
+                            .לוגליג מתמקדת בבניית כלים שיעצימו את חוויית ההשתתפות, הניהול והמעקב של הליגות באיגודי הספורט<br>
+                            אפליקציה אשר מחברת את הספורטאים, המאמנים והאוהדים יחד תחת מקום אחד
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="services">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12 text-center">
+                        <h2 class="section-heading">הכלים שלנו</h2>
+                        <hr class="primary">
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-bell wow bounceIn text-primary"></i>
+                            <h3>מערכת התראות</h3>
+                            <p class="text-muted">התראות אוטומטיות של המערכת על שינוי במועד משחק, תזכורת לפני משחק ושיאים אישיים וקבוצתיים</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-comment wow bounceIn text-primary" data-wow-delay=".1s"></i>
+                            <h3>מערכת הודעות</h3>
+                            <p class="text-muted">
+                                אפשרות להודעות ניהול כגון: שליחה מרוכזת לקבוצה/ ראשי קבוצות/ ראשי אגודות וכד' לשיפור וייעול התקשורת באיגוד
+                                , קבלת חיווים לכל משתמש דרך הודעות ב"פוש" לטלפון על גבי האפליקציה
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-search wow bounceIn text-primary" data-wow-delay=".3s"></i>
+                            <h3>חיפוש רוחבי</h3>
+                            <p class="text-muted">חיפוש קל ויעיל של ספורטאים, אוהדים, קבוצות וליגות </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-newspaper-o wow bounceIn text-primary" data-wow-delay=".2s"></i>
+                            <h3>ממשק ניהול</h3>
+                            <p class="text-muted">ממשק ניהול על-פי הרשאות לכל איגוד המאפשר הקמת לוחות משחקים בצורה אוטומטית על-פי הגדרות המשתמש, הקמת ליגות, קבוצות, שחקנים וכד' המערכת מקושרת לאתרי האיגודים ולאפליקציה ומאפשרת שליטה נוחה ויעילה </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-home wow bounceIn text-primary"></i>
+                            <h3>דפי בית לקבוצות ולליגות</h3>
+                            <p class="text-muted">דפי בית מותאמים לכל משתמש באפליקציה ולכל קבוצה וליגה. הצגת לוח המשחקים, טבלאות, ריכוז סטטיסטיקות ומצטיינים</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-camera wow bounceIn text-primary" data-wow-delay=".1s"></i>
+                            <h3>שיתוף תמונות וסרטונים</h3>
+                            <p class="text-muted">העלאת תמונות וסרטונים ישירות מהמגרש ושיתוף עם החברים באפליקציה. ניהול גלריות לקבוצות וליגות</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-heart wow bounceIn text-primary" data-wow-delay=".3s"></i>
+                            <h3>יוצרים באהבה</h3>
+                            <p class="text-muted">אנו מאמינים שכשיוצרים באהבה, דברים טובים קורים</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-file wow bounceIn text-primary" data-wow-delay=".2s"></i>
+                            <h3>הפקת דוחות</h3>
+                            <p class="text-muted">הפקת דוחות תקופתיים על הישגים, מעקבי נוכחות, סיכום תחרויות וכד</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-globe wow bounceIn text-primary"></i>
+                            <h3>תמיכה בשפות</h3>
+                            <p class="text-muted">תמיכה בעברית ובאנגלית למערכת הניהול ובאפליקציה</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-signal wow bounceIn text-primary" data-wow-delay=".1s"></i>
+                            <h3>סטטיסטיקת משחק חי</h3>
+                            <p class="text-muted">
+                                המערכת מאפשרת ניהול התחרויות אונליין ודיווח התוצאות והסטטיסטיקות באופן מיידי על גבי האפליקציה.
+                                אפשרות לקביעת רמות שונות של סטטיסטיקות לפי בחירה.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-paper-plane wow bounceIn text-primary" data-wow-delay=".3s"></i>
+                            <h3>חסכון בזמן</h3>
+                            <p class="text-muted">המערכת מספקת חסכון גדול בזמן ומשאבים ומעלה את רמת היעילות בין הגורמים השונים </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 text-center">
+                        <div class="service-box">
+                            <i class="fa fa-4x fa-user wow bounceIn text-primary" data-wow-delay=".2s"></i>
+                            <h3>אוהדים</h3>
+                            <p class="text-muted">יצירת קהילת אוהדים והגדלת מאגר המחוברים לאגודה על-ידי דפים מותאמים לכל אוהד</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="portfolio">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2 text-center">
+                        <h2 class="section-heading">מבין לקוחותינו</h2>
+                        <hr class="primary">
+                        <div style="height:300px; width:300px; margin: auto;">
+                            <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                                <!-- Indicators -->
+                                <ol class="carousel-indicators">
+                                    <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+                                    <li data-target="#myCarousel" data-slide-to="1"></li>
+                                    <li data-target="#myCarousel" data-slide-to="2"></li>
+                                    <li data-target="#myCarousel" data-slide-to="3"></li>
+                                    <li data-target="#myCarousel" data-slide-to="4"></li>
+                                    <li data-target="#myCarousel" data-slide-to="5"></li>
+                                    <li data-target="#myCarousel" data-slide-to="6"></li>
+                                    <li data-target="#myCarousel" data-slide-to="7"></li>
+                                    <li data-target="#myCarousel" data-slide-to="8"></li>
+                                    <li data-target="#myCarousel" data-slide-to="9"></li>
+                                    <li data-target="#myCarousel" data-slide-to="10"></li>
+                                    <li data-target="#myCarousel" data-slide-to="11"></li>
+                                </ol>   
+
+                                <!-- Wrapper for slides -->
+                                <div class="carousel-inner">
+                                    <div class="item active">
+                                        <a href="http://www.gym.org.il/" target="_blank">
+                                            <img src="~/Content/loglig_design/img/gymnastic-logo.png" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="http://www.hapoel.co.il/he/%D7%9E%D7%97%D7%9C%D7%A7%D7%AA-%D7%94%D7%A0%D7%95%D7%A2%D7%A8" target="_blank">
+                                            <img src="~/Content/loglig_design/img/logo-HapoelJerusalem.jpg" style="width:100%;">
+                                        </a>
+                                    </div> 
+                                    <div class="item">
+                                        <a href="http://mhaifafc.com/youth.asp" target="_blank">
+                                            <img src="~/Content/loglig_design/img/logo-maccabi-haifa.png" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="http://www.isad.org.il/" target="_blank">
+                                            <img src="~/Content/loglig_design/img/handicap-logo.png" style="width:100%;">
+                                        </a>
+                                    </div>  
+                                    <div class="item">
+                                        <a href="http://www.isrwp.co.il/" target="_blank">
+                                            <img src="~/Content/loglig_design/img/isrwp-logo.jpg" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="http://www.kadureshet.com/" target="_blank">
+                                            <img src="~/Content/loglig_design/img/logo-kadooreshet.jpg" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="https://www.ita.co.il/news.php?homepage" target="_blank">
+                                            <img src="~/Content/loglig_design/img/tennis-logo.jpg" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="http://www.iaa.co.il/" target="_blank">
+                                            <img src="~/Content/loglig_design/img/logo-athletics.png" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="http://www.isa.org.il/" target="_blank">
+                                            <img src="~/Content/loglig_design/img/logo-isa.png" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="http://www.ikf.org.il/" target="_blank">
+                                            <img src="~/Content/loglig_design/img/logo-karate.jpg" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="https://www.facebook.com/IsraelMSF/" target="_blank">
+                                            <img src="~/Content/loglig_design/img/logo-2-imsf.png" style="width:100%;">
+                                        </a>
+                                    </div>
+                                    <div class="item">
+                                        <a href="https://maccabihaifa-shop.co.il/VSHOP/_W_5753484f502e777a783f55433d48616966616226h4e4f4e26i4e4f4e.htm" target="_blank">
+                                            <img src="~/Content/loglig_design/img/logo-HaifaCarmel.jpg" style="width:100%;">
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Left and right controls -->
+                                <a class="left carousel-control" href="#myCarousel" data-slide="prev" style="background:none; left:-50px;">
+                                    <span class="glyphicon glyphicon-chevron-left" style="color:#333;"></span>
+                                </a>
+                                <a class="right carousel-control" href="#myCarousel" data-slide="next" style="background:none; right:-50px;">
+                                    <span class="glyphicon glyphicon-chevron-right" style="color:#333;"></span>
+                                </a>
+                            </div>
+                            
+                        </div>
+           <!--                 <a href='https://play.google.com/store/apps/details?id=com.yit.Loglig&utm_source=global_co&utm_medium=prtnr&utm_content=Mar2515&utm_campaign=PartBadge&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1' target="_blank"><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' style="height:60px;"/></a>
+                            <a href="https://geo.itunes.apple.com/us/app/loglig-app/id1089230900?mt=8" target="_blank"> <img src='https://linkmaker.itunes.apple.com/images/badges/en-us/badge_appstore-lrg.svg' /></a>
+                            <a href="http://www.kadureshet.com/" target="_blank"><img src="~/Content/loglig_design/img/logo-kadooreshet.jpg" style="width:150px; margin-left:30px;"/></a> 
+                    </div>
+                    <div class="col-lg-8 col-lg-offset-2 text-center">
+                            <a href='https://play.google.com/store/apps/details?id=com.loglig.waterpolo' target="_blank"><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' style="height:60px;"/></a>
+                            <a href="https://itunes.apple.com/us/app/loglig-israel-waterpolo/id1180346164?l=iw&ls=1&mt=8" target="_blank"> <img src='https://linkmaker.itunes.apple.com/images/badges/en-us/badge_appstore-lrg.svg' /></a>
+                            <img src="~/Content/loglig_design/img/logo-waterpolo.png" style="width:150px; margin-left:30px;" />
+                    </div>
+                    <div class="col-lg-8 col-lg-offset-2 text-center">
+                            <a href='https://play.google.com/store/apps/details?id=com.loglig.basketball' target="_blank"><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' style="height:60px;" /></a>
+                            <a href="https://itunes.apple.com/us/app/loglig-isad-basketball/id1182750766?l=iw&ls=1&mt=8" target="_blank"> <img src='https://linkmaker.itunes.apple.com/images/badges/en-us/badge_appstore-lrg.svg' /></a>
+                            <a href="http://www.isad.org.il/" target="_blank"><img src="~/Content/loglig_design/img/logo-basketball-handicap.png" style="width: 170px" /></a>
+                    </div>  -->
+              <!--     <div class="col-lg-8 col-lg-offset-2 text-center">
+                        <a href="http://www.iva.org.il/" target="_blank"><img src="~/Content/loglig_design/img/logo-volleyball.jpg" style="width: 200px" /></a>
+                    </div>   --> 
+                </div>
+              </div>
+           </div>
+        </section>
+
+        <section id="pricing">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2 text-center">
+                        <h2 class="section-heading">תוכניות למועדונים וקבוצות</h2>
+                        <hr class="primary">
+                    </div>
+                </div>
+                <div class="row" style="margin-top:15px;">
+                    <div class="col-lg-4 wow zoomIn">
+                        <ul class="pricing-plan list-unstyled">
+                            <li class="pricing-title">
+                                Basic
+                            </li>
+                            <li class="pricing-desc">
+                                מערכת ניהול משולבת אפליקציה
+                            </li>
+                            <!--   <li class="pricing-price">
+                              <span>$100</span> / month
+                          </li>  -->
+                            <li>
+                                לוחות משחקים וטבלאות
+                            </li>
+                            <li>
+                                סגל שחקנים ובעלי תפקידים
+                            </li>
+                            <li>
+                                מערכת הודעות והתראות
+                            </li>
+                            <li>
+                                חיבור לאוהדים
+                            </li>
+                            <li>
+                                facebook & waze אינטגרציה
+                            </li>
+                            <li>
+                                פלטפורמת אימונים
+                            </li>
+                            <li>
+                                גלריית תמונות
+                            </li>
+                            <li>
+                                רשת חברתית למועדון
+                            </li>
+                            <li>
+                                0.5GB שטח אחסון
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-xs" href="/Plan">הרשם</a>  
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-4 wow zoomIn">
+                        <ul class="pricing-plan list-unstyled selected">
+                            <li class="pricing-title">
+                                Standard
+                            </li>
+                            <li class="pricing-desc">
+                                מערכת ניהול משולבת אפליקציה +
+                                <br>
+                                Live-Scoring App (לענף הכדורסל)
+                            </li>
+                            <!--   <li class="pricing-price">
+                               <span>$150</span> / month
+                           </li>    -->
+                            <li>
+                                לוחות משחקים וטבלאות
+                            </li>
+                            <li>
+                                סגל שחקנים ובעלי תפקידים
+                            </li>
+                            <li>
+                                מערכת הודעות והתראות
+                            </li>
+                            <li>
+                                חיבור לאוהדים
+                            </li>
+                            <li>
+                                facebook & waze אינטגרציה
+                            </li>
+                            <li>
+                                פלטפורמת אימונים
+                            </li>
+                            <li>
+                                גלריית תמונות
+                            </li>
+                            <li>
+                                רשת חברתית למועדון
+                            </li>
+                            <li>
+                                Live-Scoring App
+                            </li>
+                            <li>
+                                דפי סטטיסטיקות לשחקנים/ קבוצות
+                            </li>
+                            <li>
+                                דוחות משחק וסטטיסטיקות
+                            </li>
+                            <li>
+                                דפי משחק - play by play
+                            </li>
+                            <li>
+                                שטח אחסון - ללא הגבלה
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-xs" href="/Plan">הרשם</a> 
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-4 wow zoomIn">
+                        <ul class="pricing-plan list-unstyled">
+                            <li class="pricing-title">
+                                Premium
+                            </li>
+                            <li class="pricing-desc">
+                                מערכת ניהול משולבת אפליקציה +
+                                <br>
+                                Live-Scoring App +
+                                <br>
+                                שידורי משחקים ע"ג האפליקציה
+                                <br>
+                                (בקרוב)
+                            </li>
+                            <!--    <li class="pricing-price">
+                               <span>$300</span> / month
+                           </li>   -->
+                            <li>
+                                לוחות משחקים וטבלאות
+                            </li>
+                            <li>
+                                סגל שחקנים ובעלי תפקידים
+                            </li>
+                            <li>
+                                מערכת הודעות והתראות
+                            </li>
+                            <li>
+                                חיבור לאוהדים
+                            </li>
+                            <li>
+                                facebook & waze אינטגרציה
+                            </li>
+                            <li>
+                                פלטפורמת אימונים
+                            </li>
+                            <li>
+                                גלריית תמונות
+                            </li>
+                            <li>
+                                רשת חברתית למועדון
+                            </li>
+                            <li>
+                                Live-Scoring App
+                            </li>
+                            <li>
+                                דפי סטטיסטיקות לשחקנים/ קבוצות
+                            </li>
+                            <li>
+                                דוחות משחק וסטטיסטיקות
+                            </li>
+                            <li>
+                                דפי משחק - play by play
+                            </li>
+                            <li>
+                                התממשקות לשידור המשחק
+                            </li>
+                            <li>
+                                שטח אחסון - ללא הגבלה
+                            </li>
+                            <li>
+                                <a class="btn btn-primary disabled">בקרוב</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="bg-primary" id="contact">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-lg-offset-2 text-center">
+                        <h2 class="section-heading">צרו איתנו קשר</h2>
+                        <hr class="light">
+                        <p>מעוניינים לשמוע עוד? נפלא! צרו איתנו קשר במייל או שתרימו טלפון ואנחנו נחזור אליכם בהקדם האפשרי</p>
+                        <div class="row">
+                            <div class="col-lg-4 text-center">
+                                <i class="fa fa-phone fa-3x wow bounceIn"></i>
+                                <p>054-2310485</p>
+                            </div>
+                            <div class="col-lg-4 text-center">
+                                <a href="https://www.facebook.com/loglig.sport/" target="blank"><img src="~/Content/loglig_design/img/FB-f-Logo__white_50.png"></a>
+                            </div>
+                            <div class="col-lg-4 text-center">
+                                <i class="fa fa-envelope-o fa-3x wow bounceIn" data-wow-delay=".1s"></i>
+                                <p><a href="mailto:info@loglig.com">info@loglig.com</a></p>
+                            </div>
+                         </div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="row" style="margin-left:0px; margin-right:0px; margin-bottom:15px;">
+            <div class="col-lg-8 col-lg-offset-2 text-center m-t-lg m-b-lg">
+                <p><strong>&copy; 2015 Loglig Ltd</strong><br /> All Rights Reserved</p>
+                <a href="/Terms" style="color:#333">פרטיות</a>
+            </div>
+        </div>
+
+    </div>
+    @Scripts.Render("~/bundles/js")
+    <script src="~/Content/loglig_design/js/bootstrap.min.js"></script>
+    <script src="~/Content/loglig_design/js/jquery.easing.min.js"></script>
+    <script src="~/Content/loglig_design/js/jquery.fittext.js"></script>
+    <script src="~/Content/loglig_design/js/wow.min.js"></script>
+    <script src="~/Content/loglig_design/js/creative.js"></script>
+    <script>
+        $(function () {
+            $('#login_frm').validate();
+
+            $('#capt_btn').click(function () {
+                var d = new Date();
+                var captUrl = "/login/captcha?v" + d.getMilliseconds();
+                $('#capt_img').attr('src', captUrl);
+                return false;
+            });
+        });
+    </script>
+
+</body>
+</html>

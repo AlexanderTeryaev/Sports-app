@@ -1,0 +1,61 @@
+﻿@model RefereeSalaryReportModel
+
+@if (Model?.Reports?.Any() == true)
+{
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">@Messages.SalaryReports</h3>
+        </div>
+        <div class="panel-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>@Messages.FullName</th>
+                        <th>@Messages.Season</th>
+                        <th>@Messages.StartDate</th>
+                        <th>@Messages.EndDate</th>
+                        <th><!--download button--></th>
+                        @if (Model.CanRemoveReports)
+                        {
+                            <th><!--remove report button--></th>
+                        }
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var report in Model.Reports)
+                    {
+                        <tr>
+                            <td>@report.Name</td>
+                            <td>@report.SeasonName</td>
+                            <td>@report.StartDate.ToString("d")</td>
+                            <td>@report.EndDate.ToString("d")</td>
+                            <td>
+                                <a href="@Url.Action("DownloadSalaryReport", "WorkerHome", new {id = report.Id})" class="btn btn-info">
+                                    <i class="glyphicon glyphicon-save"></i>
+                                </a>
+                            </td>
+                            @if (Model.CanRemoveReports)
+                            {
+                                <td>
+                                    @using (Ajax.BeginForm("RemoveSalaryReport", "WorkerHome", new {id = report.Id},
+                                        new AjaxOptions
+                                        {
+                                            HttpMethod = "POST",
+                                            Confirm = Messages.DeleteConfirm
+                                        },
+                                        new{@class = "remove-salary-form"}))
+                                    {
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                        </button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

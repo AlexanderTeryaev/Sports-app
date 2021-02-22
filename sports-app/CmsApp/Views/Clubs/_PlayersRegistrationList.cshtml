@@ -1,0 +1,343 @@
+﻿@using DataService.DTO
+@model IEnumerable<GymnasticDto>
+@{
+    var clubId = ViewBag.ClubId;
+    var leagueId = ViewBag.LeagueId;
+    var seasonId = ViewBag.SeasonId;
+    var clubName = ViewBag.ClubName ?? string.Empty;
+    var competitionName = ViewBag.CompetitionName ?? string.Empty;
+    bool isCompetition = ViewBag.CompetitionRouteId != null;
+    var competitionRouteId = ViewBag.CompetitionRouteId;
+    var isStatus = clubId == null && !isCompetition;
+    var instrumentList = ViewBag.InstrumentsList != null ? (List<RegistrationInstrument>)ViewBag.InstrumentsList : null;
+    bool isMartialArts = ViewBag.IsMartialArts != null && ViewBag.IsMartialArts == true;
+
+    bool isHebrew = Request.IsHebrew();
+    string pullRight = isHebrew ? "pull-left" : "pull-right";
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    @if (isCompetition)
+    {<div class="row" style="display:flex"><div class="col-sm-9"><h4 class="modal-title">@Messages.All @Messages.Registrations.ToLowerInvariant()</h4></div><div class="pull-right">@(isMartialArts ? Messages.Sportsmans + " " + Messages.Count.ToLower() : Messages.GymnasticsCount): <strong id="counter">@(Model?.Count() ?? 0)</strong></div></div> }
+else
+{ <div class="row" style="display:flex"><div class="col-sm-9"><h4 class="modal-title">@Messages.RegistrationStatus</h4></div><div class="pull-right" style="line-height:25px;">@(isMartialArts ? Messages.Sportsmans + " " + Messages.Count.ToLower() : Messages.GymnasticsCount): <strong id="counter">@(Model?.Count() ?? 0)</strong></div></div>}
+</div>
+<div class="modal-body">
+
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            <div class="col-sm-6" style="display:flex">
+                @if (!isCompetition)
+                {
+                    if (ViewBag.IsGymnastics == true)
+                    {
+                        <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportregistrations').submit()">
+                            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                            @using (Html.BeginForm("ExportRegistrationsToExcel", "Clubs", new { seasonId = seasonId, leagueId = leagueId, @clubId = clubId },
+                            FormMethod.Post, new { id = "exportregistrations" })) { }
+                        </a>
+                    }
+                    else
+                    {
+                        <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportregistrations').submit()">
+                            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                            @using (Html.BeginForm("ExportDisciplineRegistrationsToExcel", "Clubs", new
+                            {
+                                clubId = clubId,
+                                seasonId = seasonId,
+                                leagueId = leagueId
+                            },
+                            FormMethod.Post, new { id = "exportregistrations" })) { }
+                        </a>
+                    }
+                }
+                @if (isCompetition)
+                {
+                    <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportregistrations').submit()">
+                        <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                        @using (Html.BeginForm("ExportRegistrationsToExcel", "Clubs", new { seasonId = seasonId, leagueId = leagueId, competitionRouteId = competitionRouteId },
+                        FormMethod.Post, new { id = "exportregistrations" })) { }
+                    </a>
+                }
+                <a id="printregistrations" class="btn btn-info remove_print">
+                    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+                </a>
+            </div>
+            if (string.IsNullOrEmpty(clubName) && !isMartialArts)
+            {
+                <div class="col-sm-1 @pullRight">
+                    <a id="delete_all" class="btn btn-danger">
+                        @Messages.Delete @Messages.All.ToLower()&nbsp;<i class="glyphicon glyphicon-trash"></i>
+                    </a>
+                </div>
+            }
+        }
+    </div>
+    <div style="margin-top:15px;" class="row">
+        <div class="col-sm-12">
+            @if (Model != null && Model.Any())
+            {
+                <table id="print_table_registrationList" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            @if (isCompetition || isStatus)
+                            {
+                                <th>@Messages.ClubNumber</th>
+                                <th>@Messages.ClubName</th>
+                            }
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.IdentNum/@Messages.PassportNum</th>
+                            <th>@Messages.BirthDay</th>
+                            @if (!isMartialArts)
+                            {
+                                <th>@Messages.Route</th>
+                                <th>@Messages.PlayerInfoRank</th>
+                            }
+                            @if (!isMartialArts)
+                            {
+                                if (instrumentList != null)
+                                {
+                                    foreach (var instrument in instrumentList)
+                                    {
+                                        <th>@Messages.Instrument "@(instrument.Name)"</th>
+                                        <th>@Messages.Order</th>
+                                    }
+                                }
+
+                                <th>@Messages.Number @Messages.Composition</th>
+                                <th>@Messages.Reserved</th>
+                            }
+                            <th>@Messages.FinalScore</th>
+                            <th>@Messages.Rank</th>
+                            @if (ViewBag.IsGymnastics == true)
+                            {
+                                <th>@Messages.RegisteredBy</th>
+                                <th>@Messages.RegisteredDate</th>
+                            }
+                            <th class="remove_print"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var gymnastic in Model.OrderBy(g => g.IsTeam).ThenBy(g => g.ClubName).ThenBy(g => g.Route).ThenBy(g => g.FullName))
+                        {
+                            <tr>
+                                @if (isCompetition || isStatus)
+                                {
+                                    <td>@gymnastic.ClubNumber</td>
+                                    <td>@gymnastic.ClubName</td>
+                                }
+
+                                <td>@gymnastic.FullName</td>
+                                <td>@(!string.IsNullOrWhiteSpace(gymnastic.IdentNum) ? gymnastic.IdentNum : gymnastic.PassportNum)</td>
+                                <td>
+                                    @{
+                                        var birthDate = gymnastic.BirthDate.HasValue
+                                        ? gymnastic.BirthDate.Value.ToShortDateString()
+                                        : string.Empty;
+                                    }
+                                    @birthDate
+                                </td>
+                                @if (!isMartialArts)
+                                {
+                                    <td>@gymnastic.Route</td>
+                                    <td>@gymnastic.Rank</td>
+
+                                    if (instrumentList != null)
+                                    {
+                                        if (gymnastic.RegistrationInstruments != null && gymnastic.RegistrationInstruments.Any())
+                                        {
+                                            var neededCountOfTd = instrumentList.Count - gymnastic.RegistrationInstruments.Count;
+
+                                            foreach (var instrument in instrumentList)
+                                            {
+                                                var instrumentGym = gymnastic.RegistrationInstruments.FirstOrDefault(x => x.InstrumentId == instrument.InstrumentId);
+                                                if (instrumentGym != null)
+                                                {
+                                                    <td>v</td>
+                                                    <td>@instrumentGym.OrderNumber</td>
+                                                }
+                                                else
+                                                {
+                                                    <td></td>
+                                                    <td></td>
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            foreach (var instrument in instrumentList)
+                                            {
+                                                <td></td>
+                                                <td></td>
+                                            }
+                                        }
+                                    }
+                                    <td>@LangHelper.isCompositionHasValue(gymnastic)</td>
+                                    <td>@(gymnastic.IsAdditional ? "v" : string.Empty)</td>
+                                }
+                                <td>@gymnastic.FinalScore</td>
+                                <td>@gymnastic.Position</td>
+                                @if (ViewBag.IsGymnastics == true)
+                                {
+                                    <td>@gymnastic.Creator</td>
+                                    <td>@gymnastic.Created</td>
+                                }
+                                @if (!isMartialArts)
+                                {
+                                    <td class="remove_print">
+                                        @if (competitionRouteId != null && competitionRouteId > 0)
+                                        {
+                                            if (gymnastic.IsAdditional)
+                                            {
+                                                <a href="@Url.Action("DeleteAdditionalRegistration", new
+                                                    {
+                                                        id = gymnastic.RegistrationId,
+                                                        clubId = clubId,
+                                                        seasonId = seasonId,
+                                                        leagueId = leagueId,
+                                                        competitionRouteId = competitionRouteId,
+                                                        deleteType = ViewBag.RoutesType,
+                                                        isTeam = gymnastic.IsTeam
+                                                    })" class="@AppCss.Delete"
+                                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                                   data-ajax-update="#registrationlist_pl"
+                                                   data-ajax="true"></a>
+                                        
+                                            }
+                                            else
+                                            {
+                                            <a href="@Url.Action("DeleteRegistration", new
+                                                    {
+                                                        id = gymnastic.RegistrationId,
+                                                        clubId = clubId,
+                                                        seasonId = seasonId,
+                                                        leagueId = leagueId,
+                                                        competitionRouteId = competitionRouteId,
+                                                        deleteType = ViewBag.RoutesType
+                                                    })" class="@AppCss.Delete"
+                                               data-ajax-confirm="@Messages.DeleteConfirm"
+                                               data-ajax-update="#registrationlist_pl"
+                                               data-ajax="true"></a>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (gymnastic.IsAdditional)
+                                            {
+                                                <a href="@Url.Action("DeleteAdditionalRegistration", new
+                                                    {
+                                                        id = gymnastic.RegistrationId,
+                                                        clubId = clubId,
+                                                        seasonId = seasonId,
+                                                        leagueId = leagueId,
+                                                        deleteType = ViewBag.RoutesType,
+                                                        isTeam = gymnastic.IsTeam
+                                                    })" class="@AppCss.Delete"
+                                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                                   data-ajax-update="#registrationlist_pl"
+                                                   data-ajax="true"></a>
+                                            }else{
+                                                <a href="@Url.Action("DeleteRegistration", new
+                                                    {
+                                                    id = gymnastic.RegistrationId,
+                                                    seasonId = seasonId,
+                                                    leagueId = leagueId,
+                                                    clubId = clubId,
+                                                    deleteType = ViewBag.RoutesType
+                                                    })" class="@AppCss.Delete"
+                                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                                   data-ajax-update="#registrationlist_pl"
+                                                   data-ajax="true"></a>
+                                            }
+                                    
+                                        }
+
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td class="remove_print">
+                                        <a href="@Url.Action("DeleteSporsmanRegistration", new
+                                            {
+                                                id = gymnastic.RegistrationId,
+                                                clubId = clubId,
+                                                seasonId = seasonId,
+                                                leagueId = leagueId,
+                                            })" class="@AppCss.Delete"
+                                           data-ajax-confirm="@Messages.DeleteConfirm"
+                                           data-ajax-update="#registrationlist_pl"
+                                           data-ajax="true"></a>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-danger">
+                    <strong><i class="fa fa-ban"></i></strong>&nbsp; &nbsp; @Messages.NoGymnasticsRegistered
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+</div>
+
+
+<script>
+    $("#delete_all").click(function () {
+        var isConfirmed = confirm("@Messages.DeleteConfirm");
+        if (isConfirmed) {
+            $.ajax({
+                url: "@Url.Action("DeleteAllRegistrations", "Leagues")",
+                type: "POST",
+                data: {
+                    leagueId: "@leagueId",
+                    seasonId: "@seasonId",
+                    competitionRouteId: "@competitionRouteId",
+                    deleteType: @ViewBag.RoutesType
+                },
+                success: function (data) {
+                    if (data.Success == true) {
+                        $("#print_table_registrationList tbody tr").remove();
+                        $("#counter").text("0");
+                    }
+                    else {
+                        alert(data.Message);
+                    }
+                }
+            })
+        }
+    })
+            $('#printregistrations').click(function () {
+                var tbl = $("#print_table_registrationList");
+                if (tbl.length > 0) {
+                    tablePrint(tbl);
+                }
+            });
+
+            function tablePrint(el) {
+                var wnd = window.open('', '@Messages.RegistrationStatus', 'height=600, width=600');
+                wnd.document.write('<html><head><title>@Messages.RegistrationStatus. @Messages.Club: @clubName/@Messages.Competition: @competitionName</title>');
+                wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+                wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+                wnd.document.write('<body>');
+
+                wnd.document.write($(el).prop('outerHTML'));
+                $(wnd.document).find('.remove_print').remove();
+                wnd.document.write('</body></html>');
+                wnd.document.close();
+                wnd.focus();
+                setTimeout(function () {
+                    wnd.print();
+                    wnd.close();
+                }, 1000);
+        }
+</script>

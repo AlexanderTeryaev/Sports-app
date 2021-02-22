@@ -1,0 +1,21 @@
+﻿@model TeamStandingsGameForm
+<form class="form-horizontal">
+    @Html.HiddenFor(x => x.TeamId)
+    @Html.HiddenFor(x => x.ClubId)
+    @Html.HiddenFor(x => x.SeasonId)
+    <div class="form-group">
+        <label for="game-url" class="col-sm-2 control-label">@Messages.GamesUrl: </label>
+        <div class="col-sm-4">
+            <input type="text" id="game-url" name="GamesUrl" value="@Model.GamesUrl" class="form-control" />
+        </div>
+        <div class="col-sm-2">
+            <button type="button" class="btn btn-primary" id="save_standings_url">@Messages.Save</button>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label" for="team_name">@Messages.Team:</label>
+        <div class="col-sm-4">
+            <input type="text" id="team_name" class="form-control" value="@Model.TeamName" name="TeamName" />
+        </div>
+    </div>
+</form>

@@ -1,0 +1,144 @@
+﻿@using Resources
+@using LogLigFront.Helpers
+@model IEnumerable<AppModel.CompetitionDiscipline>
+<style>
+    .mobile-only {
+        display: none;
+    }
+
+    @Html.Raw('@')media only screen and (max-width: 600px) {
+        #print, #print_print_id {
+            display: none;
+        }
+        .mobile-only {
+            display: block;
+        }
+    }
+</style>
+<a href="#" id="print" class="btn btn-primary remove_print desktop-only float-last">
+    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+</a>
+
+<h3 class="main-title disciplines-title">
+    @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+    {
+        <img src="@ViewBag.Logo" class="img-circle logo" alt="" />
+    }
+    @ViewBag.LeagueData.Name - לוח מקצועות @(ViewBag.leagueData.LeagueStartDate != null ? $" - {ViewBag.leagueData.LeagueStartDate?.ToString("dd/MM/yyyy")}" : "")
+</h3>
+
+<style>
+    .modal-backdrop {
+        opacity: 0.0 !important;
+    }
+</style>
+@if (Model.FirstOrDefault()?.League?.IsCompetitionLeague ?? false)
+{
+    <a href="@Url.Action("AthleticsCupStanding", "LeagueRank", new { id = ViewBag.leagueData.LeagueId, seasonId = ViewBag.leagueData.SeasonId, isModal = true })"
+       data-target="#athleticsregistrationlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.League_RankedStandings</a>
+}
+
+@if (ViewBag.leagueData.AthleticLeagueId != null && ViewBag.leagueData.AthleticLeagueId > -1 == true)
+{
+    <a href="@Url.Action("AthleticsLeagueStandings", "LeagueRank", new { id = ViewBag.leagueData.AthleticLeagueId, isModal = true })"
+       data-target="#athleticsleaguestanding" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.League_LeagueRankedStandings</a>
+    if (ViewBag.IsFieldRace)
+    {
+        <a href="@Url.Action("AthleticsLeagueCompetitionRanking", "LeagueRank", new { id = ViewBag.leagueData.LeagueId, seasonId = ViewBag.leagueData.SeasonId, isField = true, isModal = true })"
+           data-target="#athleticsregistrationlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.FieldRaceRanks</a>
+    }
+
+
+    if (ViewBag.IsFieldRace)
+    { 
+    <a href="@Url.Action("AthleticsLeagueCompetitionRanking", "LeagueRank", new { id = ViewBag.leagueData.LeagueId, seasonId = ViewBag.leagueData.SeasonId, isModal = true })"
+       data-target="#athleticsregistrationlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.KadeteLeague</a>
+    }
+    else
+    {
+    <a href="@Url.Action("AthleticsLeagueCompetitionRanking", "LeagueRank", new { id = ViewBag.leagueData.LeagueId, seasonId = ViewBag.leagueData.SeasonId, isModal = true })"
+        data-target="#athleticsregistrationlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.League_RankedStandings</a>
+    }
+}
+
+@if (ViewBag.IsMultiBattleCompetition)
+{
+    <a href="@Url.Action("AthleticsCombinedRanking", "LeagueRank", new { id = ViewBag.leagueData.LeagueId, seasonId = ViewBag.leagueData.SeasonId, isModal = true })"
+       data-target="#athleticcombinedrankling" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.League_RankedStandings</a>
+}
+@if (ViewBag.TermsFile != null)
+{
+    <a class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;" href="@Url.Action("ShowLeagueDoc", new {id = ViewBag.TermsFile.DocId})" target="_blank"> @Messages.InfoSchedule</a>
+}
+
+
+<table class="table res-table">
+    <thead>
+        <tr class="disciplines-title">
+            <th>@Messages.Disciplines</th>
+            <th>@Messages.Category</th>
+            <th>@Messages.StartHour</th>
+            <th>@Messages.TotalRegistrations</th>
+            <th>@Messages.TotalParticipants</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var index = 0;
+        }
+        @foreach (var competitionDiscipline in Model)
+        {
+
+            <tr>
+                <td>@competitionDiscipline.DisciplineName</td>
+                <td>@competitionDiscipline.CategoryName</td>
+                <td>
+                    @if (competitionDiscipline.StartTime.HasValue)
+                    {
+                        @competitionDiscipline.StartTime.Value.ToString()
+                    }
+                </td>
+                <td>@competitionDiscipline.CompetitionDisciplineRegistrations.Count</td>
+                <td>@ViewBag.PlayersWithResultsCount[index]</td>
+                <td>
+                    <a href="@Url.Action("RegisteredCompetitionAthletes", new { id = competitionDiscipline.Id })"
+                       data-target="#players_list" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.Registrations</a>
+                    <a href="@Url.Action("StartList", new { id = competitionDiscipline.Id  , isModal = true})"
+                       data-target="#athleticsregistrationlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.StartList</a>
+                    @if (ViewBag.leagueData.LeagueStartDate == null || ViewBag.leagueData.LeagueStartDate < DateTime.Now)
+                    {
+                        <a href="@Url.Action("AthleticsDisciplineResultsByHeat", new { id = competitionDiscipline.Id , isModal = true})"
+                           data-target="#athleticsregistrationlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.ResultsByHeat</a>
+                        <a href="@Url.Action("AthleticsDisciplineResults", new { id = competitionDiscipline.Id , isModal = true})"
+                           data-target="#athleticsregistrationlist" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@Messages.Results</a>
+                    }
+
+
+                </td>
+            </tr>
+            index += 1;
+        }
+    </tbody>
+</table>
+@if (ViewBag.CanGoBack)
+{
+    <a href="@Url.Action("AthleticCompetitions", new { id = ViewBag.leagueData.UnionId , seasonId = ViewBag.leagueData.SeasonId})"
+       class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">חזרה</a>
+}
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+}
+
+<div class="modal fade bd-example-modal-lg" id="players_list" tabindex="-1" role="dialog">
+</div>
+
+<div class="modal fade" id="athleticsregistrationlist" tabindex="-1" role="dialog">
+</div>
+<div class="modal fade" id="athleticsleaguestanding" tabindex="-1" role="dialog">
+</div>
+<div class="modal fade" id="athleticcombinedrankling" tabindex="-1" role="dialog">
+</div>
+<div class="modal fade" id="athleticleagueclubresults" tabindex="-1" role="dialog">
+</div>

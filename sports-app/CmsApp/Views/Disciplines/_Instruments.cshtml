@@ -1,0 +1,87 @@
+﻿@model CmsApp.Models.InstrumentForm
+<h4>@Messages.Instruments:</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>@Messages.Name</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    @if (Model.InstrumentsList != null && Model.InstrumentsList.Any())
+    {
+        <tbody>
+            @foreach (var instrument in Model.InstrumentsList)
+            {
+                <tr>
+                    <td>@Html.TextBoxFor(m => instrument.Name, new { @class = "form-control", id = $"instrument_{instrument.Id}" })</td>
+                    <td><a class="btn btn-primary updateinstrument" data-id="@instrument.Id"><span class="fa fa-save"></span></a></td>
+                    <td><a class="@AppCss.Delete deleteinstrument" data-id="@instrument.Id"></a></td>
+                </tr>
+            }
+        </tbody>
+    }
+    <tfoot>
+        <tr>
+            <td>
+                <input id="instrumentName" type="text" class="form-control" form="instrumentform" required />
+            </td>
+            <td colspan="2">
+                <a class="btn btn-primary" style="min-width:125px;" id="createinstrumbtn">
+                    @Messages.AddNew
+                </a>
+            </td>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    $("#createinstrumbtn").on("click", function () {
+        var instrumentName = $("#instrumentName").val();
+        $.ajax({
+            url: "/Disciplines/CreateInstrument",
+            type: "POST",
+            data: {
+                disciplineId: "@Model.DisciplineId",
+                seasonId: "@Model.SeasonId",
+                instrumentName: instrumentName
+            },
+            success: function (data) {
+                $("#instruments").html(data);
+            }
+        });
+    });
+
+    $(".updateinstrument").on("click", function () {
+        var instrumentId = $(this).attr("data-id");
+        var instrumentName = $("#instrument_" + instrumentId).val();
+        $.ajax({
+            url: "/Disciplines/UpdateInstrument",
+            type: "POST",
+            data: {
+                id: instrumentId,
+                instrumentName: instrumentName
+            }
+        });
+    });
+
+    $(".deleteinstrument").on("click", function () {
+        var confirmed = confirm("@Messages.DeleteConfirm");
+        var instrumentId = $(this).attr("data-id");
+        if (confirmed) {
+             $.ajax({
+                url: "/Disciplines/DeleteInstrument",
+                type: "POST",
+                data: {
+                    id: instrumentId,
+                    seasonId: "@Model.SeasonId",
+                    disciplineId: "@Model.DisciplineId"
+                },
+                success: function (data) {
+                    $("#instruments").html(data);
+                }
+             });
+        }
+
+    });
+</script>

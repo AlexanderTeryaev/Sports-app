@@ -1,0 +1,569 @@
+﻿@model TeamForm
+
+@{
+    string msg = "";
+    if (TempData["ErrExists"] != null)
+    {
+        msg = TempData["ErrExists"] as string;
+    }
+    var seasonId = ViewBag.SeasonId;
+
+    string downloadForm = string.Empty;
+    string import = string.Empty;
+    string importPic = string.Empty;
+    string exportImgs = string.Empty;
+    string move = string.Empty;
+    string tooltip = string.Empty;
+    string total = string.Equals(Model.Section, GamesAlias.MartialArts, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(Model.Section, GamesAlias.Motorsport, StringComparison.OrdinalIgnoreCase)
+                    ? $"{Messages.Total} {Messages.Sportsmans.ToLower()}"
+                    : $"{Messages.Total} {Messages.Players.ToLower()}";
+    UIHelpers.GetButtonCaption(Model.Section, out downloadForm, out import, out importPic, out exportImgs, out move, out tooltip);
+    var is38Union = ViewBag.UnionId != null && ViewBag.UnionId == 38;
+}
+<div class="row" id="teams_view">
+
+    
+    @if ((User.IsInAnyRole(AppRole.Admins, AppRole.Workers) && ViewBag.IsLeagueManager != true) && ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <a class="btn btn-primary btn-edit select-all-teams">
+            <i class="glyphicon glyphicon-plus"></i> @Messages.SelectAllTeams
+        </a>
+
+        <a class="btn btn-primary btn-edit" id="move_to_league"
+            href="#"
+            data-target="#team_league_modal_view" data-toggle="tooltip" title="@Messages.TooltipMoveToLeague">
+            <i class="glyphicon glyphicon-move"></i> @(Model.Section == GamesAlias.WaveSurfing ? Messages.MoveToLeague.Replace(Messages.League, Messages.Competition) : Messages.MoveToLeague)
+        </a>
+    }
+    @if ((!is38Union) && ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <a class="btn btn-info export" href="@Url.Action("DownloadExcel", "Unions", new { unionId = Model.UnionId })"
+            data-toggle="tooltip" title="@tooltip" style="float:left;">
+            <i href="#" class="glyphicon glyphicon-open"></i> @downloadForm
+        </a>
+    }
+    @if ((is38Union && Model.IsTennisCompetition == 0) && ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <a class="btn btn-primary regstatus" href="@Url.Action("TennisRegistrationStatus", new { id = Model.LeagueId, seasonId = Model.SeasonId })"
+            style="float: left; margin-left: 5px; margin-bottom: 15px;"
+            data-target="#playeregistrationform"
+            data-toggle="modal">
+            <i class="fa fa-spin fa-spinner" style="display:none"></i>
+            @Messages.Status
+        </a>
+    }
+
+    @if (Model.SectionId != 6)
+    {
+        <a class="btn btn-info export" href="@Url.Action("ExportList", "TeamPlayers", new {
+            seasonId = Model.SeasonId, leagueId = Model.LeagueId, check = false, tab = "league" })" style="float:left; margin-left:5px; margin-bottom:15px;"
+            data-target="#playerexportform"
+            data-toggle="modal">
+            <i class="glyphicon glyphicon-export"></i>
+            @Messages.ExportToExcel
+        </a>
+    }
+    else if (Model.SectionId == 6)
+    {
+        <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportregistrations').submit()">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+            @using (Html.BeginForm("ExportTennisRegistrationsToExcel", "Clubs", new { seasonId, Model.LeagueId },
+            FormMethod.Post, new { id = "exportregistrations" })) { }
+        </a>
+    }
+    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <a class="btn btn-info btn-edit export" onclick="exportPlayersImages()">
+            <i class="glyphicon glyphicon-save"></i> @exportImgs
+            <i class="fa fa-spin fa-spinner" id="spinner" style="display:none"></i>
+        </a>
+    }
+    @if ((Model.SectionId != 6) && ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayers", "Players", new {formName = "league", leagueId = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId, teamId = Model.TeamId})"
+            data-target="#playerimportform"
+            data-toggle="modal">
+            <i class="glyphicon glyphicon-save"></i> @import
+        </a>
+        <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayersImage", "Players", new {seasonId = Model.SeasonId})"
+            data-target="#playerimportimageform"
+            data-toggle="modal">
+            <i class="glyphicon glyphicon-save"></i> @importPic
+        </a>
+    }
+
+    @if ((Model.IsTennisCompetition == 1) && ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <a class="btn btn-info export" href="@Url.Action("DownloadTennisCompetitionImportForm", "Leagues")">
+            <i href="#" class="glyphicon glyphicon-open"></i> @Messages.DownloadImportForm
+        </a>
+        <a class="btn btn-primary btn-edit" href="@Url.Action("ImportTennisCompetitionPlayers", "Leagues", new { competitionId = Model.LeagueId, seasonId = Model.SeasonId })"
+            data-target="#categoryimportform"
+            data-toggle="modal">
+            <i class="glyphicon glyphicon-save"></i>@Messages.ImportFromExcel
+        </a>
+    }
+
+    @using (Ajax.BeginForm("Create", "Teams", new AjaxOptions { UpdateTargetId = "teams" }, new { id = "teamsform", autocomplete = "off" }))
+    {
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th style="width:10%;"></th>
+                    <th style="width:10%;">#</th>
+                    @if (Model.UnionId == 38 && Model.IsTennisCompetition == 0)
+                    {
+                        <th>@Messages.ClubName</th>
+                    }
+                    @if (Model.IsTennisCompetition == 1)
+                    {
+                        <th>@Messages.Category</th>
+                        <th>@Messages.IsCalculatedInRanks</th>
+                    }
+                    else
+                    {
+                        <th>@Messages.Team</th>
+                    }
+                    <th>@total</th>
+                    @if (Model.SectionId == 6 && Model.IsTennisCompetition == 0)
+                    {
+                        <!--
+        <th>@Messages.UnionInsurance</th>
+        <th>@Messages.ClubInsurance</th>
+        -->
+                        <th>@Messages.ReligiousTeam</th>
+                        <th>@Messages.DaysForHosting</th>
+                    }
+
+                    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Workers))
+                    {
+                        <th>@(Model.Section == GamesAlias.WaveSurfing ? Messages.MoveToLeague.Replace(Messages.League, Messages.Competition) : Messages.MoveToLeague)</th>
+                    }
+                    @if (Model.SectionId != 6)
+                    {
+                        <th>@Messages.Active</th>
+                    }
+                    @if (!Model.IsIndividual)
+                    {
+                        <th>@Messages.Waiting</th>
+                        <th>@Messages.Approved</th>
+                        <th>@Messages.NotActive</th>
+                        <th>@Messages.Registered</th>
+
+                    }
+                    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+                    {
+                        <th></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model.TeamsList)
+                {
+                    var playersCount = Model.UnionId != 38
+                        ? m.TeamsPlayers.Count(t => t.SeasonId == seasonId && (Model.LeagueId > 0 ? t.LeagueId == Model.LeagueId : t.LeagueId == null))
+                        : m.TeamsPlayers.Count(t => t.SeasonId == seasonId && !t.WithoutLeagueRegistration);
+                <tr>
+                    <td>
+                        @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                        {
+                            if (Model.UnionId == 38 && Model.IsTennisCompetition == 0)
+                            {
+                                <a href="@Url.Action("TennisRegistrationStatus", new { id = Model.LeagueId, seasonId = Model.SeasonId, teamId = m.TeamId })" class="btn btn-primary"
+                                   data-target="#playeregistrationform"
+                                   data-toggle="modal">
+                                    @Messages.Status
+                                </a>
+                            }
+                            else
+                            {
+                                if (Model.DepartmentId.HasValue && Model.DepartmentId > 0)
+                                {
+                                    if (Model.IsTennisCompetition == 1)
+                                    {
+                                        <a class="@AppCss.Edit edit-team" href="@Url.Action("Edit", "Teams", new { id = m.TeamId, currentLeagueId = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId, departmentId = Model.DepartmentId, isTennisCompetition = Model.IsTennisCompetition })"></a>
+                                    }
+                                    else
+                                    {
+                                        <a class="@AppCss.Edit edit-team" href="@Url.Action("Edit", "Teams", new { id = m.TeamId, currentLeagueId = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId, departmentId = Model.DepartmentId })"></a>
+                                    }
+
+                                }
+                                else
+                                {
+                                    if (Model.IsTennisCompetition == 1)
+                                    {
+                                        <a class="@AppCss.Edit edit-team" target="_blank" href="@Url.Action("Edit", "Teams", new { id = m.TeamId, currentLeagueId = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId, isTennisCompetition = Model.IsTennisCompetition })"></a>
+                                    }
+                                    else
+                                    {
+                                        <a class="@AppCss.Edit edit-team" href="@Url.Action("Edit", "Teams", new { id = m.TeamId, currentLeagueId = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId })"></a>
+                                    }
+
+                                }
+                            }
+                        }
+
+                    </td>
+                    <td>@m.TeamId</td>
+                    @if (Model.UnionId == 38 && Model.IsTennisCompetition == 0)
+                    {
+                        <td>@(m.ClubTeams.FirstOrDefault(c => c.SeasonId == Model.SeasonId)?.Club?.Name)</td>
+                    }
+                    @if (Model.UnionId == 38 && Model.IsTennisCompetition == 0)
+                    {
+                        <td>@(m.TeamsDetails.FirstOrDefault(td => td.SeasonId == Model.SeasonId)?.TeamName ?? UIHelpers.GetTeamNameWithoutLeague(m.Title, ViewBag.LeagueName))</td>
+                    }
+                    else
+                    {
+                        <td>@m.Title</td>
+                    }
+                    @if (Model.IsTennisCompetition == 1)
+                    {
+                        <td>@Html.CheckBoxFor(model => m.IsRankCalculated, new { @class="rank_calculated_checkbox", data_teamId = m.TeamId})</td>
+                    }
+                    <td>@playersCount</td>
+                    @if (Model.SectionId == 6)
+                    {
+                        <!--
+        <td align="center">
+            @if (m.IsUnionInsurance == true)
+            {
+                <span class='fa fa-check'></span>
+            }
+        </td>
+        <td>
+            @if (m.IsClubInsurance == true)
+            {
+                <span class='fa fa-check'></span>
+                var clubInsuranceFile = m.ClubTeams.FirstOrDefault()?.Club?.ClubInsurance;
+                if (!string.IsNullOrEmpty(clubInsuranceFile))
+                {
+                    <span class='glyphicon glyphicon-eye-open glyph-btn' onclick="window.open('/assets/Clubs/@clubInsuranceFile')"></span>
+                }
+            }
+        </td>
+        -->
+                        <td align="center">
+                            @if (m.IsReligiousTeam)
+                            {
+                                <span class='fa fa-check'></span>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var daysForHosting = m.TeamHostingDays.Count > 0
+                                    ? UIHelpers.GenerateHostingDaysString(m.TeamHostingDays)
+                                    : string.Empty;
+                            }
+                            @Html.Raw(HttpUtility.HtmlDecode(daysForHosting))
+                        </td>
+                    }
+
+                    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Workers))
+                    {
+
+                        <td>
+                            @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                            {
+                                <input type="checkbox" name="isMoveToLeague" value="@m.TeamId" />
+                            }
+                            else
+                            {
+                                <input type="checkbox" name="isMoveToLeague" readonly disabled />
+                            }
+                        </td>
+
+                    }
+                    @if (Model.SectionId != 6)
+                    {
+                        <td>
+                            @{
+                                var registration = m.ActivityFormsSubmittedDatas.FirstOrDefault(x =>
+                                    x.LeagueId == Model.LeagueId &&
+                                    x.Activity.IsAutomatic.HasValue && x.Activity.IsAutomatic.Value &&
+                                    x.Activity.Type == ActivityType.Group &&
+                                    x.Activity.SeasonId == Model.SeasonId);
+                            }
+                            @if (registration != null && ViewBag.JobRole != JobRole.RefereeAssignment)
+                            {
+                                <input type="checkbox" name="teamRegistrationActive" data-activity="@registration.ActivityId" data-regid="@registration.Id" @(registration.IsActive ? "checked" : "") />
+                            }
+                            else
+                            {
+                                <input type="checkbox" disabled="disabled" readonly="readonly" />
+                            }
+                        </td>
+                    }
+                    @if (!Model.IsIndividual)
+                    {
+                        <td>@(Model.StatisticsDictionary.ContainsKey(m.TeamId) ? Model.StatisticsDictionary[m.TeamId].Waiting : 0)</td>
+                        <td>@(Model.StatisticsDictionary.ContainsKey(m.TeamId) ? Model.StatisticsDictionary[m.TeamId].Approved : 0)</td>
+                        <td>@(Model.StatisticsDictionary.ContainsKey(m.TeamId) ? Model.StatisticsDictionary[m.TeamId].NotActive : 0)</td>
+                        <td>@(Model.StatisticsDictionary.ContainsKey(m.TeamId) ? Model.StatisticsDictionary[m.TeamId].Registered : 0)</td>
+                    }
+
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && Model.Section.Equals(GamesAlias.Tennis) && Model.IsTennisCompetition != 1)
+                        {
+                            <td>
+                                <a href="@Url.Action("DeleteTennisTeam", new { teamId = m.TeamId, leagueId = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId, isTennisCompetition = Model.IsTennisCompetition })" class="@AppCss.Delete"
+                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                   data-ajax-update="#teams"
+                                   data-ajax="true">
+                                </a>
+                            </td>
+                        }
+                        else
+                        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) || Model.IsTennisCompetition == 1)
+                        {
+                            <td>
+                                <a href="@Url.Action("Delete", new { id = m.TeamId, leagueId = Model.LeagueId, seasonId = Model.SeasonId, isTennisCompetition = Model.IsTennisCompetition })" c class="@AppCss.Delete"
+                                   data-ajax-confirm="@Messages.DeleteConfirm"
+                                   data-ajax-update="#teams"
+                                   data-ajax="true">
+                                </a>
+                            </td>
+                        }
+                    }
+                </tr>
+                }
+            </tbody>
+            @if (((User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && !is38Union) || Model.IsTennisCompetition == 1))
+            {
+                if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                {
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <div class="form-group no-marging">
+                                    @if (Model.SectionId != 6)
+                                    {
+                                        @Html.CheckBoxFor(t => t.IsNew)
+                                        @Html.Label(Messages.AddNewTeam)
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (Model.DepartmentId != 0)
+                                {
+                                    <div class="form-group no-marging">
+                                        @if (Model.SectionId == 6)
+                                        {
+                                            @Html.TextBoxFor(m => m.Title, new
+                                            {
+                                                @class = "form-control auto-search",
+                                                @id = "team-auto-search",
+                                                placeholder = Messages.AddCategory,
+                                                //maxlength = 50,
+                                                data_remote = Url.Action("FindTeam", "Search", new { sectionId = Model.SectionId, departmentId = Model.DepartmentId, seasonId = Model.SeasonId })
+                                            })
+                                        }
+                                        else
+                                        {
+                                            @Html.TextBoxFor(m => m.Title, new
+                                            {
+                                                @class = "form-control auto-search",
+                                                @id = "team-auto-search",
+                                                placeholder = Messages.AddTeam,
+                                                //maxlength = 50,
+                                                data_remote = Url.Action("FindTeam", "Search", new { sectionId = Model.SectionId, departmentId = Model.DepartmentId, seasonId = Model.SeasonId })
+                                            })
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="form-group no-marging">
+                                        @if (Model.SectionId == 6)
+                                        {
+                                            @Html.TextBoxFor(m => m.Title, new
+                                       {
+                                           @class = Model.IsTennisCompetition == 1 && !User.IsInAnyRole(AppRole.Admins)
+                                                    ? "form-control"
+                                                    : "form-control auto-search",
+                                           @id = Model.IsTennisCompetition == 1 && !User.IsInAnyRole(AppRole.Admins)
+                                                    ? "team-with-no-search"
+                                                    : "team-auto-search",
+                                           placeholder = Messages.AddCategory,
+                                           data_remote = Url.Action("FindTeam", "Search", new { sectionId = Model.SectionId, departmentId = Model.DepartmentId, seasonId = Model.SeasonId })
+                                       })
+                                        }
+                                        else
+                                        {
+                                            @Html.TextBoxFor(m => m.Title, new
+                                            {
+                                                @class = "form-control auto-search",
+                                                @id = "team-auto-search",
+                                                placeholder = Model.Section == GamesAlias.WaveSurfing ? Messages.AddTeam.Replace(Messages.Team.ToLower(), Messages.Category.ToLower()) : Messages.AddTeam,
+                                                //maxlength = 50,
+                                                data_remote = Url.Action("FindTeam", "Search", new { sectionId = Model.SectionId, seasonId = Model.SeasonId })
+                                            })
+                                        }
+                                    </div>
+                                }
+
+
+                                @if (!string.IsNullOrEmpty(msg))
+                                {
+                                    <div class="text-danger">@msg</div>
+                                }
+
+                            </td>
+                            <td>
+                                <button class="btn btn-primary">@Messages.Save</button>
+                                @Html.HiddenFor(m => m.LeagueId)
+                                @Html.HiddenFor(m => m.TeamId)
+                                @Html.HiddenFor(m => Model.IsTennisCompetition)
+                                @Html.HiddenFor(x => x.SeasonId)
+                                @Html.HiddenFor(x => x.SectionId)
+                            </td>
+                        </tr>
+                    </tfoot>
+                }
+            }
+        </table>
+    }
+</div>
+@if (Model.IsTennisCompetition == 1)
+{
+    <div class="row" style="margin-top:15px;">
+        <div class="col-sm-12">
+            @Html.Action("LoadTennisCompetitionPlayers", "Leagues", new { leagueId = Model.LeagueId })
+        </div>
+    </div>
+}
+<div class="modal fade" id="playerimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="categoryimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="categoryimportform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="playerexportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playerimportimageform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerimportimageform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playerexportimagesform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playerexportimagesform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="playeregistrationform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content modal-lg" id="playeregistrationform_pl"></div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+    $("input[name='teamRegistrationActive']").on("click",
+        function() {
+            var activityid = $(this).data("activity");
+            var regId = $(this).data("regid");
+
+            $.post("/Activity/SetRegistrationActive/" + activityid, { regid: regId, value: this.checked });
+        });
+
+    $('#teamsform').validateBootstrap(true);
+
+    setAutoSearch();
+
+    $('#team-auto-search').bind('typeahead:select', function (ev, data) {
+        $('[name="TeamId"]').val(data.Id);
+    });
+
+    $("#team-auto-search").keypress(function (e) {
+        if (e.which != 13 || e.which != 32) {
+            $('[name="TeamId"]').val(0);
+        }
+    });
+
+    $(document).ready(function() {
+        $('.select-all-teams').click(function() {
+            $('[name="isMoveToLeague"]').click();
+        });
+
+        $('#move_to_league').click(function(e) {
+            e.preventDefault();
+            var selectedTeams = [];
+            $('[name="isMoveToLeague"]:checked').each(function(k, v) {
+                var val = $(this).val();
+                selectedTeams.push(parseInt(val));
+            });
+            if (selectedTeams.length === 0) {
+                alert('Please select at least one team to move to another league.');
+                return;
+            }
+            var league = '@Model.LeagueId';
+            var season = '@Model.SeasonId';
+            $.ajax({
+                url: '@Url.Action("MoveToLeague", "Teams")',
+                type: 'POST',
+                dataType: 'html',
+                data: { teams: selectedTeams, leagueId: league, seasonId: season, isTennisLeague: @(Model.Section.Equals(GamesAlias.Tennis) && Model.IsTennisCompetition != 1 ? "true" : "false") },
+                success: function(result) {
+                    $('#team_league_modal_view').modal('show');
+                    $('#team_league_form').html(result);
+                }
+            });
+        });
+
+        $(".rank_calculated_checkbox").change(function () {
+            var $this = $(this);
+            var teamId = $this.data("teamid");
+            var isChecked = $this.is(":checked");
+            $.ajax({
+                url: '@Url.Action("SetIsRankCalculated", "Teams")',
+                type: 'POST',
+                data: {
+                    TeamId: teamId,
+                    IsChecked: isChecked
+                }
+            });
+        });
+    });
+</script>
+<script>
+    function exportPlayersImages() {
+                $.ajax({
+                    type: "POST",
+                    url: "/Players/ImgsServerCheck",
+                    data: {
+                        leagueId: @Model.LeagueId,
+                        seasonId: @Model.SeasonId,
+                        pageType: "@PageType.League"
+                    },
+                    beforeSend: function() {
+                        $("#spinner").show();
+                    }
+                }).done(function (data) {
+                    $("#playerexportimagesform_pl").html(data);
+                    $("#playerexportimagesform").modal('show');
+                    $("#spinner").hide();
+                });
+    }
+
+</script>
+<div id="team_league_modal_view" class="modal fade" role="dialog" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" id="team_league_form"></div>
+    </div>
+</div>

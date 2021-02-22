@@ -1,0 +1,97 @@
+﻿@model CmsApp.Models.ImportPlayersImageViewModel
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <h4 class="modal-title">@Messages.ImportPlayersImage_DialogCaption</h4>
+</div>
+
+@using (Ajax.BeginForm("ImportPlayersImage", null,
+    new AjaxOptions
+    {
+        HttpMethod = "POST",
+        UpdateTargetId = "playerimportimageform_pl",
+        OnComplete = "importImageCompleted()"
+    },
+    new
+    {
+        id = "frmImportPlayersImage",
+        enctype = "multipart/form-data"
+    }))
+{
+    <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+        @Html.HiddenFor(x => x.SeasonId)
+
+        @if (Model.ImportResult == ImportPlayersImage.Completed)
+        {
+            <text>
+                <div class="alert alert-info">@Messages.ImportPlayersImage_ResultInfoMessage - <a class="text-danger" href="@Url.Action("DownloadPictureImportResult")">@Messages.Download</a></div>
+            </text>
+        }
+        else
+        {
+            <text>
+                @if (Model.ImportResult == ImportPlayersImage.Error)
+                {
+                    <div class="alert alert-danger">
+                        @Messages.ImportPlayersImage_ResultErrorMessage
+                    </div>
+                    <br/>
+                    <br/>
+                }
+                <input type="file" id="file-import-from-excel" accept="image/jpeg" multiple="multiple" name="ImportFile"/>
+            </text>
+        }
+
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        @if (Model.ImportResult != ImportPlayersImage.Completed)
+        {
+            <button id="btnImportPlayers" class="btn btn-primary">@Messages.ImportPlayers_StartImport</button>
+        }
+    </div>
+}
+
+<script type="text/javascript">
+
+    //$(document).ready(function () {
+    //    var frm = $('#frmImportPlayersImage');
+    //
+    //    $('#savebtn', frm).click(function () {
+    //        return true;
+    //    });
+    //});
+
+    function importImageCompleted() {
+
+    }
+
+    window.addEventListener("submit",
+        function(e) {
+            var form = e.target;
+            if (form.getAttribute("enctype") === "multipart/form-data") {
+                if (form.dataset.ajax) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    var xhr = new XMLHttpRequest();
+                    xhr.open(form.method, form.action);
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            if (form.dataset.ajaxUpdate) {
+                                var updateTarget = document.querySelector(form.dataset.ajaxUpdate);
+                                if (updateTarget) {
+                                    updateTarget.innerHTML = xhr.responseText;
+                                }
+                            }
+                        }
+                    };
+                    xhr.send(new FormData(form));
+                }
+            }
+        },
+        true);
+
+</script>

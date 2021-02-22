@@ -1,0 +1,74 @@
+﻿@using LogLigFront.Controllers
+@using Resources
+@model IEnumerable<DataService.DTO.PlayoffRank>
+@{
+    string sectionAlias = ViewBag.SectionAlias != null ? ViewBag.SectionAlias : string.Empty;
+    var needScore = string.Equals(sectionAlias, GamesAlias.BasketBall, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(sectionAlias, GamesAlias.WaterPolo, StringComparison.OrdinalIgnoreCase);
+}
+@if (Model != null && Model.Any())
+{
+    var groupedPlayoff = Model.GroupBy(c => c.GroupName);
+    foreach (var group in groupedPlayoff)
+    {
+        <div class="row" style="margin-top: 20px;">
+            <div class="playOff">
+                <table class="table table-bordered">
+                    <caption>@group.Key</caption>
+                    <thead>
+                        <tr>
+                            <th class="col-sm-1">@Messages.Rank</th>
+                            <th>@Messages.Team</th>
+                            @*<th class="col-sm-1">@Messages.Games</th>
+                            <th class="col-sm-1">@Messages.WinsNum</th>
+                            <th class="col-sm-1">@Messages.LossNum</th>
+                            <th width="10%" class="col-sm-2">@UIHelper.GetCurrentResultTitle(sectionAlias)</th>
+                            @if (needScore)
+                            {
+                                <th></th>
+                            }
+                            @if (!needScore)
+                            {
+                                <th>@UIHelper.GetCurrentResultRatio(sectionAlias)</th>}*@
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var ranks = group.Select(c => c)?.OrderBy(c => c.Rank);
+                            var counter = 1;
+                        }
+                        @foreach (var rank in ranks)
+                        {
+                            <tr>
+                                <td>@counter</td>
+                                <td>
+                                    <span class="rank-team-logo">
+                                        <img src="@UIHelper.GetTeamLogo(rank.TeamLogo)" class="img-circle" alt="" />
+                                    </span>
+                                    @Html.ActionLink(rank.TeamName, nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = rank.TeamId, leagueId = rank.LeagueId, seasonId = rank.SeasonId }, new { @class = "main-title", target = "_blank" })
+                                </td>
+                                @*<td>@rank.GamesCount</td>
+                                <td>@rank.WinsCount</td>
+                                <td>@rank.LostCount</td>
+                                @if (needScore)
+                                {
+                                    <td>@rank.TotalScored - @rank.TotalMissed</td>
+                                    <td align="right" class="flip-to-ltr">@rank.ScoreDifference</td>
+                                }
+                                else
+                                {
+                                    <td>@rank.SetsWon - @rank.SetsLost </td>
+                                }
+                                @if (!needScore)
+                                {
+                                    <td>@rank.SetsRatio</td>
+                                }*@
+                            </tr>
+                            counter++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}

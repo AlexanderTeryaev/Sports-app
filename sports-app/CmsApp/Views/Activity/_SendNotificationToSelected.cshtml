@@ -1,0 +1,20 @@
+﻿@model ActivityRegistrationsStatusModel
+
+<div class="sendNotification-block well-sm">
+    <button type="button" id="sendNotificationToSelected" class="btn btn-primary" disabled="disabled" 
+            data-seasonid="@Model.SeasonId" 
+            data-activity="@Model.ActivityId">
+        <i class="fa fa-envelope"></i>
+        @Messages.Activity_Status_SendNotificationToSelected
+    </button>
+
+    <input type="checkbox" id="sendNotification-selectAll" />
+    <label for="sendNotification-selectAll">@Messages.Activity_Status_SendNotification_SelectAll</label>
+</div>
+
+<div class="modal fade" id="activityStatus-sendNotification-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="activityStatus-sendNotification-modal-content">
+        </div>
+    </div>
+</div>

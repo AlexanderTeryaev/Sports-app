@@ -1,0 +1,195 @@
+﻿@model CmsApp.Models.ImportAccountingBalanceViewModel
+
+@{
+    bool showFileBox = true;
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.ImportAccountingBalances</h4>
+</div>
+
+@using (Ajax.BeginForm("ImportAccountingBalances", null,
+                    new AjaxOptions
+                    {
+                        HttpMethod = "POST",
+            //UpdateTargetId = "accountingbalancesimportform_pl",
+            OnComplete = "importCompleted()"
+                    },
+                    new
+                    {
+                        id = "frmImportAccountingBalances",
+                        enctype = "multipart/form-data"
+                    }))
+{
+
+<div class="modal-body">
+
+    <text>
+        <div id="success_message" class="alert alert-success" style="display:none;">@Messages.ImportDebtReportSuccess</div>
+        <div id="error_message" class="alert alert-danger" style="display:none;">@Messages.ImportDebtReportFail</div>
+    </text>
+
+    @Html.HiddenFor(model => model.ClubId)
+    @Html.HiddenFor(model => model.LeagueId)
+    @Html.HiddenFor(model => model.UnionId)
+    @Html.HiddenFor(model => model.FormName, new { id = "_FormName" })
+    @Html.HiddenFor(model => model.SeasonId)
+
+    @if (Model.Result.HasValue)
+    {
+        switch (Model.Result)
+        {
+            case ImportAccountingBalanceResult.Error:
+                showFileBox = true;
+                <text>
+                    <div class="alert alert-danger">@(Model.ResultMessage)</div>
+                    <br />
+                    <br />
+                </text>
+                break;
+            case ImportAccountingBalanceResult.PartialyImported:
+                showFileBox = true;
+                <text>
+                    <div class="alert alert-info">
+                        <p>@Messages.ImportPlayers_PartillyImport</p>
+                        <p>@Messages.ImportPlayers_PartiallyImportMessage - <a class="text-danger" href="@Url.Action("DownloadPartiallyImport")">@Messages.Download</a></p>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">@(Messages.ImportPlayers_SuccessCount)</div>
+                        <input type="hidden" id="hSuccessCount" value="@(Model.SuccessCount)" />
+                        <div class="col-md-8">@(Model.SuccessCount)</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">@(Messages.ImportPlayers_ValidationErrorCount)</div>
+                        <div class="col-md-8">@(Model.ErrorCount)</div>
+                    </div>
+                    <br />
+                    <br />
+                </text>
+                break;
+            case ImportAccountingBalanceResult.Success:
+                showFileBox = false;
+                <text>
+                    <div class="alert alert-success">@Messages.ImportDebtReportSuccess</div>
+                    @*<p>@(Messages.ImportPlayers_SuccessCount) - @(Model.SuccessCount)</p>*@
+                </text>
+                break;
+        }
+    }
+    @if (showFileBox)
+    {
+        <text>
+            <input type="file" id="file-import-from-excel" name="ImportFile" />
+            <br />
+        </text>
+    }
+</div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        @if (Model.Result != ImportAccountingBalanceResult.Success)
+        {
+            <button id="btnImportAccountingBalance" class="btn btn-primary">@Messages.ImportPlayers_StartImport <span id="loading_import_AccountingBalance" style="display:none;" class="fa fa-refresh fa-spin"></span></button>
+            <button id="loading_import_accounting_balance_sbmt" style="visibility:hidden;"></button>
+
+        }
+    </div>
+}
+
+<script type="text/javascript">
+
+    @if(Model.Result.HasValue)
+    {
+        if(Model.Result == ImportAccountingBalanceResult.Success)
+        {
+            <text>
+                var importOk = true;
+            </text>
+        }
+        else
+        {
+            <text>
+                var importOk = false;
+            </text>
+        }
+    }
+    else
+    {
+        <text>
+            var importOk = false;
+        </text>
+    }
+
+
+    $(document).ready(function () {
+        var frm = $('#frmImportAccountingBalances');
+
+        $('#savebtn', frm).click(function () {
+            return true;
+        });
+        //$("#playerimportformnew").on("hidden.bs.modal", function (e) {
+        //    if ($("#_FormName").val() == 'team' && parseInt($("#hSuccessCount").val()) > 0) {
+        //        window.location.reload();
+        //    }
+        //});
+        $("#accountingbalancesimportform_pl").on("hidden.bs.modal", function (e) {
+            if ($("@Model.Result" === "@ImportAccountingBalanceResult.Success")) {
+                window.location.reload();
+                $("#loading").hide();
+            }
+            else {
+                $("#loading").hide();
+            }
+        });
+        $(document).on('click', '#btnImportAccountingBalance', function () {
+            $(this).attr("disabled","disabled");
+            $("#loading_import_AccountingBalance").show();
+            $("#loading_import_accounting_balance_sbmt").trigger( "click" );
+        });
+    });
+
+
+
+    function importCompleted() {
+
+    }
+
+     window.addEventListener("submit", function (e) {
+        var form = e.target;
+        if (form.getAttribute("enctype") === "multipart/form-data") {
+            if (form.dataset.ajax) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var xhr = new XMLHttpRequest();
+                xhr.open(form.method, form.action);
+                xhr.onreadystatechange = function () {
+                    $("#loading_import_AccountingBalance").removeClass('fa-spin');
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        //window.location.reload();
+                        $("#success_message").show();
+                        $("#error_message").hide();
+                        if (form.dataset.ajaxUpdate) {
+                            var updateTarget = document.querySelector(form.dataset.ajaxUpdate);
+                            if (updateTarget) {
+                                updateTarget.innerHTML = xhr.responseText;
+                                var count = (xhr.responseText.match(/var importOk = true/g) || []).length;
+                                if (count > 1) {
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 500)
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        $("#success_message").hide();
+                        $("#error_message").show();
+                    }
+                };
+                xhr.send(new FormData(form));
+            }
+        }
+    }, true);
+
+</script>

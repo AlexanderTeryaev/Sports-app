@@ -1,0 +1,509 @@
+﻿@model AppModel.GamesCycle
+
+@{
+    string status = "";
+    if (Model.GameStatus != null)
+    {
+        status = Model.GameStatus.Trim();
+    }
+    var GoldenSet = Model.GameSets.FirstOrDefault(s => s.IsGoldenSet == true);
+    var Penalties = Model.GameSets.FirstOrDefault(s => s.IsPenalties == true);
+
+    var shoeldShowGoldenSet = Model.PlayoffBracket != null &&
+        Model.PlayoffBracket.GamesCycles.Count == 2 &&
+        GoldenSet == null &&
+        Model.CycleId == Model.PlayoffBracket.GamesCycles.OrderByDescending(gc => gc.StartDate).FirstOrDefault().CycleId &&
+        Model.GameSets.Count > 2;
+
+
+    var gameLocked = status == GameStatus.Ended;
+    var gameType = Model.Group.GamesType.Name;
+    string warnOnReset = gameLocked && (gameType == "Playoff" || gameType == "Knockout") ? "true" : "false";
+    var seasonId = Model.Stage?.League?.SeasonId;
+    var needPenalties = (bool)ViewBag.NeedPenalties;
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+    <h4 class="modal-title">@Messages.Edit @Messages.Game.ToLower()</h4>
+</div>
+<div class="modal-body">
+    <div id="backgroundgrey">
+        <div class="top-buffer row">
+            @if (!string.IsNullOrEmpty(status))
+            {
+                <a href='javascript:gcEdit.resetGame("@Model.CycleId", "@ViewBag.DepartmentId")' class="btn btn-sm btn-danger">
+                    @Messages.ResetGame
+                </a>
+            }
+
+            @if (string.IsNullOrEmpty(status))
+            {
+                <a href='javascript:gcEdit.startGame("@Model.CycleId", "@ViewBag.DepartmentId")' class="btn btn-sm btn-success">
+                    @Messages.StartGame
+                </a>
+            }
+            else if (status == GameStatus.Started)
+            {
+                <a href='javascript:gcEdit.endGame("@Model.CycleId", "@ViewBag.DepartmentId")' class="btn btn-sm btn-danger">
+                    @Messages.EndGame
+                </a>
+            }
+        </div>
+        <div class="row form-group top-buffer">
+            @if (status == GameStatus.Started)
+            {
+                <span class="label label-success col-sm-4">@Messages.Started</span>
+            }
+            else if (status == GameStatus.Ended)
+            {
+                <span class="label label-danger col-sm-4">@Messages.Ended</span>
+            }
+            else
+            {
+                <span class="label label-default col-sm-4">@Messages.Waiting</span>
+            }
+        </div>
+        <div class="row form-group">
+            <div class="col-sm-6">
+                @if (Model.Group.IsIndividual)
+                {
+                    <div>
+                        <label>@Messages.HomeCompetitor:</label>
+                    </div>
+                    <div>
+                        @if (Model.TeamsPlayer1 != null)
+                        {
+                            <h4>@Model.TeamsPlayer1.User.FullName (@(Model.TeamsPlayer1.Team.TeamsDetails.FirstOrDefault(x => x.SeasonId == seasonId)?.TeamName ?? Model.TeamsPlayer1.Team.Title))</h4>
+                        }
+                    </div>
+                    <div>
+                        @Model.HomeTeamScore
+                    </div>
+                    if (GoldenSet != null)
+                    {
+                        if (GoldenSet.HomeTeamScore > GoldenSet.GuestTeamScore)
+                        {
+                            <div class="top-buffer">
+                                <span class="label label-warning">@Messages.GoldenSet</span>
+                            </div>
+                        }
+                    }
+                    else if (Model.TechnicalWinnnerId == Model.HomeAthleteId)
+                    {
+                        <div class="top-buffer">
+                            <span class="label label-success">@Messages.TechWin</span>
+                        </div>
+                    }
+                    else if (Penalties != null)
+                    {
+                        if (Penalties.HomeTeamScore > Penalties.GuestTeamScore)
+                        {
+                            <div class="top-buffer">
+                                <span class="label label-warning">@Messages.Penalties @Messages.Winner</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="top-buffer">
+                            <a class="btn btn-sm btn-primary" href="javascript:gcEdit.techWin('@Model.CycleId','@(Model.HomeTeamId ?? 0)','@(Model.TeamsPlayer1?.Id ?? 0)','@ViewBag.DepartmentId')">
+                                @Messages.TechWin
+                            </a>
+                            <a
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div>
+                        <label>@Messages.HomeTeam:</label>
+                    </div>
+                    <div>
+                        @if (Model.HomeTeam != null)
+                        {
+                            <h4>@(Model.HomeTeam.TeamsDetails.FirstOrDefault(x => x.SeasonId == seasonId)?.TeamName ?? Model.HomeTeam.Title)</h4>
+                        }
+                    </div>
+                    <div>
+                        @if (needPenalties)
+                        {
+                            @Model.GameSets.Where(c => !c.IsPenalties).Sum(x => x.HomeTeamScore)
+                            if (needPenalties && Penalties != null)
+                            {
+                                <text>(@Penalties.HomeTeamScore)</text>
+                            }
+                        }
+                        else
+                        {
+                            @Model.HomeTeamScore
+                        }
+                    </div>
+                    if (GoldenSet != null)
+                    {
+                        if (GoldenSet.HomeTeamScore > GoldenSet.GuestTeamScore)
+                        {
+                            <div class="top-buffer">
+                                <span class="label label-warning">@Messages.GoldenSet</span>
+                            </div>
+                        }
+                    }
+                    else if (Model.TechnicalWinnnerId == Model.HomeTeamId)
+                    {
+                        <div class="top-buffer">
+                            <span class="label label-success">@Messages.TechWin</span>
+                        </div>
+                    }
+                    else if (Penalties != null)
+                    {
+                        if (Penalties.HomeTeamScore > Penalties.GuestTeamScore)
+                        {
+                            <div class="top-buffer">
+                                <span class="label label-warning">@Messages.Penalties @Messages.Winner</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="top-buffer">
+                            <div class="top-buffer">
+                                <a class="btn btn-sm btn-primary" href="javascript:gcEdit.techWin('@Model.CycleId','@(Model.HomeTeamId ?? 0)','@(Model.TeamsPlayer1?.Id ?? 0)','@ViewBag.DepartmentId')">
+                                    @Messages.TechWin
+                                </a>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+            <div class="col-sm-6">
+                @if (Model.Group.IsIndividual)
+                {
+                    <div>
+                        <label>@Messages.GuestCompetitor:</label>
+                    </div>
+                    <div>
+                        @if (Model.TeamsPlayer != null)
+                        {
+                            <h4>@Model.TeamsPlayer.User.FullName (@(Model.TeamsPlayer.Team.TeamsDetails.FirstOrDefault(x => x.SeasonId == seasonId)?.TeamName ?? Model.TeamsPlayer.Team.Title))</h4>
+                        }
+                    </div>
+                    <div>
+                        @if (needPenalties)
+                        {
+                            if (needPenalties && Penalties != null)
+                            {
+                                <text>(@Penalties.GuestTeamScore)</text>
+                            }
+                            @Model.GameSets.Where(c => !c.IsPenalties).Sum(x => x.GuestTeamScore)
+                        }
+                        else
+                        {
+                            @Model.GuestTeamScore
+                        }
+                    </div>
+                    if (GoldenSet != null)
+                    {
+                        if (GoldenSet.HomeTeamScore > GoldenSet.GuestTeamScore)
+                        {
+                            <div class="top-buffer">
+                                <span class="label label-warning">@Messages.GoldenSet</span>
+                            </div>
+                        }
+                    }
+                    else if (Penalties != null)
+                    {
+                        if (Penalties.HomeTeamScore > Penalties.GuestTeamScore)
+                        {
+                            <div class="top-buffer">
+                                <span class="label label-warning">@Messages.Penalties @Messages.Winner</span>
+                            </div>
+                        }
+                    }
+                    else if (Model.TechnicalWinnnerId == Model.GuestAthleteId)
+                    {
+                        <div class="top-buffer">
+                            <span class="label label-success">@Messages.TechWin</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="top-buffer">
+                            <a class="btn btn-sm btn-primary" href="javascript:gcEdit.techWin('@Model.CycleId','@(Model.GuestTeamId ?? 0)','@(Model.TeamsPlayer?.Id ?? 0)','@ViewBag.DepartmentId')">
+                                @Messages.TechWin
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div>
+                        <label>@Messages.GuestTeam:</label>
+                    </div>
+                    <div>
+                        @if (Model.GuestTeam != null)
+                        {
+                            <h4>@(Model.GuestTeam.TeamsDetails.FirstOrDefault(x => x.SeasonId == seasonId)?.TeamName ?? Model.GuestTeam.Title)</h4>
+                        }
+                    </div>
+                    <div>
+                        @if (needPenalties)
+                        {
+                            if (needPenalties && Penalties != null)
+                            {
+                                <text>(@Penalties.GuestTeamScore)</text>
+                            }
+                            @Model.GameSets.Where(c => !c.IsPenalties).Sum(x => x.GuestTeamScore)
+                        }
+                        else
+                        {
+                            @Model.GuestTeamScore
+                        }
+                    </div>
+                    if (GoldenSet != null)
+                    {
+                        if (GoldenSet.HomeTeamScore < GoldenSet.GuestTeamScore)
+                        {
+                            <div class="top-buffer">
+                                <span class="label label-warning">@Messages.GoldenSet</span>
+                            </div>
+                        }
+                    }
+                    else if (Penalties != null)
+                    {
+                        if (Penalties.HomeTeamScore < Penalties.GuestTeamScore)
+                        {
+                            <div class="top-buffer">
+                                <span class="label label-warning">@Messages.Penalties @Messages.Winner</span>
+                            </div>
+                        }
+                    }
+                    else if (Model.TechnicalWinnnerId == Model.GuestTeamId)
+                    {
+                        <div class="top-buffer">
+                            <span class="label label-success">@Messages.TechWin</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="top-buffer">
+                            <a class="btn btn-sm btn-primary" href="javascript:gcEdit.techWin('@Model.CycleId','@(Model.GuestTeamId ?? 0)','@(Model.TeamsPlayer?.Id ?? 0)','@ViewBag.DepartmentId')">
+                                @Messages.TechWin
+                            </a>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <div style="background-color: #eee; margin-top: 15px; padding: 15px;">
+        <div class="row">
+            <div class="form-group col-sm-3">
+                <label class="control-label">@Messages.GameReportFile:</label>
+                <div class="row">
+                    @{
+                        <div class="form-group col-sm-3 btn-file-glyph">
+                            <span class="glyphicon glyph-btn glyphicon-upload">
+                                <input type="file" id="UploadReportGameFile" name="ReportGameFile" data-val="true" data-val-regex-pattern="^.*\.(JPEG|jpeg|jpg|JPG|pdf|PDF)$"
+                                       data-val-regex="@Messages.SelectValidImage" accept="image/*, application/pdf">
+                            </span>
+                        </div>
+                        var reportFile = Model.ReportFileName;
+                        <div class="form-group col-sm-3" id="viewReportGameFile" style="display: none;">
+                            <span class="glyphicon glyphicon-eye-open glyph-btn"
+                                  onclick="window.open('@(GlobVars.ContentPath + "/gamecycles/" + reportFile)')">
+                            </span>
+                        </div>
+                        <div class="form-group col-sm-3" id="removeReportGameFile" style="display: none;">
+                            <span class="glyphicon glyphicon-remove glyph-btn"></span>
+                            <input type="hidden" name="RemoveReportGameFile" value="false" />
+                        </div>
+                        <div class="form-group col-sm-3">
+                            <i class="fa fa-spin fa-spinner" id="reportloading" style="display: none"></i>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:15px;">
+        <div class="col-sm-12">
+            @using (Ajax.BeginForm("UpdateGame", null, new AjaxOptions
+            {
+                UpdateTargetId = "gamefrmbody",
+                InsertionMode = InsertionMode.Replace
+            }, new { id = "gameform" }))
+            {
+                <div class="row form-group">
+                    <div id="gamefrmbody">
+                        @Html.Action("Game", Model)
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @{
+        TempData["schedules"] = "true";
+    }
+
+    @Html.Partial("_GameSetForm", new GameSetForm { GameCycleId = Model.CycleId, warnOnReset = warnOnReset, IsIndividualGroup = Model.Group.IsIndividual, DepartmentId = ViewBag.DepartmentId })
+
+    <h4>@Messages.Acts</h4>
+
+    <div class="row">
+        <div class="col-sm-12" id="gamesetscore">
+            @{
+                ViewBag.IsIndividualGroup = Model.Group.IsIndividual;
+            }
+            @Html.Partial("_GameSetList", Model.GameSets)
+        </div>
+    </div>
+
+    <h4>@Messages.Comments</h4>
+    <div class="row">
+        <div class="col-sm-10">
+            @Html.TextAreaFor(x => x.Note, new { @class = "form-control" })
+            @Html.ValidationMessageFor(x=> x.Note)
+        </div>
+        <div class="col-sm-2">
+            <a class="btn btn-sm btn-primary" href="javascript:gcEdit.saveNote('@Model.CycleId', $('#Note').val(), '@ViewBag.DepartmentId')">
+                @Messages.Save
+            </a>
+        </div>
+    </div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+</div>
+
+<div class="modal" role="dialog" id="referees_game_modal">
+    <div class="modal-dialog" role="document" id="referees_game_modal_dialog">
+        <div class="modal-content" id="modal_window_referee">
+
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="~/Scripts/pages/gcEdit.js"></script>
+<script type="text/javascript">
+    gcEdit.documentReady();
+    $(document).ready(function () {
+        if ('@Model.ReportFileName' == '')
+        {
+            $('#viewReportGameFile').hide();
+            $('#removeReportGameFile').hide();
+        }
+        else
+        {
+            $('#viewReportGameFile').show();
+            $('#removeReportGameFile').show();
+        }
+
+        $('#removeReportGameFile').click(function () {
+            $('#reportloading').show();
+            $.ajax({
+                type: "POST",
+                url: "/GameCycle/RemoveGameReportFile",
+                data: {
+                    id: @Model.CycleId
+                },
+                success: function (result) {
+                    $('#reportloading').hide();
+                    console.log(result);
+                    $('#viewReportGameFile').hide();
+                    $('#removeReportGameFile').hide();
+                }
+            });
+        })
+
+        $('#UploadReportGameFile').on('change', function (e) {
+            $('#reportloading').show();
+            var files = e.target.files;
+            if (files.length > 0) {
+                if (window.FormData !== undefined) {
+                    var data = new FormData();
+                    for (var x = 0; x < files.length; x++) {
+                        data.append("file" + x, files[x]);
+                    }
+
+                    $.ajax({
+                        type: "POST",
+                        url: '/GameCycle/UploadGameReportFile?id=' + @Model.CycleId,
+                        contentType: false,
+                        processData: false,
+                        data: data,
+                        success: function (result) {
+                            $('#reportloading').hide();
+                            console.log(result);
+                            $('#viewReportGameFile').show();
+                            $('#removeReportGameFile').show();
+
+                            var path = '@(GlobVars.ContentPath + "/gamecycles/")' + result;
+
+                            $('#viewReportGameFile span').attr('onclick', 'window.open("' + path + '")');
+                        },
+                        error: function (xhr, status, p3, p4) {
+                            $('#reportloading').hide();
+                            var err = "Error " + " " + status + " " + p3 + " " + p4;
+                            if (xhr.responseText && xhr.responseText[0] == "{")
+                                err = JSON.parse(xhr.responseText).Message;
+                            console.log(err);
+                        }
+                    });
+                } else {
+                    alert("This browser doesn't support HTML5 file uploads!");
+                }
+            }
+        });
+    })
+    /*
+    var API_URL = "http://192.168.5.157:6565/v2/";
+    //var API_URL = "http://52.50.14.212:8080/v2/";
+    //var API_URL = "http://loglig.com:8080/v2/";
+
+     temporary comment. In notification panel of samsung show swapped.
+    $(document).ready(function () {
+
+        $("#gamefrm").attr('action', '');
+        $("#btn-send-change-date").attr('onclick', 'Send()');
+
+    });
+
+    $(function(){
+        $(".btn.btn-sm.btn-danger").eq(1).attr("onclick","SendPush()");
+        $(".btn.btn-sm.btn-danger").eq(1).attr("href","#");
+    }); */
+
+    // send push endgame
+    function SendPush()
+    {
+        $.post(API_URL+"send-mess-game-end.aspx",{gid:@Model.CycleId}, function(data){})
+        location.href = "/GameCycle/EndGame/@Model.CycleId";
+    }
+
+	function Send()
+	{	var txtdateChange = $('#date-change').val();
+		var id = @Model.CycleId;
+		var arena = $("#AuditoriumId option:selected").text();
+		var referee = $("#RefereeIds option:selected").text();
+
+		$.post(API_URL+ "change-date-notification.aspx",
+			{
+				id:id,
+				txtdateChange:txtdateChange,
+				arena:arena,
+				referee:referee
+
+			}, function(data){
+				if(data == 1)
+				{
+					alert("change success!");
+				}
+				else{
+					alert("Error!");
+				}
+
+			});
+
+	}
+</script>
+<script src="~/Scripts/pages/officialsFeature.js"></script>
+

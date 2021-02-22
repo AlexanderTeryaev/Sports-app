@@ -1,0 +1,109 @@
+﻿@model AppModel.ClubTeam
+<div class="" id="sections_pl">
+
+    <a class="btn btn-info export" href="@Url.Action("DownloadExcel", "Unions", new { clubId = Model.ClubId })" style="float:left;">
+        <i href="#" class="glyphicon glyphicon-open"></i> @Messages.DownloadExcelPlayers
+    </a>
+    <a class="btn btn-info export" href="@Url.Action("ExportList", "TeamPlayers", new { seasonId = Model.SeasonId, clubId = Model.ClubId, check = false, tab = "club" })"
+       style="float:left; margin-left:5px;"
+       data-target="#trainingplayerexportform"
+       data-toggle="modal">
+        <i class="glyphicon glyphicon-export"></i>
+        @Messages.ExportToExcel
+    </a>
+    <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayers", "Players",
+                                                  new {
+                                                      formName = "club",
+                                                      teamId = Model.TeamId,
+                                                      clubId = Model.ClubId, 
+                                                      seasonId = Model.SeasonId,
+                                                      updateTargetId = "trainingplayerimportform_pl"
+                                                  })"
+       data-target="#trainingplayerimportform"
+       data-toggle="modal">
+        <i class="glyphicon glyphicon-save"></i>@Messages.ImportPlayers
+    </a>
+    <a class="btn btn-info btn-edit export" onclick="exportClubPlayersImages()" style="float:left; margin-left:5px;">
+        <i class="glyphicon glyphicon-save"></i> @Messages.ExportPlayersImg
+        <i class="fa fa-spin fa-spinner" id="spinner" style="display:none"></i>
+    </a>
+    <a class="btn btn-primary btn-edit" href="@Url.Action("ImportPlayersImage", "Players", new {seasonId = Model.SeasonId})"
+       data-target="#trainingplayerimportimageform"
+       data-toggle="modal">
+        <i class="glyphicon glyphicon-save"></i> @Messages.ImportPlayersImage_ButtonCaption
+    </a>
+
+    @if (Model != null)
+    {
+        <div id="club-teams-view" class="offset-3">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th width="10%"></th>
+                        <th width="10%">#</th>
+                        <th>@Messages.Team</th>
+                        <th>@Messages.Players</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="@Url.Action("Edit", "Teams", new {id = Model.TeamId, clubId = Model?.ClubId, seasonId = Model.SeasonId })" class="@AppCss.Edit edit-team"></a>
+                        </td>
+                        <td>@Model.TeamId</td>
+                        <td>@(Model.Team.TeamsDetails.FirstOrDefault(x => x.SeasonId == Model.SeasonId)?.TeamName ?? Model.Team.Title)</td>
+                        <td>@Model.Team.TeamsPlayers.Count(x => x.SeasonId == Model.SeasonId)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+
+<div class="modal fade" id="trainingplayerimportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="trainingplayerimportform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="trainingplayerimportimageform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="trainingplayerimportimageform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="trainingplayerexportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="trainingplayerexportform_pl"></div>
+    </div>
+</div>
+<div class="modal fade" id="trainingplayerexportimagesform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="trainingplayerexportimagesform_pl"></div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+<script>
+    function exportClubPlayersImages() {
+                $.ajax({
+                    type: "POST",
+                    url: "/Players/ImgsServerCheck",
+                    data: {
+                        clubId: @Model.ClubId,
+                        seasonId: @Model.SeasonId,
+                        pageType: "@PageType.Club"
+                    },
+                    beforeSend: function() {
+                        $("#spinner").show();
+                    }
+                }).done(function (data) {
+                    $("#trainingplayerexportimagesform_pl").html(data);
+                    $("#trainingplayerexportimagesform").modal('show');
+                    $("#spinner").hide();
+                });
+        }
+</script>

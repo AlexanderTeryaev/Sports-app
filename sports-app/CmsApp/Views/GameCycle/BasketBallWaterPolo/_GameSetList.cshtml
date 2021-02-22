@@ -1,0 +1,109 @@
+﻿@model ICollection<AppModel.GameSet>
+@{
+    var needPenalties = (bool)ViewBag.NeedPenalties;
+    bool isSoftBall = ViewBag.IsSoftBall;
+}
+<script>
+    var canX = @(ViewBag.IsSoftBall ? "true":"false");
+
+</script>
+<table class="table table-bordered" id="gamesetstable">
+    <thead>
+        <tr>
+            <th>@Messages.Number</th>
+            @if (isSoftBall)
+            {
+                <th>X
+                </th>
+            }
+            <th>@Messages.HomeTeamPoints</th>
+            @if (isSoftBall)
+            {
+                <th>X</th>
+            }
+            <th>@Messages.GuesTeamPoints</th>
+            @if (needPenalties)
+            {
+                <th>@Messages.Penalties</th>
+            }
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var set in Model)
+        {
+            var formId = "setitemform" + set.GameSetId;
+        <tr>
+            <td>@set.SetNumber</td>
+            @if (isSoftBall)
+            {
+                <td>
+                    @Html.CheckBoxFor(model => set.IsHomeX, new { @form = formId })
+                </td>
+            }
+            <td>
+                @Html.TextBoxFor(model => set.HomeTeamScore, new { @class = "form-control", onkeypress = "return numbersonly(event,canX)", @form = formId })
+                @Html.ValidationMessageFor(model => set.HomeTeamScore, "", new { @class = "text-danger" })
+            </td>
+            @if (isSoftBall)
+            {
+                <td>
+                    @Html.CheckBoxFor(model => set.IsGuestX, new { @form = formId })
+                </td>
+            }
+            <td>
+                @Html.TextBoxFor(model => set.GuestTeamScore, new { @class = "form-control", onkeypress = "return numbersonly(event,canX)", @form = formId })
+                @Html.ValidationMessageFor(model => set.GuestTeamScore, "", new { @class = "text-danger" })
+            </td>
+            @if (needPenalties)
+            {
+                <td>
+                    @Html.CheckBoxFor(model => set.IsPenalties, new { @form = formId })
+                    @Html.ValidationMessageFor(model => set.IsPenalties, "", new { @class = "text-danger" })
+                </td>
+            }
+
+            <td>
+                @using (Ajax.BeginForm("UpdateGameSet", null,
+    new AjaxOptions
+    {
+        UpdateTargetId = "gamesetstable"
+    },
+   new
+   {
+       id = formId
+   }
+))
+                {
+                    @Html.HiddenFor(model => set.GameSetId, new { @form = formId })
+                    @Html.HiddenFor(model => set.GameCycleId, new { @form = formId })
+                    @Html.HiddenFor(model => set.SetNumber, new { @form = formId })
+                    @Html.Hidden("NeedPenalties", needPenalties)
+                    <button type="submit" form="@formId" class="btn btn-sm btn-primary">
+                        <i class="glyphicon glyphicon-pencil"></i>
+                        <span>@Messages.Save</span>
+                    </button>
+                }
+            </td>
+            @if (set == Model.Last())
+            {
+                <td>
+                    @Ajax.ActionLink(
+                      " ",
+                        "DeleteLastGameSet",
+                        new { id = set.GameCycleId },
+                       new AjaxOptions
+                       {
+                           InsertionMode = InsertionMode.ReplaceWith,
+                           UpdateTargetId = "gamesetstable",
+                       },
+                       new
+                       {
+                           @class = AppCss.Delete
+                       })
+                </td>
+            }
+        </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,143 @@
+﻿@model CmsApp.Models.TrainingForm
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.AddNewTraining </h4>
+</div>
+
+@using (Ajax.BeginForm("AddTraining", null,
+                                    new AjaxOptions
+                                    {
+                                        UpdateTargetId = "clubTrainingContent-tab",
+                                        OnComplete = "hideModalDialog",
+
+                                    },
+                                    new { id = "newtrainingform", enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+
+<div class="modal-body">
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    @Html.HiddenFor(model => model.ClubId)
+    @Html.HiddenFor(model => model.SeasonId)
+    @Html.HiddenFor(model => model.IsTeam)
+    @{
+    var teamsList = new SelectList(Model.TeamsSelectListItems, "Value", "Text", Model.SelectedTeamId);
+    var auditoriums = new SelectList(Model.AuditoriumSelectListItems, "Value", "Text", Model.AuditoriumId);
+    }
+    @if (Model.IsTeam)
+    {
+    @Html.HiddenFor(model => model.SelectedTeamId)
+    }
+    else
+    {
+    <div class="form-group">
+        <label class="control-label">@Messages.Team:</label>
+        @Html.DropDownListFor(model => model.SelectedTeamId, teamsList, Messages.Select, new { @class = "form-control" })
+        @Html.ValidationMessageFor(model => model.SelectedTeamId, "", new { @class = "text-danger" })
+    </div>
+    }
+
+    <div class="form-group">
+        <label class="control-label">@Messages.Title:</label>
+        @Html.EditorFor(model => model.Title, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(model => model.Title, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">@Messages.Date:</label>
+        <input type='text' name='TrainingTime' value='@Model.TrainingTime.ToString("dd/MM/yyyy HH:mm")' class="form-control frm-date required" />
+        @Html.ValidationMessageFor(model => model.TrainingTime, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <label class="control-label">@UIHelpers.GetAuditoriumCaption(ViewBag.Section):</label>
+        @Html.DropDownListFor(model => model.AuditoriumId, auditoriums, Messages.Select, new { @class = "form-control" })
+        @Html.ValidationMessageFor(model => model.AuditoriumId, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <label class="control-label">@Messages.Content:</label>
+        @Html.EditorFor(model => model.Content, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(model => model.Content, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        <label class="control-label">@Messages.TrainingReport:</label> (<span>@Messages.Max2MB</span>)
+        @Html.Editor("ImageFile", "ImageUpload", new { css = "validfile" })
+        @Html.ValidationMessage("ImageFile")
+    </div>
+</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        <button id="savebtn" class="btn btn-primary">@Messages.Save</button>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        var frm = $('#newtrainingform');
+        frm.validateBootstrap(true);
+
+        $('#savebtn', frm).click(function () {
+            return true;
+        });
+
+        function hideModalDialog(data) {
+            var dial = $('#addtraining');
+            if (($(dial).data('bs.modal') || {}).isShown) {
+                $(dial).modal('hide');
+            }
+        };
+
+        cmn.initDateTimePickers();
+
+        window.addEventListener("submit", function (e) {
+            var form = e.target;
+            if (form.getAttribute("enctype") === "multipart/form-data") {
+                if (form.dataset.ajax) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    var xhr = new XMLHttpRequest();
+                    xhr.open(form.method, form.action);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState == 4 && xhr.status == 200) {
+                            if (form.dataset.ajaxUpdate) {
+                                var isTeam = xhr.response;
+                                if (isTeam === 'true' || isTeam === true) {
+
+                                    $("#trainingsListPage").load('@Html.Raw(Url.Action("TeamTrainings", "Teams",
+                                                new {id = Model.SelectedTeamId, clubId = Model.ClubId, seasonId = Model.SeasonId, pageNumber = 1, pageSize = 10 }))');
+                                } else {
+                                    $("#trainingsListPage").load('@Html.Raw(Url.Action("ClubTrainings", "Clubs",
+                                                new {clubId = Model.ClubId, seasonId = Model.SeasonId, pageNumber = 1, pageSize = 10 }))');
+                                }
+                                
+                                $('#res_tbl tbody tr').each(function () {
+                                    var me = $(this);
+                                    var id = me.attr('id').substring(9);
+                                    var btn = $('[name=savebtn_' + id+']', me);
+                                    $("input:file", me).change(function () {
+                                        btn.attr('disabled', null);
+                                    });
+                                    var rmFile = $('div[name=remove-report]', me);
+                                    if (rmFile != null) {
+                                        var file = $('img[name=training-report]', me)[0];
+                                        var rmImg = $('input[name=RemoveReport]', me)[0];
+                                        rmFile.on('click', function () {
+                                            file.style.visibility = 'hidden';
+                                            rmImg.value = 'true';
+                                            btn.attr('disabled', null);
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                    };
+                    xhr.send(new FormData(form));
+                }
+            }
+        }, true);
+    });
+</script>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

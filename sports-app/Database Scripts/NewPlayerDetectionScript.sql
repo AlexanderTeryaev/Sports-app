@@ -1,0 +1,1 @@
+ALTER TABLE [LogLig].[dbo].[Users] ADD SeasonIdOfCreation INT NULL;  

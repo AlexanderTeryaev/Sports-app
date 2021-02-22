@@ -1,0 +1,162 @@
+﻿@using AppModel
+@using Resources
+@using LogLigFront.Helpers
+@model List<IGrouping<Tuple<int?, int>, CompetitionClubsCorrection>>
+@{ 
+    var isGoldenSpike = ViewBag.isGoldenSpike;
+}
+<div class="modal-dialog modal-lg modal-result-custom-width">
+    <div class="modal-content" style="padding: 18px;">
+        <a href="" onclick="printClick(this.parentElement);" class="print_print_id btn btn-primary remove_print desktop-only float-last">
+            <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+        </a>
+        <div class="print_id" id="print_id" data-print-title="">
+            <style>
+                td, th {
+                    text-align: center;
+                }
+                .modal-result-custom-width {
+                    width:100%;
+                }
+
+            @@media screen and (min-width: 1000px) {
+                .modal-result-custom-width {
+                    max-width:1000px;
+                    width:90%;
+                }
+            @@page{size:auto; margin:5mm;}
+            }
+            </style>
+            <div class="main-title disciplines-title">
+                <table class="borderless disciplines-title" style="width:100%;">
+                    <tr>
+                        <td style="vertical-align : middle;text-align:center;" colspan="3" rowspan="3">
+                            @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+                            {
+                                <img src="@ViewBag.Logo" class="img-circle keep-for-print" style="max-height:100px;max-width:150px;" alt="" />
+                            }
+                        </td>
+                        <td style="text-align:center;" colspan="4">
+                            <h3 style="margin-top:0px;margin-bottom:0px;">
+                                @ViewBag.CompetitionName
+                            </h3>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <h4 style="margin-top:0px;margin-bottom:0px;">
+                                @if (ViewBag.CompetitionDate != null)
+                                {
+                                    @ViewBag.CompetitionDate.ToString("dd/MM/yyyy")
+                                }
+                            </h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><h4 style="margin-top:0px;margin-bottom:0px;">@Messages.League_RankedStandings</h4></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="row col-sm-12">
+                @if (ViewBag.IsFieldCompetition == true)
+                {
+                    if (ViewBag.FieldRaceTables.Count > 0)
+                    {
+                        <div class="col-sm-12"><h4 style="text-align:center;">@Messages.FieldRaceRanks</h4></div>
+                    }
+                    foreach (var table in ViewBag.FieldRaceTables)
+                    {
+                        var index = 0;
+                        <div class="col-sm-6">
+                            <br />
+                            <h4>@(table.Item1)</h4>
+                            <div class="table-responsive">
+                                <table class="table res-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-sm-1">#</th>
+                                            <th class="col-sm-1">@Messages.Club</th>
+                                            <th class="col-sm-1">@Messages.Points</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in table.Item2)
+                                        {
+                                            index += 1;
+                                            <tr>
+                                                <td>@index</td>
+                                                <td>@row.Item1</td>
+                                                <td>@row.Item2</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    }
+                    if (ViewBag.FieldRaceTables.Count % 2 == 1)
+                    {
+                        <div class="col-sm-6"></div>
+                    }
+                }
+            </div>
+            <div class="row col-sm-12">
+                @if (Model.Count > 0)
+                {
+                    <div class="col-sm-12"><h4 style="text-align:center;">@(isGoldenSpike ? Messages.GoldenSpikes : Messages.AthleticLeagueRanks)</h4></div>
+                }
+                @foreach (var table in Model)
+                {
+                    var index = 0;
+                    <div class="col-sm-6">
+                        <br />
+                        <h4>@(UIHelpers.GetAthleticLeagueTypeById(table.Key.Item1)) - @(table.Key.Item2 == 0 ? Messages.Women : Messages.Men)</h4>
+                        <div class="table-responsive">
+                            <table class="table res-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>@Messages.Club</th>
+                                        <th>@Messages.Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in table)
+                                    {
+                                        index += 1;
+                                        <tr>
+                                            <td>@index</td>
+                                            <td>
+                                                <a href="@Url.Action("AthleticsLeagueClubResults","LeagueTable", new { id = row.Club.ClubId, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId, GenderId = table.Key.Item2, LeagueType = table.Key.Item1, isModal = true })"
+                                                   data-target="#athleticleagueclubresults" data-toggle="modal" onclick="hidePopup();" class="" style="margin: 8px 0;padding: 2px 12px; color:#000080;">@(row.Club.Name)</a>
+                                            </td>
+                                            <td>@(Decimal.Round(row.FinalScore, 0))@(row.ResultsCounted.HasValue && !isGoldenSpike ? $" ({row.ResultsCounted})": "")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                @if (Model.Count % 2 == 1)
+                {
+                    <div class="col-sm-6"></div>
+                }
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default mobile-only" data-dismiss="modal">Close</button>
+            </div>
+            @section scripts
+                {
+                <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+            }
+        </div>
+    </div>
+</div>
+<script>
+    function hidePopup() {
+        //$('#athleticsregistrationlist').modal('hide');
+    }
+</script>

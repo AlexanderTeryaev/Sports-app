@@ -1,0 +1,69 @@
+﻿@model IEnumerable<TennisGameViewModel>
+
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close pull-left" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+            <h4 class="modal-title">תוצאות המפגש</h4>
+        </div>
+        <div class="modal-body">
+            @if (Model.Count() == 0)
+            {
+                <div class="alert alert-warning">אין תוצאות</div>
+            }
+            else
+            {
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th width="40%" style="text-align:center">@ViewBag.HomeTeamName</th>
+                            <th width="20%" style="text-align:center">@Resources.Messages.Scores</th>
+                            <th width="40%" style="text-align:center">@ViewBag.GuestTeamName</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var game in Model)
+                        {
+                            <tr>
+                                <td align="center" valign="middle">
+                                    <div class="row"><b>@game.Player1Name</b></div>
+                                    @if (game.TechnicalWinnerId.HasValue && game.HomePlayerId == game.TechnicalWinnerId)
+                                    {
+                                        <div class="row"><span class="label label-success">@Resources.Messages.TechWin</span></div>
+                                    }
+                                </td>
+                                <td align="center" valign="middle">
+                                    @foreach (var gameScores in game.Sets)
+                                    {
+                                    <p style="line-height: 10px;">
+                                        <text style="font-size:18px;">
+                                            @gameScores.HomeScore : @gameScores.GuestScore
+                                        </text>
+                                        @if (gameScores.IsTieBreak)
+                                        {
+                                            <span style="float:right;">T-B</span>
+                                        }
+                                    </p>
+
+                                    }
+                                </td>
+                                <td align="center" valign="middle">
+                                    <div class="row"><b>@game.Player2Name</b></div>
+                                    @if (game.TechnicalWinnerId.HasValue && game.GuestPlayerId == game.TechnicalWinnerId)
+                                    {
+                                        <div class="row"><span class="label label-success">@Resources.Messages.TechWin</span></div>
+                                    }
+                                </td>
+
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">סגור</button>
+        </div>
+    </div>
+</div>
+

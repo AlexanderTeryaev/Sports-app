@@ -1,0 +1,2 @@
+ALTER TABLE dbo.UsersJobs ADD
+	IsCompetitionRegistrationBlocked bit NOT NULL CONSTRAINT DF_UsersJobs_IsCompetitionRegistrationBlocked DEFAULT 0

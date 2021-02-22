@@ -1,0 +1,163 @@
+﻿@model NotificationsForm
+
+
+@using (Ajax.BeginForm("SendNotification", "TeamPlayers", new { unionId = Model.UnionId, clubId = Model.ClubId },new AjaxOptions { HttpMethod = "Post", OnSuccess = "onSendComplete"  },
+        new { id = "notificationForm", autocomplete = "off", enctype = "multipart/form-data" }))
+{
+    @Html.HiddenFor(m => m.SeasonId)
+    @Html.HiddenFor(m => m.EntityId)
+    @Html.HiddenFor(m => m.RelevantEntityLogicalName)
+    @Html.HiddenFor(m => m.TeamId)
+    @Html.HiddenFor(m => m.ClubEmail)
+    @Html.HiddenFor(m => m.UnionEmail)
+
+
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+        <h4 class="modal-title">@Messages.PlayerNotification_ModalTitle</h4>
+    </div>
+    <div class="modal-body">
+
+        <div id="divOnFailure"></div>
+        <div class="alert alert-danger" id="fail_send_notification_message" style="display:none;">
+            @Messages.PlayerNotification_FailResult
+        </div>
+        <div class="alert alert-success" id="success_send_notification_message" style="display:none;">
+            @Messages.PlayerNotification_SuccessResult
+        </div>
+        <div id="form_notification_fill">
+            @if (ViewBag.SendeSuccess == true)
+            {
+                <div class="alert alert-success">
+                    @Messages.PlayerNotification_SuccessResult
+                </div>
+            }
+            else
+            {
+                <div class="form-group">
+                    <label class="control-label">@Messages.Subject:</label>
+                    @Html.TextBoxFor(m => m.Subject, new { @class = "form-control" })
+                </div>
+                <div class="form-group">
+                    <label class="control-label">@Messages.Message:</label>
+                    @Html.TextAreaFor(m => m.Message, new { rows = "3", @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.Message)
+                </div>
+                <div class="row">
+                    <div class="form-inline col-sm-4">
+                        @Html.LabelFor(m => m.SendByEmail, Messages.SendAlsoByEmail)
+                        @Html.CheckBoxFor(m => m.SendByEmail)
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="btn btn-default btn-file">
+                            <span>@Messages.AddFile</span>
+                            <input type="file" id="EmailFile" name="EmailFile" data-val="true" data-val-regex-pattern="^.*\.(jpg|JPG|jpeg|JPEG|png|PNG|pdf|PDF)$"
+                                   data-val-regex="@Messages.SelectValidFile" />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default close-modal" data-dismiss="modal">@Messages.Close</button>
+        @if (ViewBag.SendeSuccess != true)
+        {
+            <button  id="send_notification_button" type="submit" class="btn btn-primary">@Messages.Send</button>
+        }
+
+    </div>
+}
+
+<div id="playerEmailModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-body" style="padding:5px;">
+                <div class="row no-marging">
+                    @if (!string.IsNullOrEmpty(Model.ClubEmail))
+                    {
+                        <div class="alert alert-info no-marging">
+                            <h5>
+                                @Messages.SendThrowClubEmail
+                            </h5>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.UnionEmail))
+                    {
+                        <div class="alert alert-info no-marging">
+                            <h5>
+                                @Messages.SendThrowUnionEmail
+                            </h5>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning no-marging">
+                            <h5>
+                                <span class="glyphicon glyphicon-warning-sign"></span>&nbsp;&nbsp;
+                                @(!String.IsNullOrEmpty(Model.UnionEmail)
+                                                                                                                                                                ? Messages.NoClubEmailWasDefined.Replace(Messages.Club.ToLower(), Messages.Union.ToLower())
+                                                                                                                                                                : Messages.NoClubEmailWasDefined)
+                            </h5>
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                @if (!string.IsNullOrEmpty(Model.ClubEmail) || (!string.IsNullOrEmpty(Model.UnionEmail) && Model.IsUnionManager))
+                {
+                    <button onclick="sendByClubEmail(false)" type="button" class="btn btn-secondary">@Messages.No</button>
+                    <button onclick="sendByClubEmail(true)" type="button" class="btn btn-primary">@Messages.Yes</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" onclick="$('#playerEmailModal').modal('hide');">@Messages.Close</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    $("#SendByEmail").change(function () {
+        var isChecked = $(this).is(":checked");
+        if (isChecked) {
+            $("#playerEmailModal").modal("show");
+        }
+        else {
+            sendByClubEmail(false);
+        }
+    });
+
+    function sendByClubEmail(isClubEmailChecked) {
+        if (isClubEmailChecked) {
+            $("#notificationForm").append('<input type="hidden" value="True" name= "IsClubEmailChecked" id="clubEmailHidden" />');
+        }
+        else {
+            var clubEmailHidden = $("#clubEmailHidden");
+            if (clubEmailHidden) {
+                $("#clubEmailHidden").remove();
+            }
+        }
+        $("#playerEmailModal").modal("hide");
+    }
+
+    function onSendComplete(data) {
+        if (data.Success) {
+            $("#success_send_notification_message").show();
+            $("#form_notification_fill").hide();
+            $("#send_notification_button").hide();
+            $("#fail_send_notifdication_message").hide();
+        } else {
+            $("#success_send_notification_message").hide();
+            $("#form_notification_fill").show();
+            $("#send_notification_button").show();
+            $("#fail_send_notifdication_message").show();
+        }
+    }
+</script>
+

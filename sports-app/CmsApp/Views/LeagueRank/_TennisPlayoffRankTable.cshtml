@@ -1,0 +1,64 @@
+﻿@model IEnumerable<DataService.DTO.TennisPlayoffRank>
+@{
+    string sectionAlias = ViewBag.SectionAlias != null ? ViewBag.SectionAlias : string.Empty;
+    var needScore = string.Equals(sectionAlias, GamesAlias.BasketBall, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(sectionAlias, GamesAlias.WaterPolo, StringComparison.OrdinalIgnoreCase);
+}
+@if (Model != null && Model.Any())
+{
+    var groupedPlayoff = Model.GroupBy(c => c.GroupName);
+    foreach (var group in groupedPlayoff)
+    {
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-sm-6 playOff">
+                <table class="table table-bordered">
+                    <caption>@group.Key</caption>
+                    <thead>
+                        <tr>
+                            <th class="col-sm-1">@Messages.Rank</th>
+                            <th class="col-sm-3">@Messages.Player</th>
+                            <th class="col-sm-1">@Messages.Competition @Messages.Rank.ToLower()</th>
+                            <th class="col-sm-1">@Messages.Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var ranks = group.Select(c => c)?.OrderBy(c => c.Rank)?.ThenBy(c => c.PlayerName)?.ToList();
+                            var counter = 1;
+                        }
+                        @for (var i = 0; i < ranks.Count; i++)
+                        {
+                            <tr>
+                                <td>-</td>
+                                <td>@ranks[i].PlayerName</td>
+                                <td>
+                                    @{
+                                        var rank = string.Empty;
+                                        if (i == 0)
+                                        {
+                                            rank = ranks[i]?.Rank?.ToString();
+                                        }
+                                        else
+                                        {
+                                            if (ranks[i - 1]?.Rank == ranks[i]?.Rank)
+                                            {
+                                                rank = "-";
+                                            }
+                                            else
+                                            {
+                                                rank = ranks[i]?.Rank?.ToString();
+                                            }
+                                        }
+                                    }
+                                    @rank
+                                </td>
+                                <td>@ranks[i].Points</td>
+                            </tr>
+                            counter++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}

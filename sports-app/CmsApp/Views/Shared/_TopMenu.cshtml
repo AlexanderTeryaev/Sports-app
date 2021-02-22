@@ -1,0 +1,22 @@
+﻿<nav class="navbar navbar-default navbar-fixed-top navbar-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed navbar-left" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <span class="navbar-brand"><img  alt="Loglig Logo" src="~/Content/loglig_design/img/img_logo.png"/></span>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <div class="flags">
+                <a href='@Url.Action("SetCulture", "Common", new { lang = "he"})' class="he" title="עברית"></a>
+                <a href='@Url.Action("SetCulture", "Common", new { lang = "en"})' class="en" title="english"></a>
+                <a href='@Url.Action("SetCulture", "Common", new { lang = "uk"})' class="ua" title="Український"></a>
+            </div>
+            <ul class="nav navbar-nav navbar-left visible-xs">
+                @Html.Partial("_Navbar")
+            </ul>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,47 @@
+﻿@using Resources
+@using AppModel
+@model List<Club>
+<div class="modal-dialog modal-lg modal-result-custom-width">
+    <div class="modal-content" style="padding: 18px;">
+        <div class="print_id">
+            <div class="modal-header">
+                <a href="" onclick="printClick();" class="print_print_id btn btn-primary remove_print desktop-only float-last">
+                    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+                </a>
+                <h4 class="disciplines-title">@ViewBag.CompetitionName - @ViewBag.CompetitionDate</h4>
+                <h4 class="disciplines-title">@Messages.ResultsByClub</h4>
+            </div>
+            <style>
+                td, th {
+                    text-align: center;
+                }
+            </style>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table res-table" data-print-title="">
+                        <thead style="color:royalblue;">
+                            <tr>
+                                <th>@Messages.ClubName</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var club in Model)
+                            {
+                            <tr>
+                                <td>
+                                    <a href="@Url.Action("AthleticsLeagueClubResults", new { id = club.ClubId, leagueId = ViewBag.LeagueId, seasonId = ViewBag.SeasonId, isModal = true })"
+                                       data-target="#athleticleagueclubresults" data-toggle="modal" class="btn btn-primary" style="margin: 8px 0;padding: 2px 12px;">@club.Name</a>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @section scripts
+                {
+                    <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,43 @@
+﻿@model LoginResetPasswordModel
+
+@using (Html.BeginForm("ResetPassword", "Login", FormMethod.Post, new {@class = "login", style = "margin: 30px auto 0 auto;"}))
+{
+    <fieldset>
+        <legend class="legend">@Messages.Login_ResetPassword_Title</legend>
+
+        @if (Model.ResetCompleted)
+        {
+            <div class="text-primary">
+                <i class="fa fa-check-circle fa-3x"></i>
+                <p>
+                    @Messages.Login_ResetPassword_Success
+                </p>
+                <p>
+                    @(Model.Culture == CultEnum.En_US 
+                          ? Html.ActionLink(Messages.Login_RestorePassword_GetBack, "Index", "Logineng", null, new {@class = "btn btn-primary btn-xs"}) 
+                          : Html.ActionLink(Messages.Login_RestorePassword_GetBack, "Index", "Login", null, new {@class = "btn btn-primary btn-xs"}))
+                </p>
+            </div>
+        }
+        else
+        {
+            @Html.HiddenFor(x => x.ResetId)
+            <div class="input">
+                @Html.PasswordFor(m => m.ResetPassword, new {@placeholder = Messages.Login_ResetPassword_NewPassword})
+                <span>&nbsp;</span>
+                <span><i class="fa fa-key"></i></span>
+            </div>
+            <div class="input">
+                @Html.PasswordFor(m => m.ConfirmResetPassword, new {@placeholder = Messages.Login_ResetPassword_ConfirmNewPassword})
+                <span>&nbsp;</span>
+                <span><i class="fa fa-key"></i></span>
+            </div>
+            <p class="text-primary">
+                @Html.ValidationMessageFor(x => x.ConfirmResetPassword)
+            </p>
+            <button type="submit" class="submit">
+                <i class="fa fa-long-arrow-right"></i>
+            </button>
+        }
+    </fieldset>
+}

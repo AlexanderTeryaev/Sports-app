@@ -1,0 +1,309 @@
+﻿@model ActivityRegistrationsStatusModel
+
+<div id="activity-status-container">
+
+@using (Html.BeginForm("ExportRegStatusToExcel", "Activity", new { id = Model.ActivityId }, FormMethod.Post, new { id = "exportExcelForm" }))
+{
+    <button type="submit" class="btn btn-info" href="#" data-toggle="tooltip" title="@Messages.TooltipExportToExcel">
+        <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+    </button>
+}
+
+@Html.Partial("_SendNotificationToSelected", Model)
+
+@if (Model.IsDataTruncated)
+{
+    <div class="alert alert-warning" role="alert" style="margin-top: 10px">
+        <span class="glyphicon glyphicon-warning-sign"></span>
+
+        @Messages.Activity_Status_BigAmountOfData <a href="#" id="show-all" data-activity="@Model.Activity.ActivityId">@Messages.Activity_Status_BigAmountOfData_ClickHere</a>
+    </div>
+}
+
+<div class="modal fade" id="deleteRegistrationModal" tabindex="-1" role="dialog" aria-labelledby="deleteRegistrationModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="@Messages.Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="deleteRegistrationModalLabel">@Messages.Activity_DeleteRegistration</h4>
+            </div>
+            <div class="modal-body">
+                @Messages.Activity_DeleteRegistrationConfirmation
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Cancel</button>
+                <button type="button" id="deleteRegistrationButton" data-activity="@Model.ActivityId" class="btn btn-primary">@Messages.Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<div id="toggle-columns">
+    @Messages.Activity_Status_ToggleColumns: <span id="activity-status-columns-list"></span>
+</div>
+
+<table id="registrationStatus-table" data-registrationstitle="@Model.Title" data-activityname="@Model.Activity.Name" data-columnsorder="@Model.ColumnsOrder" data-columnsnames="@Model.ColumnsNames" data-columnssorting="@Model.ColumnsSorting" data-hiddencolumns="@(string.Join(",", Model.HiddenColumns))" class="table table-striped table-bordered offset-2" cellspacing="0" width="100%" style="margin-top: 10px;">
+<thead>
+    <tr>
+        <th data-orderable="false" data-nofilter>@Messages.TeamPlayers_ProfilePicture</th>
+        @if (!Model.Activity.NoTeamRegistration)
+        {
+            <th>@Messages.Team</th>
+            <th>@Messages.SchoolName</th>
+        }
+        <th @(Model.CanEdit ? "data-type=html-input" : "")>@Messages.IdentNum</th>
+        <th @(Model.CanEdit ? "data-type=html-input" : "")>@Messages.FirstName</th>
+        <th @(Model.CanEdit ? "data-type=html-input" : "")>@Messages.LastName</th>
+        <th @(Model.CanEdit ? "data-type=html-input" : "")>@Messages.MiddleName</th>
+        <th>@Messages.Gender</th>
+        <th @(Model.CanEdit ? "data-type=html-input" : "")>@Messages.Email</th>
+        <th @(Model.CanEdit ? "data-type=html-input" : "")>@Messages.Phone</th>
+        <th @(Model.CanEdit ? "data-type=html-input" : "")>@Messages.Address</th>
+        <th @(Model.CanEdit ? "data-type=html-input" : "")>@Messages.Activity_BuildForm_BirthDate</th>
+        @if (Model.Activity.RegistrationPrice)
+        {
+            <th>@Messages.TeamDetails_PlayerRegistrationAndEquipmentPrice</th>
+            <th @(Model.CanPay ? "data-order-data-type=dom-text data-type=html-input" : "")>@Messages.TeamDetails_PlayerRegistrationAndEquipmentPrice_Paid</th>
+        }
+        @if (Model.Activity.ParticipationPrice)
+        {
+            <th>@Messages.TeamDetails_ParticipationPrice</th>
+            <th @(Model.CanPay ? "data-order-data-type=dom-text data-type=html-input" : "")>@Messages.TeamDetails_ParticipationPrice_Paid</th>
+            if (Model.Activity.AllowNoParticipationPayment)
+            {
+                <th>@Messages.Activity_DoNotPayParticipation</th>
+            }
+        }
+        @if (Model.Activity.InsurancePrice)
+        {
+            <th>@Messages.TeamDetails_PlayerInsurancePrice</th>
+            <th @(Model.CanPay ? "data-order-data-type=dom-text data-type=html-input" : "")>@Messages.Activity_BuildForm_InsurancePaid</th>
+            if (Model.Activity.AllowNoInsurancePayment)
+            {
+                <th>@Messages.Activity_DoNotPayInsurance</th>
+            }
+        }
+        <th>@Messages.Activity_BuildForm_RemainForPayment</th>
+        @if (Model.Activity.CustomPricesEnabled && Model.ActivityCustomPrices.Any())
+        {
+            foreach (var activityCustomPrice in Model.ActivityCustomPrices)
+            {
+                <th>@(Model.Culture != CultEnum.He_IL ? activityCustomPrice.TitleEng : activityCustomPrice.TitleHeb)</th>
+                <th>@(Model.Culture != CultEnum.He_IL ? activityCustomPrice.TitleEng : activityCustomPrice.TitleHeb) @Messages.Paid</th>
+            }
+        }
+        @*<th>@Messages.Activity_BuildForm_AmountPaid</th>*@
+        @*<th>@Messages.Activity_BuildForm_InsurancePaid</th>*@
+        @*<th>@Messages.Activity_BuildForm_NameForInvoice</th>*@
+        @if (Model.BenefactorEnabled)
+        {
+            <th>@Messages.Activity_BuildForm_ByBenefactor</th>
+            <th>@Messages.Activity_BuildForm_AmountPayedByBenefactor</th>
+        }
+        @if (Model.DocumentEnabled)
+        {
+            <th data-orderable="false" data-nofilter>@Messages.Activity_BuildForm_Document</th>
+        }
+        @if (Model.MedicalCertEnabled)
+        {
+            <th data-orderable="false" data-nofilter>@Messages.Activity_BuildForm_MedicalCert</th>
+            <th data-order-data-type="dom-checkbox">@Messages.Activity_BuildForm_ApproveMedicalCert</th>
+        }
+        @if (Model.InsuranceCertEnabled)
+        {
+            <th data-orderable="false" data-nofilter>@Messages.Activity_BuildForm_InsuranceCert</th>
+        }
+        <th>@Messages.Activity_BuildForm_Comments</th>
+        @Html.Partial("_RenderCustomFieldsHeaders", new Tuple<CultEnum, bool, List<AppModel.ActivityFormsDetail>>(Model.Culture, Model.CanEdit, Model.FormFields))
+        <th>@Messages.Activity_BuildForm_DateSubmitted</th>
+        <th>@Messages.Activity_BuildForm_ClubComment</th>
+        @Html.Partial("Status/Common/Headers/_RenderCardComInvoiceNumberAndNumberOfPaymentsHeader", Model.Registrations)
+        <th data-order-data-type="dom-checkbox" data-type="html-input" name="IsActiveColumn">@Messages.Activity_BuildForm_RegistrationStatusActive</th>
+        <th data-orderable="false" data-nofilter>@Messages.Activity_Status_SendNotificationColumn</th>
+        @if (Model.CanDelete)
+        {
+            <th data-orderable="false" data-nofilter></th>
+            <!-- delete registration -->
+        }
+    </tr>
+</thead>
+<tbody>
+@foreach (var reg in Model.Registrations)
+{
+    <tr>
+        <td>
+            @if (!string.IsNullOrWhiteSpace(reg.ProfilePicture))
+            {
+                <a target="_blank" href="@($"{GlobVars.ContentPath}/players/{reg.ProfilePicture}")">
+                    <img class="img-responsive img-thumbnail" style="max-height: 50px;max-width: 50px" src="@($"{GlobVars.ContentPath}/players/{reg.ProfilePicture}")" alt="" />
+                </a>
+            }
+        </td>
+        @if (!Model.Activity.NoTeamRegistration)
+        {
+            @Html.Partial("Status/Common/_RenderTeamName", new Tuple<ActivityRegistrationItem, int?, int?>(reg, Model.Activity.UnionId, Model.Activity.SeasonId))
+            <td>@reg.School</td>
+        }
+        <td data-sort="@reg.UserIdNum">@if (Model.CanEdit){<a href="#" class="x-editable" data-x-ed-type="text" data-x-ed-url="@Url.Action("EditPlayerData", "Activity")" data-x-ed-pk="@reg.UserId" data-x-ed-name="@nameof(reg.UserIdNum)" data-x-ed-title="@Messages.Activity_Status_Edit_EnterPlayerIdentityNumber">@reg.UserIdNum</a>}else{@reg.UserIdNum}</td>
+        @Html.Partial("Status/Common/_RenderPlayerName", new Tuple<ActivityRegistrationsStatusModel, ActivityRegistrationItem>(Model, reg))
+        <td>@reg.PlayerGender</td>
+        <td data-sort="@reg.PlayerEmail">@if (Model.CanEdit){<a href="#" class="x-editable" data-x-ed-type="text" data-x-ed-url="@Url.Action("EditPlayerData", "Activity")" data-x-ed-pk="@reg.UserId" data-x-ed-name="@nameof(reg.PlayerEmail)" data-x-ed-title="@Messages.Activity_Status_Edit_EnterPlayerEmail">@reg.PlayerEmail</a>}else{@reg.PlayerEmail}</td>
+        <td data-sort="@reg.PlayerPhone">@if (Model.CanEdit){<a href="#" class="x-editable" data-x-ed-type="text" data-x-ed-url="@Url.Action("EditPlayerData", "Activity")" data-x-ed-pk="@reg.UserId" data-x-ed-name="@nameof(reg.PlayerPhone)" data-x-ed-title="@Messages.Activity_Status_Edit_EnterPlayerPhone">@reg.PlayerPhone</a>}else{@reg.PlayerPhone}</td>
+        <td data-sort="@reg.PlayerAddress">@if (Model.CanEdit){<a href="#" class="x-editable" data-x-ed-type="text" data-x-ed-url="@Url.Action("EditPlayerData", "Activity")" data-x-ed-pk="@reg.UserId" data-x-ed-name="@nameof(reg.PlayerAddress)" data-x-ed-title="@Messages.Activity_Status_Edit_EnterPlayerAddress">@reg.PlayerAddress</a>}else{@reg.PlayerAddress}</td>
+        <td data-sort="@(reg.PlayerBirthDate?.Ticks ?? 0)">@if (Model.CanEdit){<a href="#" class="x-editable" data-x-ed-type="combodate" data-x-ed-format="DD/MM/YYYY" data-x-ed-locale="@(Model.Culture != CultEnum.He_IL ? "en" : "he")" data-x-ed-url="@Url.Action("EditPlayerData", "Activity")" data-x-ed-pk="@reg.UserId" data-x-ed-name="@nameof(reg.PlayerBirthDate)" data-x-ed-title="@Messages.Activity_Status_Edit_EnterPlayerBirthDate">@(reg.PlayerBirthDate?.ToString("d"))</a>}else{@(reg.PlayerBirthDate?.ToString("d"))}</td>
+        @if (Model.Activity.RegistrationPrice)
+        {
+            <td class="price">@reg.LeaguePrice</td>
+            if (Model.CanPay)
+            {
+                <td>
+                    <input data-regid="@reg.Id" data-activity="@Model.ActivityId" type="text" style="width: 100px" class="form-control registrationPaidValue" value="@reg.RegistrationPaid"/>
+                </td>
+            }
+            else
+            {
+                <td>@reg.RegistrationPaid</td>
+            }
+        }
+        @if (Model.Activity.ParticipationPrice)
+        {
+            <td class="participationPrice">@reg.ParticipationPrice</td>
+            if (Model.CanPay)
+            {
+                <td>
+                    <input data-regid="@reg.Id" data-activity="@Model.ActivityId" type="text" style="width: 100px" class="form-control participationPaidValue" value="@reg.ParticipationPaid"/>
+                </td>
+            }
+            else
+            {
+                <td>@reg.ParticipationPaid</td>
+            }
+            if (Model.Activity.AllowNoParticipationPayment)
+            {
+                <td>@(reg.DisableParticipationPayment == true ? Messages.Yes : Messages.No)</td>
+            }
+        }
+        @if (Model.Activity.InsurancePrice)
+        {
+            <td class="insurancePrice">@reg.InsurancePrice</td>
+            if (Model.CanPay)
+            {
+                <td>
+                    <input data-regid="@reg.Id" data-activity="@Model.ActivityId" type="text" style="width: 100px" class="form-control insurancePaidValue" value="@reg.InsurancePaid"/>
+                </td>
+            }
+            else
+            {
+                <td>@reg.InsurancePaid</td>
+            }
+            if (Model.Activity.AllowNoInsurancePayment)
+            {
+                <td>@(reg.DisableInsurancePayment == true ? Messages.Yes : Messages.No)</td>
+            }
+        }
+        <td class="remainPayment">@(reg.LeaguePrice + reg.InsurancePrice + reg.ParticipationPrice - (reg.InsurancePaid + reg.RegistrationPaid + reg.ParticipationPaid))</td>
+        @if (Model.Activity.CustomPricesEnabled && Model.ActivityCustomPrices.Any())
+        {
+            foreach (var activityCustomPrice in Model.ActivityCustomPrices)
+            {
+                var regCustomPrice = reg.CustomPrices.FirstOrDefault(x => x.PropertyName == $"customPrice-{activityCustomPrice.Id}");
+                <td>@(regCustomPrice?.TotalPrice)</td>
+                <td>@(regCustomPrice?.Paid)</td>
+            }
+        }
+        @*@{
+                var insurancePaid = reg.Paid > 0 && (reg.InsurancePaid == null || reg.InsurancePaid == 0) ? reg.Paid - reg.LeaguePrice : reg.InsurancePaid;
+            }
+            @if (Model.CanEdit)
+            {
+                <td>
+                    <input data-regid="@reg.Id" data-activity="@Model.ActivityId" type="text" style="width: 100px" class="form-control insurancePaidValue" value="@insurancePaid"/>
+                </td>
+            }
+            else
+            {
+                <td>@insurancePaid</td>
+            }*@
+        @*<td>@reg.NameForInvoice</td>*@
+        @if (Model.BenefactorEnabled)
+        {
+            <td>@reg.PaymentByBenefactor</td>
+            <td>@reg.ByBenefactorPrice</td>
+        }
+        @if (Model.DocumentEnabled)
+        {
+            <td>@if (!string.IsNullOrWhiteSpace(reg.Document))
+                {
+                    <a target="_blank" href="@($"{GlobVars.ContentPath}/publishedactivityforms/{reg.Document}")"><span class="glyphicon glyphicon-new-window"></span></a>
+                }
+            </td>
+        }
+        @if (Model.MedicalCertEnabled)
+        {
+            <td>@if (!string.IsNullOrWhiteSpace(reg.MedicalCert))
+                {
+                    <a target="_blank" href="@($"{GlobVars.ContentPath}/players/{reg.MedicalCert}")"><span class="glyphicon glyphicon-new-window"></span></a>
+                }
+            </td>
+            <td>
+                @if (!string.IsNullOrWhiteSpace(reg.MedicalCert))
+                {
+                    <input type="checkbox" class="approveMedicalCert" data-activity="@Model.Activity.ActivityId" data-user="@reg.UserIdNum" @(reg.MedicalCertApproved ? "checked" : "") @(!Model.CanApproveMedicalCert ? "disabled=disabled readonly=readonly" : "")/>
+                }
+            </td>
+        }
+        @if (Model.InsuranceCertEnabled)
+        {
+            <td>@if (!string.IsNullOrWhiteSpace(reg.InsuranceCert))
+                {
+
+                    <a target="_blank" href="@($"{GlobVars.ContentPath}/players/{reg.InsuranceCert}")"><span class="glyphicon glyphicon-new-window"></span></a>
+                }
+            </td>
+        }
+        <td>@reg.Comments</td>
+
+        @Html.Partial("_RenderCustomFields", new Tuple<ActivityRegistrationItem, bool, List<AppModel.ActivityFormsDetail>>(reg, Model.CanEdit, Model.FormFields))
+
+        <td data-sort="@reg.DateSubmitted.Ticks">@(reg.DateSubmitted.ToString("d"))</td>
+        <td>
+            @if (Model.CanEdit)
+            {
+                <textarea data-activity="@Model.ActivityId" data-regid="@reg.Id" class="form-control club-comment" rows="1">@reg.ClubComment</textarea>
+            }
+            else
+            {
+                @reg.ClubComment
+            }
+        </td>
+            
+        @Html.Partial("Status/Common/_RenderCardComInvoiceNumberAndNumberOfPayments", new Tuple<IEnumerable<ActivityRegistrationItem>, ActivityRegistrationItem>(Model.Registrations, reg))
+
+        <td>
+            @if (Model.CanEdit)
+            {
+                <input class="registrationActive" type="checkbox" @(reg.IsActive ? "checked" : "") data-activity="@Model.ActivityId" data-regid="@reg.Id"/>
+            }
+            else
+            {
+                <input class="registrationActive" type="checkbox" @(reg.IsActive ? "checked" : "") disabled="disabled" readonly="readonly"/>
+            }
+        </td>
+        <td>
+            <input class="sendNotification" data-userid="@reg.UserId" type="checkbox" />
+        </td>
+        @if (Model.CanDelete)
+        {
+            <td>
+                <button type="button"
+                        class="btn btn-danger glyphicon glyphicon-trash"
+                        data-regid="@reg.Id"
+                        data-target="#deleteRegistrationModal"
+                        data-toggle="modal"></button>
+            </td>
+        }
+    </tr>
+}
+</tbody>
+</table>
+</div>

@@ -1,0 +1,17 @@
+﻿@model VehicleModel
+
+<div id="sportsmenInformation">
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.LicenseNumber:</label>
+            @Html.TextBoxFor(m => m.LicenseNumber, new { @class = "form-control", form = "createvehicleform" })
+            @Html.ValidationMessageFor(m => m.LicenseNumber, $"\"{Messages.LicenseNumber}\" {Messages.FieldIsRequired}")
+        </div>
+        <div class="form-group col-sm-6">
+            <label class="control-label">@Messages.Valid:</label>
+            @{ var valid = Model.Valid?.ToShortDateString() ?? string.Empty;}
+            @Html.TextBoxFor(m => valid, new { @class = "form-control veh-date-short", form = "createvehicleform" })
+            @Html.ValidationMessageFor(m => m.Valid, $"\"{Messages.Valid}\" {Messages.FieldIsRequired}")
+        </div>
+    </div>
+</div>

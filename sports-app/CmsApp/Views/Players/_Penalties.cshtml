@@ -1,0 +1,62 @@
+﻿@model IEnumerable<DataService.DTO.PenaltyDto>
+
+@if (Model.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th style="max-width:80px;">@Messages.NumberOfGames</th>
+                <th>@Messages.Date</th>
+                <th>@Messages.Team</th>
+                <th>@Messages.League</th>
+                <th>@Messages.UserAction</th>
+                <th>@Messages.Ended</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var penalty in Model)
+            {
+                <tr>
+                    @{Html.RenderPartial("_PenaltyItem", penalty);}
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<script>
+        $(".update-penalty").click(function () {
+        var id = $(this).attr("data-id");
+        var exclusionNumber = $(this).closest("tr").find("input[name='ExclusionNumber']").val();
+        var row = $(this).closest("tr");
+        $.ajax({
+            url: "/Players/UpdatePenalty",
+            type: "POST",
+            data: {
+                id: id,
+                playerId: "@ViewBag.PlayerId",
+                exclusionNumber: exclusionNumber
+            },
+            success: function (data) {
+                $(row).html(data);
+            }
+        });
+    });
+        $(".delete-penalty").click(function () {
+        var id = $(this).attr("data-id");
+        var row = $(this).closest("tr");
+        $.ajax({
+            url: "/Players/DeletePenalty",
+            type: "POST",
+            data: {
+                id: id
+            },
+            success: function () {
+                $(row).remove();
+            }
+        });
+    });
+</script>
+

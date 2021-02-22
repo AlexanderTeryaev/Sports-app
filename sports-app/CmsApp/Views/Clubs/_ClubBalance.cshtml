@@ -1,0 +1,252 @@
+﻿@model IEnumerable<DataService.DTO.ClubBalanceDto>
+@{
+    /**/
+
+    var clubId = ViewBag.ClubId != null ? (int)ViewBag.ClubId : 0;
+    var seasonId = ViewBag.SeasonId != null ? (int)ViewBag.SeasonId : 0;
+}
+<div class="row" id="sections_pl">
+    <div class="col-sm-12">
+        <table class="table table-bordered">
+            <caption><b>@Messages.ClubBalances</b>:</caption>
+            @if (Model.Any())
+            {
+                <thead>
+                    <tr>
+                        <th class="col-sm-2">@Messages.Income</th>
+                        <th class="col-sm-1">@Messages.Expense</th>
+                        <th class="col-sm-1">@Messages.Balance</th>
+                        <th class="col-sm-3">@Messages.Comment</th>
+                        <th class="col-sm-2">@Messages.UserAction</th>
+                        <th class="col-sm-2">@Messages.Date</th>
+                        <th class="col-sm-1" style="min-width: 120px;">@Messages.Reference</th>
+                        @if (ViewBag.IsTennis)
+                        {
+                            <th class="col-sm-1">@Messages.Report</th>
+                            <th class="col-sm-1">@Messages.MarkAsPaid</th>
+                        }
+                        @if (ViewBag.HasPermission == true)
+                        {
+                            <th class="col-sm-1"></th>
+                            <th class="col-sm-1"></th>
+                        }
+                    </tr>
+                </thead>
+            }
+
+            <tbody>
+                @foreach (var clubBalance in Model)
+                {
+                <tr>
+                    <td>
+
+                        @if (clubBalance.IsPdfReport.HasValue && clubBalance.IsPdfReport.Value)
+                        {
+                            if (ViewBag.HasTopPermission)
+                            {
+                                @Html.TextBox("Income", clubBalance.Income, new { @class = "form-control", type = "number", min = "0", step = "0.01" })
+
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(m => clubBalance.Income)
+                            }
+                        }
+                        else if (ViewBag.HasPermission == true)
+                        {
+                            @Html.TextBox("Income", clubBalance.Income, new { @class = "form-control", type = "number", min = "0", step = "0.01" })
+                        }
+                        else
+                        {
+                            @Html.DisplayFor(m => clubBalance.Income)
+                        }
+                    </td>
+                    <td style="@(clubBalance.IsPdfReport.HasValue && clubBalance.IsPdfReport.Value ? (clubBalance.IsPaid.HasValue && clubBalance.IsPaid.Value ? "color:green;" : "color:red;") : "")">
+                        @if (clubBalance.IsPdfReport.HasValue && clubBalance.IsPdfReport.Value)
+                        {
+                            if (ViewBag.HasTopPermission)
+                            {
+                                @Html.TextBox("Expense", clubBalance.Expense, new { @class = "form-control", type = "number", min = "0", step = "0.01" })
+
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(m => clubBalance.Expense)
+                            }
+                        }
+                        else if (ViewBag.HasPermission == true)
+                        {
+                            @Html.TextBox("Expense", clubBalance.Expense, new { @class = "form-control", type = "number", min = "0", step = "0.01" })
+                        }
+                        else
+                        {
+                            @Html.DisplayFor(m => clubBalance.Expense)
+                        }
+                    </td>
+                    <td style="direction: ltr;">
+                        @Html.DisplayFor(m => clubBalance.Balance)
+                    </td>
+                    <td>
+                        @if (clubBalance.IsPdfReport.HasValue && clubBalance.IsPdfReport.Value)
+                        {
+                            if (ViewBag.HasTopPermission)
+                            {
+                                @Html.TextBox("Comment", clubBalance.Comment, new { @class = "form-control" })
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(m => clubBalance.Comment)
+                            }
+                        }
+                        else if (ViewBag.HasPermission == true)
+                        {
+                            @Html.TextBox("Comment", clubBalance.Comment, new { @class = "form-control" })
+                        }
+                        else
+                        {
+                            @Html.DisplayFor(m => clubBalance.Comment)
+                        }
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => clubBalance.ActionUser.FullName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => clubBalance.TimeOfAction)
+                    </td>
+                    <td style="direction: ltr;">
+                        @if (ViewBag.HasTopPermission == true)
+                        {
+                            @Html.TextBox("Reference", clubBalance.Reference, new { @class = "form-control",type="number", min="0",form="updateBalanceForm_" + clubBalance.Id })
+                        }
+                        else
+                        {
+                            @Html.DisplayFor(m => clubBalance.Reference)
+                        }
+                    </td>
+
+                    @if (ViewBag.IsTennis)
+                    {
+                        <td class="col-sm-1">
+                            <a class="btn btn-primary btn-edit" href="@Url.Action("ReadPaymentReport", "Players", new { clubBalanceId = clubBalance.Id, clubId =  clubId})"><i href="#" class="glyphicon glyphicon-open"></i></a>
+                        </td>
+                        if (clubBalance.IsPdfReport.HasValue && clubBalance.IsPdfReport.Value)
+                        {
+                            if (ViewBag.HasTopPermission)
+                            {
+                                <td class="col-sm-1">
+                                    <input type="checkbox" id="ClubPaymentIsDone" name="ClubPaymentIsDone" @(clubBalance.IsPaid.HasValue && clubBalance.IsPaid.Value ? "checked" : "") onclick="clubPaymentIsDone(@clubBalance.Id);" />
+                                </td>
+                            }
+                            else
+                            {
+                                <td class="col-sm-1">@(clubBalance.IsPaid.HasValue && clubBalance.IsPaid.Value ? $"{Messages.Paid}" : $"{Messages.No} {Messages.Paid}")</td>
+                            }
+                        }
+                        else
+                        {
+                            <td class="col-sm-1"></td>
+                        }
+                    }
+                    @if (ViewBag.HasPermission == true)
+                    {
+                        <td>
+                            <button onclick="updateClubBalance('@clubBalance.Id',this)" form="updateBalanceForm_@clubBalance.Id" typeof="submit" class="@AppCss.Save" type="submit"></button>
+                        </td>
+                        <td>
+                            <a href="@Url.Action("DeleteClubBalance","Clubs",new { id = clubId, seasonId = seasonId, clubBalanceId = clubBalance.Id  })"
+                               data-ajax="true"
+                               data-ajax-confirm="@Messages.DeleteConfirm"
+                               data-ajax-update="#clubBalanceMainDiv" class="@AppCss.Delete">
+                            </a>
+                        </td>
+                    }
+                </tr>
+                }
+            </tbody>
+            @if (ViewBag.HasPermission == true)
+            {
+                <tfoot>
+                    <tr>
+                        <td class="col-sm-2">
+                            @Html.TextBox("Income", string.Empty, new { @class = "form-control", placeholder = $"{Messages.Enter} {Messages.Income.ToLower()}:", type = "number", min = "0", step = "0.01" })
+                        </td>
+                        <td class="col-sm-2">
+                            @Html.TextBox("Expense", string.Empty, new { @class = "form-control", placeholder = $"{Messages.Enter} {Messages.Expense.ToLower()}:", type = "number", min = "0", step = "0.01" })
+                        </td>
+                        <td class="col-sm-4" colspan="2">
+                            @Html.TextBox("Comment", string.Empty, new { @class = "form-control", placeholder = $"{Messages.Enter} {Messages.Comment.ToLower()}:" })
+                        </td>
+                        <td class="col-sm-2">
+                            @Html.TextBox("Reference", string.Empty, new { @class = "form-control", placeholder = $"{Messages.Enter} {Messages.Reference.ToLower()}:", type = "number", min = "0" })
+                        </td>
+                        <td colspan="2">
+                            <button onclick="createNewBalance(this)" class="btn btn-primary" type="button">@Messages.AddNew</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+</div>
+
+<script>
+    function createNewBalance(elem) {
+        var tr = $(elem).closest("tr");
+        var income = $(tr).find("#Income").val();
+        var expense = $(tr).find("#Expense").val();
+        var comment = $(tr).find("#Comment").val();
+        var reference = $(tr).find("#Reference").val();
+        $.ajax({
+            url: "@Url.Action("CreateClubBalance", "Clubs",new { id = clubId, seasonId = seasonId })",
+            type: "POST",
+            data: {
+                income: income,
+                expense: expense,
+                comment: comment,
+                reference:reference
+            },
+            success: function (data) {
+                $("#clubBalanceMainDiv").html(data);
+            }
+        })
+    }
+
+    function updateClubBalance(id, elem) {
+        var tr = $(elem).closest("tr");
+        var income = $(tr).find("#Income").val();
+        var expense = $(tr).find("#Expense").val();
+        var comment = $(tr).find("#Comment").val();
+        var reference = $(tr).find("#Reference").val();
+        $.ajax({
+            url: "@Url.Action("UpdateClubBalance", "Clubs")",
+            type: "POST",
+            data: {
+                clubId: "@clubId",
+                seasonId: "@seasonId",
+                id: id,
+                income: income,
+                expense: expense,
+                comment: comment,
+                reference: reference
+            },
+            success: function (data) {
+                $("#clubBalanceMainDiv").html(data);
+            }
+        })
+    }
+
+
+    function clubPaymentIsDone(clubBalanceId) {
+        var isChecked = $("#ClubPaymentIsDone").is(':checked');
+        $.ajax({
+            type: "POST",
+            url: "/Clubs/CheckClubPaymentDone",
+            data: {
+                'clubBalanceId': clubBalanceId,
+                'isPaid': isChecked
+            }
+        });
+    }
+
+
+</script>

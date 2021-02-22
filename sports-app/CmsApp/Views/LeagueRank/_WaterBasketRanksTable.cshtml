@@ -1,0 +1,128 @@
+﻿@using DataService
+@model SchedulesDto
+@{
+    var GroupIndex = -1;
+    var BracketWinnerDivPrefix = "bracket_winner_div_";
+    var BracketLoserDivPrefix = "bracket_loser_div_";
+    var rounds = 1;
+    List<StageBracketsDto> stBracketsData = new List<StageBracketsDto>();
+    bool isHebrew = Request.IsHebrew();
+    var cssDirection = isHebrew ? "right" : "left";
+}
+@if (isHebrew)
+{
+    <style>
+        .teamname {
+            text-align: left;
+        }
+    </style>
+}
+@foreach (var group in Model.BracketData)
+{
+    GroupIndex++;
+    string BracketWinnerDivId = $"{BracketWinnerDivPrefix}{group.GroupName}".Replace(' ', '_').Replace("'", "");
+    string BracketLoserDivId = $"{BracketLoserDivPrefix}{group.GroupName}".Replace(' ', '_').Replace("'", "");
+    var bracketItems = Model.BracketData?.Where(r => r.GameTypeId == GameTypeId.Playoff && r.GroupName.Equals(group.GroupName))
+        ?.Where(r => r.Stages.Any(s => s.Items.Count == 8))?.FirstOrDefault()?.Stages[1]?.Items;
+
+    if (Model.BracketData.Count() > 1 && (group.GameTypeId == GameTypeId.Knockout || group.GameTypeId == GameTypeId.Playoff))
+    {
+        <h4>@group.GroupName</h4>
+    }
+
+    <div class="container-fluid" style="margin-@cssDirection:90px;">
+        @if (isHebrew)
+        {
+            <div class="row no-print" style="margin-right:150px;display:inline-flex;">
+                <div style="display:inline-block;" id="@BracketWinnerDivId"></div>
+                <div style="display:inline-block;margin-right:-19px;" class="losers" id='@BracketLoserDivId'></div>
+            </div>
+        }
+        else
+        {
+            <div class="row no-print" style="margin-right:-90px;display:inline-flex;">
+                <div style="display:inline-block" class="losers" id='@BracketLoserDivId'></div>
+                <div style="display:inline-block;margin-left:-19px;" id="@BracketWinnerDivId"></div>
+            </div>
+        }
+        @if (bracketItems != null)
+        {
+            <div class="row-like" style="margin-bottom:100px;">
+                <div class="column-like" id="bracket_winner_div_Test_group">
+                    <div class="brackets-header">
+                        <div class="title" style="width:120px;">@bracketItems[5].MinPlayoffPos - @bracketItems[5].MaxPlayoffPos</div>
+                    </div>
+                    <div class="container-brackets">
+                        <div style="width:120px;" class="round rd-1">
+                            <div class="match">
+                                <div data-index="@bracketItems[5].MaxPlayoffPos"
+                                     class="team @(bracketItems[5].WinnerId == bracketItems[5].HomeTeamId ? "winner" : string.Empty)
+                                    team-@bracketItems[5].HomeTeamId" data-id="@bracketItems[5].HomeTeamId">
+                                    <label class="teamname">@bracketItems[5].HomeTeam</label>
+                                    <label class="score">@bracketItems[5].BasketBallWaterpoloHomeTeamScore</label>
+                                </div>
+                                <div data-index="@bracketItems[5].MinPlayoffPos"
+                                     class="team @(bracketItems[5].WinnerId == bracketItems[5].GuestTeamId ? "winner" : string.Empty)
+                                     team-@bracketItems[5].GuestTeamId" data-id="@bracketItems[5].GuestTeamId">
+                                    <label class="teamname">@bracketItems[5].GuestTeam</label>
+                                    <label class="score">@bracketItems[5].BasketBallWaterpoloGuestTeamScore</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="column-like"></div>
+                <div class="column-like" id="bracket_winner_div_Test_group">
+                    <div class="brackets-header">
+                        <div class="title" style="width:120px;">@bracketItems[6].MinPlayoffPos - @bracketItems[6].MaxPlayoffPos</div>
+                    </div>
+                    <div class="container-brackets">
+                        <div style="width:120px;" class="round rd-1">
+                            <div class="match">
+                                <div data-index="@bracketItems[6].MaxPlayoffPos"
+                                     class="team @(bracketItems[6].WinnerId == bracketItems[6].HomeTeamId ? "winner" : string.Empty)
+                                     team-@bracketItems[6].HomeTeamId" data-id="@bracketItems[6].HomeTeamId">
+                                    <label class="teamname">@bracketItems[6].HomeTeam</label>
+                                    <label class="score">@bracketItems[6].BasketBallWaterpoloHomeTeamScore</label>
+                                </div>
+                                <div data-index="@bracketItems[6].MinPlayoffPos"
+                                     class="team @(bracketItems[6].WinnerId == bracketItems[6].GuestTeamId ? "winner" : string.Empty)
+                                 team-@bracketItems[6].GuestTeamId" data-id="@bracketItems[6].GuestTeamId">
+                                    <label class="teamname">@bracketItems[6].GuestTeam</label>
+                                    <label class="score">@bracketItems[6].BasketBallWaterpoloGuestTeamScore</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <style>
+        #@BracketLoserDivId > div.brackets-header > div:nth-child(1) {
+            margin-left: 65px;
+        }
+    </style>
+
+    var firstTeamId = group.Stages.First().Items.First().HomeTeamId;
+    rounds = group.Stages.First().Items.Count(x => x.GuestTeamId == firstTeamId || x.HomeTeamId == firstTeamId);
+    stBracketsData.Add(new StageBracketsDto
+    {
+        elementWinnerId = BracketWinnerDivId,
+        elementLoserId = BracketLoserDivId,
+        rounds = rounds,
+        stages = group.Stages
+    });
+}
+
+<script src="~/Scripts/bracketsmodified.js"></script>
+<script src="~/Scripts/pages/schedulesCtrl.js"></script>
+<script>
+        $(document).ready(function () {
+            @foreach (var brItem in stBracketsData)
+                {
+                     @:schedulesCtrl.fillBrackets('@brItem.elementWinnerId', '@brItem.elementLoserId', @Html.Raw(Json.Encode(brItem.stages)), @brItem.rounds, true);
+                }
+        });
+</script>

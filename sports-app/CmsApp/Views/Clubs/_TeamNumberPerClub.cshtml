@@ -1,0 +1,73 @@
+﻿@model ClubTeamsNumberList
+@{
+    Layout = "";
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9"><h4 class="modal-title">@Model.Title</h4></div><div class="pull-right" style="line-height:25px;">
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="row" style="margin-bottom:10px;">
+        <div class="col-sm-12">
+            <table id="teamList" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>
+                            #
+                        </th>
+                        <th>
+                            @Messages.ClubName
+                        </th>
+                        <th>
+                            @Messages.TeamsNum
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.ClubTeamsNumbers)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ClubId)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ClubName)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.TeamNumber)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $.fn.dataTable.ext.errMode = 'none';
+        var teamListTable = $('#teamList').on('error.dt', function (e, settings, techNote, message) {
+            console.log('An error has been reported by DataTables: ', message);
+        }) .DataTable({
+            "distroy": true,
+            "bPaginate": false,
+            "paging": false,
+            "info": false,
+            "searching": false,
+            "order": [[1, "asc"]],
+            "columnDefs": [
+                { "orderable": false, "targets": 0 },
+                { "orderable": true, "targets": 1 },
+                { "orderable": true, "targets": 2 }
+
+            ]                            
+            })
+        });
+</script>

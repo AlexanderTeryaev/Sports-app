@@ -1,0 +1,600 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Acts" xml:space="preserve">
+    <value>מערכות</value>
+  </data>
+  <data name="ActsRatio" xml:space="preserve">
+    <value>יחס מערכות</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>כתובת</value>
+  </data>
+  <data name="Ages" xml:space="preserve">
+    <value>קטגוריה</value>
+  </data>
+  <data name="AveragePoints" xml:space="preserve">
+    <value>ממוצע</value>
+  </data>
+  <data name="BasketRatio" xml:space="preserve">
+    <value>יחס סלים</value>
+  </data>
+  <data name="Birthday" xml:space="preserve">
+    <value>תאריך לידה</value>
+  </data>
+  <data name="ClubName" xml:space="preserve">
+    <value>מועדון</value>
+  </data>
+  <data name="Competition" xml:space="preserve">
+    <value>תחרות</value>
+  </data>
+  <data name="Cycle" xml:space="preserve">
+    <value>מחזור</value>
+  </data>
+  <data name="DateOfInsuranceValidity" xml:space="preserve">
+    <value>תוקף ביטוח</value>
+  </data>
+  <data name="Draw" xml:space="preserve">
+    <value>תיקו</value>
+  </data>
+  <data name="ExtendedTable" xml:space="preserve">
+    <value>טבלה מורחבת</value>
+  </data>
+  <data name="Field" xml:space="preserve">
+    <value>מגרש</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>שם מלא</value>
+  </data>
+  <data name="FullRankingAlert" xml:space="preserve">
+    <value>טבלת הדירוג תוצג לאחר סיום כל המשחקים</value>
+  </data>
+  <data name="Games" xml:space="preserve">
+    <value>משחקים</value>
+  </data>
+  <data name="GamesNum" xml:space="preserve">
+    <value>משחקים</value>
+  </data>
+  <data name="Gaming" xml:space="preserve">
+    <value>משחקונים</value>
+  </data>
+  <data name="GoalRatio" xml:space="preserve">
+    <value>יחס שערים</value>
+  </data>
+  <data name="GuestPlayer" xml:space="preserve">
+    <value>שחקן קבוצת חוץ</value>
+  </data>
+  <data name="HasTechLost" xml:space="preserve">
+    <value>קיים הפסד טכני</value>
+  </data>
+  <data name="HasTechWin" xml:space="preserve">
+    <value>קיים נצחון טכני</value>
+  </data>
+  <data name="HomePlayer" xml:space="preserve">
+    <value>שחקן קבוצת בית</value>
+  </data>
+  <data name="IdentNum" xml:space="preserve">
+    <value>ת.ז</value>
+  </data>
+  <data name="LeagueStructure" xml:space="preserve">
+    <value>על הליגה</value>
+  </data>
+  <data name="League_RankedStandings" xml:space="preserve">
+    <value>טבלת דירוג</value>
+  </data>
+  <data name="League_RankedStanding_NoFinishedGamesInStage" xml:space="preserve">
+    <value>לא הסתיימו כל המשחקים בשלב</value>
+  </data>
+  <data name="LossNum" xml:space="preserve">
+    <value>הפסדים</value>
+  </data>
+  <data name="Matches" xml:space="preserve">
+    <value>משחקים</value>
+  </data>
+  <data name="Penalty" xml:space="preserve">
+    <value>עונש</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>טלפון</value>
+  </data>
+  <data name="Points" xml:space="preserve">
+    <value>ניקוד</value>
+  </data>
+  <data name="PointsRatio" xml:space="preserve">
+    <value>יחס נקודות</value>
+  </data>
+  <data name="PointsToAverage" xml:space="preserve">
+    <value>ניקוד לממוצע</value>
+  </data>
+  <data name="Print" xml:space="preserve">
+    <value>הדפס</value>
+  </data>
+  <data name="Rank" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="Scores" xml:space="preserve">
+    <value>תוצאות</value>
+  </data>
+  <data name="Sets" xml:space="preserve">
+    <value>מערכות</value>
+  </data>
+  <data name="Team" xml:space="preserve">
+    <value>קבוצה</value>
+  </data>
+  <data name="TeamManager" xml:space="preserve">
+    <value>מנהל קבוצה</value>
+  </data>
+  <data name="TeamName" xml:space="preserve">
+    <value>שם קבוצה</value>
+  </data>
+  <data name="TechLossesNum" xml:space="preserve">
+    <value>טכני</value>
+  </data>
+  <data name="TechWin" xml:space="preserve">
+    <value>נצחון טכני</value>
+  </data>
+  <data name="TenicardValidity" xml:space="preserve">
+    <value>תוקף אייטניס</value>
+  </data>
+  <data name="Tie" xml:space="preserve">
+    <value>תיקו</value>
+  </data>
+  <data name="ValidityOfMedicalExamination" xml:space="preserve">
+    <value>תוקף אישור רפואי</value>
+  </data>
+  <data name="WinsNum" xml:space="preserve">
+    <value>ניצחונות</value>
+  </data>
+  <data name="StartList" xml:space="preserve">
+    <value>Start list</value>
+  </data>
+  <data name="AthleteNumber" xml:space="preserve">
+    <value>מספר חזה</value>
+  </data>
+  <data name="Heat" xml:space="preserve">
+    <value>מקצה</value>
+  </data>
+  <data name="Lane" xml:space="preserve">
+    <value>שביל</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>סדר עליה</value>
+  </data>
+  <data name="Club" xml:space="preserve">
+    <value>אגודה</value>
+  </data>
+  <data name="Female" xml:space="preserve">
+    <value>נקבה</value>
+  </data>
+  <data name="Male" xml:space="preserve">
+    <value>זכר</value>
+  </data>
+  <data name="Men" xml:space="preserve">
+    <value>גברים</value>
+  </data>
+  <data name="Women" xml:space="preserve">
+    <value>נשים</value>
+  </data>
+  <data name="Player" xml:space="preserve">
+    <value>שחקן</value>
+  </data>
+  <data name="Runs" xml:space="preserve">
+    <value>הקפות</value>
+  </data>
+  <data name="IsNotSetYet" xml:space="preserve">
+    <value>עדיין לא נקבע</value>
+  </data>
+  <data name="AlefLeague" xml:space="preserve">
+    <value>ליגה א</value>
+  </data>
+  <data name="AlLeague" xml:space="preserve">
+    <value>ליגת על</value>
+  </data>
+  <data name="NationalLeague" xml:space="preserve">
+    <value>ליגה ארצית</value>
+  </data>
+  <data name="PremiereLeague" xml:space="preserve">
+    <value>ליגה לאומית</value>
+  </data>
+  <data name="League_LeagueRankedStandings" xml:space="preserve">
+    <value>טבלת הליגה</value>
+  </data>
+  <data name="AthleticLeagueRanks" xml:space="preserve">
+    <value>דירוג ליגת אתלטיקה</value>
+  </data>
+  <data name="FieldRaceRanks" xml:space="preserve">
+    <value>דירוג מרוצי שדה</value>
+  </data>
+  <data name="KadeteLeague" xml:space="preserve">
+    <value>ליגת קדטים</value>
+  </data>
+  <data name="MultiBattle" xml:space="preserve">
+    <value>קרב רב</value>
+  </data>
+  <data name="YearOfBirth" xml:space="preserve">
+    <value>שנת לידה</value>
+  </data>
+  <data name="Results" xml:space="preserve">
+    <value>תוצאות</value>
+  </data>
+  <data name="ResultsByHeat" xml:space="preserve">
+    <value>תוצאות מקצים</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>מידע</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>ללא</value>
+  </data>
+  <data name="InfoSchedule" xml:space="preserve">
+    <value>לוח זמנים</value>
+  </data>
+  <data name="GoldenSpikesU14" xml:space="preserve">
+    <value>גולדן ספייקס U-14</value>
+  </data>
+  <data name="GoldenSpikesU16" xml:space="preserve">
+    <value>גולדן ספייקס U-16</value>
+  </data>
+  <data name="GoldenSpikes" xml:space="preserve">
+    <value>גולדן ספייקס</value>
+  </data>
+  <data name="Registrations" xml:space="preserve">
+    <value>נרשמים</value>
+  </data>
+  <data name="CategoryResults" xml:space="preserve">
+    <value>תוצאות קטגוריות</value>
+  </data>
+  <data name="ResultsByClub" xml:space="preserve">
+    <value>תוצאות לפי אגודה</value>
+  </data>
+  <data name="Place" xml:space="preserve">
+    <value>מיקום</value>
+  </data>
+  <data name="Wind" xml:space="preserve">
+    <value>רוח</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>קטגוריה</value>
+  </data>
+  <data name="Gender" xml:space="preserve">
+    <value>מין</value>
+  </data>
+  <data name="BattleOfTwo" xml:space="preserve">
+    <value>קרב שניים</value>
+  </data>
+  <data name="Lifting" xml:space="preserve">
+    <value>הנפה</value>
+  </data>
+  <data name="Pushing" xml:space="preserve">
+    <value>דחיקה</value>
+  </data>
+  <data name="ResultOf" xml:space="preserve">
+    <value>תוצאת</value>
+  </data>
+  <data name="Weight" xml:space="preserve">
+    <value>משקל</value>
+  </data>
+  <data name="SportsmenNumber" xml:space="preserve">
+    <value>מס ספורטאים</value>
+  </data>
+  <data name="FinalResult" xml:space="preserve">
+    <value>תוצאה סופית</value>
+  </data>
+  <data name="BasicInfo" xml:space="preserve">
+    <value>מידע כללי</value>
+  </data>
+  <data name="SeasonalBests" xml:space="preserve">
+    <value>שיאים עונתיים</value>
+  </data>
+  <data name="CompetitionName" xml:space="preserve">
+    <value>שם תחרות</value>
+  </data>
+  <data name="Discipline" xml:space="preserve">
+    <value>מקצוע</value>
+  </data>
+  <data name="NoActiveCompetitions" xml:space="preserve">
+    <value>אין תחרויות</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>תוצאה</value>
+  </data>
+  <data name="StartDate" xml:space="preserve">
+    <value>תאריך התחלה</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>תאריך</value>
+  </data>
+  <data name="RankRaw" xml:space="preserve">
+    <value>מיקום</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>rtl</value>
+  </data>
+  <data name="Lang" xml:space="preserve">
+    <value>he</value>
+  </data>
+  <data name="ToGame" xml:space="preserve">
+    <value>למשחק</value>
+  </data>
+  <data name="Ended" xml:space="preserve">
+    <value>נגמר</value>
+  </data>
+  <data name="Waiting" xml:space="preserve">
+    <value>בהמתנה</value>
+  </data>
+  <data name="Started" xml:space="preserve">
+    <value>התחיל</value>
+  </data>
+  <data name="LeagueAbout" xml:space="preserve">
+    <value>על הליגה</value>
+  </data>
+  <data name="Game" xml:space="preserve">
+    <value>מש</value>
+  </data>
+  <data name="Win" xml:space="preserve">
+    <value>נצ</value>
+  </data>
+  <data name="Lost" xml:space="preserve">
+    <value>הפ</value>
+  </data>
+  <data name="Set" xml:space="preserve">
+    <value>מע</value>
+  </data>
+  <data name="PointsShort" xml:space="preserve">
+    <value>נק</value>
+  </data>
+  <data name="CompetitionTable" xml:space="preserve">
+    <value>טבלת דירוג</value>
+  </data>
+  <data name="ScheduleResults" xml:space="preserve">
+    <value>לוח משחקים ותוצאות</value>
+  </data>
+  <data name="ToCompetition" xml:space="preserve">
+    <value>לתחרות</value>
+  </data>
+  <data name="CompetitionSchedule" xml:space="preserve">
+    <value>לוח תחרויות</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>סגור</value>
+  </data>
+  <data name="Disciplines" xml:space="preserve">
+    <value>מקצועות</value>
+  </data>
+  <data name="StartHour" xml:space="preserve">
+    <value>שעת התחלה</value>
+  </data>
+  <data name="TotalParticipants" xml:space="preserve">
+    <value>סה"כ משתתפים</value>
+  </data>
+  <data name="TotalRegistrations" xml:space="preserve">
+    <value>סה"כ נרשמים</value>
+  </data>
+  <data name="Records" xml:space="preserve">
+    <value>שיאים</value>
+  </data>
+  <data name="OrderRaw" xml:space="preserve">
+    <value>סדר</value>
+  </data>
+  <data name="IntentionalIsraeliRecord" xml:space="preserve">
+    <value>שיא ישראלי בינלאומי</value>
+  </data>
+  <data name="IsraeliRecord" xml:space="preserve">
+    <value>שיא ישראלי</value>
+  </data>
+  <data name="SeasonRecord" xml:space="preserve">
+    <value>תוצאת שנה</value>
+  </data>
+  <data name="Record" xml:space="preserve">
+    <value>שיא</value>
+  </data>
+  <data name="CompetitionRecord" xml:space="preserve">
+    <value>שיא אליפות</value>
+  </data>
+  <data name="Sportsmans" xml:space="preserve">
+    <value>ספורטאים</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>סטטוס</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>סה"כ</value>
+  </data>
+  <data name="DateTime" xml:space="preserve">
+    <value>תאריך/ שעה</value>
+  </data>
+  <data name="FromHour" xml:space="preserve">
+    <value>משעה</value>
+  </data>
+  <data name="HeatsList" xml:space="preserve">
+    <value>לוח מקצים</value>
+  </data>
+  <data name="ToHour" xml:space="preserve">
+    <value>לשעה</value>
+  </data>
+  <data name="WeightIn" xml:space="preserve">
+    <value>שקילה</value>
+  </data>
+  <data name="RegistrationToAllHeats" xml:space="preserve">
+    <value>נרשמים לכל המקצים</value>
+  </data>
+  <data name="RegistrationToHeat" xml:space="preserve">
+    <value>נרשמים למקצה</value>
+  </data>
+  <data name="WeightTime" xml:space="preserve">
+    <value>שעות שקילה</value>
+  </data>
+  <data name="Entry" xml:space="preserve">
+    <value>כניסה</value>
+  </data>
+  <data name="StartListHeb" xml:space="preserve">
+    <value>רשימת משתתפים</value>
+  </data>
+  <data name="WeightDeclaration" xml:space="preserve">
+    <value>הצהרת משקל להרמה</value>
+  </data>
+  <data name="FieldCompetition" xml:space="preserve">
+    <value>מרוצי שדה</value>
+  </data>
+  <data name="RoadCompetition" xml:space="preserve">
+    <value>מרוצי כביש</value>
+  </data>
+  <data name="StadiumCompetition" xml:space="preserve">
+    <value>תחרויות אצטדיון</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>הבא</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>קודם</value>
+  </data>
+  <data name="Day" xml:space="preserve">
+    <value>יום</value>
+  </data>
+  <data name="Month" xml:space="preserve">
+    <value>חודש</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>היום</value>
+  </data>
+  <data name="Week" xml:space="preserve">
+    <value>שבוע</value>
+  </data>
+  <data name="Event" xml:space="preserve">
+    <value>ארוע</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>תיאור</value>
+  </data>
+  <data name="GuestTeam" xml:space="preserve">
+    <value>ק. חוץ</value>
+  </data>
+  <data name="HomeTeam" xml:space="preserve">
+    <value>ק. בית</value>
+  </data>
+  <data name="At" xml:space="preserve">
+    <value>בשעה</value>
+  </data>
+  <data name="In" xml:space="preserve">
+    <value>באולם</value>
+  </data>
+  <data name="GameSchedules" xml:space="preserve">
+    <value>לוחות זמנים למשחק</value>
+  </data>
+</root>

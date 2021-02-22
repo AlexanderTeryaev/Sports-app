@@ -1,0 +1,16 @@
+﻿@model CmsApp.Models.TrainingSettingForm
+@*@{
+        var grid = new WebGrid(source: Model, canPage: true, rowsPerPage: 15, defaultSort: "Name", canSort:true, ajaxUpdateContainerId: "grid");
+        grid.Pager(WebGridPagerModes.NextPrevious);
+    }
+
+
+    @grid.GetHtml(tableStyle: "webGrid", mode: WebGridPagerModes.All,
+                columns: grid.Columns(
+                 grid.Column("Name", "AuditoriumName"),
+                grid.Column("TrainingDays", "TrainingDays"),
+                grid.Column("StartTime", "StartTime"),
+                grid.Column("EndTime", "EndTime"),
+             grid.Column("Action", format: @<text><input type="hidden" id="hdn1" value='@item.Id' /><button class="edit-user display-mode" onclick="DeleteRecords(@item.Id);">Delete</button> </text> )))*@
+
+@Html.Raw(Model.tableHTML)

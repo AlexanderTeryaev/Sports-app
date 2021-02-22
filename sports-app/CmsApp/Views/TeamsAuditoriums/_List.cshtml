@@ -1,0 +1,116 @@
+﻿@model TeamsAuditoriumForm
+
+<!--<a href="#" id="arena_print" style="float:left;">
+    <i class="glyphicon glyphicon-print" style="font-size: 20px;"></i>
+</a>  -->
+<br/>
+
+@using (Ajax.BeginForm("HasArena", new { id = Model.TeamId, seasonId = Model.SeasonId },
+                            new AjaxOptions { UpdateTargetId = "halls" },
+                            new { id = "hasArenaForm" }))
+{
+    <div class="row">
+        <label class="control-label" style="padding-right: 15px;">@Messages.Has @UIHelpers.GetAuditoriumCaption(ViewBag.Section, false):</label>
+    </div>
+        <div class="row">
+            <div class="col-sm-4 form-group">
+                <select class="form-control" name="HasArena">
+                    <option value="" @(!Model.HasArena.HasValue ? "selected" : "")>@Messages.Select</option>
+                    <option value="true" @(Model.HasArena ?? false ? "selected" : "")>@Messages.Yes</option>
+                    <option value="false" @(!(Model.HasArena ?? true) ? "selected" : "")>@Messages.No</option>
+                </select>
+            </div>
+            <div class="col-sm-4 form-group">
+                <label class="control-label">&nbsp;</label>
+                <button class="btn btn-primary">@Messages.Save</button>
+            </div>
+        </div>
+}
+
+
+@using (Ajax.BeginForm("Add", new { seasonId = Model.SeasonId },
+                            new AjaxOptions { UpdateTargetId = "halls" },
+                            new { id = "hallsform" }))
+{
+    if (Model.HasArena != false)
+    {
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>@UIHelpers.GetAuditoriumCaption(ViewBag.Section)</th>
+                <th>@Messages.Main</th>
+                <th class="remove_print"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model.TeamAuditoriums)
+            {
+                <tr>
+                    <td>@m.Auditorium.Name</td>
+                    <td>
+                        @if (m.IsMain)
+                        { <i class="glyphicon glyphicon-check"></i> }
+                    </td>
+                    <td class="remove_print">
+                        <a href="@Url.Action("Delete", new { id = m.Id, seasonId = Model.SeasonId })" class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#halls"
+                           data-ajax="true"></a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot class="remove_print">
+            <tr>
+                <td>
+                    <span class="form-group">
+                        @Html.DropDownListFor(m => m.AuditoriumId, Model.Auditoriums, Messages.Select, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.AuditoriumId)
+                    </span>
+                </td>
+                <td>
+                    @Html.CheckBoxFor(m => m.IsMain) @Messages.Main
+                </td>
+                <td>
+                    <button class="btn btn-primary">@Messages.Save</button>
+                    @Html.HiddenFor(m => m.TeamId)
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+    }
+}
+<script>
+    $('#hallsform').validateBootstrap(true);
+    $('#arena_print').click(function () {
+        var el = $('div.active');
+        if (el.length > 0) {
+            arenaPrint(el);
+        }
+    });
+
+    function arenaPrint(element) {
+
+        var wnd = window.open('', 'Arena', 'height=600, width=600');
+        wnd.document.write('<html><head><title>Game schedules</title>');
+        //if need to add styles
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        var tbl = $(element).find('table');
+        wnd.document.write('<body>');
+        wnd.document.write($(tbl).prop('outerHTML'));
+
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+           // wnd.close();
+        }, 100);
+
+
+
+
+    }
+</script>

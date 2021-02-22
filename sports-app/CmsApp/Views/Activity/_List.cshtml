@@ -1,0 +1,471 @@
+﻿@model IEnumerable<ActivityBranchViewModel>
+
+<div id="activitiesview">
+    @if (ViewBag.JobRole == JobRole.UnionManager || ViewBag.jobRole == JobRole.DepartmentManager || ViewBag.jobRole == JobRole.ClubManager || User.IsInAnyRole(AppRole.Admins))
+    {
+        <a class="btn btn-primary btn-edit"
+           href="@Url.Action("EditBranch", "Activity", new {unionId = ViewBag.UnionId, clubId = ViewBag.ClubId, seasonId = ViewBag.SeasonId})"
+           data-target="#activityedit"
+           data-toggle="modal">
+            <i class="glyphicon glyphicon-plus"></i> @Messages.Activity_AddNewBranch
+        </a>
+    }
+    @if (ViewBag.IsActivityViewer || ViewBag.IsActivityManager || ViewBag.JobRole == JobRole.UnionManager || ViewBag.jobRole == JobRole.ClubManager || ViewBag.jobRole == JobRole.DepartmentManager || User.IsInAnyRole(AppRole.Admins))
+    {
+        <a class="btn btn-primary btn-edit" href="@Url.Action("ExportList", "Activity", new {unionId = ViewBag.UnionId, clubId = ViewBag.ClubId, seasonId = ViewBag.SeasonId, type = "all"})"
+           data-hrefTpl="@Url.Action("ExportList", "Activity", new {unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId, clubId = ViewBag.ClubId, type = "12321"})"
+           data-target="#activitiesexportform"
+           data-toggle="modal">
+            <i class="glyphicon glyphicon-export"></i>
+            @Messages.ExportToExcel
+        </a>
+
+        <a class="btn btn-primary btn-edit" onclick="javascript:printActivites();">
+            <i class="glyphicon glyphicon-print"></i>
+            @Messages.Print
+        </a>
+    }
+    <div class="clearfix"></div>
+    <span style="margin-top: 20px; font-size: 16px; display: inline-block; margin-bottom: 20px;">@Messages.Activity_List_PageTitle</span>
+    <select id="cbActivityType" style="width: 150px; display: inline-block;" class="form-control">
+        <option value="all">@Messages.All</option>
+        <option value="@ActivityType.Group">@Messages.Activity_Type_Group</option>
+        <option value="@ActivityType.Personal">@Messages.Activity_Type_Personal</option>
+    </select>
+
+    @foreach (var branch in Model)
+    {
+        if (branch.Activities.Count > 0 || ViewBag.jobRole == JobRole.UnionManager || ViewBag.jobRole == JobRole.ClubManager || ViewBag.JobRole == JobRole.DepartmentManager || User.IsInAnyRole(AppRole.Admins))
+        {
+            <div class="row branch well well-sm">
+                <div class="col-xs-12">
+                    <span class="branch-state">
+                        <i data-branchid="@branch.ActivityBranchId" class="glyphicon glyphicon-plus expand-branch" style="display: @(branch.Collapsed ? "inline" : "none"); cursor: pointer;"></i>
+                        <i data-branchid="@branch.ActivityBranchId" class="glyphicon glyphicon-minus collapse-branch" style="display: @(branch.Collapsed ? "none" : "inline"); cursor: pointer;"></i>
+                    </span>
+                    @if (ViewBag.JobRole == JobRole.UnionManager || ViewBag.jobRole == JobRole.ClubManager || User.IsInAnyRole(AppRole.Admins))
+                    {
+                        <text>
+                            <a class="btn-link branch-edit" id="activitybranch_@(branch.ActivityBranchId)" href="@Url.Action("EditBranch", "Activity", new {unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId, branchId = branch.ActivityBranchId})"
+                               data-hrefTpl="@Url.Action("EditBranch", "Activity", new {unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId, type = "12321"})"
+                               data-target="#activitybranchform"
+                               data-toggle="modal">
+                                @branch.ActivityBranchName
+                            </a>
+                        </text>
+                    }
+                    else
+                    {
+                        <span>@branch.ActivityBranchName</span>
+                    }
+
+                    @if (ViewBag.JobRole == JobRole.UnionManager || ViewBag.JobRole == JobRole.DepartmentManager || ViewBag.jobRole == JobRole.ClubManager || User.IsInAnyRole(AppRole.Admins))
+                    {
+                        <a class="btn btn-primary btn-edit"
+                           href="@Url.Action("Edit", "Activity", new {unionId = ViewBag.UnionId, clubId = ViewBag.ClubId, seasonId = ViewBag.SeasonId, branchId = branch.ActivityBranchId})"
+                           data-target="#activityedit"
+                           data-toggle="modal">
+                            <i class="glyphicon glyphicon-plus"></i> @Messages.Activity_AddNewActivity
+                        </a>
+                        if (branch.Activities.Count > 0)
+                        {
+                            <a class="btn btn-danger "
+                               href="javascript: alert('@Messages.Activity_DeleteBranch_Alert');">
+                                <i class="glyphicon glyphicon-trash"></i> @Messages.Activity_DeleteBranch
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-danger "
+                               href="@Url.Action("DeleteBranch", "Activity", new {unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId, branchId = branch.ActivityBranchId})"
+                               data-target="#activitybranchdeleteform"
+                               data-toggle="modal">
+                                <i class="glyphicon glyphicon-trash"></i> @Messages.Activity_DeleteBranch
+                            </a>
+                        }
+                    }
+
+                    <div class="clearfix"></div>
+
+                    <table id="branch_table_@(branch.ActivityBranchId)" class="activities-table table table-striped table-bordered offset-2" cellspacing="0" width="100%" style="margin-top: 10px; display: @(branch.Collapsed ? "none" : "table")">
+                        <thead>
+                        <tr>
+                            <th></th> <!-- inactive registrations indicator -->
+                            <!-- <th>@Messages.Activity_CreateDate</th> -->
+                            <th>@Messages.Activity_Name</th>
+                            <th>@Messages.Activity_Description</th>
+                            <th>@Messages.Activity_Type</th>
+                            <th>@Messages.Activity_StartDate</th>
+                            <th>@Messages.Activity_EndDate</th>
+                            <th>@Messages.Activity_EditForm</th>
+                            <th>@Messages.Activity_IsPublished</th>
+                            <th>@Messages.Activity_ExternalLink</th>
+                            <th>@Messages.Activity_Registrations</th>
+                            <th></th>
+                            <th style="display: none;"></th>
+                            <th style="display: none;"></th>
+                            <th style="display: none;"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        @foreach (var activity in branch.Activities.OrderBy(x => x.Name))
+                        {
+                            <tr data-type="@activity.Type">
+                                <td class="inactive-registrations-indicator @(activity.RegistationsCount == 0 ? "iri-noreg" : (activity.InactiveRegistrationsCount > 0 ? "iri-inactives" : "iri-all") )"></td>
+                                <!-- <td>@activity.Date.ToString("dd-MM-yyyy")</td> -->
+                                <td>
+                                    @if (activity.RegistationsCount > 500)
+                                    {
+                                        <a class="btn btn-link" href="@Url.Action("GetRegistrationsPage", new {id = activity.ActivityId})" target="_blank">
+                                            @activity.Name
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-link openRegistrationsStatus" data-toggle="modal" data-target="#registrationStatusModal"
+                                                data-activity="@activity.ActivityId"
+                                                data-title="@activity.Name">
+                                            @activity.Name
+                                        </button>
+                                    }
+                                </td>
+                                <td>@activity.Description</td>
+                                <td>@{
+                                        switch (activity.Type)
+                                        {
+                                            case ActivityType.Personal:
+                                                @Messages.Activity_Type_Personal
+                                                break;
+
+                                            case ActivityType.Group:
+                                                @Messages.Activity_Type_Group
+                                                break;
+
+                                            case ActivityType.Club:
+                                                @Messages.Activity_Type_UnionClub
+                                                break;
+
+                                            case ActivityType.UnionPlayerToClub:
+                                                @Messages.Activity_Type_UnionPersonalClub
+                                                break;
+                                        }
+                                    }
+                                </td>
+                                <td>@(activity.StartDate?.ToString("dd-MM-yyyy") ?? "")</td>
+                                <td>@(activity.EndDate?.ToString("dd-MM-yyyy") ?? "")</td>
+                                <td>
+                                    @if (!activity.IsReadOnly)
+                                    {
+                                        <button class="btn btn-link openActivityForm" id="openActivityForm-@activity.ActivityId"
+                                                data-toggle="modal" data-target="#activityFormModal"
+                                                data-activity="@activity.ActivityId"
+                                                data-activity-name="@activity.Name"
+                                                data-activity-description="@activity.Description"
+                                                data-activity-enddate="@($"{Messages.Activity_EndDate}: {activity.EndDate?.ToString("d")}")">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </button>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!activity.IsReadOnly)
+                                    {
+                                        <input data-activity="@activity.ActivityId" class="publishActivityChk" type="checkbox" @(activity.IsPublished ? " checked=\"checked\"" : "")/>
+                                    }
+                                    else
+                                    {
+                                        <input type="checkbox" disabled="disabled" readonly="readonly" @(activity.IsPublished ? " checked=\"checked\"" : "")/>
+                                    }
+                                </td>
+                                <td class="activity-published-link">
+                                    <a href="@Url.Action("Form", new {id = activity.ActivityId})" target="_blank">
+                                        <span class="glyphicon glyphicon-new-window"></span>
+                                    </a>
+                                </td>
+                                <td>@activity.RegistationsCount</td>
+                                <td>
+                                    @if (activity.IsReadOnly)
+                                    {
+                                        <a class="btn btn-primary btn-edit glyphicon glyphicon-pencil"
+                                           id="activity@(activity.ActivityId)"
+                                           href="/Activity/Edit?activityId=@(activity.ActivityId)&readOnly=true"
+                                           data-target="#activityedit" data-toggle="modal"></a>
+                                    }
+                                    else //if (ViewBag.JobRole == JobRole.UnionManager || ViewBag.IsActivityManager || User.IsInAnyRole(AppRole.Admins))
+                                    {
+                                        <a class="btn btn-primary btn-edit glyphicon glyphicon-pencil"
+                                           id="activity@(activity.ActivityId)"
+                                           href="/Activity/Edit?activityId=@(activity.ActivityId)"
+                                           data-target="#activityedit" data-toggle="modal"></a>
+
+                                        <a href="/Activity/DeleteActivity/@(activity.ActivityId)"
+                                           id="deleteActivity_@(activity.ActivityId)"
+                                           data-target="#activitiesdeleteform"
+                                           data-toggle="modal" style="display: none;"></a>
+
+                                        <a class="btn btn-danger glyphicon glyphicon-trash"
+                                           onclick="if (confirm('@(Messages.Activity_DeleteConfirm)')) { $('#deleteActivity_@(activity.ActivityId)').trigger('click'); }"></a>
+                                    }
+                                </td>
+                                <td style="display: none;">
+                                    @(activity.StartDate != null ? activity.StartDate.Value.Ticks : 0)
+                                </td>
+                                <td style="display: none;">
+                                    @(activity.EndDate != null ? activity.EndDate.Value.Ticks : 0)
+                                </td>
+                                <td style="display: none;">
+                                    @(activity.Date.Ticks)
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+        }
+    }
+</div>
+
+
+<div id="activitiesview_print" style="display: none;">
+    <h4>@Messages.Activity_List_PageTitle</h4>
+
+    @foreach (var branch in Model)
+    {
+        if (branch.Activities.Count >= 0 || ViewBag.jobRole == JobRole.UnionManager || ViewBag.JobRole == JobRole.DepartmentManager || ViewBag.jobRole == JobRole.ClubManager || User.IsInAnyRole(AppRole.Admins))
+        {
+            <h4>@branch.ActivityBranchName</h4>
+
+            <table class="table table-bordered offset-2" style="margin-top: 10px;">
+                <thead>
+                <tr>
+                    <!-- <td>Date</td> -->
+                    <td>Name</td>
+                    <td>Description</td>
+                    <td>Type</td>
+                    <td>StartDate</td>
+                    <td>EndDate</td>
+                    <!-- <td>External link</td> -->
+
+                </tr>
+                </thead>
+                <tbody>
+                    @foreach (var activity in branch.Activities)
+                    {
+                        <tr data-type="@activity.Type">
+                            <!-- <td>@activity.Date.ToString("dd-MM-yyyy")</td> -->
+                            <td>@activity.Name</td>
+                            <td>@activity.Description</td>
+                            <td>@(activity.Type == ActivityType.Group ? Messages.Activity_Type_Group : Messages.Activity_Type_Personal)</td>
+                            <td>@(activity.StartDate.HasValue ? activity.StartDate.Value.ToString("dd-MM-yyyy") : "")</td>
+                            <td>@(activity.EndDate.HasValue ? activity.EndDate.Value.ToString("dd-MM-yyyy") : "")</td>
+                            <!-- <td><a href="javascript:;">www</a></td> -->
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+</div>
+
+<div class="modal fade" id="activitiesexportform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="activitiesexportform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="activitybranchdeleteform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="activitybranchdeleteform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="activitiesdeleteform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="activitiesdeleteform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="activitybranchform" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="activitybranchform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="activityedit" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content" id="activityform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="activityFormModal" tabindex="-1" role="dialog" aria-labelledby="activityFormModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="@Messages.Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="activityFormModalLabel">@Messages.Activity_BuildForm_ModalTitle</h4>
+            </div>
+            <div class="modal-body">
+                @Html.Partial("_ActivityForm")
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="registrationStatusModal" tabindex="-1" role="dialog" aria-labelledby="registrationStatusModalLabel">
+    <div class="modal-dialog registrations-modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="@Messages.Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="registrationStatusModalLabel"></h4>
+            </div>
+            <div class="modal-body">
+                @Html.Partial("_RegistrationStatus")
+            </div>
+        </div>
+    </div>
+</div>
+
+@Scripts.Render("~/Content/js/activityFormBuilder.js")
+
+<script type="text/javascript">
+    function reload() {
+        window.location.reload();
+    }
+</script>
+
+<script type="text/javascript">
+
+    (function() {
+        $(".expand-branch").click(function() {
+            $(this).parent().parent().find(".activities-table").show();
+            $(this).parent().find('.glyphicon-minus').show();
+            $(this).hide();
+
+            updateBranchState($(this).data("branchid"), false);
+        });
+
+        $(".collapse-branch").click(function() {
+            $(this).parent().parent().find(".activities-table").hide();
+            $(this).parent().find('.glyphicon-plus').show();
+            $(this).hide();
+
+            updateBranchState($(this).data("branchid"), true);
+        });
+
+        function updateBranchState(branchId, collapsed) {
+            $.post("/Activity/SetBranchState", { branchId: branchId, collapsed: collapsed });
+        }
+
+        $("#activityedit").on("hidden.bs.modal",
+            function (e) {
+                if ($(e.target).is("#activityedit.modal.fade")) {
+                    $("#activityedit .modal-content").html("");
+                }
+            });
+
+        $(".publishActivityChk").on("change",
+            function () {
+                var activityId = $(this).data("activity");
+
+                $.post("/Activity/Publish/" + activityId, {value: this.checked});
+            });
+
+        jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+            "date-uk-pre": function (a) {
+                if (a == null || a == "") {
+                    return 0;
+                }
+                var ukDatea = a.split('/');
+                return (ukDatea[2] + ukDatea[1] + ukDatea[0]) * 1;
+            },
+
+            "date-uk-asc": function (a, b) {
+                return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+            },
+
+            "date-uk-desc": function (a, b) {
+                return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+            }
+        });
+
+
+        $('#cbActivityType').on('change', function () {
+
+
+            var exportLink = $('[data-target="#activitiesexportform"]').attr('data-hrefTpl');
+            if (exportLink) {
+                exportLink = exportLink.replace("12321", $('#cbActivityType').val());
+                $('[data-target="#activitiesexportform"]').attr("href", exportLink);
+            }
+
+            if ($('#cbActivityType').val() == 'all') {
+                $('[data-type]').show();
+
+            }
+            else {
+                $('[data-type]').each(function () {
+                    if ($(this).attr('data-type') == $('#cbActivityType').val()) {
+                        $(this).show();
+                    }
+                    else {
+                        $(this).hide();
+                    }
+                });
+            }
+        });
+
+        $('#activitiesview table').DataTable({
+            "dom": 't<"clear">',
+            "aaSorting": [], //disable default sort
+            "bAutoWidth": false,
+            "paging": false,
+            "aoColumns": [
+                { "bSortable": false, "sWidth": "30px" }, //Inactives indicator
+                { "bSortable": true }, //Name
+                { "bSortable": true }, //Description
+                { "bSortable": true }, //Type
+                { "bSortable": true }, //Start date
+                { "bSortable": true }, //End date
+                { "bSortable": false }, //Edit form
+                { "bSortable": false }, //Is published
+                { "bSortable": false }, //External link
+                { "bSortable": true }, //Registrations count
+                { "bSortable": false }, //btn
+                { "bSortable": false }, //btn
+                { "bSortable": false }, //btn
+                { "bSortable": false }, //btn
+            ]
+        });
+    })();
+
+
+    function printActivites() {
+
+        var wnd = window.open('', '@Messages.Activity_List_PrintActivities', '');
+
+        wnd.document.write('<html><head><title>@Messages.Activity_List_PrintActivities</title>');
+        //if need to add styles
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<link rel="stylesheet" href="/Content/site.css" type="text/css" />');
+
+
+
+        wnd.document.write('<body>');
+
+        wnd.document.write($('#activitiesview_print').html());
+        wnd.document.write('</body>');
+
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+
+        setTimeout(function () {
+            wnd.print();
+        }, 1000);
+
+        return false;
+    }
+</script>

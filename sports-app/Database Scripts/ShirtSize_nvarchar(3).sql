@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[Users] ALTER COLUMN ShirtSize NVARCHAR(3) NULL

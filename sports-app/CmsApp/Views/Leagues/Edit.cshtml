@@ -1,0 +1,810 @@
+﻿@model LeagueNavView
+
+@{
+    var updateRankCall = "";
+    if (Model.UnionId.HasValue)
+    {
+        updateRankCall = $"javascript:lgEdit.UpdateRank({Model.LeagueId}, {Model.SeasonId}, {Model.UnionId})";
+    }
+    bool isRefereeRole = User.GetSessionWorkerValueOrTopLevelSeasonJob(Model.SeasonId) == JobRole.RefereeAssignment;
+    bool isCallRoomManager = User.GetSessionWorkerValueOrTopLevelLeagueJob(Model.LeagueId) == JobRole.CallRoomManager;
+    bool refereePermission = User.GetSessionWorkerValueOrTopLevelLeagueJob(Model.LeagueId) == JobRole.Referee;
+
+    var standings = (string.Equals(Model.SectionAlias, SectionAliases.Gymnastic)
+             || string.Equals(Model.SectionAlias, GamesAlias.WaveSurfing)
+             || (Model.SectionId == 6 && Model.IsTennisCompetition == 1))
+? Messages.CompetitionTable
+: Messages.LeagueTable;
+
+    var teamsDivSize = (string.Equals(Model.SectionAlias, SectionAliases.Gymnastic, StringComparison.OrdinalIgnoreCase) && Model.DisciplineId.HasValue) ||
+                       string.Equals(Model.SectionAlias, SectionAliases.MartialArts, StringComparison.OrdinalIgnoreCase)
+        ? "col-sm-12" : "col-sm-12";
+    var isAthleticLeagueCompetition = Model.AthleticLeagueId.HasValue && Model.AthleticLeagueId.Value > 0;
+    var isGoldenSpikes = ViewBag.IsGoldenSpike != null && ViewBag.IsGoldenSpike == true;
+}
+
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiwCq-EDCvfhQ786WvFgSQvrSxCgjzsYM&libraries=places"></script>
+
+<div class="row">
+    <div class="col-lg-10">
+        <h3 class="sub-header">
+            @if (!Model.IsDepartmentLeague)
+            {
+                if (Model.UnionId.HasValue)
+                {
+                    if (Model.IsUnionValid && (User.IsInAnyRole(AppRole.Admins) || (User.HasTopLevelJob(JobRole.UnionManager))))
+                    {
+                        <a href="@Url.Action("Edit", "Unions", new {id = Model.UnionId})">@Model.UnionName</a>
+                    }
+                    else
+                    {
+                        @Model.UnionName
+                    }
+                }
+                if (Model.UnionId.HasValue && Model.ClubId.HasValue)
+                {
+                    @:&raquo;
+                }
+                @:&raquo;
+                if (Model.DisciplineId.HasValue && (User.IsInAnyRole(AppRole.Admins) || (User.HasTopLevelJob(JobRole.UnionManager))))
+                {
+                    <a href="@Url.Action("Edit", "Disciplines", new {id = Model.DisciplineId, seasonId = Model.SeasonId})">@Model.DisciplineAlias</a>
+                }
+                if (Model.ClubId.HasValue && !isCallRoomManager)
+                {
+                    <a href="@Url.Action("Edit", "Clubs", new {id = Model.ClubId, sectionId = Model.SectionId})">@Model.ClubName</a>
+                }
+                @:&raquo; @Model.LeagueName
+            }
+            else
+            {
+                <a href="@Url.Action("Edit", "Clubs", new {id = Model.ClubId, isDepartment = true, seasonId = Model.SeasonId})">@Model.ClubName</a>
+                @:&raquo; @Model.LeagueName
+            }
+
+        </h3>
+    </div>
+    <div class="col-lg-2">
+        <h3 class="currentSeason"></h3>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" id="league_tabs" role="tablist">
+
+    @if (refereePermission && Model.IsAthleticsCompetition)
+    {
+        @*<li><a href="#settings" data-toggle="tab">@Messages.GameSettings</a></li>*@
+        <li class="active">
+            <a href="#disciplines" data-toggle="tab">@Messages.AthleticsDisciplines</a>
+        </li>
+    }
+    else
+    {
+        if (!isRefereeRole && !isCallRoomManager)
+        {
+            <li class="active">
+                <a href="#details" data-toggle="tab">@Messages.Info</a>
+            </li>
+        }
+
+        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && (isRefereeRole || !isCallRoomManager))
+        {
+            <li class="@(isRefereeRole ? "active" : string.Empty)">
+                <a href="#userstab" data-toggle="tab">@Messages.Workers</a>
+            </li>
+        }
+        if (!isRefereeRole)
+        {
+            <li>
+                @if (!Model.IsAthleticsCompetition
+                    && !Model.IsRowingCompetition
+                    && !Model.IsWeightLiftingCompetition
+                    && !string.Equals(Model.SectionAlias, SectionAliases.Swimming, StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(Model.SectionAlias, SectionAliases.Climbing, StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(Model.SectionAlias, SectionAliases.Bicycle, StringComparison.OrdinalIgnoreCase))
+                {
+                    <a href="#teams" data-toggle="tab">
+                        @if (string.Equals(Model.SectionAlias, SectionAliases.Gymnastic, StringComparison.OrdinalIgnoreCase))
+                        {
+                            @Messages.Routes
+                        }
+                        else if (string.Equals(Model.SectionAlias, SectionAliases.Tennis, StringComparison.OrdinalIgnoreCase) && Model.IsTennisCompetition == 1)
+                        {
+                            @Messages.Category
+                        }
+                        else if (Model.UnionId == 37)
+                        {
+                            @Messages.Sportsmans
+                        }
+                        else if (string.Equals(Model.SectionAlias, GamesAlias.WaveSurfing, StringComparison.OrdinalIgnoreCase))
+                        {
+                            @Messages.Categories
+                        }
+                        else
+                        {
+                            @Messages.Teams
+                        }
+                    </a>
+                }
+            </li>
+        }
+
+        @*<li><a href="#settings" data-toggle="tab">@Messages.GameSettings</a></li>*@
+
+        if (Model.IsTennisCompetition != 1)
+        {
+            if (Model.IsAthleticsCompetition && !isRefereeRole)
+            {
+                <li class="@(isCallRoomManager && !isRefereeRole ? "active" : string.Empty)">
+                    <a href="#disciplines" data-toggle="tab">@Messages.AthleticsDisciplines</a>
+                </li>
+            }
+            else if (!isRefereeRole)
+            {
+                if (Model.IsWeightLiftingCompetition
+                || Model.IsRowingCompetition
+                || string.Equals(Model.SectionAlias, SectionAliases.Swimming, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(Model.SectionAlias, SectionAliases.Climbing, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(Model.SectionAlias, SectionAliases.Bicycle, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (string.Equals(Model.SectionAlias, SectionAliases.Bicycle, StringComparison.OrdinalIgnoreCase))
+                    {
+                        <li>
+                            <a href="#disciplines" data-toggle="tab">@Messages.SubCompetition</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li>
+                            <a href="#disciplines" data-toggle="tab">@Messages.Categories</a>
+                        </li>
+                    }
+
+                }
+                else
+                {
+                    if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && ViewBag.JobRole != JobRole.RefereeAssignment && !Model.IsGymnasticsCompetition)
+                    {
+                        <li>
+                            <a href="#groups" data-toggle="tab">@Messages.Groups</a>
+                        </li>
+                    }
+                }
+            }
+        }
+
+        if (!isRefereeRole)
+        {
+            if (!Model.IsAthleticsCompetition
+            && !Model.IsRowingCompetition
+            && !isCallRoomManager
+            && !Model.IsWeightLiftingCompetition
+            && !Model.IsGymnasticsCompetition
+            && !string.Equals(Model.SectionAlias, SectionAliases.Swimming, StringComparison.OrdinalIgnoreCase)
+            && Model.IsTennisCompetition != 1
+            && !string.Equals(Model.SectionAlias, SectionAliases.Climbing, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(Model.SectionAlias, SectionAliases.Bicycle, StringComparison.OrdinalIgnoreCase))
+            {
+                <li>
+                    <a href="#schedules" data-toggle="tab">@Messages.GamesTable</a>
+                </li>
+            }
+
+            if ((Model.UnionId.HasValue || Model.IsDepartmentLeague || Model.ClubId.HasValue) && !isCallRoomManager && Model.IsTennisCompetition != 1 && !Model.IsRowingCompetition)
+            {
+                <li>
+                    <a href="#leaguerank" data-toggle="tab" onclick="@updateRankCall">
+                        @(Model.IsAthleticsCompetition
+                                         || Model.IsRowingCompetition
+                                         || string.Equals(Model.SectionAlias, SectionAliases.Swimming, StringComparison.OrdinalIgnoreCase)
+                                         || string.Equals(Model.SectionAlias, SectionAliases.Climbing, StringComparison.OrdinalIgnoreCase)
+                                         || string.Equals(Model.SectionAlias, SectionAliases.Bicycle, StringComparison.OrdinalIgnoreCase)
+                                         ? Messages.Standings : standings)
+                    </a>
+                </li>
+            }
+        }
+
+        if (!isRefereeRole)
+        {
+            if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && !isCallRoomManager)
+            {
+                <li>
+                    <a href="#notifications" data-toggle="tab">@Messages.Notifications</a>
+                </li>
+            }
+
+            if ((ViewBag.IsActivityManager || ViewBag.IsActivityManager || ViewBag.IsActivityRegistrationActive) && !string.IsNullOrWhiteSpace(ViewBag.JobRole) && !(ViewBag.JobRole == JobRole.UnionManager || User.IsInRole(AppRole.Admins)))
+            {
+                <li>
+                    <a href="#activities" data-toggle="tab">@Messages.ManageActivities</a>
+                </li>
+            }
+            if (Model.SectionAlias == SectionAliases.Basketball)
+            {
+                <li>
+                    <a href="#league-statistics" data-toggle="tab">@Messages.Statistics</a>
+                </li>
+            }
+            if (!isCallRoomManager)
+            {
+                <li>
+                    <a href="#gallery" data-toggle="tab">@Messages.Gallery</a>
+                </li>
+            }
+        }
+    }
+</ul>
+<div class="tab-content row offset-3">
+
+    @if (refereePermission && Model.IsAthleticsCompetition)
+    {
+        if (Model.IsAthleticsCompetition || Model.IsWeightLiftingCompetition || Model.IsRowingCompetition || string.Equals(Model.SectionAlias, SectionAliases.Swimming, StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="tab-pane col-sm-12 active" id="disciplines">
+                <div id="disciplines-tabloader">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("Disciplines", "Leagues", new { leagueId = Model.LeagueId }),
+                   DataElementId = "disciplines-tabloader"
+               })
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+
+        if (!isRefereeRole && !isCallRoomManager)
+        {
+            <div class="tab-pane fade in @(ViewBag.IsTennisLeagueReferee == true ? string.Empty : "active") col-sm-12" id="details">
+                <div id="details-tabloader">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("Details", new { id = Model.LeagueId, isTennisCompetition = Model.IsTennisCompetition, sectionAliasRead = ViewBag.SectionAlias }),
+                   DataElementId = "details-tabloader"
+               })
+                </div>
+            </div>
+
+        }
+        if (isRefereeRole || !isCallRoomManager)
+        {
+            <div class="tab-pane fade col-sm-12 offset-2 @(isRefereeRole ? "active in" : string.Empty)" id="userstab">
+                <div id="workers_list">
+                    <div id="workers-tabloader">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("WorkerList", "Jobs", new { id = @Model.LeagueId, logicalName = LogicaName.League, seasonId = Model.SeasonId }),
+                       DataElementId = "workers-tabloader"
+                   })
+                    </div>
+                </div>
+            </div>
+        }
+        if (!isRefereeRole
+            && !Model.IsAthleticsCompetition
+            && !Model.IsRowingCompetition
+            && !Model.IsWeightLiftingCompetition
+            && !string.Equals(Model.SectionAlias, SectionAliases.Swimming, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(Model.SectionAlias, SectionAliases.Climbing, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(Model.SectionAlias, SectionAliases.Bicycle, StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="tab-pane fade @teamsDivSize" id="teams">
+                <div id="teams-tabloader">
+                    @if (Model.IsTennisCompetition == 1)
+                    {
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("List", "Teams", new { id = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId, departmentId = Model.ClubId, isTennisCompetition = Model.IsTennisCompetition }),
+                       DataElementId = "teams-tabloader"
+                   })
+                    }
+                    else if (Model.IsDepartmentLeague)
+                    {
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("List", "Teams", new { id = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId, departmentId = Model.ClubId }),
+                       DataElementId = "teams-tabloader"
+                   })
+                    }
+                    else if (string.Equals(Model.SectionAlias, SectionAliases.Gymnastic, StringComparison.OrdinalIgnoreCase) && Model.DisciplineId.HasValue)
+                    {
+                        <div class="row">
+                            <div class="col-sm-8" id="routesDiv">
+                                <div id="routesList-tabloader">
+                                    @Html.Partial("_TabLoader", new TabLoaderParams
+                               {
+                                   ActionUrl = Url.Action("RoutesList", "Teams", new { disciplineId = Model.DisciplineId, seasonId = Model.SeasonId, leagueId = Model.LeagueId }),
+                                   DataElementId = "routesList-tabloader",
+                               })
+                                </div>
+                            </div>
+                            <div class="col-sm-4" id="routesDiv">
+                                <div id="refereesList-tabloader">
+                                    @Html.Partial("_TabLoader", new TabLoaderParams
+                               {
+                                   ActionUrl = Url.Action("RefereesList", "Teams", new { leagueId = Model.LeagueId, seasonId = Model.SeasonId }),
+                                   DataElementId = "refereesList-tabloader"
+                               })
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (Model.UnionId == 37)
+                    {
+                        <div class="row">
+                            <div class="col-sm-7" id="registeredPlayersDiv">
+                                <div id="registeredPlayersDiv-tabloader">
+                                    @Html.Partial("_TabLoader", new TabLoaderParams
+                               {
+                                   ActionUrl = Url.Action("RegisteredPlayers", "Players", new { leagueId = Model.LeagueId, seasonId = Model.SeasonId }),
+                                   DataElementId = "registeredPlayersDiv-tabloader"
+                               })
+                                </div>
+                            </div>
+                            <div class="col-sm-5" id="refereesDiv">
+                                <div id="refereesDiv-tabloader">
+                                    @Html.Partial("_TabLoader", new TabLoaderParams
+                               {
+                                   ActionUrl = Url.Action("RefereesList", "Teams", new { leagueId = Model.LeagueId, seasonId = Model.SeasonId }),
+                                   DataElementId = "refereesDiv-tabloader"
+                               })
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("List", "Teams", new { id = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId }),
+                       DataElementId = "teams-tabloader"
+                   })
+                    }
+                </div>
+            </div>
+        }
+        @*<div class="tab-pane fade col-xs-10" id="settings">
+                    @Html.Action("Edit", "Games")
+            </div>*@
+    if (Model.IsTennisCompetition != 1)
+    {
+        if (Model.IsAthleticsCompetition
+        || Model.IsWeightLiftingCompetition
+        || Model.IsRowingCompetition
+        || string.Equals(Model.SectionAlias, SectionAliases.Swimming, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Model.SectionAlias, SectionAliases.Climbing, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Model.SectionAlias, SectionAliases.Bicycle, StringComparison.OrdinalIgnoreCase))
+        {
+                <div class="tab-pane col-sm-12 @(isCallRoomManager && !isRefereeRole ? "active" : "fade")" id="disciplines">
+                    <div id="disciplines-tabloader">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("Disciplines", "Leagues", new { leagueId = Model.LeagueId }),
+                       DataElementId = "disciplines-tabloader"
+                   })
+                    </div>
+                </div>
+            }
+            else
+            {
+                if (ViewBag.JobRole != JobRole.RefereeAssignment && !Model.IsGymnasticsCompetition)
+                {
+                    <div class="tab-pane fade col-sm-7" id="groups">
+                        <div id="groups-tabloader">
+                            @if (Model.IsDepartmentLeague)
+                            {
+                                @Html.Partial("_TabLoader", new TabLoaderParams
+                           {
+                               ActionUrl = Url.Action("Groups", "Schedules", new { id = Model.LeagueId, seasonId = Model.SeasonId, departmentId = Model.ClubId }),
+                               DataElementId = "groups-tabloader"
+                           })
+                            }
+                            else
+                            {
+                                @Html.Partial("_TabLoader", new TabLoaderParams
+                           {
+                               ActionUrl = Url.Action("Groups", "Schedules", new { id = Model.LeagueId, seasonId = Model.SeasonId }),
+                               DataElementId = "groups-tabloader"
+                           })
+                            }
+                        </div>
+                    </div>
+            }
+        }
+        if (!Model.IsAthleticsCompetition
+        && !isCallRoomManager
+        && !Model.IsRowingCompetition
+        && !Model.IsWeightLiftingCompetition
+        && !Model.IsGymnasticsCompetition
+        && !string.Equals(Model.SectionAlias, SectionAliases.Swimming, StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(Model.SectionAlias, SectionAliases.Climbing, StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(Model.SectionAlias, SectionAliases.Bicycle, StringComparison.OrdinalIgnoreCase))
+        {
+                <div class="tab-pane fade" id="schedules">
+                    <div id="schedules-tabloader">
+                        @if (Model.IsDepartmentLeague)
+                        {
+                            @Html.Partial("_TabLoader", new TabLoaderParams
+                       {
+                           ActionUrl = Url.Action("List", "Schedules", new { id = Model.LeagueId, isChronological = TempData["IsChrono"], desOrder = false, seasonId = Model.SeasonId, departmentId = Model.ClubId }),
+                           DataElementId = "schedules-tabloader"
+                       })
+                        }
+                        else
+                        {
+                            @Html.Partial("_TabLoader", new TabLoaderParams
+                       {
+                           ActionUrl = Url.Action("List", "Schedules", new { id = Model.LeagueId, isChronological = TempData["IsChrono"], desOrder = false, seasonId = Model.SeasonId }),
+                           DataElementId = "schedules-tabloader",
+                           UseFadeEffect = false
+                       })
+                        }
+                    </div>
+                </div>
+
+            }
+            if ((Model.UnionId.HasValue || Model.IsDepartmentLeague || Model.ClubId.HasValue) && !isCallRoomManager)
+            {
+                <div class="tab-pane fade" id="leaguerank">
+                    @if (ViewBag.IsTennisLeague == false)
+                    {
+                        if (Model.SectionAlias != GamesAlias.Athletics)
+                        {
+                            <button class="btn btn-primary btn-edit export"
+                                    onclick="@updateRankCall">
+                                <i class="glyphicon glyphicon-refresh"></i> @Messages.Update
+                            </button>
+                        }
+                        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers) && Model.SectionAlias != GamesAlias.Athletics)
+                        {
+                            <a href="@GlobVars.SiteUrl/LeagueTable/Index?id=@Model.LeagueId&seasonId=@Model.SeasonId&union=@Model.UnionId" target="_blank" class="btn btn-info view">@Messages.ExternalLink</a>
+                            if (Model.SectionAlias == GamesAlias.NetBall)
+                            {
+                                <a href="#" id="extTblBtn" class="btn btn-info export" onclick="$('.extendedTable').toggle()" style="margin-right: 5px; margin-left: 5px;">@Messages.ExtendedTable</a>
+                            }
+                        }
+                        if (Model.SectionAlias != GamesAlias.Athletics)
+                        {
+                            <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportranks').submit()">
+                                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                                @using (Html.BeginForm("ExportLeagueRanksToExcel", "LeagueRank", new { id = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId }
+        , FormMethod.Post, new { id = "exportranks" }))
+                                {
+                                }
+                            </a>
+                        }
+                        <div>
+                            <div class="row">
+                                @{
+                                    var showScoringAndRankedStanding = Model.SectionAlias == GamesAlias.Rugby || Model.IsIndividual && Model.SectionAlias != SectionAliases.Tennis;
+                                }
+
+                                <div id="leagueranktable" class="col-sm-@(showScoringAndRankedStanding ? "8" : "12")">
+                                    <div id="leagueranktable-tabloader">
+                                        @Html.Partial("_TabLoader", new TabLoaderParams
+                                   {
+                                       ActionUrl = Url.Action("Details", "LeagueRank", new { id = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId }),
+                                       DataElementId = "leagueranktable-tabloader"
+                                   })
+                                    </div>
+
+                                </div>
+                                @if (isAthleticLeagueCompetition)
+                                {
+                                    <div id="athleticLeagueCompetitionRanks_pl" class="col-sm-8">
+                                        <div id="athleticLeagueCompetitionRanks_pl-tabloader">
+                                            @Html.Partial("_TabLoader", new TabLoaderParams
+                                       {
+                                           ActionUrl = Url.Action("AthleticLeagueCompetitionRanks", "LeagueRank", new { competitionId = Model.LeagueId, seasonId = Model.SeasonId, isGoldenSpike = isGoldenSpikes }),
+                                           DataElementId = "athleticLeagueCompetitionRanks_pl-tabloader"
+                                       })
+                                        </div>
+                                    </div>
+                                    <div id="athleticCombinedRanks_pl" class="col-sm-12">
+                                        <div id="athleticCombinedRanks_pl-tabloader">
+                                            @Html.Partial("_TabLoader", new TabLoaderParams
+                                       {
+                                           ActionUrl = Url.Action("AthleticCombinedRanks", "LeagueRank", new { competitionId = Model.LeagueId, seasonId = Model.SeasonId }),
+                                           DataElementId = "athleticCombinedRanks_pl-tabloader"
+                                       })
+                                        </div>
+                                    </div>
+                                }
+                                else if (Model.SectionAlias == GamesAlias.Athletics)
+                                {
+                                    <div class="col-sm-8">
+                                        <div class="col-sm-12" style="margin:10px;">
+                                            <div class="row">
+                                                <a href="@Url.Action("UpdateAthleticCompetitionPoints", "LeagueRank", new { competitionId = Model.LeagueId, seasonId = Model.SeasonId, @isGoldenSpikes = isGoldenSpikes })"
+                                                   data-ajax="true"
+                                                   data-ajax-loading="#update_ranks_spinner"
+                                                   data-ajax-complete="athletic_competition_ranks_update"
+                                                   class="btn btn-primary btn-edit">
+                                                    <i id="update_ranks_spinner" style="display:none;" class="fa fa-spinner fa-spin"></i> @Messages.Refresh @Messages.Points
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="athleticCombinedRanks_pl" class="col-sm-12">
+                                        <div id="athleticCombinedRanks_pl-tabloader">
+                                            @Html.Partial("_TabLoader", new TabLoaderParams
+                                       {
+                                           ActionUrl = Url.Action("AthleticCombinedRanks", "LeagueRank", new { competitionId = Model.LeagueId, seasonId = Model.SeasonId }),
+                                           DataElementId = "athleticCombinedRanks_pl-tabloader"
+                                       })
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (showScoringAndRankedStanding && !isAthleticLeagueCompetition)
+                                {
+                                    @*<div class="row">*@
+                                    <div class="col-sm-4">
+                                        @if (Model.SectionAlias == GamesAlias.Rugby)
+                                        {
+                                            <h3>@Messages.LeagueSettings</h3>
+                                        }
+
+                                        <div class="checkbox">
+                                            <label>@Html.CheckBoxFor(m => m.IsPositionSettingsEnabled)@Messages.ScoringSettings</label>
+                                        </div>
+
+                                        <div id="position-settings">
+                                            <div id="position-settings-tabloader">
+                                                @Html.Partial("_TabLoader", new TabLoaderParams
+                                           {
+                                               ActionUrl = Url.Action("LoadPositionSettings", "LeagueRank", new { leagueId = Model.LeagueId, seasonId = Model.SeasonId }),
+                                               DataElementId = "position-settings-tabloader"
+                                           })
+                                            </div>
+                                        </div>
+                                        @if (Model.SectionAlias == GamesAlias.Rugby)
+                                        {
+                                            <div id="ranked-standing">
+                                                <div id="ranked-standing-tabloader">
+                                                    @Html.Partial("_TabLoader", new TabLoaderParams
+                                               {
+                                                   ActionUrl = Url.Action("RankedStanding", "LeagueRank", new { leagueId = Model.LeagueId, seasonId = Model.SeasonId }),
+                                                   DataElementId = "ranked-standing-tabloader"
+                                               })
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (Model.SectionAlias == GamesAlias.Athletics)
+                                        {
+                                            <div id="athletic-ranked-standing">
+                                                <div id="athletic-ranked-standing-tabloader">
+                                                    @Html.Partial("_TabLoader", new TabLoaderParams
+                                               {
+                                                   ActionUrl = Url.Action("AthleticRankedStanding", "LeagueRank", new { leagueId = Model.LeagueId, seasonId = Model.SeasonId }),
+                                                   DataElementId = "athletic-ranked-standing-tabloader"
+                                               })
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row offset-3">
+                            <div class="col-sm-6 col-lg-6" style="margin-bottom: 10px;">
+                                <a href="@Url.Action("TennisLeagueDetails", "LeagueRank", new { id = Model.LeagueId, seasonId = Model.SeasonId })" class="btn btn-primary"
+                                   data-ajax-update="#leaguerank_tennis_league"
+                                   data-ajax="true">
+                                    <i class="glyphicon glyphicon-refresh"></i> @Messages.Update
+                                </a>
+                                @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+                                {
+                                    <a href="@GlobVars.SiteUrl/LeagueTable/TennisLeagueDetails?id=@Model.LeagueId&seasonId=@Model.SeasonId" target="_blank" class="btn btn-info view">@Messages.ExternalLink</a>
+                                    <a href="#" id="extTblBtn" class="btn btn-info export" onclick="$('.extendedTable').toggle()" style="margin-right: 5px; margin-left: 5px;">@Messages.ExtendedTable</a>
+                                }
+                                <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportranks').submit()">
+                                    <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                                    @using (Html.BeginForm("ExportTennisLeagueRanksToExcel", "LeagueRank", new { id = Model.LeagueId, seasonId = Model.SeasonId }
+                                                    , FormMethod.Post, new { id = "exportranks" }))
+                                    {
+                                    }
+                                </a>
+                            </div>
+                        </div>
+                        <div id="leaguerank_tennis_league">
+                            <div id="leaguerank_tennis_league-tabloader">
+                                @Html.Partial("_TabLoader", new TabLoaderParams
+                           {
+                               ActionUrl = Url.Action("TennisLeagueDetails", "LeagueRank", new { id = Model.LeagueId, seasonId = Model.SeasonId }),
+                               DataElementId = "leaguerank_tennis_league-tabloader"
+                           })
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        <div class="tab-pane fade" id="notifications">
+            <div id="notifications-tabloader">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("Add", "Notifications", new { entityId = Model.LeagueId, logicalName = LogicaName.League, seasonId = Model.SeasonId }),
+               DataElementId = "notifications-tabloader",
+               LoadByVisibilityOnly = true
+           })
+            </div>
+        </div>
+
+        if ((ViewBag.IsActivityManager || ViewBag.IsActivityManager || ViewBag.IsActivityRegistrationActive) && !string.IsNullOrWhiteSpace(ViewBag.JobRole) && !(ViewBag.JobRole == JobRole.UnionManager || User.IsInRole(AppRole.Admins)))
+        {
+            <div class="tab-pane fade" id="activities">
+                <div id="activity-list">
+                    <div id="activity-list-tabloader">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("List", "Activity", new { unionId = Model.UnionId, seasonId = Model.SeasonId }),
+                       DataElementId = "activity-list-tabloader",
+                       LoadByVisibilityOnly = true
+                   })
+                    </div>
+                </div>
+            </div>
+        }
+        if (Model.SectionAlias == SectionAliases.Basketball)
+        {
+            <div class="tab-pane fade" id="league-statistics">
+                <div id="statistics">
+                    <div id="statistics-tabloader">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("LeagueStatistics", "Leagues", new { id = Model.LeagueId, seasonId = Model.SeasonId }),
+                       DataElementId = "statistics-tabloader",
+                       LoadByVisibilityOnly = true
+                   })
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="tab-pane fade col-sm-10" id="gallery">
+            <div id="galleryContent">
+                <div id="galleryContent-tabloader">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("LeagueGalleries", "Leagues", new { leagueId = Model.LeagueId }),
+                   DataElementId = "galleryContent-tabloader",
+                   LoadByVisibilityOnly = true
+               })
+                </div>
+
+            </div>
+        </div>
+
+    }
+</div>
+
+
+<div class="modal fade" id="addsycle" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="addsycleform_pl"></div>
+    </div>
+</div>
+
+<script type="text/javascript" src="~/Scripts/pages/leagueEdit.js">
+</script>
+<script>
+        var updateStandingsTimer;
+        $(document).on("change",
+            "#ranked-standing .ranked-standing-correction",
+            function() {
+                clearTimeout(updateStandingsTimer);
+                $.post("/LeagueRank/UpdateRankedStandingCorrection",
+                        {
+                            leagueId: $(this).data("leagueid"),
+                            teamId: $(this).data("teamid"),
+                            value: $(this).val()
+                        })
+                    .done(function() {
+                        clearTimeout(updateStandingsTimer);
+                        updateStandingsTimer = setTimeout(function() {
+                                lgEdit.UpdateRank(@Model.LeagueId, @Model.SeasonId, @Model.UnionId);
+                            },
+                            2500);
+                    });
+            });
+
+        function athletic_competition_ranks_update() {
+            $("#athleticCombinedRanks_pl").loadWith('@Url.Action("AthleticCombinedRanks", "LeagueRank", new { competitionId = Model.LeagueId, seasonId = Model.SeasonId }, this.Request.Url.Scheme)');
+
+        }
+
+        function changePositions() {
+            var isPositionEnabled = $("#IsPositionSettingsEnabled").is(":checked");
+            if (isPositionEnabled) {
+                $("#position-settings").show();
+                $("#ranked-standing").show();
+                $("#athletic-ranked-standing").show();
+            } else {
+                $("#position-settings").hide();
+                $("#ranked-standing").hide();
+                $("#athletic-ranked-standing").hide();
+            }
+        };
+
+        $(document).ready(function() {
+            changePositions();
+        });
+        @*var url = '';
+        if ('@Model.IsDepartmentLeague' === 'True') {
+            url = '@Html.Raw(Url.Action("List", "Teams", new { id = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId, departmentId = Model.ClubId, isTennisCompetition = Model.IsTennisCompetition }))';
+            $("#teams").load(url);
+        }
+        else {
+            url = '@Html.Raw(Url.Action("List", "Teams", new { id = Model.LeagueId, seasonId = Model.SeasonId, unionId = Model.UnionId }))'
+            $("#teams").load(url);
+        }*@
+    $("#IsPositionSettingsEnabled").on("change",
+        function() {
+            var isPositionEnabled = $("#IsPositionSettingsEnabled").is(":checked");
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("ChangePositionSettingsStatus", "LeagueRank")",
+                data: {
+                    leagueId: "@Model.LeagueId",
+                    status: isPositionEnabled
+                },
+                success: function() {
+                    changePositions();
+                }
+            });
+        });
+
+</script>
+@if ((ViewBag.IsUnionViewer != null && ViewBag.IsUnionViewer == true && !isCallRoomManager && !isRefereeRole) || ViewBag.IsTennisLeagueReferee == true)
+{
+    <script>
+        $(document).ready(function() {
+            $('a').attr('disabled', true);
+            $('button').attr('disabled', true);
+            $('.btn').attr('disabled', true);
+            $('.gameCycleItemChbx').attr('disabled', true);
+            $('.dropdown-toggle').attr('disabled', true);
+            $('select').attr('disabled', true);
+            $('.frm-date').attr('disabled', true);
+            $(".export").attr('disabled', false);
+            $(".view").attr('disabled', false);
+            $(".edit-team").attr('disabled', false);
+            $('#export-row > span > div > button').attr('disabled', false);
+            $('input[name="IsAll"]').attr('disabled', true);
+            $('#dateFilterType').attr('disabled', false);
+            $('.gamePublish').attr('disabled', true);
+            $('.stageItemsChbx').attr('disabled', true);
+            $('#export-columns').attr('disabled', false);
+            if ("@ViewBag.IsTennisLeagueReferee" === "True") {
+                $("a[href='#details'").remove();
+                $("a[href='#userstab'").remove();
+                $("a[href='#teams'").remove();
+                $("a[href='#groups'").remove();
+                $("a[href='#leaguerank'").remove();
+                $("a[href='#notifications'").remove();
+                $("a[href='#gallery'").remove();
+                $('#league_tabs a[href="#schedules"]').tab('show');
+                $(".edit-tennis").each(function(index, elem) {
+                    var referees = $(elem).attr("data-referees");
+                    if (referees) {
+                        var refereesArray = referees.split(",");
+                        for (var i = 0; i < refereesArray.length; i++) {
+                            if (refereesArray[i].trim() == "@ViewBag.UserId") {
+                                if ($(elem).attr("data-disabled") !== "true") {
+                                    $(elem).attr('disabled', false);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

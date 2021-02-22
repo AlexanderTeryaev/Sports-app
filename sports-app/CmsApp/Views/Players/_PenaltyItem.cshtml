@@ -1,0 +1,25 @@
+﻿@model DataService.DTO.PenaltyInformationDto
+@{ 
+    var disabled = Model.IsEnded ? "disabled" : string.Empty;
+}
+<td>
+    @if (Model.IsEnded)
+    {
+        @Html.TextBoxFor(m => m.ExclusionNumber, new { @class = "form-control", @type = "number", @min = "1", style = "max-width:80px;", disabled = disabled })
+    }
+    else
+    {
+        @Html.TextBoxFor(m => m.ExclusionNumber, new { @class = "form-control", @type = "number", @min = "1", style = "max-width:80px;" })
+    }
+</td>
+<td>@Model.DateOfExclusion</td>
+<td>@Model.TeamName</td>
+<td>@Model.LeagueName</td>
+<td>@Model.UserActionName</td>
+<td>@UIHelpers.GetYesNoCaption(Model.IsEnded)</td>
+<td>
+    <a class="btn btn-primary update-penalty" @(disabled) data-id="@Model.Id"><i class="fa fa-save"></i></a>
+</td>
+<td>
+    <a class="@AppCss.Delete delete-penalty" @(disabled) data-id="@Model.Id"></a>
+</td>

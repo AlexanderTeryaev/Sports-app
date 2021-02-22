@@ -1,0 +1,55 @@
+﻿@model IEnumerable<DataService.DTO.PlayerRegistrationDto>
+@if (Model.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th class="col-sm-3">@Messages.FullName</th>
+                <th class="col-sm-2">@Messages.IdentNum</th>
+                <th class="col-sm-2">@Messages.BirthDay</th>
+                <th class="col-sm-1">@Messages.Gender</th>
+                <th class="col-sm-2">@Messages.ClubName</th>
+                <th class="col-sm-1">@Messages.ClubNumber</th>
+                <th class="col-sm-1">@Messages.Approve</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var registration in Model)
+            {
+                <tr>
+                    <td class="col-sm-3">@registration.FullName</td>
+                    <td class="col-sm-2">@registration.IdentNum</td>
+                    <td class="col-sm-2">@(registration.Birthday?.ToShortDateString())</td>
+                    <td class="col-sm-1">@LangHelper.GetGender(registration.Gender)</td>
+                    <td class="col-sm-2">@registration.ClubName</td>
+                    <td class="col-sm-1">@registration.ClubNumber</td>
+                    <td class="col-sm-1">
+                        @if (ViewBag.IsValidToUncheck)
+                        {
+                            @Html.CheckBoxFor(m => registration.IsActive, new { onclick = $"changeRegisterStatus('{registration.RegistrationId}')" })
+
+                        }
+                        else
+                        {
+                            @Html.CheckBoxFor(m => registration.IsActive, new { onclick = $"changeRegisterStatus('{registration.RegistrationId}')", disabled = "disabled" })
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<script>
+    function changeRegisterStatus(regId) {
+        var isActive = $(event.target).is(":checked");
+        $.ajax({
+            url: "@Url.Action("ChangeTennisCompetitionPlayerActiveStatus","Leagues")",
+            type: "POST",
+            data: {
+                isActive: isActive,
+                regId: regId
+            }
+        })
+    }
+</script>

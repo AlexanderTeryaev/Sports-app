@@ -1,0 +1,744 @@
+﻿@model ClubMainTabForm
+@{
+    var isMartialArts = Model.SectionAlias.Equals(GamesAlias.MartialArts, StringComparison.OrdinalIgnoreCase);
+}
+
+@{
+    string tooltip, move, exportImgs, importPic, import, downloadForm, addTournament = string.Empty;
+    UIHelpers.GetButtonCaption(Model.SectionAlias, out downloadForm, out import, out importPic, out exportImgs, out move, out tooltip);
+}
+
+
+
+
+@if (Model.IsGymnastics && Model.IsUnionClub)
+{
+    <div class="@(isMartialArts ? "col-sm-2" : "col-sm-3") form-group">
+        <div class="ibox">
+            <div class="ibox-content">
+                <h5>@Messages.NumberOfDisciplines</h5>
+                <h1 class="no-margins">
+                    <span>@Model.TeamsCount</span>
+                </h1>
+            </div>
+        </div>
+    </div>
+    if (!Model.SectionIsIndividual)
+    {
+        <div class="@(isMartialArts ? "col-sm-2" : "col-sm-3") form-group">
+            <div class="ibox">
+                <div class="ibox-content">
+                    <h5>@Messages.TeamsCompleted</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.TeamsCompletedRegistrations</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.TeamsApproved</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.TeamsApproved</span>
+                    </h1>
+                </div>
+            </div>
+        </div>
+    }
+    <div class="@(isMartialArts ? "col-sm-2" : "col-sm-3") form-group">
+        <div class="ibox">
+            <div class="ibox">
+                <div class="ibox-content">
+                    <h5>@Messages.NumberOfOfficials</h5>
+                    <h1 class="no-margins"><span>@Model.OfficialsCount</span></h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="col-sm-12 form-group" style="text-align:center">
+        <div class="ibox-content" style="display: flex">
+            <div class="col-sm-2 form-group"></div>
+            <div class="col-sm-2 form-group"><h5>@Messages.TotalGymnastics</h5></div>
+            <div class="col-sm-2 form-group"><h5>@Messages.WaitingForApproval</h5></div>
+            <div class="col-sm-2 form-group"><h5>@Messages.ApprovedForRegistration</h5></div>
+            <div class="col-sm-2 form-group"><h5>@Messages.NotApprovedForRegistration</h5></div>
+            <div class="col-sm-2 form-group">
+                @if (Model.IsIndividual)
+                {
+                    <h5>@($"{Messages.ActivePlayers} {Messages.FourCompetitions}")</h5>
+                }
+            </div>
+        </div>
+        <div class="ibox-content" style="display: flex">
+            <div class="col-sm-2 form-group"><h5>@Messages.AllDisciplines</h5></div>
+            <div class="col-sm-2 form-group">
+                <h1 class="no-margins">
+                    <span>@Model.UniquePlayersCount</span>
+                </h1>
+            </div>
+            <div class="col-sm-2 form-group">
+                <h1 class="no-margins">
+                    <span>@Model.WaitingForApproval</span>
+                </h1>
+            </div>
+            <div class="col-sm-2 form-group">
+                <h1 class="no-margins">
+                    <span>@Model.PlayersApprovedUnique</span>
+                </h1>
+            </div>
+            <div class="col-sm-2 form-group">
+                <h1 class="no˚-margins">
+                    <span>@Model.PlayersNotApprovedUnique</span>
+                </h1>
+            </div>
+            <div class="col-sm-2 form-group">
+                @if (Model.IsIndividual)
+                {
+                    <h1 class="no-margins">
+                        <span>@Model.ActivePlayers</span>
+                    </h1>
+                }
+            </div>
+        </div>
+        @foreach (PlayerCountsDetail d in Model.CountDetail)
+        {
+            <div class="ibox-content" style="display: flex">
+                <div class="col-sm-2 form-group"><h5>@d.TeamName</h5></div>
+                <div class="col-sm-2 form-group">
+                    <h1 class="no-margins">
+                        <span>@d.TotalCount</span>
+                    </h1>
+                </div>
+                <div class="col-sm-2 form-group">
+                    <h1 class="no-margins">
+                        <span>@d.WaitingCount</span>
+                    </h1>
+                </div>
+                <div class="col-sm-2 form-group">
+                    <h1 class="no-margins">
+                        <span>@d.ApprovedCount</span>
+                    </h1>
+                </div>
+                <div class="col-sm-2 form-group">
+                    <h1 class="no˚-margins">
+                        <span>@d.NotApprovedCount</span>
+                    </h1>
+                </div>
+                <div class="col-sm-2 form-group">
+                    @if (Model.IsIndividual)
+                    {
+                        <h1 class="no-margins">
+                            <span>@d.ActiveCount</span>
+                        </h1>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    if (!Model.IsRowing)
+    {
+        <div class="@(isMartialArts ? "col-sm-2" : "col-sm-3") form-group">
+            <div class="ibox">
+                @if (Model.IsGymnastics)
+                {
+                    <div class="ibox-content">
+                        <h5>@Messages.NumberOfDisciplines</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.TeamsCount</span>
+                        </h1>
+                    </div>
+                }
+                else
+                {
+                    <div class="ibox-content">
+                        <h5>
+                            @if (ViewBag.Section == GamesAlias.WaveSurfing)
+                            {
+                                @Messages.NumberOfTeams.Replace(Messages.Teams, Messages.Categories)
+                            }
+                            else if (ViewBag.Section == GamesAlias.Athletics)
+                            {
+                                @Messages.NumberOfTeams.Replace(Messages.Teams, Messages.SubsClub)
+                            }
+                            else
+                            {
+                                @Messages.NumberOfTeams
+                            }
+                        </h5>
+                        <h1 class="no-margins">
+                            <span>@Model.TeamsCount</span>
+                        </h1>
+                    </div>
+                }
+                @if (!Model.SectionIsIndividual)
+                {
+                    <div class="ibox-content">
+                        <h5>@Messages.TeamsCompleted</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.TeamsCompletedRegistrations</span>
+                        </h1>
+                    </div>
+                    <div class="ibox-content">
+                        <h5>@Messages.TeamsApproved</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.TeamsApproved</span>
+                        </h1>
+                    </div>
+                }
+            </div>
+            <div class="ibox">
+                <div class="ibox-content">
+                    <h5>@Messages.NumberOfOfficials</h5>
+                    <h1 class="no-margins"><span>@Model.OfficialsCount</span></h1>
+                </div>
+            </div>
+        </div>
+    }
+
+    if (!Model.IsGymnastics)
+    {
+        if (!Model.IsUnionClub)
+        {
+            <div class="col-sm-3 form-group">
+                <div class="ibox-content">
+                    <h5>@Messages.Registrations</h5>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.NumberOfPlayers</h5>
+                    <h1 class="no-margins">
+                        <span>@(Model.PlayersCount)</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.WaitingForApproval</h5>
+                    <h1 class="no-margins">
+                        <span>@(Model.WaitingForApproval + Model.SchoolWaitingForApproval)</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.ApprovedForRegistration</h5>
+                    <h1 class="no-margins">
+                        <span>@(Model.PlayersApproved + Model.SchoolPlayersApproved)</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.NotApprovedForRegistration</h5>
+                    <h1 class="no˚-margins">
+                        <span>@(Model.PlayersNotApproved + Model.SchoolPlayersNotApproved)</span>
+                    </h1>
+                </div>
+                @if (Model.IsIndividual)
+                {
+                    <div class="ibox-content">
+                        <h5>@($"{Messages.ActivePlayers} {Messages.FourCompetitions}")</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.ActivePlayers</span>
+                        </h1>
+                    </div>
+                }
+            </div>
+
+            <!-- league team section -->
+            <div class="col-sm-3 form-group">
+                <div>
+                    <div class="ibox-content">
+                        <h5>
+                            @Messages.LeagueTeams
+                        </h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h5>@Messages.NumberOfPlayers</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.UniquePlayersCount</span>
+                        </h1>
+                    </div>
+                    <div class="ibox-content">
+                        <h5>@Messages.WaitingForApproval</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.WaitingForApproval</span>
+                        </h1>
+                    </div>
+                    <div class="ibox-content">
+                        <h5>@Messages.ApprovedForRegistration</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.PlayersApproved</span>
+                        </h1>
+                    </div>
+                    <div class="ibox-content">
+                        <h5>@Messages.NotApprovedForRegistration</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.PlayersNotApproved</span>
+                        </h1>
+                    </div>
+                    @if (Model.IsIndividual)
+                    {
+                        <div class="ibox-content">
+                            <h5>@($"{Messages.ActivePlayers} {Messages.FourCompetitions}")</h5>
+                            <h1 class="no-margins">
+                                <span>@Model.ActivePlayers</span>
+                            </h1>
+                        </div>
+                    }
+                </div>
+            </div>
+            <!-- school team secion -->
+            <div class="col-sm-3 form-group">
+                <div class="ibox-content">
+                    <h5>
+                        @if (ViewBag.Section == GamesAlias.WaveSurfing)
+                        {
+                            @Messages.SchoolTeams.Replace(Messages.Teams.ToLower(), Messages.Categories)
+                        }
+                        else if (ViewBag.Section == GamesAlias.Athletics)
+                        {
+                            @Messages.SchoolTeams.Replace(Messages.Teams.ToLower(), Messages.SubClub)
+                        }
+                        else
+                        {
+                            @Messages.SchoolTeams
+                        }
+                    </h5>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.NumberOfPlayers</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.SchoolPlayersCount</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.WaitingForApproval</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.SchoolWaitingForApproval</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.ApprovedForRegistration</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.SchoolPlayersApproved</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.NotApprovedForRegistration</h5>
+                    <h1 class="no˚-margins">
+                        <span>@Model.SchoolPlayersNotApproved</span>
+                    </h1>
+                </div>
+            </div>
+        }
+        else
+        {
+            if (!Model.IsRowing && !Model.IsBicycle)
+            {
+                <div class="@(isMartialArts ? "col-sm-2" : "col-sm-3") form-group">
+                    <div class="ibox-content">
+                        <h5>@Messages.Registrations</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.PlayersCount</span>
+                        </h1>
+                    </div>
+                    @if (Model.UnionId == 38)
+                    {
+                        <div class="ibox-content">
+                            <h5>@Messages.Itennis</h5>
+                            <h1 class="no˚-margins">
+                                <span>@Model.Itennis</span>
+                            </h1>
+                        </div>
+                    }
+                    <div class="ibox-content">
+                        <h5>@Messages.TotalRegistrationCompleted</h5>
+                        <h1 class="no-margins">
+                            <span>@(Model.PlayersCompletedRegistrations + Model.SchoolPlayersCompletedRegistrations)</span>
+                        </h1>
+                    </div>
+                    <div class="ibox-content">
+                        <h5>@Messages.ApprovedForRegistration</h5>
+                        <h1 class="no-margins">
+                            <span>@(Model.PlayersApproved + Model.SchoolPlayersApproved)</span>
+                        </h1>
+                    </div>
+                    <div class="ibox-content">
+                        <h5>@Messages.NotApprovedForRegistration</h5>
+                        <h1 class="no-margins">
+                            <span>@(Model.PlayersNotApproved + Model.SchoolPlayersNotApproved)</span>
+                        </h1>
+                    </div>
+                </div>
+            }
+            <div class="@(isMartialArts ? "col-sm-2" : "col-sm-3") form-group">
+                <div>
+                    <div class="ibox-content">
+                        <h4>
+                            @if (ViewBag.Section == GamesAlias.WaveSurfing)
+                            {
+                                @Messages.LeagueTeams.Replace(Messages.League, Messages.Competition).Replace(Messages.Teams.ToLower(), Messages.Categories.ToLower())
+                            }
+                            else if (ViewBag.Section == GamesAlias.Athletics)
+                            {
+                                @Messages.SubsClub
+                            }
+                            else if (ViewBag.Section == GamesAlias.Rowing || ViewBag.Section == GamesAlias.Bicycle)
+                            {
+                                @Messages.Registrations
+                            }
+                            else
+                            {
+                                @Messages.LeagueTeams
+                            }
+                        </h4>
+                    </div>
+                    <div class="ibox-content">
+                        @{
+                            var numberPlayersCountCaption = "";
+                            var playersCompletedCaption = "";
+                            var playersApprovedCaption = "";
+                            var playerNotapprovedCaption = "";
+                            var totalTeams = "";
+
+                            if (ViewBag.Section == GamesAlias.MartialArts || ViewBag.Section == GamesAlias.Motorsport || ViewBag.Section == GamesAlias.WaveSurfing || ViewBag.Section == GamesAlias.Rowing || ViewBag.Section == GamesAlias.Bicycle)
+                            {
+                                numberPlayersCountCaption = Messages.TotalSportsmans;
+                                playersCompletedCaption = Messages.SportsmansRegistrationCompleted;
+                                playersApprovedCaption = Messages.SportsmansApproved;
+                                playerNotapprovedCaption = Messages.Sportsmans;
+                                totalTeams = Messages.TotalTeams;
+                            }
+                            else if (ViewBag.Section == GamesAlias.Athletics)
+                            {
+                                numberPlayersCountCaption = Messages.TotalAthletes;
+                                playersCompletedCaption = Messages.AthletesRegistrationCompleted;
+                                playersApprovedCaption = Messages.AthletesApproved;
+                                playerNotapprovedCaption = Messages.Athletes;
+                                totalTeams = Messages.TotalTeams;
+                            }
+                            else
+                            {
+                                numberPlayersCountCaption = Messages.NumberOfPlayers;
+                                playersCompletedCaption = Messages.PlayersCompleted;
+                                playersApprovedCaption = Messages.PlayersApproved;
+                                playerNotapprovedCaption = Messages.Players;
+                                totalTeams = Messages.TotalTeams;
+                            }
+                        }
+                        <h5>@numberPlayersCountCaption</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.UniquePlayersCount</span>
+                        </h1>
+                    </div>
+                    @if (ViewBag.IsTennisClub)
+                    {
+                        <div class="ibox-content">
+                            <h5>@totalTeams</h5>
+                            <h1 class="no-margins">
+                                <span>@Model.TotalTeams</span>
+                            </h1>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ibox-content">
+                            <h5>@playersCompletedCaption</h5>
+                            <h1 class="no-margins">
+                                <span>@Model.PlayersCompletedRegistrationsUnique</span>
+                            </h1>
+                        </div>
+                        <div class="ibox-content">
+                            <h5>@playersApprovedCaption</h5>
+                            <h1 class="no-margins">
+                                <span>@Model.PlayersApprovedUnique</span>
+                            </h1>
+                        </div>
+                        <div class="ibox-content">
+                            <h5>@playerNotapprovedCaption @Messages.NotApprovedForRegistration.ToLower()</h5>
+                            <h1 class="no-margins">
+                                <span>@Model.PlayersNotApprovedUnique</span>
+                            </h1>
+                        </div>
+                        if (Model.IsIndividual)
+                        {
+                            <div class="ibox-content">
+                                <h5>@($"{Messages.ActivePlayers} {Messages.FourCompetitions}")</h5>
+                                <h1 class="no-margins">
+                                    <span>@Model.ActivePlayers</span>
+                                </h1>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            if (!Model.IsRowing && !Model.IsBicycle)
+            {
+                <div class="@(isMartialArts ? "col-sm-2" : "col-sm-3") form-group">
+
+                    <div>
+                        <div class="ibox-content">
+                            <h4>
+                                @if (ViewBag.Section == GamesAlias.WaveSurfing)
+                                {
+                                    @Messages.SchoolTeams.Replace(Messages.Teams.ToLower(), Messages.Categories.ToLower())
+                                }
+                                else if (ViewBag.Section == GamesAlias.Athletics)
+                                {
+                                    @Messages.SchoolTeams.Replace(Messages.Teams.ToLower(), Messages.SubClub)
+                                }
+                                else
+                                {
+                                    @Messages.SchoolTeams
+                                }
+                            </h4>
+                        </div>
+                        <div class="ibox-content">
+                            <h5>@numberPlayersCountCaption</h5>
+                            <h1 class="no-margins">
+                                <span>@ViewBag.TotalTrainingPlayers</span>
+                            </h1>
+                        </div>
+                        <div class="ibox-content">
+                            <h5>@playersCompletedCaption</h5>
+                            <h1 class="no-margins">
+                                <span>@Model.SchoolPlayersCompletedRegistrationsUnique</span>
+                            </h1>
+                        </div>
+                        <div class="ibox-content">
+                            <h5>@playersApprovedCaption</h5>
+                            <h1 class="no-margins">
+                                <span>@Model.SchoolPlayersApprovedUnique</span>
+                            </h1>
+                        </div>
+                        <div class="ibox-content">
+                            <h5>@playerNotapprovedCaption @Messages.NotApprovedForRegistration.ToLower()</h5>
+                            <h1 class="no-margins">
+                                <span>@Model.SchoolPlayersNotApproved</span>
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            if (isMartialArts)
+            {
+                <div class="col-sm-3 form-group">
+                    <div class="ibox-content">
+                        <div class="row">
+                            <div class="col-sm-9">
+                                <h5>
+                                    @Messages.RegistrationStatus
+                                </h5>
+                            </div>
+                            <div class="col-sm-3">
+                                @if (Model.HasPermission)
+                                {
+                                    @Html.CheckBoxFor(m => m.IsClubApproved, new { })
+                                }
+                                else
+                                {
+                                    @Html.CheckBoxFor(m => m.IsClubApproved, new { disabled = "disabled" })
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ibox-content">
+                        <h5>@Messages.TotalSportsmans</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.TotalWaitingAndApprovedCount</span>
+                        </h1>
+                    </div>
+                    <div class="ibox-content">
+                        <div class="row">
+                            @if (Model.HasPermission)
+                            {
+                                <div class="col-sm-12"><h5>@Messages.Comments</h5></div>
+                                <div class="col-sm-12">
+                                    <textarea id="commentsForMartialArts" class="form-control" placeholder="@Messages.AddComment ...">@Model.Comment</textarea>
+                                </div>
+                            }
+                            else if (!Model.HasPermission && !string.IsNullOrEmpty(Model.Comment))
+                            {
+                                <div class="col-sm-12"><h5>@Messages.Comments:</h5></div>
+                                <div class="col-sm-12">
+                                    @Model.Comment
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+                    <div class="ibox-content" style="margin-top:10px;">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                @Html.Action("ClubPayments", "Clubs", new { clubId = Model.ClubId })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    }
+    else
+    {
+        <div class="col-sm-3 form-group">
+            <div class="ibox-content">
+                @if (Model.IsIndividual)
+                {
+                    <h5>@Messages.Registrations</h5>
+                }
+                else
+                {
+                    <h5>@Messages.LeagueTeams</h5>
+                }
+            </div>
+            <div class="ibox-content">
+                <h5>@Messages.TotalGymnastics</h5>
+                <h1 class="no-margins">
+                    <span>@(Model.PlayersCount)</span>
+                </h1>
+            </div>
+            <div class="ibox-content">
+                <h5>@Messages.WaitingForApproval</h5>
+                <h1 class="no-margins">
+                    <span>@(Model.WaitingForApproval + Model.SchoolWaitingForApproval)</span>
+                </h1>
+            </div>
+            <div class="ibox-content">
+                <h5>@Messages.ApprovedForRegistration</h5>
+                <h1 class="no-margins">
+                    <span>@(Model.PlayersApproved + Model.SchoolPlayersApproved)</span>
+                </h1>
+            </div>
+            <div class="ibox-content">
+                <h5>@Messages.NotApprovedForRegistration</h5>
+                <h1 class="no˚-margins">
+                    <span>@(Model.PlayersNotApproved + Model.SchoolPlayersNotApproved)</span>
+                </h1>
+            </div>
+            @if (Model.IsIndividual)
+            {
+                <div class="ibox-content">
+                    <h5>@($"{Messages.ActivePlayers} {Messages.FourCompetitions}")</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.ActivePlayers</span>
+                    </h1>
+                </div>
+            }
+        </div>
+
+        <!-- league team section -->
+        <div class="col-sm-3 form-group">
+            <div>
+                <div class="ibox-content">
+                    <h5>
+                        @Messages.LeagueTeams
+                    </h5>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.TotalGymnastics</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.UniquePlayersCount</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.WaitingForApproval</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.WaitingForApproval</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.ApprovedForRegistration</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.PlayersApproved</span>
+                    </h1>
+                </div>
+                <div class="ibox-content">
+                    <h5>@Messages.NotApprovedForRegistration</h5>
+                    <h1 class="no-margins">
+                        <span>@Model.PlayersNotApproved</span>
+                    </h1>
+                </div>
+                @if (Model.IsIndividual)
+                {
+                    <div class="ibox-content">
+                        <h5>@($"{Messages.ActivePlayers} {Messages.FourCompetitions}")</h5>
+                        <h1 class="no-margins">
+                            <span>@Model.ActivePlayers</span>
+                        </h1>
+                    </div>
+                }
+            </div>
+        </div>
+        <!-- school team secion -->
+        <div class="col-sm-3 form-group">
+            <div class="ibox-content">
+                <h5>
+                    @if (ViewBag.Section == GamesAlias.WaveSurfing)
+                    {
+                        @Messages.SchoolTeams.Replace(Messages.Teams.ToLower(), Messages.Categories)
+                    }
+                    else if (ViewBag.Section == GamesAlias.Athletics)
+                    {
+                        @Messages.SchoolTeams.Replace(Messages.Teams.ToLower(), Messages.SubClub)
+                    }
+                    else
+                    {
+                        @Messages.SchoolTeams
+                    }
+                </h5>
+            </div>
+            <div class="ibox-content">
+                <h5>@Messages.TotalGymnastics</h5>
+                <h1 class="no-margins">
+                    <span>@Model.SchoolPlayersCount</span>
+                </h1>
+            </div>
+            <div class="ibox-content">
+                <h5>@Messages.WaitingForApproval</h5>
+                <h1 class="no-margins">
+                    <span>@Model.SchoolWaitingForApproval</span>
+                </h1>
+            </div>
+            <div class="ibox-content">
+                <h5>@Messages.ApprovedForRegistration</h5>
+                <h1 class="no-margins">
+                    <span>@Model.SchoolPlayersApproved</span>
+                </h1>
+            </div>
+            <div class="ibox-content">
+                <h5>@Messages.NotApprovedForRegistration</h5>
+                <h1 class="no˚-margins">
+                    <span>@Model.SchoolPlayersNotApproved</span>
+                </h1>
+            </div>
+        </div>
+
+    }
+}
+
+
+
+
+
+<script>
+$("#commentsForMartialArts").change(function(){
+    $.ajax({
+url: "@Url.Action("ChangeComment", "Clubs")",
+        type: "POST",
+        data:
+    {
+    comment: $(this).val(),
+            clubId: "@Model.ClubId"
+        }
+})
+});
+
+            $("#IsClubApproved").change(function () {
+            $.ajax({
+            url: "@Url.Action("ChangeClubActiveStatus", "Clubs")",
+            type: "POST",
+            data: {
+            isApproved: $(this).is(":checked"),
+            clubId: "@Model.ClubId"
+            }
+            })
+            })
+</script>

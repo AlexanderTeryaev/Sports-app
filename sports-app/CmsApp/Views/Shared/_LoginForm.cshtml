@@ -1,0 +1,44 @@
+﻿@model LoginForm
+
+<form role="form" id="login_frm" method="post" autocomplete="off" class="login" style="position: relative; top: 50%; width: 250px; display: table; margin: 30px auto 0 auto; background: #fff; border-radius: 4px;">
+    <fieldset>
+        <legend class="legend">Login</legend>
+
+        <div class="input">
+            @Html.TextBoxFor(m => m.UserName, new { @placeholder = "Username / ID" })
+            <span>&nbsp;</span>
+            <span><i class="fa fa-user"></i></span>
+        </div>
+        <div class="input">
+            @Html.PasswordFor(m => m.Password, new { @placeholder = "Password" })
+            <span>&nbsp;</span>
+            <span><i class="fa fa-lock"></i></span>
+        </div>
+        <div>
+            @if (Model.Culture == CultEnum.En_US)
+            {
+                @Html.ActionLink(Messages.Login_ForgotPassword, "ForgotPassword", "Logineng", null, new {@class = "text-primary"})
+            }
+            else
+            {
+                @Html.ActionLink(Messages.Login_ForgotPassword, "ForgotPassword", "Login", null, new {@class = "text-primary"})
+            }
+        </div>
+        @if (Model.IsSecure)
+        {
+            <div class="col-xs-9 captcha">
+                <img id="capt_img" src="@Url.Action("Captcha", "Login")" />
+            </div>
+            <div class="input">
+                @Html.TextBoxFor(m => m.Captcha, new { @placeholder = "הקלד קוד אבטחה" })
+            </div>
+        }
+        <button type="submit" class="submit">
+            <i class="fa fa-long-arrow-right"></i>
+        </button>
+    </fieldset>
+    <div class="feedback">
+        login successful <br />
+        redirecting...
+    </div>
+</form>

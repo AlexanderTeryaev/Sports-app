@@ -1,0 +1,677 @@
+﻿@using Resources
+@using LogLigFront.Helpers
+@using AppModel
+@using System.Configuration
+@model CompetitionDiscipline
+@{
+    string[] alternativeResultArray = new string[] { "", "DNF", "DQ", "DNS", "NM" };
+    var coloumnFields = Model.GetFormat6CustomFields();
+    var lastColumnOfFirstStage = ViewBag.LastFirstStageColumn ?? -1;
+    var hasLogo = !string.IsNullOrWhiteSpace(ViewBag.Logo);
+}
+<div class="modal-dialog modal-lg modal-result-custom-width">
+    <div class="modal-content" style="padding: 18px;">
+        <a href="" onclick="printClickInstant(@(ViewBag.IsAnyAttempt ? "true" : "false"));" class="print_print_id btn btn-primary remove_print desktop-only float-last">
+            <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+        </a>
+        <div class="print_id" id="print_id" data-print-title="">
+
+            <style>
+                td, th {
+                    text-align: center;
+                }
+                .modal-result-custom-width {
+                    width:100%;
+                }
+                .body-content {
+                    width: 1500px;
+                    max-width: 1500px;
+                }
+
+                .format6cell {
+                    border: 1px solid #dddddd !important;
+                    height: 35px;
+                    min-width: 30px;
+                    max-width: 30px;
+                }
+                .format6th {
+                    min-width: 90px;
+                    max-width: 90px;
+                }
+            @Html.Raw('@')media screen and (min-width: 1500px) {
+                .modal-result-custom-width {
+                    max-width: 1500px;
+                    width:100%;
+                }
+            @Html.Raw('@')page{size:auto; margin:5mm;}
+            }
+            </style>
+            <div class="main-title disciplines-title">
+                <table class="borderless disciplines-title" style="width:100%;">
+                    <tr>
+                        <td style="vertical-align : middle;text-align:@(hasLogo ? "left": "center");" colspan="3" rowspan="3">
+                            @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+                            {
+                                @ShowImage(ViewBag.Logo)
+                            }
+                        </td>
+                        <td style="text-align:@(hasLogo ? "right": "center");" colspan="4">
+                            <h3 style="margin-top:0px;margin-bottom:0px;">
+                                @Model.League.Union.Name
+                            </h3>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="@(hasLogo ? "text-align:right;": "")">
+                            <h4 style="margin-top:0px;margin-bottom:0px;">
+                                @if (Model.StartTime.HasValue)
+                                {
+                                    @:@Model.League.Name - @Model.StartTime.Value.Date.ToString("dd/MM/yyyy")
+                                }
+                                else
+                                {
+                                    @Model.League.Name
+                                }
+                            </h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="@(hasLogo ? "text-align:right;": "")"><h4 style="margin-top:0px;margin-bottom:0px;">@ViewBag.DisciplineName - @ViewBag.GenderId - @Messages.Results</h4></td>
+                    </tr>
+                </table>
+            </div>
+            @if (ViewBag.DisciplineRecord != null)
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered" style="width:100%;">
+                        <thead>
+                            <tr style="background:royalblue;">
+                                <th>@Messages.IsraeliRecord</th>
+                                <th>@($"{Messages.CompetitionRecord}")</th>
+                                <th>@Messages.IntentionalIsraeliRecord</th>
+                                <th>@Messages.SeasonRecord</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @{
+                            var seasonRecord = (DisciplineRecord) ViewBag.DisciplineRecord;
+                        }
+                        <tr>
+                            <td>@ViewBag.DisciplineRecord.IsraeliRecord</td>
+                            <td>@ViewBag.DisciplineRecord.CompetitionRecord</td>
+                            <td>@ViewBag.DisciplineRecord.IntentionalIsraeliRecord</td>
+                            @if (seasonRecord!=null && seasonRecord.SeasonRecords !=null && seasonRecord.SeasonRecords.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId) != null)
+                            {
+                                <td>@seasonRecord.SeasonRecords.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId).SeasonRecord1</td>
+                    
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table res-table">
+                    <thead>
+                        <tr class="disciplines-title">
+                            <th>@Messages.Place</th>
+                            <th>@Messages.AthleteNumber</th>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.YearOfBirth</th>
+                            <th>@Messages.Club</th>
+                            @if (!ViewBag.IsCombinedDiscipline)
+                            {
+                                <th>@Messages.Heat</th>
+                                <th>@(ViewBag.Format == 10 || ViewBag.Format == 11 || ViewBag.Format == 6 || ViewBag.Format == 7 ? Messages.OrderRaw : Messages.Lane)</th>
+                            }
+                            <th style="text-align: center;">@Messages.Results</th>
+                            @if (!ViewBag.IsCombinedDiscipline && ViewBag.Format != 6)
+                            {
+                                <th>@Messages.Wind</th>
+                            }
+                            <th>@Messages.Points</th>
+                            @if (ViewBag.IsOneRecordHasValue)
+                            {
+                                <th>@Messages.Records</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var rank = 0;
+                        }
+
+                        @foreach (var reg in Model.ResultedCompetitionDisciplineRegistrations)
+                        {
+                            CompetitionResult results = null;
+                            if (reg.CompetitionResult.Count() > 0)
+                            {
+                                results = reg.CompetitionResult.FirstOrDefault();
+                            }
+                            rank += 1;
+                            <tr>
+                                <td>@(ViewBag.IsResultsManualyRanked ? results.Rank : rank)</td>
+                                @{
+                                    var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                }
+                                <td>
+                                    @if (athleteNumber != null)
+                                    {
+                                        @athleteNumber
+                                    }
+                                </td>
+                                <td>
+                                    @if (reg.User != null)
+                                    {
+                                        <a href="@Url.Action("Details","Players", new { id = reg.UserId,  seasonId = ViewBag.SeasonId})"
+                                           style="margin: 8px 0;padding: 2px 12px; color:#000080;" target="_blank">@reg.User.FullName</a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (reg.User != null)
+                                    {
+                                        @(reg.User.BirthDay.HasValue ? reg.User.BirthDay.Value.Year.ToString() : "");
+                                    }
+                                </td>
+                                <td>
+                                    @if (reg.Club != null)
+                                    {
+                                        @reg.Club.Name
+                                    }
+                                </td>
+                                @if (!ViewBag.IsCombinedDiscipline)
+                                {
+                                    <td>
+                                        @if (results != null)
+                                        {
+                                            @results.Heat
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (results != null)
+                                        {
+                                            @results.Lane
+                                        }
+                                    </td>
+                                }
+                                <td style="direction:ltr;">
+                                    @if (results != null)
+                                    {
+                                        if (results.AlternativeResult > 0)
+                                        {
+                                            @alternativeResultArray[results.AlternativeResult];
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(results.Result))
+                                        {
+                                            @UIHelpers.GetCompetitionDisciplineResultString(results.Result, ViewBag.Format)
+
+                                        }
+                                    }
+                                </td>
+                                @if (!ViewBag.IsCombinedDiscipline && ViewBag.Format != 6)
+                                {
+                                    <td style="direction:ltr;">
+                                        @if (results != null)
+                                        {
+                                            @String.Format("{0:0.0}", results.Wind)
+                                        }
+                                    </td>
+                                }
+                                <td style="direction:ltr;">
+                                    @if (results != null && results.AlternativeResult == 0)
+                                    {
+                                        if (ViewBag.IsMultiBattle)
+                                        {
+                                            @results.CombinedPoint
+                                        }
+                                        else if ((Model.League.AthleticLeagueId.HasValue && Model.League.AthleticLeagueId.Value > -1) || !Model.IsForScore)
+                                        {
+                                            @(UIHelpers.RemoveRightSidedZeros(results.ClubPoints.ToString()))
+                                        }
+                                        else
+                                        {
+                                            @results.ClubPoints
+                                        }
+                                    }
+                                </td>
+                                @if (ViewBag.IsOneRecordHasValue)
+                                {
+                                    <td style="direction:ltr;">@(!string.IsNullOrWhiteSpace(results.Records) ? results.Records : string.Empty)</td>
+                                }
+                            </tr>
+
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (ViewBag.IsAnyAttempt && (ViewBag.Format == 7 || ViewBag.Format == 10 || ViewBag.Format == 11))
+            {
+                <br /><br />
+                <div class="table-responsive">
+                    <table class="table res-table">
+                        <thead>
+                            <tr class="disciplines-title">
+                                <th>@Messages.AthleteNumber</th>
+                                <th>@Messages.FullName</th>
+                                <th>@Messages.Club</th>
+                                @if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                                {
+                                    <th>@($"{Messages.Result} 1")</th>
+                                    <th style="@(lastColumnOfFirstStage == 1 ? "border-left: 2px solid;" : "")">@(Messages.Wind)</th>
+                                    <th>@($"{Messages.Result} 2")</th>
+                                    <th style="@(lastColumnOfFirstStage == 2 ? "border-left: 2px solid;" : "")">@(Messages.Wind)</th>
+                                    <th>@($"{Messages.Result} 3")</th>
+                                    <th style="@(lastColumnOfFirstStage == 3 ? "border-left: 2px solid;" : "")">@(Messages.Wind)</th>
+                                    <th>@($"{Messages.Result} 4")</th>
+                                    <th style="@(lastColumnOfFirstStage == 4 ? "border-left: 2px solid;" : "")">@(Messages.Wind)</th>
+                                    <th>@($"{Messages.Result} 5")</th>
+                                    <th style="@(lastColumnOfFirstStage == 5 ? "border-left: 2px solid;" : "")">@(Messages.Wind)</th>
+                                    <th>@($"{Messages.Result} 6")</th>
+                                    <th style="@(lastColumnOfFirstStage == 6 ? "border-right: 2px solid;" : "")">@(Messages.Wind)</th>
+                                }
+                                else
+                                {
+                                    <th style="@(lastColumnOfFirstStage == 1 ? "border-left: 2px solid;" : "")">@($"{Messages.Result} 1")</th>
+                                    <th style="@(lastColumnOfFirstStage == 2 ? "border-left: 2px solid;" : "")">@($"{Messages.Result} 2")</th>
+                                    <th style="@(lastColumnOfFirstStage == 3 ? "border-left: 2px solid;" : "")">@($"{Messages.Result} 3")</th>
+                                    <th style="@(lastColumnOfFirstStage == 4 ? "border-left: 2px solid;" : "")">@($"{Messages.Result} 4")</th>
+                                    <th style="@(lastColumnOfFirstStage == 5 ? "border-left: 2px solid;" : "")">@($"{Messages.Result} 5")</th>
+                                    <th style="@(lastColumnOfFirstStage == 6 ? "border-right: 2px solid;" : "")">@($"{Messages.Result} 6")</th>
+                                }
+                                <th style="border-right: 2px solid;">@Messages.FinalResult</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var reg in Model.CompetitionDisciplineRegistrations)
+                            {
+                                CompetitionResult result = null;
+                                if (reg.CompetitionResult.Count() > 0)
+                                {
+                                    result = reg.CompetitionResult.FirstOrDefault();
+                                }
+                                <tr>
+                                    @{
+                                        var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                    }
+                                    <td>
+                                        @if (athleteNumber != null)
+                                        {
+                                            @athleteNumber
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (reg.User != null)
+                                        {
+                                            @reg.User.FullName
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (reg.Club != null)
+                                        {
+                                            @reg.Club.Name
+                                        }
+                                    </td>
+                                    @if (result == null)
+                                    {
+
+
+
+
+
+
+
+                                        if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                                        {
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 1 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr;"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 2 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr;"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 3 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr;"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 4 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr;"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 5 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr;"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 6 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr; border-right: 2px solid;"></td>
+                                        }
+                                        else
+                                        {
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 1 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 2 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 3 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 4 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 5 ? "border-left: 2px solid;" : "")"></td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 6 ? "border-left: 2px solid;" : "")"></td>
+
+                                        }
+                                        <td style="direction: ltr; border-right: 2px solid;"></td>
+                                    }
+                                    else
+                                    {
+
+
+
+                                        if (ViewBag.Format == 10 || ViewBag.Format == 11)
+                                        {
+                                            <td style="direction: ltr; @(result.Alternative1.HasValue && result.Alternative1 == 0 && !string.IsNullOrWhiteSpace(result.Attempt1) && result.Attempt1 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative1.HasValue && result.Alternative1 == 1 ? "-" : (result.Alternative1.HasValue && result.Alternative1 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt1) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt1.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 1 ? "border-left: 2px solid;" : "") @(result.Alternative1.HasValue && result.Alternative1 == 0 && !string.IsNullOrWhiteSpace(result.Attempt1) && result.Attempt1 == result.Result ? "background:lime;" : "")">
+                                                @(result != null && result.Attempt1Wind.HasValue ? Math.Round(result.Attempt1Wind.Value, 2).ToString() : "")
+                                            </td>
+
+
+
+
+
+
+                                            <td style="direction: ltr; @(result.Alternative2.HasValue && result.Alternative2 == 0 && !string.IsNullOrWhiteSpace(result.Attempt2) && result.Attempt2 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative2.HasValue && result.Alternative2 == 1 ? "-" : (result.Alternative2.HasValue && result.Alternative2 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt2) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt2.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 2 ? "border-left: 2px solid;" : "") @(result.Alternative2.HasValue && result.Alternative2 == 0 && !string.IsNullOrWhiteSpace(result.Attempt2) && result.Attempt2 == result.Result ? "background:lime;" : "")">
+                                                @(result != null && result.Attempt2Wind.HasValue ? Math.Round(result.Attempt2Wind.Value, 2).ToString() : "")
+                                            </td>
+
+
+
+
+
+
+                                            <td style="direction: ltr; @(result.Alternative3.HasValue && result.Alternative3 == 0 && !string.IsNullOrWhiteSpace(result.Attempt3) && result.Attempt3 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative3.HasValue && result.Alternative3 == 1 ? "-" : (result.Alternative3.HasValue && result.Alternative3 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt3) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt3.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 3 ? "border-left: 2px solid;" : "") @(result.Alternative3.HasValue && result.Alternative3 == 0 && !string.IsNullOrWhiteSpace(result.Attempt3) && result.Attempt3 == result.Result ? "background:lime;" : "")">
+                                                @(result != null && result.Attempt3Wind.HasValue ? Math.Round(result.Attempt3Wind.Value, 2).ToString() : "")
+                                            </td>
+
+
+
+
+
+
+                                            <td style="direction: ltr; @(result.Alternative4.HasValue && result.Alternative4 == 0 && !string.IsNullOrWhiteSpace(result.Attempt4) && result.Attempt4 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative4.HasValue && result.Alternative4 == 1 ? "-" : (result.Alternative4.HasValue && result.Alternative4 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt4) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt4.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 4 ? "border-left: 2px solid;" : "") @(result.Alternative4.HasValue && result.Alternative4 == 0 && !string.IsNullOrWhiteSpace(result.Attempt4) && result.Attempt4 == result.Result ? "background:lime;" : "")">
+                                                @(result != null && result.Attempt4Wind.HasValue ? Math.Round(result.Attempt4Wind.Value, 2).ToString() : "")
+                                            </td>
+
+
+
+
+
+
+                                            <td style="direction: ltr; @(result.Alternative5.HasValue && result.Alternative5 == 0 && !string.IsNullOrWhiteSpace(result.Attempt5) && result.Attempt5 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative5.HasValue && result.Alternative5 == 1 ? "-" : (result.Alternative5.HasValue && result.Alternative5 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt5) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt5.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 5 ? "border-left: 2px solid;" : "") @(result.Alternative5.HasValue && result.Alternative5 == 0 && !string.IsNullOrWhiteSpace(result.Attempt5) && result.Attempt5 == result.Result ? "background:lime;" : "")">
+                                                @(result != null && result.Attempt5Wind.HasValue ? Math.Round(result.Attempt5Wind.Value, 2).ToString() : "")
+                                            </td>
+
+
+
+
+
+
+                                            <td style="direction: ltr; @(result.Alternative6.HasValue && result.Alternative6 == 0 && !string.IsNullOrWhiteSpace(result.Attempt6) && result.Attempt6 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative6.HasValue && result.Alternative6 == 1 ? "-" : (result.Alternative6.HasValue && result.Alternative6 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt6) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt6.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 6 ? "border-left: 2px solid;" : "") @(result.Alternative6.HasValue && result.Alternative6 == 0 && !string.IsNullOrWhiteSpace(result.Attempt6) && result.Attempt6 == result.Result ? "background:lime;" : "")">
+                                                @(result != null && result.Attempt6Wind.HasValue ? Math.Round(result.Attempt6Wind.Value, 2).ToString() : "")
+                                            </td>
+                                            <td style="direction: ltr; border-right: 2px solid;">
+                                                @{
+                                                    var alternative = UIHelpers.GetAlternativeResultStringByValue(result?.AlternativeResult ?? 0);
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(alternative))
+                                                {
+                                                    @alternative
+                                                }
+                                                else
+                                                {
+                                                    @(result != null ? UIHelpers.removeStringLeft2Zeros(result.Result) : "")
+                                                    <div>
+                                                        @(result != null && result.Wind.HasValue && !string.IsNullOrWhiteSpace(UIHelpers.removeStringLeft2Zeros(result.Result)) ? Math.Round(result.Wind.Value, 2).ToString() : "")
+                                                    </div>
+                                                }
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 1 ? "border-left: 2px solid;" : "") @(result.Alternative1.HasValue && result.Alternative1 == 0 && !string.IsNullOrWhiteSpace(result.Attempt1) && result.Attempt1 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative1.HasValue && result.Alternative1 == 1 ? "-" : (result.Alternative1.HasValue && result.Alternative1 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt1) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt1.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 2 ? "border-left: 2px solid;" : "") @(result.Alternative2.HasValue && result.Alternative2 == 0 && !string.IsNullOrWhiteSpace(result.Attempt2) && result.Attempt2 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative2.HasValue && result.Alternative2 == 1 ? "-" : (result.Alternative2.HasValue && result.Alternative2 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt2) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt2.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 3 ? "border-left: 2px solid;" : "") @(result.Alternative3.HasValue && result.Alternative3 == 0 && !string.IsNullOrWhiteSpace(result.Attempt3) && result.Attempt3 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative3.HasValue && result.Alternative3 == 1 ? "-" : (result.Alternative3.HasValue && result.Alternative3 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt3) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt3.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 4 ? "border-left: 2px solid;" : "") @(result.Alternative4.HasValue && result.Alternative4 == 0 && !string.IsNullOrWhiteSpace(result.Attempt4) && result.Attempt4 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative4.HasValue && result.Alternative4 == 1 ? "-" : (result.Alternative4.HasValue && result.Alternative4 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt4) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt4.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 5 ? "border-left: 2px solid;" : "") @(result.Alternative5.HasValue && result.Alternative5 == 0 && !string.IsNullOrWhiteSpace(result.Attempt5) && result.Attempt5 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative5.HasValue && result.Alternative5 == 1 ? "-" : (result.Alternative5.HasValue && result.Alternative5 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt5) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt5.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; @(lastColumnOfFirstStage == 6 ? "border-left: 2px solid;" : "") @(result.Alternative6.HasValue && result.Alternative6 == 0 && !string.IsNullOrWhiteSpace(result.Attempt6) && result.Attempt6 == result.Result ? "background:lime;" : "")">
+                                                @(result != null ? (result.Alternative6.HasValue && result.Alternative6 == 1 ? "-" : (result.Alternative6.HasValue && result.Alternative6 == 2 ? "X" : (string.IsNullOrWhiteSpace(result.Attempt6) ? string.Empty : UIHelpers.removeStringLeft2Zeros(result.Attempt6.ToString())))) : "")
+                                            </td>
+                                            <td style="direction: ltr; border-right: 2px solid;">
+                                                @{
+                                                    var alternative = UIHelpers.GetAlternativeResultStringByValue(result?.AlternativeResult ?? 0);
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(alternative))
+                                                {
+                                                    @alternative
+                                                }
+                                                else
+                                                {
+                                                    @(result != null ? UIHelpers.removeStringLeft2Zeros(result.Result) : "")
+                                                }
+                                            </td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else if (ViewBag.IsAnyAttempt && ViewBag.Format == 6)
+            {
+                <style>
+
+                        .fixed_table > thead > tr > th {
+                            vertical-align: top;
+                        }
+
+                        .fixed_table > thead > tr > th:first-child {
+                            background: #dddddd;
+                            position: absolute;
+                            width: 6em;
+                            height: 60px;
+                        }
+
+                        .fixed_table > thead > tr > th:nth-child(2) {
+                            background: #dddddd;
+                            @(Messages.Lang != "he" ? "left" : "right"): 7em;
+                            position: absolute;
+                            width: 6em;
+                            height: 60px;
+                        }
+
+                        .fixed_table > tbody > tr > td:first-child {
+                            background: #dddddd;
+                            position: absolute;
+                            width: 6em;
+                            padding: 2%;
+                        }
+
+                        .fixed_table > tbody > tr > td:nth-child(2) {
+                            background: #dddddd;
+                            @(Messages.Lang != "he" ? "left" : "right"): 7em;
+                            position: absolute;
+                            width: 6em;
+                            padding: 1%;
+                        }
+
+                        .fixed_table > thead > tr > th:nth-child(3),
+                        .fixed_table > tbody > tr > td:nth-child(3) {
+                            padding-@(Messages.Lang != "he" ? "left" : "right"): 14em;
+                            font-size: 0.89em;
+                        }
+                        .fixed_table > tbody > tr > td:not(:last-child) {
+                            height:125px;
+                        }
+                </style>
+                <br /><br />
+                <div class="table-responsive" style="overflow-x: scroll;">
+                    <table class="table res-table fixed_table">
+                        <col width="130">
+                        <col width="180">
+                        <col width="400">
+                        <thead>
+                            <tr class="disciplines-title">
+                                <th>@Messages.AthleteNumber</th>
+                                <th>@Messages.FullName</th>
+                                <th width="20%">@Messages.Club</th>
+                                @for (int i = 0; i < coloumnFields.Count(); i++)
+                                {
+                                    var field = coloumnFields[i];
+                                    <th class="format6th">
+                                        @(field.ToString())
+                                    </th>
+                                }
+                                <th style="border-right: 2px solid;">@Messages.FinalResult</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var reg in Model.CompetitionDisciplineRegistrations)
+                            {
+                                CompetitionResult result = null;
+                                if (reg.CompetitionResult.Count() > 0)
+                                {
+                                    result = reg.CompetitionResult.FirstOrDefault();
+                                }
+                                <tr>
+                                    <td>
+                                        @{
+                                            var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                        }
+                                        @if (athleteNumber != null)
+                                        {
+                                            @athleteNumber
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (reg.User != null)
+                                        {
+                                            @reg.User.FullName
+                                        }
+                                    </td>
+                                    <td style="min-width:100px;">
+                                        @if (reg.Club != null)
+                                        {
+                                            @reg.Club.Name
+                                        }
+                                    </td>
+                                    @if (result == null)
+                                    {
+                                        for (int i = 0; i < coloumnFields.Count(); i++)
+                                        {
+                                            <td>
+                                                <table class="table" style="margin-bottom: 0px;max-width:90px;"><tr><td class="format6cell"></td><td class="format6cell"></td><td class="format6cell"></td></tr></table>
+                                            </td>
+                                        }
+                                        <td style="direction:ltr;"></td>
+                                    }
+                                    else
+                                    {
+                                        for (int i = 0; i < coloumnFields.Count(); i++)
+                                        {
+                                            var field = result.GetFormat6CustomField(i, 0);
+                                            var successIndex = result.GetSuccessIndex6(coloumnFields.Count);
+                                            var columnSuccess = successIndex >= 0 ? successIndex / 3 : -1;
+                                            <td>
+                                                <table class="table" style="margin-bottom: 0px;max-width:90px;"><tr style="@(columnSuccess == i ? "background:lime;" : "")"><td class="format6cell">@result.GetFormat6CustomField(i, 0)</td><td class="format6cell">@result.GetFormat6CustomField(i, 1)</td><td class="format6cell">@result.GetFormat6CustomField(i, 2)</td></tr></table>
+                                            </td>
+                                        }
+                                        <td style="direction:ltr;border-right: 2px solid;">
+                                            @{
+                                                var alternative = UIHelpers.GetAlternativeResultStringByValue(result?.AlternativeResult ?? 0);
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(alternative))
+                                            {
+                                                @alternative
+                                            }
+                                            else
+                                            {
+                                                @(result != null ? UIHelpers.removeStringLeft2Zeros(result.Result) : "")
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <script>
+    var lastRecievedResult = @(Model.LastResultUpdate.HasValue ? Model.LastResultUpdate.Value.Ticks.ToString() : "null");
+    function checkIsNeedPageRefresh() {
+        if (typeof $ !== 'undefined'){
+            $.ajax({
+                type: "POST",
+                url: "/LeagueTable/IsWeightDeclarationResultsRequireUpdate",
+                data: {
+                    "competitionDisciplineId": '@Model.Id',
+                    "lastRecieveValue": lastRecievedResult
+                },
+                success: function (data) {
+                    lastRecievedResult = data.lastUpdate;
+                    if (!data.IsStillSame) {
+                        location.reload();
+                    }
+                }
+            });
+        }
+
+    }
+    setInterval(function () {
+        checkIsNeedPageRefresh();
+    }, 7 * 1000);
+            </script>
+
+
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default mobile-only" data-dismiss="modal">@Messages.Close</button>
+        </div>
+        @section scripts
+        {
+            <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+        }
+    </div>
+</div>
+
+
+@helper ShowImage(string imgName)
+{
+    string imgSrc = "";
+    if (!string.IsNullOrEmpty(imgName))
+    {
+        imgSrc = String.Concat(ConfigurationManager.AppSettings["SiteUrl"], "/assets/union/" + imgName);
+    }
+    else
+    {
+        imgSrc = Url.Content("~/content/img/fan-default.jpg");
+    }
+    <img src="@imgSrc" class="img-circle keep-for-print" style="max-height:7rem;max-width:11rem;" alt="" />
+}

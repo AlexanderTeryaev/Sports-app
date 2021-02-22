@@ -1,0 +1,185 @@
+﻿@using Resources
+@using LogLigFront.Helpers
+@using AppModel
+@model List<IGrouping<string, CompetitionDisciplineRegistration>>
+@{ 
+    string[] alternativeResultArray = new string[] {"","DNF","DQ","DNS","NM" };
+}
+    <div class="modal-dialog modal-lg modal-result-custom-width">
+        <div class="modal-content" style="padding: 18px;">
+            <a href="" onclick="printClickAlternative();" class="print_print_id btn btn-primary remove_print desktop-only float-last">
+                <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+            </a>
+            <button type="button" class="btn btn-default" data-dismiss="modal">X</button>
+            <div class="print_button_class" id="print_id" data-print-title="">
+
+                <style>
+                td, th {
+                    text-align: center;
+                }
+                .modal-result-custom-width {
+                    width:100%;
+                }
+
+            @Html.Raw('@')media screen and (min-width: 1000px) {
+                .modal-result-custom-width {
+                    max-width:1000px;
+                    width:90%;
+                }
+            @Html.Raw('@')page{size:auto; margin:5mm;}
+            }
+                </style>
+                <div class="main-title disciplines-title">
+                    <table class="borderless disciplines-title" style="width:100%;">
+                        <tr>
+                            <td style="vertical-align : middle;text-align:center;" colspan="3" rowspan="3">
+                                @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+                                {
+                                    <img src="@ViewBag.Logo" class="img-circle keep-for-print" style="max-height:100px;max-width:150px;" alt="" />
+                                }
+                            </td>
+                            <td style="text-align:center;" colspan="4">
+                                <h3 style="margin-top:0px;margin-bottom:0px;">
+                                    @ViewBag.UnionName
+                                </h3>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                <h4 style="margin-top:0px;margin-bottom:0px;">
+                                    @if (ViewBag.CompetitionDate != null)
+                                    {
+                                        @:@ViewBag.CompetitionName - @ViewBag.CompetitionDate.Date.ToString("dd/MM/yyyy")
+                                    }
+                                    else
+                                    {
+                                        @ViewBag.CompetitionName
+                                    }
+                                </h4>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"><h4 style="margin-top:0px;margin-bottom:0px;">@($"{ViewBag.ClubName} - {ViewBag.LeagueType} - {ViewBag.GenderLetter}")</h4></td>
+                        </tr>
+                    </table>
+                </div>
+                @foreach (var group in Model)
+                {
+                    <h4 style="margin-top:8px;">@group.Key</h4>
+                    <div class="table-responsive" style="display: block; text-align: -webkit-center;">
+                        <table class="table res-table">
+                            <thead>
+                                <tr class="disciplines-title">
+                                    <th>@Messages.AthleteNumber</th>
+                                    <th>@Messages.FullName</th>
+                                    <th>@Messages.YearOfBirth</th>
+                                    <th>@Messages.Place</th>
+                                    @if (!group.FirstOrDefault().isCombinedDiscipline)
+                                    {
+                                        <th>@Messages.Heat</th>
+                                        <th>@Messages.Lane</th>
+                                    }
+                                    <th style="text-align: center;">@Messages.Results</th>
+                                    @if (!group.FirstOrDefault().isCombinedDiscipline)
+                                    {
+                                        <th>@Messages.Wind</th>
+                                    }
+                                    <th>@Messages.Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var reg in group)
+                                {
+                                    CompetitionResult results = null;
+                                    if (reg.CompetitionResult.Count() > 0)
+                                    {
+                                        results = reg.CompetitionResult.FirstOrDefault();
+                                    }
+                                <tr style="@(results?.IsPointsAddedToClub == true ? "background:yellow;" : "")">
+                                    @{
+                                        var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                    }
+                                    <td>
+                                        @if (athleteNumber != null)
+                                        {
+                                            @athleteNumber
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (reg.User != null)
+                                        {
+                                            <a href="@Url.Action("Details", "Players", new {id = reg.UserId, seasonId = ViewBag.SeasonId})"
+                                               style="margin: 8px 0; padding: 2px 12px; color: #000080;" target="_blank">@reg.User.FullName</a>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (reg.User != null)
+                                        {
+                                            @(reg.User.BirthDay.HasValue ? reg.User.BirthDay.Value.Year.ToString() : "");
+                                        }
+                                    </td>
+                                    <td>
+                                        @reg.TempRank
+                                    </td>
+                                    @if (!group.FirstOrDefault().isCombinedDiscipline)
+                                    {
+                                        <td>
+                                            @if (results != null)
+                                            {
+                                                @results.Heat
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (results != null)
+                                            {
+                                                @results.Lane
+                                            }
+                                        </td>
+                                    }
+                                    <td style="direction: ltr;">
+                                        @if (results != null)
+                                        {
+                                            if (results.AlternativeResult > 0)
+                                            {
+                                                @alternativeResultArray[results.AlternativeResult]
+                                                ;
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(results.Result))
+                                            {
+                                                @UIHelpers.GetCompetitionDisciplineResultString(results.Result, ViewBag.Format)
+
+                                            }
+                                        }
+                                    </td>
+                                    @if (!group.FirstOrDefault().isCombinedDiscipline)
+                                    {
+                                        <td style="direction: ltr;">
+                                            @if (results != null)
+                                            {
+                                                @String.Format("{0:0.0}", results.Wind)
+                                            }
+                                        </td>
+                                    }
+                                    <td style="direction: ltr;">
+                                        @if (results != null && results.AlternativeResult == 0)
+                                        {
+                                            @(UIHelpers.RemoveRightSidedZeros(results.ClubPoints.ToString()))
+                                        }
+                                    </td>
+
+                                </tr>
+
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+            </div>
+            @section scripts
+        {
+                <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+            }
+        </div>
+    </div>
+

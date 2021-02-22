@@ -1,0 +1,179 @@
+﻿@model MedicalInstituteForm
+@{
+    var savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+
+}
+<a href="#" id="arena_print" class="btn btn-info">
+    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+</a>
+<table id="medicalInstitutesTable" class="table table-bordered offset-3">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>
+                @Messages.Name
+            </th>
+            <th>
+                @Messages.Address
+            </th>
+            <th class="remove_print"></th>
+            <th class="remove_print"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in Model.MedicalInstitutes)
+        {
+            var frmid = "medicalInstitutesform" + m.MedicalInstitutesId;
+            <tr>
+                <td name="MedicalInstitutesId">@m.MedicalInstitutesId</td>
+                @using (Ajax.BeginForm("CreateMedicalInstitute", "Unions", new AjaxOptions { UpdateTargetId = "medicalInstitutes" }, new { id = frmid }))
+                {
+                    <td>
+                        <div class="form-group" style="margin-bottom:0px">
+                            <input type="text" name="Name" value="@m.Name" form="@frmid" class="form-control txt-medicalInstitutes-name" />
+                            @Html.ValidationMessage("Name")
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="margin-bottom: 0px">
+                            <input type="text" name="Address" value="@m.Address" form="@frmid" class="txt-medicalInstitutes-adress form-control" oninvalid="this.setCustomValidity('@Messages.AddressModelStateError.Replace("{0}",Messages.MedicalInstitutes.ToLowerInvariant())')" required />
+                            @Html.ValidationMessage("Address")
+                        </div>
+                    </td>
+                    @Html.HiddenFor(x => x.UnionId, new { form = frmid })
+                    @Html.HiddenFor(x => x.SeasonId, new { form = frmid })
+                }
+                <td class="remove_print">
+                    <input type="hidden" name="MedicalInstitutesId" form="@frmid" value="@m.MedicalInstitutesId" />
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        var idd = "Save" + frmid;
+                        <button class="btn-save-record btn btn-primary btn-save glyphicon glyphicon-saved" form="@frmid" id="@idd" disabled="disabled"></button>
+                    }
+                </td>
+                <td class="remove_print">
+                    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                    {
+                        <a href="@Url.Action("DeleteMedicalInstitute", new { id = m.MedicalInstitutesId, unionId = ViewBag.UnionId, seasonId = ViewBag.SeasonId, clubId = ViewBag.ClubId })" class="@AppCss.Delete"
+                           data-ajax-confirm="@Messages.DeleteConfirm"
+                           data-ajax-update="#medicalInstitutes"
+                           data-ajax="true"></a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+    @if (ViewBag.JobRole != JobRole.RefereeAssignment)
+    {
+        <tfoot class="remove_print">
+            @using (Ajax.BeginForm("CreateMedicalInstitute", "Unions", new AjaxOptions { UpdateTargetId = "medicalInstitutes" }, new { id = "medicalinstitutesform" }))
+            {
+                <tr>
+                    <td>@Messages.AddNew</td>
+
+                    <td>
+                        <div class="form-group">
+                            @Html.TextBoxFor(m => m.Name, new { @class = "form-control", maxlength = 80, form = "medicalinstitutesform", required = "required" })
+                            @Html.ValidationMessageFor(m => m.Name)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group">
+                            <div id="locationField">
+                                <input id="medicalInstituteAddress" form="medicalinstitutesform" placeholder="@Messages.AutocompleteAddress" name="Address" class="form-control" type="text" oninvalid="this.setCustomValidity('@Messages.AddressModelStateError.Replace("{0}", Messages.MedicalInstitutes.ToLowerInvariant())')" required />
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <button type="submit" class="btn btn-primary" form="medicalinstitutesform">@Messages.Save</button>
+                    </td>
+                    <td>
+                        @Html.HiddenFor(m => m.MedicalInstitutesId, new { form = "medicalinstitutesform" })
+                        @Html.HiddenFor(m => m.UnionId, new { form = "medicalinstitutesform" })
+                        @Html.HiddenFor(x => x.SeasonId, new { form = "medicalinstitutesform" })
+                    </td>
+                </tr>
+            }
+        </tfoot>
+    }
+</table>
+<script>
+    $(document).ready(function() {
+        var autocomplete;
+            autocomplete = new google.maps.places.Autocomplete(
+                (document.getElementById('medicalInstituteAddress')),
+                { types: ['geocode'] });
+            google.maps.event.addListener(autocomplete,
+                'place_changed',
+                function() {
+                });
+        //var autocompleteAll;
+        //autocompleteAll = new google.maps.places.Autocomplete(
+        //    (document.getElementByName('Address')),
+        //    { types: ['geocode'] });
+        //google.maps.event.addListener(autocompleteAll,
+        //    'place_changed',
+        //    function() {
+        //    });
+    });
+</script>
+<script>
+    $('#arena_print').click(function () {
+        var tbl = $('div.active').find('table');
+        if (tbl.length > 0) {
+            arenaPrint(tbl);
+        }
+    });
+
+    function arenaPrint(el) {
+        var wnd = window.open('', '@Messages.MedicalInstitutes', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.MedicalInstitutes</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+        var TableData = new Array();
+
+        $("#medicalInstitutesTable tbody tr").each(function (row, tr) {
+            TableData[row] = {
+                "id": $($(tr).find('td[name=MedicalInstitutesId]')).text(),
+                "name": $($(tr).find('input[name=Name]')).val(),
+                "address": $($(tr).find('input[name=Address]')).val(),
+                "type": $($(tr).find('select[name=DisciplineId] :selected')).text()
+            }
+        });
+        wnd.document.write('<table class="table table-bordered offset-3"><thead>');
+        wnd.document.write("<tr>");
+        wnd.document.write("<th>" + "#" + "</th>");
+        wnd.document.write("<th>" + "@Messages.Name" + "</th>");
+        wnd.document.write("<th>" + "@Messages.Address" + "</th>");
+        wnd.document.write("</tr>");
+        wnd.document.write('</thead><tbody>');
+        for (var i = 0; i < TableData.length; i++) {
+            wnd.document.write("<tr>");
+            wnd.document.write("<td>" + TableData[i].id + "</td>");
+            wnd.document.write("<td>" + TableData[i].name + "</td>");
+            wnd.document.write("<td>" + TableData[i].address + "</td>");
+            wnd.document.write("</tr>");
+        }
+        wnd.document.write('</tbody></table>');
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 200);
+    }
+
+    $(document).ready(function () {
+        $('.txt-medicalInstitutes-name').change(function () {
+            var frmId = $(this).attr("form");
+            $("#Save" + frmId).removeAttr("disabled");
+        })
+        $('.txt-medicalInstitutes-adress').change(function () {
+            var frmId = $(this).attr("form");
+            $("#Save" + frmId).removeAttr("disabled");
+        })
+
+    });
+</script>

@@ -1,0 +1,28 @@
+﻿@model IEnumerable<AppModel.Section>
+
+<div class="row">
+    <div class="col-lg-9">
+        <h3 class="sub-header">@Messages.Sections</h3>
+    </div>
+</div>
+<ul class="nav nav-tabs" role="tablist">
+    <li class="active"><a href="#sections" data-toggle="tab">@Messages.Sections</a></li>
+    <li><a href="#settings" data-toggle="tab">@Messages.Settings</a></li>
+</ul>
+
+<div class="tab-content row offset-3">
+    <div class="tab-pane active in fade col-sm-9" id="sections">
+        @{Html.RenderPartial("_SectionList", Model);}
+    </div>
+    <div class="tab-pane col-sm-9" id="settings">
+        @Html.Action("List", "Ages")
+    </div>
+</div>
+
+
+@*<form class="form-inline filters" role="form">
+        <div class="form-group">
+            <label>@Messages.Language:</label>
+            @Html.DropDownList("LangId", null, Messages.Select, new { @class = "form-control combo" })
+        </div>
+    </form>*@

@@ -1,0 +1,25 @@
+ALTER TABLE Sections ADD IsIndividual BIT NOT NULL DEFAULT 0
+GO
+ALTER TABLE Groups ADD IsIndividual BIT NOT NULL DEFAULT 0
+GO
+ALTER TABLE GamesCycles ADD HomeAthleteId INTEGER NULL,
+FOREIGN KEY (HomeAthleteId) REFERENCES TeamsPlayers(Id)
+GO
+ALTER TABLE GamesCycles ADD GuestAthleteId INTEGER NULL,
+FOREIGN KEY (GuestAthleteId) REFERENCES TeamsPlayers(Id)
+GO
+ALTER TABLE PlayoffBrackets ADD Athlete1Id INTEGER NULL,
+FOREIGN KEY (Athlete1Id) REFERENCES TeamsPlayers(Id)
+GO
+ALTER TABLE PlayoffBrackets ADD Athlete2Id INTEGER NULL,
+FOREIGN KEY (Athlete2Id) REFERENCES TeamsPlayers(Id)
+GO
+ALTER TABLE PlayoffBrackets ADD WinnerAthleteId INTEGER NULL,
+FOREIGN KEY (WinnerAthleteId) REFERENCES TeamsPlayers(Id)
+GO
+ALTER TABLE PlayoffBrackets ADD LoserAthleteId INTEGER NULL,
+FOREIGN KEY (LoserAthleteId) REFERENCES TeamsPlayers(Id)
+GO
+ALTER TABLE [GroupsTeams] ADD AthleteId INTEGER NULL,
+FOREIGN KEY (AthleteId) REFERENCES TeamsPlayers(Id)
+GO

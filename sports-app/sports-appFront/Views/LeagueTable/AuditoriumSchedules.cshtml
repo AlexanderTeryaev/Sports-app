@@ -1,0 +1,183 @@
+﻿@using Resources
+@using DataService
+@using LogLigFront.Models
+@using LogLigFront.Controllers
+@model IEnumerable<GamesCycleDto>
+
+@{
+    bool isMonthSet = false;
+
+    var gt_basket_water = new string[] { "basketball", "waterpolo" };
+}
+
+<a href="#" id="print" class="btn btn-info remove_print" style="float:left;">
+    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+</a>
+
+<h3 class="main-title">
+    @ViewBag.AudTitle  - @Messages.ScheduleResults
+</h3>
+<h4>
+    @ViewBag.AudAddress
+</h4>
+
+<table class="table res-table">
+    <tbody>
+        @foreach (var m in Model)
+        {
+            string elId = null;
+            if (m.StartDate.Month == DateTime.Now.Month && m.StartDate.Year == DateTime.Now.Year && !isMonthSet)
+            {
+                isMonthSet = true;
+                elId = "closemonth";
+            }
+            <tr id="@elId">
+                <td class="res-stat remove_print" style="width: 70px;">
+                    @if (m.GameStatus == GameStatus.Started)
+                    {
+                        <span class="label label-success">@Messages.Started</span>
+                    }
+                    else if (m.GameStatus == GameStatus.Ended)
+                    {
+                        <span class="label label-danger">@Messages.Ended</span>
+                    }
+                    else
+                    {
+                        <span class="label label-default">@Messages.Waiting</span>
+                    }
+                </td>
+                <td>
+                    @*@{
+                            string logo = UIHelper.GetLeagueLogo(m.LeagueLogo);
+                            if (!string.IsNullOrEmpty(logo))
+                            {
+                                <img src="@logo" class="img-circle logo" alt="" />
+                            }
+                        }*@
+                    @Html.DisplayFor(modelItem => m.LeagueName)
+                </td>
+                <td>@( m.IsNotSetYet ? Messages.IsNotSetYet : m.StartDate.ToString("dd/MM/yyyy HH:mm"))</td>
+                <td class="text-center">
+                    <img src="@UIHelper.GetTeamLogo(m.HomeLogo)" class="img-circle" alt="" />
+                </td>
+                <td class="text-center main-title">
+                    @if (m.IsHomeTeamKnown)
+                    {
+                        <h4>
+                            @Html.ActionLink(@m.HomeTeam, nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = @m.HomeTeamId, leagueId = m.LeagueId, seasonId = ViewBag.SeasonId }, new { @class = "main-title", target = "_blank" })
+                        </h4>
+                    }
+                    else if (m.IsRoot)
+                    {
+                        <h4>
+                            @(@m.HomeTeam)
+                        </h4>
+                    }
+                    else
+                    {
+                        if (m.Bracket != null)
+                        {
+                            <a href="@Url.Action("PotentialTeams", "LeagueTable", new { id = m.Bracket.Id, index = m.IndexInBracket % 2 == 0 ? 1 : 2 })"
+                               data-target="#barcket-potential-teams"
+                               data-toggle="modal"
+                               class="main-title">@m.HomeTeam</a>
+                        }
+                    }
+                </td>
+                <td class="text-center result">
+                    @if (gt_basket_water.Contains(m.SectionAlias))
+                    {
+                        @m.BasketBallWaterpoloHomeTeamScore
+                        if (m.PenaltyHomeTeamScore.HasValue)
+                        {
+                            <font size="2">(@m.PenaltyHomeTeamScore)</font>
+                        }
+                    }
+                    else
+                    {
+                        @m.HomeTeamScore
+                        if (m.PenaltyHomeTeamScore.HasValue)
+                        {
+                            <font size="2">
+                                (@m.PenaltyHomeTeamScore)
+                            </font>
+                        }
+                    }
+                </td>
+
+                <td class="text-center result">
+                    @if (gt_basket_water.Contains(m.SectionAlias))
+                    {
+                        if (m.PenaltyGuestTeamScore.HasValue)
+                        {
+                            <font size="2">
+                                (@m.PenaltyGuestTeamScore)
+                            </font>
+                        }
+                        @m.BasketBallWaterpoloGuestTeamScore
+                    }
+                    else
+                    {
+                        if (m.PenaltyGuestTeamScore.HasValue)
+                        {
+                            <font size="2">
+                                (@m.PenaltyGuestTeamScore)
+                            </font>
+                        }
+                        @m.GuestTeamScore
+                    }
+                </td>
+                <td class="text-center main-title">
+                    @if (m.IsGuestTeamKnown)
+                    {
+                        <h4>
+                            @Html.ActionLink(@m.GuestTeam, nameof(LeagueTableController.TeamSchedulesLink), "LeagueTable", new { id = @m.GuestTeamId, leagueId = m.LeagueId, seasonId = ViewBag.SeasonId }, new { @class = "main-title", target = "_blank" })
+                        </h4>
+                    }
+                    else if (m.IsRoot)
+                    {
+                        <h4>
+                            @(@m.GuestTeam)
+                        </h4>
+                    }
+                    else
+                    {
+                        if (m.Bracket != null)
+                        {
+                            <a href="@Url.Action("PotentialTeams", "LeagueTable", new { id = m.Bracket.Id, index = m.IndexInBracket % 2 == 0 ? 2 : 1 })"
+                               data-target="#barcket-potential-teams"
+                               data-toggle="modal"
+                               class="main-title">@m.GuestTeam</a>
+                        }
+                    }
+                </td>
+                <td class="text-center">
+                    <img src="@UIHelper.GetTeamLogo(m.GuesLogo)" class="img-circle" alt="" />
+                </td>
+                <td class="text-left">
+                    @if (m.IsTennisLeagueGame)
+                    {
+                        <a href="@Url.Action("TennisGameSets", new { id = m.CycleId })" class="btn btn-danger main-btn" data-target="#resbox" data-toggle="modal">@Messages.ToGame</a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("GameSet", new { id = m.CycleId })" class="btn btn-danger main-btn" data-target="#resbox" data-toggle="modal">@Messages.ToGame</a>
+                    }
+                </td>
+                <td>@m.Remark</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+@section scripts
+{
+    <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+}
+
+<div class="modal fade" id="resbox" tabindex="-1" role="dialog">
+</div>
+
+<div class="modal fade" id="barcket-potential-teams" tabindex="-1" role="dialog">
+</div>

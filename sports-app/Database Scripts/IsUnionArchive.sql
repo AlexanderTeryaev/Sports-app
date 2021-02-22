@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[Clubs] ADD [IsUnionArchive] bit DEFAULT 0 NOT NULL

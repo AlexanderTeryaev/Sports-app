@@ -1,0 +1,20 @@
+﻿@model AddSchoolModel
+
+@using (Html.BeginForm("AddSchool", "Clubs", FormMethod.Post))
+{
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="@Messages.Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="@(Model.IsCamp ? "addCampModalLabel" : "addSchoolModalLabel")">@(Model.IsCamp ? Messages.AddCamp : Messages.AddSchool)</h4>
+    </div>
+    <div class="modal-body">
+        @Html.HiddenFor(x => x.ClubId)
+        @Html.HiddenFor(x => x.SeasonId)
+        @Html.HiddenFor(x => x.IsCamp)
+        @Html.LabelFor(x => x.Name, Model.IsCamp ? Messages.CampName : Messages.SchoolName)
+        @Html.TextBoxFor(x => x.Name, new { @class = "form-control" })
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        <button type="submit" class="btn btn-primary">@Messages.Save</button>
+    </div>
+}

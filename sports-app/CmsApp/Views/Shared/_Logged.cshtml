@@ -1,0 +1,8 @@
+﻿@model LoggedView
+@{
+    string roleName = LangHelper.GetRoleName(Model.RoleType);
+}
+<div class="logged">
+    <i class="glyphicon glyphicon-user"></i> <strong>@Model.UserName</strong>
+    <br />@roleName [ <a href="@Url.Action("Logout", "Common")">@Messages.Logout</a> ]
+</div>

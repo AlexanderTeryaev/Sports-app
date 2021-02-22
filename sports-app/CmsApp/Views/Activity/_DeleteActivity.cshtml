@@ -1,0 +1,28 @@
+﻿
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.Activity_DeleteFormTitle</h4>
+</div>
+
+<div id="editplayerformbody">
+    <div class="row">
+        <div class="col-md-12">
+
+            @if (ViewBag.Result == true)
+            {
+                <div class="alert alert-success">
+                    @Messages.Activity_DeleteSuccessResult
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-danger">@Messages.Activity_DeleteErrorResult</div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="window.location.reload()">@Messages.Close</button>
+</div>

@@ -1,0 +1,74 @@
+﻿
+@model IEnumerable<DataService.DTO.TennisPlayerRegistrationDto>
+@{
+    var teamManager = ViewBag.TeamManager != null ? (DataService.DTO.TeamManagerDto)ViewBag.TeamManager : null;
+}
+<div style="margin-top:15px;" class="row">
+    <div class="col-sm-12">
+        @if (Model != null && Model.Any())
+        {
+            <table id="print_table" class="table table-hover">
+                <thead style="background-color: #e9e9e9; color: gray;">
+                    <tr>
+                        <th>@Resources.Messages.ClubName</th>
+                        <th>@Resources.Messages.FullName</th>
+                        <th>@Resources.Messages.IdentNum</th>
+                        <th>@Resources.Messages.Birthday</th>
+                        <th>@Resources.Messages.TenicardValidity</th>
+                        <th>@Resources.Messages.DateOfInsuranceValidity</th>
+                        <th>@Resources.Messages.ValidityOfMedicalExamination</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var player in Model)
+                    {
+                        <tr id="row_@player.TeamPlayerId">
+                            <td>@player.ClubName</td>
+                            <td>@player.FullName</td>
+                            <td>@player.IdentNum</td>
+                            <td>
+                                @(player.BirthDay?.ToString("dd/MM/yyyy") ?? string.Empty)
+                            </td>
+                            <td>
+                                @(player.TennicardValidity?.ToString("dd/MM/yyyy") ?? string.Empty)
+                            </td>
+                            <td>
+                                @(player.InsuranceValidity?.ToString("dd/MM/yyyy") ?? string.Empty)
+                            </td>
+                            <td>
+                                @(player.MedicalValidity?.ToString("dd/MM/yyyy") ?? string.Empty)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                @if (teamManager != null)
+                {
+                    <tfoot>
+                        <tr>
+                            <td colspan="9">
+                                @if (!string.IsNullOrEmpty(teamManager.Name))
+                                {
+                                    <text>@Resources.Messages.TeamManager: @teamManager.Name</text>
+                                }
+                                @if (!string.IsNullOrEmpty(teamManager.Phone))
+                                {
+                                    <text>@Resources.Messages.Phone: @teamManager.Phone</text>
+                                }
+                                <br />
+                                @if (!string.IsNullOrEmpty(teamManager.FieldName))
+                                {
+                                    <text>@Resources.Messages.Field: @teamManager.FieldName</text>
+                                }
+                                @if (!string.IsNullOrEmpty(teamManager.FieldAddress))
+                                {
+                                    <text>@Resources.Messages.Address: @teamManager.FieldAddress</text>
+                                }
+                            </td>
+                        </tr>
+                    </tfoot>
+                }
+            </table>
+        }
+    </div>
+</div>
+

@@ -1,0 +1,343 @@
+﻿@using DataService.DTO
+@using System.Collections.Generic
+@using System.Linq
+@model DataService.LeagueRank.RankLeague
+@{
+    var leagueRankTable = ViewBag.PlayoffTable != null
+        ? (IEnumerable<DataService.DTO.PlayoffRank>)ViewBag.PlayoffTable
+        : Enumerable.Empty<DataService.DTO.PlayoffRank>();
+}
+
+
+@if (leagueRankTable != null && leagueRankTable.Any()) { Html.RenderPartial("_PlayoffRankTable", leagueRankTable); }
+
+<div id="ranks_for_league" class="row col-sm-12">
+    @Html.Action("Ranks", "LeagueRank", new { id = Model.LeagueId, seasonId = ViewBag.SeasonId })
+</div>
+
+
+@if (Model.Teams.Count > 0)
+{
+    <div class="row col-sm-12">
+        <div class="rank">
+            <div class="playOff">
+                <table class="table table-bordered tableRank">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-1">#</th>
+                            <th>@Messages.Team</th>
+                            <th class="col-sm-1">@Messages.GamesNum</th>
+                            <th class="col-sm-1">@Messages.WinsNum</th>
+                            <th class="col-sm-1">@Messages.LossNum</th>
+                            <th class="col-sm-1">@Messages.Acts</th>
+                            <th class="col-sm-1">@Messages.ActsRatio</th>
+                            <th class="col-sm-1">@Messages.Points</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var team in Model.Teams)
+                        {
+                            <tr>
+                                <td>-</td>
+                                <td>@team.Title</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.IsEmptyRankTable)
+{
+    if (ViewBag.CompetitionDisciplinesTable != null)
+    {
+        <div class="row col-sm-12">
+
+            @{
+                List<List<CompetitionDisciplineDto>> res = ViewBag.CompetitionDisciplinesTable;
+            }
+            @for (var i = 0; i < res.Count; i++)
+            {
+                var genderComps = res.ElementAtOrDefault(i);
+                if (genderComps.Count > 0)
+                {
+                    <div class="col-sm-6">
+                        <h4>@(i == 0 ? Messages.Men : Messages.Women)</h4>
+                        @foreach (var discipline in genderComps)
+                        {
+                            <h5>@discipline.DisciplineName</h5>
+                            <table class="table table-bordered tableRank">
+                                <thead>
+                                    <tr>
+                                        <th class="col-sm-1">@Messages.Club</th>
+                                        <th class="col-sm-1">@Messages.Points</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var reg in discipline.ClubsPointed)
+                                    {
+                                        <tr>
+                                            <td>@(reg.ClubName)</td>
+                                            <td>@(reg.Score.HasValue ? Decimal.Round(reg.Score.Value, 2).ToString() : "")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <br />
+                        }
+                    </div>
+                }
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row col-sm-12">
+            <div class="rank">
+                @foreach (var stage in @Model.Stages.Where(x => x.Groups.Count > 0))
+                {
+                    var groups = stage.Groups;
+                    <div class="playOff">
+                        @if (groups.Count() > 0 && groups.All(g => g.IsAdvanced))
+                        {
+                            if (groups.All(g => !g.Teams.Any()))
+                            {
+                                continue;
+                            }
+                            var firstGroup = groups.FirstOrDefault();
+                            if (firstGroup != null && firstGroup.PlayoffBrackets != null)
+                            {
+                                int numOfBrackets = (int)firstGroup.PlayoffBrackets;
+                                switch (numOfBrackets)
+                                {
+                                    case 1:
+                                        <h3>@Messages.Final</h3>
+                                        break;
+                                    case 2:
+                                        <h3>@Messages.Semifinals</h3>
+                                        break;
+                                    case 4:
+                                        <h3>@Messages.Quarter_finals</h3>
+                                        break;
+                                    case 8:
+                                        <h3>@Messages.Final_Eighth</h3>
+                                        break;
+                                    default:
+                                        <h3>@(numOfBrackets * 2) @Messages.FinalNumber</h3>
+                                        break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <h3>@(stage.CustomStageName ?? $"{Messages.Stage} {stage.Number}")</h3>
+                        }
+                        <div class="playOff">
+                            @foreach (var group in stage.Groups)
+                            {
+                                if (!group.IsAdvanced)
+                                {
+                                    <h4>@group.Title</h4>
+                                }
+                                <table class="table table-bordered tableRank">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-sm-1">#</th>
+                                            <th>@Messages.Team</th>
+                                            @if (!group.IsAdvanced)
+                                            {
+                                                <th class="col-sm-1">@Messages.GamesNum</th>
+                                                <th class="col-sm-1">@Messages.WinsNum</th>
+                                                <th class="col-sm-1">@Messages.LossNum</th>
+                                                <th class="col-sm-1">@Messages.Acts</th>
+                                                <th class="col-sm-1">@Messages.ActsRatio</th>
+                                                <th class="col-sm-1">@Messages.Points</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (var i = 0; i < group.Teams.Count(); i++)
+                                        {
+                                            <tr>
+                                                @if (group.IsAdvanced)
+                                                {
+                                                    int numOfBrackets = (int)group.PlayoffBrackets;
+                                                    if (i % ((numOfBrackets)) == 0)
+                                                    {
+                                                        <td>@(i + 1)</td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td>-</td>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (i != 0 && group.Teams[i].Position == group.Teams[i - 1].Position)
+                                                    {
+                                                        <td>-</td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td>@(i + 1)</td>
+                                                    }
+                                                }
+                                                <td>@group.Teams[i].Title</td>
+                                                @if (!group.IsAdvanced)
+                                                {
+                                                    <td>0</td>
+                                                    <td>0</td>
+                                                    <td>0</td>
+                                                    <td>0</td>
+                                                    <td>0</td>
+                                                    <td>0</td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+}
+else
+{
+    <div class="row col-sm-12">
+        <div class="rank">
+            @foreach (var stage in @Model.Stages)
+            {
+
+                var groups = stage.Groups;
+                <div class="playOff">
+                    @if (groups.Count() > 0 && groups.All(g => g.IsAdvanced))
+                    {
+                        if (groups.All(g => !g.Teams.Any()))
+                        {
+                            continue;
+                        }
+                        var firstGroup = groups.FirstOrDefault();
+                        if (firstGroup != null && firstGroup.PlayoffBrackets != null)
+                        {
+                            int numOfBrackets = (int)firstGroup.PlayoffBrackets;
+                            switch (numOfBrackets)
+                            {
+                                case 1:
+                                    <h3>@Messages.Final</h3>
+                                    break;
+                                case 2:
+                                    <h3>@Messages.Semifinals</h3>
+                                    break;
+                                case 4:
+                                    <h3>@Messages.Quarter_finals</h3>
+                                    break;
+                                case 8:
+                                    <h3>@Messages.Final_Eighth</h3>
+                                    break;
+                                default:
+                                    <h3>@(numOfBrackets * 2) @Messages.FinalNumber</h3>
+                                    break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        <h3>@(stage.CustomStageName ?? $"{Messages.Stage} {stage.Number}")</h3>
+                    }
+
+                    @Html.Partial("_TeamPenalties", new TeamStagePenaltiesModel
+                    {
+                        TeamPenalties = Model.TeamPenalties,
+                        SeasonId = Model.SeasonId,
+                        LeagueId = Model.LeagueId,
+                        Groups = stage.Groups,
+                        Stage = stage,
+                        CanEditPenalties = Model.CanEditPenalties
+                    })
+
+                    <div class="playOff">
+                        @foreach (var group in stage.Groups)
+                        {
+                            if (!group.IsAdvanced)
+                            {
+                                <h4>@group.Title</h4>
+                            }
+                            <table class="table table-bordered tableRank">
+                                <thead>
+                                    <tr>
+                                        <th class="col-sm-1">#</th>
+                                        <th>@Messages.Team</th>
+                                        @if (!group.IsAdvanced)
+                                        {
+                                            <th class="col-sm-1">@Messages.GamesNum</th>
+                                            <th class="col-sm-1">@Messages.WinsNum</th>
+                                            <th class="col-sm-1">@Messages.LossNum</th>
+                                            <th class="col-sm-1">@Messages.Acts</th>
+                                            <th class="col-sm-1">@Messages.ActsRatio</th>
+                                            @*<th class="col-sm-1">יחס נקודות</th>*@
+                                            <th class="col-sm-1">@Messages.Points</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (var i = 0; i < group.Teams.Count(); i++)
+                                    {
+                                        <tr>
+                                            @if (group.IsAdvanced)
+                                            {
+                                                int numOfBrackets = (int)group.PlayoffBrackets;
+                                                if (i % ((numOfBrackets)) == 0)
+                                                {
+                                                    <td>@(i + 1)</td>
+                                                }
+                                                else
+                                                {
+                                                    <td>-</td>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (i != 0 && group.Teams[i].Position == group.Teams[i - 1].Position)
+                                                {
+                                                    <td>-</td>
+                                                }
+                                                else
+                                                {
+                                                    <td>@(i + 1)</td>
+                                                }
+                                            }
+                                            <td>@group.Teams[i].Title</td>
+                                            @if (!group.IsAdvanced)
+                                            {
+                                                <td>@group.Teams[i].Games</td>
+                                                <td>@group.Teams[i].Wins</td>
+                                                <td>@group.Teams[i].Loses</td>
+                                                <td>@group.Teams[i].SetsWon - @group.Teams[i].SetsLost</td>
+                                                <td>@group.Teams[i].SetsRatio</td>
+                                                @*<td>@team.TotalPointsScored - @team.TotalPointsLost</td>
+                                                    <td>@team.TotalPointsRatio</td>*@
+                                                <td>@group.Teams[i].Points</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+

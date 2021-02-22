@@ -1,0 +1,759 @@
+﻿@using CmsApp.Controllers
+@model EditClubViewModel
+
+@{
+    bool isTrainingEnabled = Model.IsClubTrainingEnabled;
+    bool isMultiSport = ViewBag.IsMultiSport;
+    bool isDepartment = ViewBag.IsDepartment;
+    bool isUnionViewer = ViewBag.IsUnionViewer != null ? ViewBag.IsUnionViewer : null;
+    string leagueCapture, tournamentCapture, teamsValue, createValue, exportValue, addTorunament = string.Empty;
+    UIHelpers.GetUnionClubInfoCaption(Model.SectionName, out tournamentCapture, out leagueCapture, out teamsValue, out createValue, out exportValue, out addTorunament);
+    string karateMessage = ViewBag.KarateMesssage != null ? ViewBag.KarateMesssage : string.Empty;
+    var blockades = Session["UnblockadedPlayers"] as List<DataService.DTO.PlayersBlockadeShortDTO>;
+    var hasBlockades = blockades != null && blockades.Count > 0 ? true : false;
+    var playersToClubs = Session["UnionPlayerToClub"] as DataService.DTO.PlayerToClubModalDataDTO;
+    var hasPlayersToClubs = playersToClubs != null && playersToClubs.PlayersToClubs.Count > 0 ? true : false;
+}
+
+<div class="row">
+    <div class="col-lg-9">
+        <h3 class="sub-header">
+            @{
+                if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors) || (isDepartment == true && ViewBag.IsClubManager == true) || ViewBag.JobRole == JobRole.UnionManager || ViewBag.JobRole == JobRole.Unionviewer)
+                {
+                    if (Model.SectionId.HasValue && !isDepartment)
+                    {
+                        <a href="@Url.Action(nameof(SectionsController.Edit), "Sections", new { id = Model.SectionId })">@Model.SectionName</a>
+                    }
+                    if (isDepartment && Model.ParentClubId.HasValue)
+                    {
+                        <a href="@Url.Action("Edit", "Clubs", new { id = Model.ParentClubId, sectionId = Model.ParentClubSectionId, seasonId = Model.CurrentSeasonId })">@Model.ParentClubTitle</a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action(nameof(UnionsController.Edit), "Unions", new { id = Model.UnionId })">@Model.UnionName</a>
+                    }
+                }
+                else
+                {
+                    <span>@Messages.ClubsInSection</span>
+                }
+            }
+            &raquo; @Model.Name
+        </h3>
+    </div>
+    <div class="col-lg-3">
+        <div class="form-group" style="margin-top: 20px">
+            @if (Model.SectionId.HasValue)
+            {
+                @Html.DropDownListFor(m => m.CurrentSeasonId, new SelectList(Model.Seasons, "Id", "Name"), new { @class = "form-control", @id = "ddlSeasons" })
+            }
+            else
+            {
+                @Html.DisplayFor(m => m.CurrentSeasonName)
+            }
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs" id="section_tabs" role="tablist">
+    @if (Model.CanEditClub)
+    {
+        <li class="active"><a href="#clubmain" data-toggle="tab">@Messages.ClubMainTab</a></li>
+    }
+
+    <li @(Model.CanEditClub ? "" : "class=\"active\"")>
+        <a href="#info" data-toggle="tab">@Messages.Info</a>
+    </li>
+
+    @if (Model.CanEditClub)
+    {
+        if (isMultiSport && !isDepartment)
+        {
+            <li><a href="#departments" data-toggle="tab">@Messages.Department</a></li>
+        }
+        <li><a href="#workers_list" data-toggle="tab">@Messages.ClubOfficialsTab</a></li>
+        if (!Model.IsCatchBall && Model.UnionId.HasValue)
+        {
+            string caption = UIHelpers.GetPlayerCaption(Model.SectionName);
+
+            if (Model.SectionIsIndividual && !Model.IsGymnastics && !Model.SectionName.Equals(SectionAliases.Tennis) && !Model.SectionName.Equals(SectionAliases.Athletics))
+            {
+                caption = Messages.Sportsmans;
+            }
+
+            if (Model.IsBicycle)
+            {
+                caption = Messages.Riders;
+            }
+
+
+            <li><a href="#players" data-toggle="tab">@caption</a></li>
+        }
+        if (Model.IsGymnastics || Model.IsMartialArts || Model.IsAthletics || Model.IsWeightLifting || Model.IsSwimming || Model.IsRowing || Model.IsBicycle || Model.IsClimbing)
+        {
+            if (Model.UnionId.HasValue && Model.UnionId != 52)
+            {
+                <li><a href="#unioncompetitions" data-toggle="tab">@Messages.CompetitionRegistration</a></li>
+            }
+        }
+
+        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+        {
+            if (!Model.IsWaveSurfing && !Model.IsRowing && !Model.IsBicycle)
+            {
+                <li><a href="#auditoriums" data-toggle="tab">@UIHelpers.GetAuditoriumCaption(Model.SectionName)</a></li>
+            }
+        }
+        if (!isMultiSport || isDepartment)
+        {
+            var leagueTeams = Model.UnionId == 36 ? Messages.Disciplines : Model.ClubId == 3610 ? Messages.NationalTeam : Model.SectionName.Equals(GamesAlias.Athletics) ? Messages.SubsClub : Model.UnionId == 52 ? Messages.ClubTeams : teamsValue;
+            var schoolTeams = string.Empty;
+            if (Model.IsGymnastics)
+            {
+                schoolTeams = Messages.Schools;
+            }
+            else if (Model.IsWaveSurfing)
+            {
+                schoolTeams = Messages.SchoolTeams.Replace(Messages.Teams.ToLower(), Messages.Categories.ToLower());
+            }
+            else
+            {
+                schoolTeams = Messages.SchoolTeams;
+            }
+
+            <li><a href="#teams" data-toggle="tab">@leagueTeams</a></li>
+            if (Model.UnionId.HasValue && Model.IsTennis)
+            {
+                <li><a href="#union-leagues" data-toggle="tab">@Messages.Union - @Messages.Leagues.ToLowerInvariant()</a></li>
+                <li><a href="#training-team" data-toggle="tab">@Messages.Training @Messages.Team.ToLowerInvariant()</a></li>
+            }
+            if (!Model.UnionId.HasValue)
+            {
+                <li><a href="#schoolTeams" data-toggle="tab">@schoolTeams</a></li>
+                <li><a href="#campTeams" data-toggle="tab">@Messages.Camps</a></li>
+            }
+        }
+        if (!Model.SectionName.Equals(GamesAlias.Athletics) && !Model.IsRowing && !Model.IsBicycle)
+        {
+            <li><a href="#events" data-toggle="tab">@Messages.Events</a></li>
+        }
+        if (!isMultiSport || isDepartment)
+        {
+            if (!Model.UnionId.HasValue)
+            {
+                <li><a href="#tournament" data-toggle="tab">@tournamentCapture</a></li>
+            }
+        }
+        if (Model.SectionId.HasValue && !isDepartment)
+        {
+            <li><a href="#seasons" data-toggle="tab">@Messages.Seasons</a></li>
+        }
+        if (isDepartment || (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsClubManager == true || (ViewBag.IsActivityManager || ViewBag.IsDepartMgr || ViewBag.IsActivityViewer || ViewBag.IsActivityRegistrationActive) && !(ViewBag.JobRole == JobRole.UnionManager || User.IsInRole(AppRole.Admins))))
+        {
+            if (!Model.UnionId.HasValue)
+            {
+                <li><a href="#activities" data-toggle="tab">@Messages.ManageActivities</a></li>
+            }
+        }
+        if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsClubManager == true || ViewBag.IsDepartMgr == true)
+        {
+            if (!Model.IsGymnastics && !Model.IsWeightLifting && !Model.IsWaveSurfing && !Model.IsSwimming && !Model.IsTennis && !Model.IsMartialArts)
+            {
+                <li><a href="#clubTrainings" data-toggle="tab">@Messages.TrainingSettings</a></li>
+                <li><a id="clubTrainingTab" href="#clubTeamTrainings" data-toggle="tab">@Messages.ClubTrainings</a></li>
+            }
+            if (!isMultiSport && !isDepartment)
+            {
+                <li><a href="#clubCalendar" data-toggle="tab">@Messages.Calendar</a></li>
+            }
+        }
+        if (isMultiSport || isDepartment)
+        {
+            <li id="departmentcalendarview"><a href="#calendar-sector" data-toggle="tab">@Messages.Calendar</a></li>
+        }
+        if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+        {
+            <li><a href="#notifications" data-toggle="tab">@Messages.Notifications</a></li>
+        }
+        @*
+            @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+            {
+                <li><a href="#banners" data-toggle="tab">@Messages.Banner</a></li>
+            }
+        *@
+        if (!Model.SectionIsIndividual && Model.IsUnionClub == true)
+        {
+            <li id="calendar-club"><a href="#calendar-club-sector" data-toggle="tab">@Messages.Calendar</a></li>
+        }
+    }
+</ul>
+
+<div id="groupmodal" class="tab-content row offset-3">
+    @if (Model.CanEditClub)
+    {
+        <div class="tab-pane active in fade col-sm-12" id="clubmain">
+            <div class="row" id="club-main-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("MainTab", new { Model.Id, seasonId = Model.CurrentSeasonId }),
+               DataElementId = "club-main-tab"
+           })
+            </div>
+            @if (!Model.IsRowing && Model.UnionId != 52)
+            {
+                <div class="row" id="clubBalanceMainDiv">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+                {
+                    ActionUrl = Url.Action("ClubBalanceList", new { id = Model.Id, seasonId = Model.CurrentSeasonId }),
+                    DataElementId = "clubBalanceMainDiv"
+                })
+                </div>
+            }
+        </div>
+    }
+
+    <div class="tab-pane @(Model.CanEditClub ? "" : "active in") fade col-sm-12" id="info">
+        <div class="row" id="info-tab">
+            @Html.Partial("_TabLoader", new TabLoaderParams
+            {
+               ActionUrl = Url.Action("Details", new { id = Model.Id, seasonId = Model.CurrentSeasonId }),
+               DataElementId = "info-tab"
+            })
+        </div>
+    </div>
+
+    @if (Model.CanEditClub)
+    {
+        if (isMultiSport)
+        {
+            <div class="tab-pane fade col-sm-7" id="departments">
+                <div class="row" id="departments-tab">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("List", "Departments", new { id = Model.Id, seasonId = Model.CurrentSeasonId }),
+                   DataElementId = "departments-tab"
+               })
+                </div>
+            </div>
+        }
+
+        <div class="tab-pane fade col-sm-12 offset-2" id="workers_list">
+            <div class="row" id="workers_list-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("WorkerList", "Jobs", new { id = Model.Id, logicalName = LogicaName.Club, seasonId = Model.CurrentSeasonId }),
+               DataElementId = "workers_list-tab",
+               LoadByVisibilityOnly = true
+           })
+            </div>
+        </div>
+
+        if (!Model.IsCatchBall && Model.UnionId.HasValue)
+        {
+            <div class="tab-pane fade col-sm-12 offset-2" id="players">
+                <div class="row" id="playerslist">
+                    @Messages.Loading
+                </div>
+            </div>
+        }
+
+        if (Model.IsGymnastics || Model.IsAthletics || Model.IsWeightLifting || Model.IsSwimming || Model.IsRowing || Model.IsBicycle || Model.IsClimbing)
+        {
+            if (Model.UnionId.HasValue && Model.UnionId != 52)
+            {
+                <div class="tab-pane fade col-sm-12 offset-2" id="unioncompetitions">
+                    <div id="unioncompetitions_div">
+                        @{
+                            var competitionsAction = Model.IsWeightLifting
+                                ? Url.Action("WeightLiftingRegistrationList", "Clubs",
+                                    new { clubId = Model.Id, unionId = Model.UnionId, seasonId = Model.CurrentSeasonId })
+                                : Url.Action("CompetitionsList", "Clubs",
+                                    new { clubId = Model.Id, unionId = Model.UnionId, seasonId = Model.CurrentSeasonId });
+                        }
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = competitionsAction,
+                       DataElementId = "unioncompetitions_div",
+                       LoadByVisibilityOnly = true
+                   })
+                    </div>
+                </div>
+            }
+        }
+        if (Model.IsMartialArts)
+        {
+            <div class="tab-pane fade col-sm-10 offset-2" id="unioncompetitions">
+                <div id="unioncompetitions_div">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action(nameof(ClubsController.MartialArtsCompetitionsList), nameof(ClubsController).TrimControllerName(), new { clubId = Model.Id, unionId = Model.UnionId, seasonId = Model.CurrentSeasonId }),
+                   DataElementId = "unioncompetitions_div"
+               })
+                </div>
+            </div>
+        }
+
+        if (!Model.IsWaveSurfing && !Model.IsRowing && !Model.IsBicycle)
+        {
+            <div class="tab-pane fade col-sm-7 offset-2" id="auditoriums">
+                <div class="row" id="auditoriums-tab">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("List", "Auditoriums", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId }),
+                   DataElementId = "auditoriums-tab",
+                   LoadByVisibilityOnly = true
+               })
+                </div>
+            </div>
+        }
+        if (!isMultiSport || isDepartment)
+        {
+            <div class="tab-pane fade col-sm-7 offset-2" id="teams">
+                <div class="row" id="teams-tab">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("ClubTeams", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId, sportId = Model.SportId }),
+                   DataElementId = "teams-tab"
+               })
+                </div>
+            </div>
+            if (Model.UnionId.HasValue && Model.IsTennis)
+            {
+                <div class="tab-pane fade col-sm-9 offset-2" id="union-leagues">
+                    <div class="row" id="union-leagues-tab">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("UnionLeagues", "Clubs", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId }),
+                       DataElementId = "union-leagues-tab"
+                   })
+                    </div>
+                </div>
+                <div class="tab-pane fade col-sm-7 offset-2" id="training-team">
+                    <div class="row" id="training-team-tab">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("TrainingTeam", "Clubs", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId }),
+                       DataElementId = "training-team-tab"
+                   })
+                    </div>
+                </div>
+            }
+            if (!Model.UnionId.HasValue)
+            {
+                <div class="tab-pane fade col-sm-7 offset-2" id="schoolTeams">
+                    @Html.Action("SchoolTeams", "Clubs", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId })
+                </div>
+                <div class="tab-pane fade col-sm-7 offset-2" id="campTeams">
+                    @Html.Action("SchoolTeams", "Clubs", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId, isCamp = true })
+                </div>
+            }
+        }
+        if (!Model.SectionName.Equals(GamesAlias.Athletics) && !Model.IsRowing && !Model.IsBicycle)
+        {
+            <div class="tab-pane fade col-sm-7 offset-2" id="events">
+                <div class="row" id="events-tab">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("Index", "Events", new { clubId = Model.Id }),
+                   DataElementId = "events-tab",
+                   LoadByVisibilityOnly = true
+               })
+                </div>
+            </div>
+        }
+        if (!isMultiSport || isDepartment)
+        {
+            if (!Model.UnionId.HasValue)
+            {
+                <div class="tab-pane fade col-sm-7 offset-2" id="tournament">
+                    <div class="row" id="tournament-tab">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("EilatTournament", "Unions", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId }),
+                       DataElementId = "tournament-tab",
+                       LoadByVisibilityOnly = true
+                   })
+                    </div>
+                </div>
+            }
+        }
+
+        <div class="tab-pane fade col-sm-7 offset-2" id="seasons">
+            <div class="row" id="seasons-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("List", "Seasons", new { entityId = Model.Id, logicalName = LogicaName.Club }),
+               DataElementId = "seasons-tab",
+               LoadByVisibilityOnly = true
+           })
+            </div>
+        </div>
+
+        if (isDepartment || (User.IsInAnyRole(AppRole.Admins) || ViewBag.JobRole == JobRole.ClubManager || ViewBag.JobRole == JobRole.ClubSecretary || (ViewBag.IsActivityManager || ViewBag.IsActivityViewer || ViewBag.IsActivityRegistrationActive) && ViewBag.JobRole != JobRole.UnionManager))
+        {
+            if (!Model.UnionId.HasValue)
+            {
+                <div class="tab-pane fade" id="activities">
+                    <div class="row" id="activity-list-tab">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("List", "Activity", new { clubId = Model.Id, seasonId = Model.SeasonId }),
+                       DataElementId = "activity-list-tab"
+                   })
+                    </div>
+                </div>
+            }
+        }
+
+        if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsClubManager == true || ViewBag.IsDepartMgr == true)
+        {
+            if (!Model.IsGymnastics && !Model.IsWeightLifting && !Model.IsWaveSurfing && !Model.IsSwimming && !Model.IsTennis && !Model.IsMartialArts)
+            {
+                <div class="tab-pane fade" id="clubTrainings">
+                    <div class="row" id="clubTrainings-tab">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("TeamTrainings", "Clubs", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId, pageNumber = 1, pageSize = 10 }),
+                       DataElementId = "clubTrainings-tab",
+                       LoadByVisibilityOnly = true
+                   })
+                    </div>
+                </div>
+                <div class="tab-pane fade col-sm-12" id="clubTeamTrainings">
+                    <div class="row" id="clubTrainingContent-tab">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("ClubTrainings", "Clubs", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId }),
+                       DataElementId = "clubTrainingContent-tab",
+                       LoadByVisibilityOnly = true
+                   })
+                    </div>
+                </div>
+            }
+            if (!isMultiSport && !isDepartment)
+            {
+                <div class="tab-pane fade" id="clubCalendar">
+                    <div class="row" id="clubCalendar-tab">
+                        @Html.Partial("_TabLoader", new TabLoaderParams
+                   {
+                       ActionUrl = Url.Action("Calendar", "Clubs", new { clubId = Model.Id, seasonId = Model.CurrentSeasonId }),
+                       DataElementId = "clubCalendar-tab",
+                       LoadByVisibilityOnly = true
+                   })
+                    </div>
+                </div>
+            }
+        }
+        if (isMultiSport || isDepartment)
+        {
+            <div class="tab-pane fade" id="calendar-sector">
+                <div class="row" id="club-multisport-calendar">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+               {
+                   ActionUrl = Url.Action("Calendar", "Unions", new { sectionId = Model.SectionId, clubId = Model.Id, seasonId = Model.CurrentSeasonId }),
+                   DataElementId = "club-multisport-calendar",
+                   LoadByVisibilityOnly = true
+               })
+                </div>
+            </div>
+        }
+        <div class="tab-pane fade" id="notifications">
+            <div class="row" id="notifications-tab">
+                @Html.Partial("_TabLoader", new TabLoaderParams
+           {
+               ActionUrl = Url.Action("Add", "Notifications", new { entityId = Model.Id, logicalName = LogicaName.Club, seasonId = Model.CurrentSeasonId }),
+               DataElementId = "notifications-tab",
+               LoadByVisibilityOnly = true
+           })
+            </div>
+        </div>
+        @*
+            @if (User.IsInAnyRole(AppRole.Admins) || ViewBag.IsClubManager == true)
+            {
+                <div class="tab-pane fade" id="banners">
+                    @Html.Action("List", "Banners", new { parentId = Model.Id, isUnion = false })
+                </div>
+            }
+        *@
+        if (!Model.SectionIsIndividual && Model.IsUnionClub == true)
+        {
+            <div class="tab-pane fade" id="calendar-club-sector">
+                <div class="row" id="calendar-club-games">
+                    @Html.Partial("_TabLoader", new TabLoaderParams
+                    {
+                        ActionUrl = Url.Action("Calendar", "Unions", new { sectionId = Model.SectionId, clubId = Model.Id, seasonId = Model.CurrentSeasonId }),
+                        DataElementId = "calendar-club-games",
+                        LoadByVisibilityOnly = true
+                    })
+                </div>
+            </div>
+         }
+    }
+</div>
+
+<div class="modal fade" id="banneredit" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="newleague" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+@if (Model.UnionId == 37)
+{
+    <div class="modal fade" id="karateclubmodal" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="karateclubmodal_pl">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <p id="modal-info-text"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@*Blockades modal*@
+@if (hasBlockades)
+{
+    <div class="modal fade" id="unBlockadedPlayersList" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">@Messages.Notifications</h4>
+                </div>
+                <div class="modal-body">
+                    @{
+                        var blocadesByType = blockades.GroupBy(b => b.BType);
+
+                        IGrouping<int, DataService.DTO.PlayersBlockadeShortDTO> gBlockades = null;
+                        IGrouping<int, DataService.DTO.PlayersBlockadeShortDTO> gMedCertExpireInMonth = null;
+                        IGrouping<int, DataService.DTO.PlayersBlockadeShortDTO> gInsuranceExpireInMonth = null;
+                        foreach (var result in blocadesByType)
+                        {
+                            if (result.Key == BlockadeType.Blockade)
+                            {
+                                gBlockades = result;
+                            }
+                            if (result.Key == BlockadeType.MedicalExpiration)
+                            {
+                                gMedCertExpireInMonth = result;
+                            }
+                            if (result.Key == BlockadeType.InsuranceExpiration)
+                            {
+                                gInsuranceExpireInMonth = result;
+                            }
+                        }
+                        var message1 = Messages.UnblockadedStatusMessage;
+                        var message2 = Messages.MedicalCertExpirationSoonMessage;
+                        var message3 = Messages.InsuranceExpirationSoonMessage;
+                        if (Model.SectionName.Equals(GamesAlias.Athletics))
+                        {
+                            message1 = message1.Replace(Messages.Player, Messages.Athlete);
+                            message2 = message2.Replace(Messages.Player, Messages.Athlete);
+                        }
+                        else if (Model.SectionIsIndividual)
+                        {
+                            message1 = message1.Replace(Messages.Player, Messages.Sportsman);
+                            message2 = message2.Replace(Messages.Player, Messages.Sportsman);
+                        }
+                    }
+                    @if (gBlockades != null)
+                    {
+                        <h4 class="modal-title">@Messages.UnblockadedPlayers</h4>
+                        foreach (var blockade in gBlockades)
+                        {
+                            <p>@String.Format(message1, blockade.UserName, blockade.TeamTitle)</p>
+                        }
+                    }
+                    @if (gMedCertExpireInMonth != null)
+                    {
+                        <h4 class="modal-title">@Messages.MedicalExpirationAlert</h4>
+                        foreach (var blockade in gMedCertExpireInMonth)
+                        {
+                            <p>@String.Format(message2, blockade.UserName, blockade.TeamTitle)</p>
+                        }
+                    }
+                    @if (gInsuranceExpireInMonth != null)
+                    {
+                        <h4 class="modal-title">@Messages.InsuranceExpirationAlert</h4>
+                        foreach (var blockade in gInsuranceExpireInMonth)
+                        {
+                            <p>@String.Format(message3, blockade.UserName, blockade.TeamTitle)</p>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    Session["UnblockadedPlayers"] = null;
+}
+@*PlayersToCLubs modal*@
+@if (hasPlayersToClubs && ViewBag.IsClubManager)
+{
+    <div class="modal fade" id="playersToClubsList" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    @*<button type="button" class="close" data-dismiss="modal">&times;</button>*@
+                    <h4 class="modal-title">@Messages.Notifications</h4>
+                </div>
+                <div class="modal-body">
+                    <h4 class="modal-title" style="margin-bottom:10px;">@Messages.PlayerMovedToClub</h4>
+                    <p>
+                        @Messages.Hello @playersToClubs.ClubManagerName,
+                    </p>
+
+                    @foreach (var p in playersToClubs.PlayersToClubs)
+                    {
+                    <p>@String.Join(" ", Messages.Player, p.PlayerName, Messages.HasCompletedRegToNewClub.Replace("{0}", p.NewClubName))</p>
+                    }
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" onclick="MarkAsSeen()">@Messages.Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    Session["UnionPlayerToClub"] = null;
+}
+
+
+@section scripts
+{
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBiwCq-EDCvfhQ786WvFgSQvrSxCgjzsYM&libraries=places"></script>
+    @if (!Model.CanEditClub)
+    {
+        <script>
+            $(document).ready(function() {
+                $("#section_tabs a[href=#info]").tab("show");
+            });
+        </script>
+    }
+    <script>
+        var autocomplete;
+
+        function initialize() {
+            autocomplete = new google.maps.places.Autocomplete(
+                (document.getElementById('auditoriumAddress')),
+                { types: ['geocode'] });
+            google.maps.event.addListener(autocomplete,
+                'place_changed',
+                function() {
+                });
+        }
+
+        $(document).ready(function() {
+            initialize();
+        });
+    </script>
+    @if (Model.UnionId == 37)
+    {
+        <script>
+            $(document).ready(function() {
+                if ("@(!string.IsNullOrEmpty(karateMessage))" === "True" && "@ViewBag.IsClubManager" === "True") {
+                    $("#karateclubmodal").modal({ backdrop: 'static', keyboard: false });
+                    $("#modal-info-text").text("@karateMessage");
+                    $("#karateclubmodal").modal("show");
+                }
+            });
+        </script>
+    }
+    <script>
+        function MarkAsSeen() {
+            $("#playersToClubsList").modal('hide');
+            $.ajax({
+                url: '/Clubs/MarkPlayerToClubActivityAsSeen',
+                type: 'POST',
+                dataType: 'JSON',
+                data: {
+                    unionId: @(Model.UnionId ?? 0),
+                    clubId: @(Model.ClubId ?? 0),
+                    seasonId: @(Model.SeasonId ?? 0)
+                },
+                success: function() {
+                }
+            });
+        }
+
+        $('#ddlSeasons').change(function() {
+            var seasonId = $(this).val();
+            var sectionId = '@Model.SectionId';
+            var isDepartment = '@isDepartment';
+            $.ajax({
+                url: '/Admin/SetClubCurrentSeason',
+                type: 'POST',
+                dataType: 'JSON',
+                data: { seasonId: seasonId },
+                success: function() {
+                }
+            });
+            if ('@Model.SectionId.HasValue' == 'True' && '@isDepartment' != 'True') {
+                window.location.href = '@Url.Action("Edit", new {id = Model.Id})?seasonId=' +
+                    seasonId +
+                    '&sectionId=' +
+                    sectionId;
+            } else if ('@isDepartment' == 'True') {
+                window.location.href = '@Url.Action("Edit", new {id = Model.Id})?seasonId=' +
+                    seasonId +
+                    '&isDepartment=' +
+                    isDepartment;
+            } else {
+                window.location.href = '@Url.Action("Edit", new {id = Model.Id})?seasonId=' + seasonId + '';
+            }
+        });
+        if ('@isTrainingEnabled' == 'False') {
+            $(function() {
+                $('[href="#clubTrainings"]').closest('li').hide();
+                $('[href="#clubTeamTrainings"]').closest('li').hide();
+                $('[href="#clubCalendar"]').closest('li').hide();
+            });
+        }
+        $(document).ready(function() {
+            $("#playerslist").load('@Html.Raw(Url.Action("List", "Players",
+                                        new {id = Model.Id, logicalName = LogicaName.Club, seasonId = Model.CurrentSeasonId, isUnionViewer = isUnionViewer || Model.IsUnionClubManagerUnderPastSeason}))');
+            $("#clubTrainingContent").load('@Html.Raw(Url.Action("ClubTrainings", "Clubs",
+                                                new {clubId = Model.Id, seasonId = Model.CurrentSeasonId}))');
+
+            @*if ("@Model.IsGymnastics" === "True" || "@Model.IsAthletics" === "True" || "@Model.IsSwimming" === "True") {
+                $("#unioncompetitions_div").load('@Html.Raw(Url.Action( nameof(ClubsController.CompetitionsList), nameof(ClubsController).TrimControllerName(),
+                                    new { clubId = Model.Id, unionId = Model.UnionId, seasonId = Model.CurrentSeasonId }))');
+            }
+
+            if ("@Model.IsWeightLifting" === "True" ) {
+                $("#unioncompetitions_div").load('@Html.Raw(Url.Action( nameof(ClubsController.WeightLiftingRegistrationList), nameof(ClubsController).TrimControllerName(),
+                                    new { clubId = Model.Id, unionId = Model.UnionId, seasonId = Model.CurrentSeasonId }))');
+            }*@
+
+            if ('@isUnionViewer' === "True" || '@Model.IsUnionClubManagerUnderPastSeason' === "True") {
+                $("a").attr('disabled', true);
+                $("span").attr('disabled', true);
+                $(".btn").attr('disabled', true);
+                $(".export").attr('disabled', false);
+                $(".game-chbx").attr('disabled', true);
+                $('#games-chbx').attr('disabled', true);
+                $(".frm-date").attr('disabled', true);
+                $(".auditoriums-display").attr('disabled', true);
+                $("#arena_print").attr('disabled', false);
+                $(".edit-team").attr('disabled', false);
+            }
+            if ('@hasBlockades' == 'True') {
+                $("#unBlockadedPlayersList").modal('show');
+            }
+            if ('@hasPlayersToClubs' == 'True') {
+                $("#playersToClubsList").modal('show');
+            }
+        });
+    </script>
+}

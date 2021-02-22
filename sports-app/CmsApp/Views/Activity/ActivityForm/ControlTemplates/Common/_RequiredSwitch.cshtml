@@ -1,0 +1,11 @@
+﻿@model ActivityFormControlTemplateModel 
+
+@if(!Model.IsPublish && Model.CanBeRequired)
+{
+    <label class="isRequiredLabel">
+        <input type="checkbox" class="isRequiredChk" data-fb-for="buildForm-body-@Model.PropertyName" data-size="mini"
+               data-on-text="@Messages.Activity_BuildForm_CheckboxRequired"
+               data-off-text="@Messages.Activity_BuildForm_CheckboxOptional">
+        *
+    </label>
+}

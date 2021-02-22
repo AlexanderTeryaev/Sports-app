@@ -1,0 +1,1 @@
+ALTER TABLE dbo.Clubs ALTER COLUMN NGO_Number nvarchar(20) null

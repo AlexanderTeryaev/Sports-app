@@ -1,0 +1,4 @@
+ALTER TABLE CompetitionRoutes ADD IsCompetitiveEnabled BIT NOT NULL DEFAULT 0
+ALTER TABLE Clubs ADD IsFlowerOfSport BIT NOT NULL DEFAULT 0
+ALTER TABLE Disciplines ADD IsPreffered BIT NOT NULL DEFAULT 0
+ALTER TABLE UsersJobs ADD ConnectedDisciplineIds VARCHAR(255) NULL

@@ -1,0 +1,959 @@
+﻿@using AppModel
+@model TeamInfoForm
+@{
+    string underAdult = string.Empty;
+    string reserved = string.Empty;
+    string registrationData = string.Empty;
+    string aboutTeam = string.Empty;
+    string settings = string.Empty;
+    UIHelpers.GetTeamDetailsCaptions(Model.SectionAlias, out underAdult, out reserved, out registrationData,
+            out aboutTeam, out settings);
+}
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+<form id="detailsform" method="post" data-targetid="details" action="@Url.Action("Details", "Teams" )" autocomplete="off" enctype="multipart/form-data">
+    @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+    {
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="row">
+                    <div class="col-sm-2 form-group">
+                        <label class="control-label">#</label>
+                        @Html.TextBoxFor(m => m.TeamId, new { @class = "form-control", @readonly = "readonly" })
+                    </div>
+                    <div class="col-sm-4 form-group">
+                        <label class="control-label">@Messages.Name:</label>
+                        @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Title)
+                    </div>
+                    <div class="col-sm-4 form-group">
+                        <label class="control-label">@Messages.TeamForeignName:</label>
+                        @Html.TextBoxFor(m => m.TeamForeignName, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.TeamForeignName)
+                    </div>
+
+                    @{
+                        var showTrainingCheckBox = User.IsInAnyRole(AppRole.Admins) || (ViewBag.IsClubManager == true && ViewBag.IsClubTrainingEnabled == true)
+                        || (ViewBag.IsDepartMgr == true && ViewBag.IsClubTrainingEnabled == true);
+                    }
+                    @if (showTrainingCheckBox)
+                    {
+                        <div class="col-sm-2 form-group" style="display: flex; flex-direction: row; justify-content: flex-end;">
+                            @Html.CheckBoxFor(model => model.IsTrainingEnabled, new { @checked = "checked" })
+                            <label class="control-label">@Messages.AddTrainingFeature</label>
+                        </div>
+                    }
+
+
+        @*<div class="col-sm-6 form-group">
+            <label class="control-label">@Messages.Active:</label>
+            @if (Model.Registration == null)
+            {
+            <input type="checkbox" readonly="readonly" disabled="disabled" />
+            }
+            else
+            {
+            @Html.CheckBoxFor(x => x.Registration.IsActive)
+            @Html.HiddenFor(x => x.Registration.LeagueId)
+            }
+        </div>*@
+
+                </div>
+
+                @if (Model.sectionId == 6 && Model.IsTennisCompetition == 1)
+                {
+                    <div class="row">
+                        <div class="col-sm-4 form-group">
+                            <label class="control-label">@Messages.Ages:</label>
+                            @Html.DropDownListFor(m => m.CompetitionAgeId, Model.ListAges, "- select -", new { @class = "form-control", @id = "dropdownage" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6 form-group">
+                            <label class="control-label">@Messages.MaximumAge:</label>
+                            @Html.TextBox(nameof(Model.MaximumAge), Model.MaximumAge == null ? "" : Model.MaximumAge.Value.ToString("dd/MM/yyyy"), new { @class = "form-control frm-date-wo-time", @id = "minimumage" })
+                            @Html.ValidationMessageFor(m => m.MaximumAge)
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="control-label">@Messages.MinimumAge:</label>
+                            @*<input type="text" name="StartDate" value="" class="form-control frm-date" />*@
+                            @Html.TextBox(nameof(Model.MinimumAge), Model.MinimumAge == null ? "" : Model.MinimumAge.Value.ToString("dd/MM/yyyy"), new { @class = "form-control frm-date-wo-time", @id = "maximumage" })
+                            @Html.ValidationMessageFor(m => m.MinimumAge)
+                        </div>
+                    </div>
+                    <div class="row" style="margin-bottom:10px;">
+                        <div class="col-sm-4 form-inline">
+                            <label class="control-label">@Messages.ImportPlayers_Columns_Gender:</label>
+                            <text id="gender-text"></text>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4 form-group">
+                            <label class="control-label">@Messages.CompetitionRegion:</label>
+                            @Html.DropDownListFor(m => m.CompetitionRegionId, Model.ListRegions, "- select - ", new { @class = "form-control", @id = "dropdownregion" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4 form-group">
+                            <label class="control-label">@Messages.CompetitionLevel:</label>
+                            @Html.DropDownListFor(m => m.CompetitionLevelId, Model.ListLevels, "- select - ", new { @class = "form-control", @id = "dropdownlevel" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6 form-group">
+                            <label class="control-label">@Messages.MinRank:</label>
+                            @Html.TextBoxFor(m => Model.MinRank, Model.MinRank == null ? "" : Model.MinRank.Value.ToString(), new { @class = "form-control", @id = "minrank" })
+                            @Html.ValidationMessageFor(m => m.MinRank)
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="control-label">@Messages.MaxRank:</label>
+                            @*<input type="text" name="StartDate" value="" class="form-control frm-date" />*@
+                            @Html.TextBoxFor(m => Model.MaxRank, Model.MaxRank == null ? "" : Model.MaxRank.Value.ToString(), new { @class = "form-control", @id = "maxrank" })
+                            @Html.ValidationMessageFor(m => m.MaxRank)
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-12">
+                            <label class="control-label">@Messages.PlaceForQualification:</label>
+                            <div id="locationField">
+                                @Html.TextBoxFor(m => m.PlaceForQualification, new { @class = "form-control", id = "qualificationaddress", placeholder = $"{Messages.AutocompleteAddress}" })
+                                @Html.ValidationMessageFor(m => m.PlaceForQualification)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-6">
+                            <label class="control-label">@Messages.QualificationsStartDate</label>
+                            @Html.TextBoxFor(m => m.QualificationStartDate, new { @class = "form-control frm-date" })
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label class="control-label">@Messages.QualificationsEndDate</label>
+                            @Html.TextBoxFor(m => m.QualificationEndDate, new { @class = "form-control frm-date" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-12">
+                            <label class="control-label">@Messages.PlaceForFinal:</label>
+                            <div id="locationField">
+                                @Html.TextBoxFor(m => m.PlaceForFinal, new { @class = "form-control", id = "finaladdress", placeholder = $"{Messages.AutocompleteAddress}" })
+                                @Html.ValidationMessageFor(m => m.PlaceForFinal)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-6">
+                            <label class="control-label">@Messages.FinalsStartDate</label>
+                            @Html.TextBoxFor(m => m.FinalStartDate, new { @class = "form-control frm-date" })
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label class="control-label">@Messages.FinalsEndDate</label>
+                            @Html.TextBoxFor(m => m.FinalEndDate, new { @class = "form-control frm-date" })
+                        </div>
+                    </div>
+                }
+                @if (Model.sectionId == 6 && Model.IsTennisCompetition == 0 && Model.IsLeagueRegistration && !Model.IsTrainingTeam && !Model.IsSchoolTeam)
+                {
+                    <div class="row" style="margin-top: 10px; margin-bottom: 10px;">
+                        <div class="col-sm-6">
+                            <a href="@Url.Action("DaysForHosting", "Leagues" ,
+                       new { leagueId=ViewBag.LeagueId, seasonId=Model.SeasonId, teamId=Model.TeamId })"
+                               class="btn btn-info"
+                               data-ajax-update="#daysForHostingModal_pl"
+                               data-toggle="modal"
+                               data-target="#daysForHostingModal"
+                               data-ajax="true">
+                                @Messages.DaysForHosting
+                            </a>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.IsTennisCompetition != 1)
+                {
+                    <div class="row">
+                        <div class="col-sm-4 form-group">
+                            <label class="control-label">@Messages.Logo:</label> (<span>2mb</span>)
+
+                            <table>
+                                <tr>
+                                    <td width="100px">
+                                        @Html.Editor("LogoFile", "ImageUpload")
+                                    </td>
+                                    <td width="10px"></td>
+                                    <td>
+                                        <a class="btn btn-sm btn-danger"
+                                           href="@Url.Action("DeleteImage", new { leagueId=Model.LeagueId, teamId=Model.TeamId, seasonId=Model.SeasonId, image="Logo" })"
+                                           title="@Messages.Delete">
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            @Html.ValidationMessage("LogoFile")
+                            @if (!string.IsNullOrEmpty(Model.Logo))
+                            {
+                                <div class="offset-2"></div>
+                                @ShowImage(Model.Logo)
+                            }
+                        </div>
+                        @if (Model.SeasonId !=1112)
+                        {
+                        <div class="col-sm-4 form-group">
+                            <label class="control-label">@Messages.PersonnelImage:</label> (<span>2mb</span>)
+
+                            <table>
+                                <tr>
+                                    <td width="100px">
+                                        @Html.Editor("ImageFile", "ImageUpload")
+                                    </td>
+                                    <td width="10px"></td>
+                                    <td>
+                                        <a class="btn btn-sm btn-danger"
+                                           href="@Url.Action("DeleteImage", new { leagueId=Model.LeagueId, teamId=Model.TeamId, seasonId=Model.SeasonId, image="Image" })"
+                                           title="@Messages.Delete">
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            @Html.ValidationMessage("ImageFile")
+                            @if (!string.IsNullOrEmpty(Model.PersonnelPic))
+                            {
+                                <div class="offset-2"></div>
+                                @ShowImage(Model.PersonnelPic)
+                            }
+                        </div>
+                        }
+                    </div>
+                }
+                @if (Model.IsTennisCompetition != 1)
+                {
+                    <div class="row">
+                        <div class="col-sm-8">
+                            <div class="progress progress-striped">
+                                <div class="progress-bar progress-bar-success">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (!Model.IsGymnastic)
+                {
+                    if (Model.IsTennisCompetition == 0 && !Model.IsLeagueRegistration && !Model.IsTrainingTeam && !Model.IsSchoolTeam)
+                    {
+                    <div class="row">
+                        <div class="col-sm-3 form-group">
+                            <label class="control-label">
+                                    @underAdult
+                            </label>
+                            <select class="form-control" name="IsUnderAdult">
+                                <option value="" @(!Model.IsUnderAdult.HasValue ? "selected" : "" )>@Messages.Select</option>
+                                <option value="true" @(Model.IsUnderAdult ?? false ? "selected" : "" )>@Messages.Yes</option>
+                                <option value="false" @(!(Model.IsUnderAdult ?? true) ? "selected" : "" )>@Messages.No</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="control-label">
+                                    @reserved
+                            </label>
+                            <select class="form-control" name="IsReserved">
+                                <option value="" @(!Model.IsReserved.HasValue ? "selected" : "" )>@Messages.Select</option>
+                                <option value="true" @(Model.IsReserved ?? false ? "selected" : "" )>@Messages.Yes</option>
+                                <option value="false" @(!(Model.IsReserved ?? true) ? "selected" : "" )>@Messages.No</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="control-label">@Messages.NeedShirts</label>
+                            <select class="form-control" name="NeedShirts">
+                                <option value="" @(!Model.NeedShirts.HasValue ? "selected" : "" )>@Messages.Select</option>
+                                <option value="true" @(Model.NeedShirts ?? false ? "selected" : "" )>@Messages.Yes</option>
+                                <option value="false" @(!(Model.NeedShirts ?? true) ? "selected" : "" )>@Messages.No</option>
+                            </select>
+                        </div>
+                    </div>
+                    }
+                    if (Model.sectionId == 6 && Model.IsTennisCompetition == 0 && Model.IsLeagueRegistration && !Model.IsTrainingTeam && !Model.IsSchoolTeam)
+                    {
+                        <div class="row">
+                            <div class="col-sm-6 form-group" style="display: flex; flex-direction: row;">
+                                <label class="control-label">@Messages.ReligiousTeam:</label>
+                                @Html.CheckBoxFor(model => model.IsReligiousTeam)
+                            </div>
+                        </div>
+
+                    }
+                }
+                @if (Model.IsTennisCompetition == 0 && !Model.IsTrainingTeam && !Model.IsSchoolTeam && Model.SeasonId != 1112)
+                {
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label class="control-label">@Messages.Insurance:</label> (<span>2mb</span>)
+
+                        <table>
+                            <tr>
+                                <td width="100px">
+                                    @Html.Editor("InsuranceApprovalFile", "ImageUpload")
+                                </td>
+                                <td width="10px"></td>
+                                <td>
+                                    <a class="btn btn-sm btn-danger"
+                                       href="@Url.Action("DeleteImage", new {leagueId=Model.LeagueId, teamId=Model.TeamId, seasonId=Model.SeasonId, image="InsuranceApproval" })"
+                                       title="@Messages.Delete">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        @Html.ValidationMessage("InsuranceApprovalFile")
+                        @if (!string.IsNullOrEmpty(Model.InsuranceApproval))
+                        {
+                            <div class="offset-2"></div>
+                            @ShowImage(Model.InsuranceApproval)
+                        }
+                    </div>
+                </div>
+                }
+                @if (Model.IsGymnastic && Model.IsUnionConnected)
+                {
+                    if (Model.SeasonId != 1112)
+                    { 
+                    var disciplines = new MultiSelectList(Model.UnionDisciplines ?? new List<Discipline>
+                        (), nameof(Discipline.DisciplineId), nameof(Discipline.Name), Model.TeamDisciplines?.Select(x => x.DisciplineId));
+
+                    <div class="row">
+                        <div class="form-group col-sm-3">
+                            <label class="control-label">@Messages.Disciplines:</label>
+                            <div>
+                                @Html.DropDownList($"SelectedDisciplines", disciplines, new { @class = "form-control disciplinesIds", @multiple = "multiple" })
+                            </div>
+                        </div>
+                    </div>
+                    }
+                }
+                @if (Model.IsTennisCompetition == 0 && !Model.IsLeagueRegistration && !Model.IsTrainingTeam && !Model.IsSchoolTeam && !Model.IsGymnastic)
+                { 
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <label class="control-label">
+                                    @registrationData
+                            </label>
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        @if (Model.Registration != null || Model.CustomRegistrations?.Any() == true)
+                        {
+                            if (Model.Registration != null)
+                            {
+                                @Html.Partial("_TeamRegDataPanel", Model.Registration)
+                            }
+
+                            if (Model.CustomRegistrations?.Any() == true)
+                            {
+                                foreach (var customRegistration in Model.CustomRegistrations)
+                                {
+                                    @Html.Partial("_TeamRegDataPanel", customRegistration)
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <i>@Messages.NoDataFound</i>
+                        }
+                    </div>
+                </div>
+                }
+
+                <div class="row">
+                    <div class="col-sm-12 form-group">
+                        <label class="control-label">
+                            @if (Model.IsTennisCompetition == 1)
+                            {
+                                @Messages.AboutCategory
+                            }
+                            else if (!Model.IsGymnastic)
+                            {
+                                @aboutTeam
+                            }
+                            else
+                            {
+                                @Messages.AboutDiscipline
+                            }
+                        </label>
+                        @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "5" })
+                        @Html.ValidationMessageFor(m => m.Description)
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-10">
+                        @if (TempData["Saved"] != null)
+                        {
+                            <span class="text-success">@Messages.DataSavedSuccess</span>
+                        }
+                    </div>
+                    <div class="col-sm-2 form-group text-align">
+                        <button type="submit" class="btn btn-primary" id="saveBtn">@Messages.Save</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <!--SETTINGS-->
+            @if (Model.ClubId.HasValue && (!Model.IsGymnastic || !Model.IsUnionConnected) && !Model.IsLeagueRegistration)
+            {
+                <div class="col-sm-6">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12 col-xs-12">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h4>@settings</h4>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-12 form-group">
+                                    <label class="control-label">
+                                        @Messages.TeamDetails_PlayerRegistrationAndEquipmentPrice:
+                                    </label>
+                                    <table id="tbPlayerRegistrationAndEquipmentPrice" class="table table-striped" style="margin-bottom: 0px;">
+                                        <thead>
+                                            <tr>
+                                                <td>@Messages.Activity_StartDate</td>
+                                                <td>@Messages.Activity_EndDate</td>
+                                                <td>@Messages.Activity_Price</td>
+                                                <td>@Messages.Price_CardComProductId</td>
+                                                <td></td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (int i = 0; i < Model.PlayerRegistrationAndEquipmentPrices.Count; i++)
+                                            {
+                                                var item = Model.PlayerRegistrationAndEquipmentPrices[i];
+                                                if (ViewBag.IsClubSecretary || ViewBag.IsTeamManager)
+                                                {
+                                                    <tr style="margin: 0 5px;">
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="PlayerRegistrationAndEquipmentPrices[@(i)].StartDate" data-nameTpl="PlayerRegistrationAndEquipmentPrices[0].StartDate" value="@(item.StartDate?.ToString(" dd/MM/yyyy"))" class="form-control" readonly/>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="PlayerRegistrationAndEquipmentPrices[@(i)].EndDate" data-nameTpl="PlayerRegistrationAndEquipmentPrices[0].EndDate" value="@(item.EndDate?.ToString(" dd/MM/yyyy"))" class="form-control" readonly/>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="PlayerRegistrationAndEquipmentPrices[@(i)].Price" data-nameTpl="PlayerRegistrationAndEquipmentPrices[0].Price" value="@(item.Price)" class="form-control" readonly/>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="PlayerRegistrationAndEquipmentPrices[@(i)].CardComProductId" data-nameTpl="PlayerRegistrationAndEquipmentPrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" readonly/>
+                                                        </td>
+                                                        <td>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                else
+                                                {
+                                                    <tr style="margin: 0 5px;">
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="PlayerRegistrationAndEquipmentPrices[@(i)].StartDate" data-nameTpl="PlayerRegistrationAndEquipmentPrices[0].StartDate" value="@(item.StartDate?.ToString(" dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="PlayerRegistrationAndEquipmentPrices[@(i)].EndDate" data-nameTpl="PlayerRegistrationAndEquipmentPrices[0].EndDate" value="@(item.EndDate?.ToString(" dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="PlayerRegistrationAndEquipmentPrices[@(i)].Price" data-nameTpl="PlayerRegistrationAndEquipmentPrices[0].Price" value="@(item.Price)" class="form-control" />
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="PlayerRegistrationAndEquipmentPrices[@(i)].CardComProductId" data-nameTpl="PlayerRegistrationAndEquipmentPrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" />
+                                                        </td>
+                                                        <td>
+                                                            <a onclick="javascript:removePeriodRow(this);" class="btn btn-default">
+                                                                <i class="glyphicon glyphicon-remove"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4">
+                                                    @if (!ViewBag.IsClubSecretary && !ViewBag.IsTeamManager)
+                                                    {
+                                                        <button type="button" class="btn btn-primary btnAddFormPayment" onclick="btnAddFormPaymentHandler(this);" data-tableName="tbPlayerRegistrationAndEquipmentPrice" data-propName="PlayerRegistrationAndEquipmentPrices" id="btnAddPlayerRegistrationAndEquipmentPrices">
+                                                            <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-12 form-group">
+                                    <label class="control-label">
+                                        @Messages.TeamDetails_ParticipationPrice:
+                                    </label>
+                                    <table id="tbParticipationPrice" class="table table-striped" style="margin-bottom: 0px;">
+                                        <thead>
+                                            <tr>
+                                                <td>@Messages.Activity_StartDate</td>
+                                                <td>@Messages.Activity_EndDate</td>
+                                                <td>@Messages.Activity_Price</td>
+                                                <td>@Messages.Price_CardComProductId</td>
+                                                <td></td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (int i = 0; i < Model.ParticipationPrices.Count; i++)
+                                            {
+                                                var item = Model.ParticipationPrices[i];
+                                                if (ViewBag.IsClubSecretary || ViewBag.IsTeamManager)
+                                                {
+                                                    <tr style="margin: 0 5px;">
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="ParticipationPrices[@(i)].StartDate" data-nameTpl="ParticipationPrices[0].StartDate" value="@(item.StartDate?.ToString(" dd/MM/yyyy"))" class="form-control" readonly/>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="ParticipationPrices[@(i)].EndDate" data-nameTpl="ParticipationPrices[0].EndDate" value="@(item.EndDate?.ToString(" dd/MM/yyyy"))" class="form-control" readonly/>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="ParticipationPrices[@(i)].Price" data-nameTpl="ParticipationPrices[0].Price" value="@(item.Price)" class="form-control" readonly/>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="ParticipationPrices[@(i)].CardComProductId" data-nameTpl="ParticipationPrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" readonly/>
+                                                        </td>
+                                                        <td>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                else
+                                                {
+                                                    <tr style="margin: 0 5px;">
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="ParticipationPrices[@(i)].StartDate" data-nameTpl="ParticipationPrices[0].StartDate" value="@(item.StartDate?.ToString(" dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="ParticipationPrices[@(i)].EndDate" data-nameTpl="ParticipationPrices[0].EndDate" value="@(item.EndDate?.ToString(" dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="ParticipationPrices[@(i)].Price" data-nameTpl="ParticipationPrices[0].Price" value="@(item.Price)" class="form-control" />
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="ParticipationPrices[@(i)].CardComProductId" data-nameTpl="ParticipationPrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" />
+                                                        </td>
+                                                        <td>
+                                                            <a onclick="javascript:removePeriodRow(this);" class="btn btn-default">
+                                                                <i class="glyphicon glyphicon-remove"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4">
+                                                    @if (!ViewBag.IsClubSecretary && !ViewBag.IsTeamManager)
+                                                    {
+                                                        <button type="button" class="btn btn-primary btnAddFormPayment" onclick="btnAddFormPaymentHandler(this);" data-tableName="tbParticipationPrice" data-propName="ParticipationPrices" id="btnAddParticipationPrices">
+                                                            <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-12 form-group">
+                                    <label class="control-label">
+                                        @Messages.TeamDetails_PlayerInsurancePrice:
+                                    </label>
+                                    <table id="tbPlayerInsurancePrice" class="table table-striped" style="margin-bottom: 0px;">
+                                        <thead>
+                                            <tr>
+                                                <td>@Messages.Activity_StartDate</td>
+                                                <td>@Messages.Activity_EndDate</td>
+                                                <td>@Messages.Activity_Price</td>
+                                                <td>@Messages.Price_CardComProductId</td>
+                                                <td></td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (int i = 0; i < Model.PlayerInsurancePrices.Count; i++)
+                                            {
+                                                var item = Model.PlayerInsurancePrices[i];
+                                                if (ViewBag.IsClubSecretary || ViewBag.IsTeamManager)
+                                                {
+                                                    <tr style="margin: 0 5px;">
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="PlayerInsurancePrices[@(i)].StartDate" data-nameTpl="PlayerInsurancePrices[0].StartDate" value="@(item.StartDate?.ToString(" dd/MM/yyyy"))" class="form-control" readonly/>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="PlayerInsurancePrices[@(i)].EndDate" data-nameTpl="PlayerInsurancePrices[0].EndDate" value="@(item.EndDate?.ToString(" dd/MM/yyyy"))" class="form-control" readonly/>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="PlayerInsurancePrices[@(i)].Price" data-nameTpl="PlayerInsurancePrices[0].Price" value="@(item.Price)" class="form-control" readonly/>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="PlayerInsurancePrices[@(i)].CardComProductId" data-nameTpl="PlayerInsurancePrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" readonly/>
+                                                        </td>
+                                                        <td>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                else
+                                                {
+                                                    <tr style="margin: 0 5px;">
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="PlayerInsurancePrices[@(i)].StartDate" data-nameTpl="PlayerInsurancePrices[0].StartDate" value="@(item.StartDate?.ToString(" dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div style="position: relative">
+                                                                <input type="text" name="PlayerInsurancePrices[@(i)].EndDate" data-nameTpl="PlayerInsurancePrices[0].EndDate" value="@(item.EndDate?.ToString(" dd/MM/yyyy"))" class="form-control frm-date-wo-time" />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="PlayerInsurancePrices[@(i)].Price" data-nameTpl="PlayerInsurancePrices[0].Price" value="@(item.Price)" class="form-control" />
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="PlayerInsurancePrices[@(i)].CardComProductId" data-nameTpl="PlayerInsurancePrices[0].CardComProductId" value="@(item.CardComProductId)" class="form-control" />
+                                                        </td>
+                                                        <td>
+                                                            <a onclick="javascript:removePeriodRow(this);" class="btn btn-default">
+                                                                <i class="glyphicon glyphicon-remove"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="4">
+                                                    @if (!ViewBag.IsClubSecretary && !ViewBag.IsTeamManager)
+                                                    {
+                                                        <button type="button" class="btn btn-primary btnAddFormPayment" onclick="btnAddFormPaymentHandler(this);" data-tableName="tbPlayerInsurancePrice" data-propName="PlayerInsurancePrices" id="btnAddPlayerInsurancePrices">
+                                                            <i class="glyphicon glyphicon-plus"></i> @Messages.AddNew
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6 form-group">
+                                    <label class="control-label">@Messages.MaximumAge:</label>
+                                    @Html.TextBox(nameof(Model.MaximumAge), Model.MaximumAge == null ? "" : Model.MaximumAge.Value.ToString("dd/MM/yyyy"), new { @class = "form-control frm-date-wo-time" })
+                                    @Html.ValidationMessageFor(m => m.MaximumAge)
+                                </div>
+                                <div class="col-sm-6 form-group">
+                                    <label class="control-label">@Messages.MinimumAge:</label>
+                                    @*<input type="text" name="StartDate" value="" class="form-control frm-date" />*@
+                                    @Html.TextBox(nameof(Model.MinimumAge), Model.MinimumAge == null ? "" : Model.MinimumAge.Value.ToString("dd/MM/yyyy"), new { @class = "form-control frm-date-wo-time" })
+                                    @Html.ValidationMessageFor(m => m.MinimumAge)
+                                </div>
+                            </div>
+                            <div class="row">
+                                @if (!ViewBag.IsUnionClub && (User.IsInAnyRole(AppRole.Admins) || (ViewBag.IsClubManager == true)))
+                                {
+                                    <div class="col-sm-4 form-group">
+                                        <label class="control-label">@Messages.MonthlyProvisionForSecurity: </label>
+                                        @Html.TextBoxFor(model => model.MonthlyProvisionForSecurity, new { @class = "form-control", type = "number", min="0" })
+                                    </div>
+                                }
+                                @if (!ViewBag.IsUnionClub && ViewBag.IsTeamManager == true)
+                                {
+                                    <div class="col-sm-4 form-group">
+                                        <label class="control-label">@Messages.MonthlyProvisionForSecurity: </label>
+                                        @Html.TextBoxFor(model => model.MonthlyProvisionForSecurity, new { @readonly = "readonly", @class = "form-control", type = "number", style = "direction:ltr;" })
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-sm-6 form-group">
+                <h3>@Model.Title</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-3 form-group">
+                @if (!string.IsNullOrEmpty(Model.Logo))
+                {
+                    <div class="offset-2"></div>
+                    @ShowImage(Model.Logo)
+                }
+            </div>
+            <div class="col-sm-3 form-group">
+                @if (!string.IsNullOrEmpty(Model.PersonnelPic))
+                {
+                    <div class="offset-2"></div>
+                    @ShowImage(Model.PersonnelPic)
+                }
+            </div>
+        </div>
+    }
+    @Html.HiddenFor(m => m.TeamId)
+    @Html.Hidden(nameof(League.LeagueId), Model.leagues.Count > 0 ? (int?)Model.leagues.First().Id : null)
+    @Html.HiddenFor(m => m.SeasonId)
+    @Html.HiddenFor(m => m.IsTennisCompetition)
+    @Html.HiddenFor(m => m.sectionId)
+    @if (Model.ClubId.HasValue)
+    {
+        @Html.HiddenFor(x => x.ClubId)
+    }
+    else
+    {
+        @Html.Hidden(nameof(Club.ClubId), Model.clubs.Count > 0 ? (int?)Model.clubs.First().Id : null)
+    }
+</form>
+
+<div class="modal fade" id="daysForHostingModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document" id="daysForHostingModal_pl">
+    </div>
+</div>
+
+@helper ShowImage(string imgName)
+{
+    <img class="img-responsive img-thumbnail" src="@( GlobVars.ContentPath + "/teams/" + imgName)" />
+}
+
+<script>
+
+    var autocompleteQualification;
+    var autocompleteFinal;
+    function initialize() {
+        autocompleteQualification = new google.maps.places.Autocomplete(
+            (document.getElementById('qualificationaddress')),
+            { types: ['geocode'] });
+        google.maps.event.addListener(autocompleteQualification, 'place_changed', function () {
+        });
+        autocompleteFinal = new google.maps.places.Autocomplete(
+            (document.getElementById('finaladdress')),
+            { types: ['geocode'] });
+        google.maps.event.addListener(autocompleteFinal, 'place_changed', function () {
+        });
+    }
+
+    $(document).ready(function () {
+        initialize();
+    });
+
+    $(".disciplinesIds").multiselect({
+        numberDisplayed: 1,
+        onDropdownHide: function(element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    setFileUpload('#detailsform', '#details');
+
+    $("#saveBtn").click(function () {
+        if ($('#IsTrainingEnabled:checked').val()) {
+            $('[href="#trainngSettings"]').closest('li').show();
+            $('[href="#teamTrainings"]').closest('li').show();
+        } else {
+            $('[href="#trainngSettings"]').closest('li').hide();
+            $('[href="#teamTrainings"]').closest('li').hide();
+        }
+    });
+
+    function removePeriodRow(that, tableName) {
+        $(that).closest("tr").remove();
+        updatePriceIndex(tableName);
+    }
+
+    function AddFormPayment(propName, tableName) {
+        var row = '';
+        row += '<tr>';
+        row += '   <td>';
+        row += '       <div style="position: relative">';
+        row += '           <input type="text" name="' +
+            propName +
+            '[0].StartDate" data-nameTpl="' +
+            propName +
+            '[0].StartDate" value="" class="form-control frm-date-wo-time" />';
+        row += '       </div>';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <div style="position: relative">';
+        row += '           <input type="text" name="' +
+            propName +
+            '[0].EndDate" data-nameTpl="' +
+            propName +
+            '[0].EndDate" value="" class="form-control frm-date-wo-time" />';
+        row += '       </div>';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <input type="text" name="' +
+            propName +
+            '[0].Price" data-nameTpl="' +
+            propName +
+            '[0].Price" class="form-control" />';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <input type="text" name="' +
+            propName +
+            '[0].CardComProductId" data-nameTpl="' +
+            propName +
+            '[0].CardComProductId" class="form-control" />';
+        row += '   </td>';
+        row += '   <td>';
+        row += '       <a onclick="javascript:removePeriodRow(this,\'' +
+            tableName +
+            '\');" class="btn btn-default"><i class="glyphicon glyphicon-remove"></i></a>';
+        row += '   </td>';
+        row += '</tr>';
+
+        return row;
+    }
+
+    $(document).ready(function () {
+        updateValues();
+    });
+
+    $("#dropdownage").on("change", function () {
+        updateValues();
+    });
+
+    $("#dropdownlevel").on("change", function () {
+        updateLevelDates();
+    });
+
+    function updateLevelDates() {
+        if ($("#dropdownlevel").val() != null && $("#dropdownlevel").val() != undefined) {
+            $.ajax({
+                url: "/Teams/GetLevelSettings?levelSettingsId=" + $("#dropdownlevel").val() + "&competitionId=@Model.LeagueId",
+                type: "GET",
+                success: function (data) {
+                    if (data.Success != false) {
+                        $("#QualificationStartDate").val(format(data.QualificationStartDate, "dd/MM/yyyy"));
+                        $("#QualificationEndDate").val(format(data.QualificationEndDate, "dd/MM/yyyy"));
+                        $("#FinalStartDate").val(format(data.FinalStartDate, "dd/MM/yyyy"));
+                        $("#FinalEndDate").val(format(data.FinalEndDate, "dd/MM/yyyy"));
+                    }
+                    else {
+                        $("#QualificationStartDate").val("");
+                        $("#QualificationEndDate").val("");
+                        $("#FinalStartDate").val("");
+                        $("#FinalEndDate").val("");
+                    }
+                }
+            });
+        }
+    }
+
+    function updateValues() {
+        if ($("#dropdownage").val() != null && $("#dropdownage").val() != undefined) {
+            $.ajax({
+                url: "/Teams/GetCompetitionAge?ageId=" + $("#dropdownage").val(),
+                type: "GET",
+                success: function (data) {
+                    $("#minimumage").val(format(data.FromBirth, "dd/MM/yyyy"));
+                    $("#maximumage").val(format(data.ToBirth, "dd/MM/yyyy"));
+                    $("#gender-text").text(data.Gender);
+                }
+            });
+        }
+    }
+
+    var format = function (time, format) {
+        var startIndex = time.indexOf("(");
+        var endIndex = time.indexOf(")");
+        var timestamp = Number(time.slice(startIndex + 1, endIndex));
+        var t = new Date(timestamp);
+        var tf = function (i) { return (i < 10 ? '0' : '') + i };
+        return format.replace(/yyyy|MM|dd|HH|mm|ss/g, function (a) {
+            switch (a) {
+                case 'yyyy':
+                    return tf(t.getFullYear());
+                    break;
+                case 'MM':
+                    return tf(t.getMonth() + 1);
+                    break;
+                case 'mm':
+                    return tf(t.getMinutes());
+                    break;
+                case 'dd':
+                    return tf(t.getDate());
+                    break;
+                case 'HH':
+                    return tf(t.getHours());
+                    break;
+                case 'ss':
+                    return tf(t.getSeconds());
+                    break;
+            }
+        })
+    }
+
+    function btnAddFormPaymentHandler(that) {
+        var tableName = $(that).attr("data-tableName");
+        var propName = $(that).attr("data-propName");
+
+        var row = AddFormPayment(propName, tableName);
+
+        $('#' + tableName + ' > tbody').append(row);
+        cmn.initDateTimePickers();
+
+        updatePriceIndex(tableName);
+    }
+
+
+    (function () {
+        cmn.initDateTimePickers();
+    })();
+
+
+    function updatePriceIndex(tableName) {
+        $('#' + tableName + ' > tbody > tr').each(function (ind, el) {
+
+            $('input', el).each(function (iInd, iEl) {
+                $(iEl).attr('name', $(iEl).attr("data-nameTpl").replace("[0]", "[" + ind + "]"));
+            });
+        });
+    }
+</script>

@@ -1,0 +1,409 @@
+﻿@using CmsApp.Controllers
+@using DataService.DTO
+@model UnionCompetitionForm
+@{
+    var hasSportsmen = false;
+    bool isHebrew = Request.IsHebrew();
+}
+
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+
+@foreach (var competition in Model.Competitions)
+{
+    <tr class="@(competition.IsEnded ? " isEnded" : string.Empty) @(competition.IsStarted ? string.Empty : "isNotStarted") @(competition.IsMaxed ? "isMaxed" : string.Empty)">
+        <td>
+            <a data-id="@competition.LeagueId" class="btn btn-primary information">
+                <i class="glyphicon glyphicon-info-sign" name="info-icon"></i>
+                <i class="fa fa-spin fa-spinner" name="spinner" style="display:none"></i>
+            </a>
+        </td>
+        <td>
+            <a href="@Url.Action( nameof(ClubsController.AthleticsRegistrationList), nameof(ClubsController).TrimControllerName() ,
+                         new { clubId=Model.ClubId, seasonId=Model.SeasonId, leagueId=competition.LeagueId })" style="color:#f45c0e;"
+               data-toggle="modal"
+               data-target="#registrationlist"
+               data-ajax-update="#registrationlist_pl"
+               data-ajax="true">
+                <b>@competition.CompetitionName</b>
+            </a>
+        </td>
+        <td>@competition.StartDate</td>
+        <td>@competition.EndDate</td>
+        <td>@competition.StartRegistrationDate</td>
+        <td>@competition.EndRegistrationDate</td>
+        <td>@competition.Place</td>
+        @{
+            var registrarionEnabled = competition.StartRegistrationDate.HasValue
+                                      && competition.EndRegistrationDate.HasValue
+                                      && competition.StartRegistrationDate <= DateTime.Now
+                                      && competition.EndRegistrationDate >= DateTime.Now;
+        }
+    <td>
+        <a data-id="@competition.LeagueId" class="btn btn-primary heat_pop">@Messages.Heat</a>
+        @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager))
+        {
+            <a data-id="@competition.LeagueId" class="btn btn-primary is_admin register">@Messages.Register</a>
+        }
+        else
+        {
+            <a data-id="@competition.LeagueId" class="btn btn-primary register">@Messages.Register</a>
+        }
+    </td>
+    </tr>
+    if (competition.CompetitionDisciplines.Any())
+    {
+        <tr style="display:none" class="competition_weightlifting" id="collapse_heat_@competition.LeagueId">
+            <td colspan="8">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="row" style="margin-bottom:20px;">
+                            <div class="col-sm-2">
+                                <strong>@Messages.Heat</strong>
+                            </div>
+                            <div class="col-sm-2"></div>
+                            <div class="col-sm-2"></div>
+                        </div>
+                        <div class="row">
+                            @foreach (var heat in competition.Heats)
+                            {
+                                <div class="col-sm-1">
+                                    <a href="@Url.Action("WeightLiftingResultsBySession", "Leagues", new { SessionId = heat.Id, LeagueId = @competition.LeagueId, ClubId = Model.ClubId })"
+                                       data-toggle="modal"
+                                       data-target="#weightliftingregistrationresultslist"
+                                       data-ajax-update="#weightliftingregistrationresultslist_pl"
+                                       data-ajax="true"
+                                       class="btn btn-primary">@($"{Messages.Edit} {Messages.Heat} {heat.SessionNum}")</a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+            </td>
+        </tr>
+        <tr style="display:none" class="competition_weightlifting" id="collapse_@competition.LeagueId">
+            <td colspan="8">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="row" style="margin-bottom:20px;">
+                            <div class="col-sm-2">
+                                <strong>@Messages.Category</strong>
+                            </div>
+                            <div class="col-sm-2"></div>
+                            <div class="col-sm-2"></div>
+                        </div>
+                        @foreach (var discipline in competition.CompetitionDisciplines.Where(cd => !cd.IsDeleted))
+                        {
+                            var players = new MultiSelectList(discipline.DisciplinePlayers,
+                            nameof(PlayerShortDTO.UserId), nameof(PlayerShortDTO.UserName),
+                            discipline.RegisteredPlayers.Select(rpl => rpl.UserId));
+                            var playersTableId = $"disc-player-table_{discipline.Id}";
+                            var playerTblBodyId = $"disc-player-tbl-body_{discipline.Id}";
+                            <div class="row" style="margin-bottom:30px;">
+                                <div class="col-sm-2">
+                                    <text>@UIHelpers.GetCompetitionCategoryName(discipline.CategoryId)</text>
+                                </div>
+                                <div class="col-sm-2">
+                                    @{
+                                        var selectedSportsmenIds = discipline.RegisteredPlayers.Select(rpl => rpl.UserId);
+                                        var sportsmen = new MultiSelectList(discipline.DisciplinePlayers.ToList(),
+                                            nameof(PlayerShortDTO.UserId), nameof(PlayerShortDTO.UserName), selectedSportsmenIds);
+                                    }
+                                    @if (competition.IsEnded)
+                                    {
+                                        @Html.DropDownList($"SportsmenIds", sportsmen, new
+                                        {
+                                            @class = $"form-control sportsmenIds",
+                                            @multiple = "multiple",
+                                            data_disciplineid = discipline.Id,
+                                            @id = $"sportsmenIds_{discipline.Id}",
+                                            disabled = "disabled"
+                                        })
+                                    }
+                                    else
+                                    {
+                                        @Html.DropDownList($"SportsmenIds", sportsmen, new
+                                        {
+                                            @class = $"form-control sportsmenIds",
+                                            @multiple = "multiple",
+                                            data_disciplineid = discipline.Id,
+                                            @id = $"sportsmenIds_{discipline.Id}",
+                                        })
+                                    }
+                                </div>
+                                <div class="col-sm-8">
+                                    <div class="row">
+                                        <button type="button"
+                                                class="col-sm-10 col-md-4 btn btn-default toggle-league-players"
+                                                tableid="@playersTableId">
+                                            @Messages.WeightDeclaration
+                                        </button>
+                                        <div id="@playersTableId" class="col-sm-12 league-plrs-tbl" style="display: none">
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        <th>@Messages.Name</th>
+                                                        <th>@Messages.Weight</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="@playerTblBodyId">
+                                                    @foreach (var player in discipline.RegisteredPlayers)
+                                                    {
+                                                        string weightDeclId = $"weight-decl-{discipline.Id}-{player.UserId}";
+                                                        <tr>
+                                                            <td>@player.UserName
+                                                            <td>
+                                                            <td>
+                                                                <input type="number" min="0" step="1" id="@weightDeclId"
+                                                                       class="form-control" value="@(player.WeightDeclaration ?? 0)" />
+                                                            </td>
+                                                            <td>
+                                                                <button class="btn btn-primary btn-save glyphicon glyphicon-saved btn"
+                                                                        id="@weightDeclId" autocomplete="off"
+                                                                        playerId="@player.UserId" disciplineId="@discipline.Id"></button>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </td>
+        </tr>
+    }
+    else
+    {
+        <tr style="display:none" id="collapse_@competition.LeagueId">
+            <td colspan="8">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="row" style="margin-bottom:20px;">
+                            <div class="col-sm-12">
+                                @Messages.NoCategoriesForThisCompetition
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <button class="btn btn-danger cancel">@Messages.Cancel</button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    }
+}
+
+
+<div class="modal fade" id="weightliftingregistrationresultslist" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-result-lg-custom-width">
+        <div class="modal-content" id="weightliftingregistrationresultslist_pl">
+        </div>
+    </div>
+</div>
+
+<script>
+    var needRegistration = false;
+
+    function disableAlreadyRegistered() {
+        $(".competition_weightlifting").each(function (index, competitionElement) {
+            var allCheckboxes = $(".sportsmenIds ~ div>ul>li>a>label>input[type=checkbox]", competitionElement);
+            allCheckboxes.prop('disabled', false);
+            var selectedCheckboxes = $(".sportsmenIds ~ div>ul>li>a>label>input[type=checkbox]:checked", competitionElement);
+            $.each(allCheckboxes, function (i, val1) {
+                var $val1 = $(val1);
+                $.each(selectedCheckboxes, function (i, val2) {
+                    var $val2 = $(val2);
+                    if ($val1.val() == $val2.val() && $val1.val() != "multiselect-all") {
+                        if (!$val1.is(':checked')) {
+                            $val1.prop('disabled', true);
+                        }
+                    }
+                });
+            });
+        });
+    }
+
+    $(document).ready(function () {
+        $(".toggle-league-players").on("click", function () {
+            var tableId = '#' + $(this).attr("tableid");
+            var othersOpen = false;
+            $.each($(".league-plrs-tbl:not("+tableId+")"), function(){
+                if ($(this).is(":visible")) {
+                    $(this).toggle();
+                    othersOpen = true;
+                }
+            }).promise().done(function() {
+                if (!$(tableId).is(":visible"))
+                    $(tableId).toggle();
+                else if (!othersOpen) {
+                    if($(tableId).is(":visible"))
+                        $(tableId).toggle();
+                }
+            });
+        });
+
+        $(".sportsmenIds").multiselect({
+            enableCaseInsensitiveFiltering: true,
+            includeSelectAllOption: true,
+            selectAllText: '@Messages.SelectAllPlayers',
+            buttonText: function (options, select) {
+                return '@Messages.Register @Messages.Sportsmans.ToLower()';
+            },
+            onChange: function () {
+                needRegistration = true;
+            },
+            onSelectAll: function () {
+                needRegistration = true;
+            },
+            onDeselectAll: function () {
+                needRegistration = true;
+            },
+            onDropdownHidden: function (option, select) {
+                if (needRegistration) {
+                    var selectItem = $(this)[0].$select[0];
+                    var disciplineId = $(selectItem).attr("data-disciplineid");
+                    sportsmen = $("#sportsmenIds_" + disciplineId).val();
+                    if (sportsmen === null)
+                        sportsmen = undefined;
+                    $.ajax({
+                        url: "/Clubs/RegisterSportsmenForDiscipline/",
+                        type: "POST",
+                        data: {
+                            clubId: "@Model.ClubId",
+                            competitionDisciplineId: disciplineId,
+                            sportsmenIds: sportsmen
+                        },
+                        success: function(data) {
+                            if (data.Success === true) {
+                                $("#succesful-div").hide();
+                                $("#error-div").hide();
+                                $("#succesful-div").show();
+                                disableAlreadyRegistered();
+                            } else {
+                                $("#succesful-div").hide();
+                                $("#error-div").hide();
+                                $("#error-div").show();
+                                $("#error_message").html(data.Message);
+                            }
+
+                            $.ajax({
+                                url: "@($"/{nameof(ClubsController).TrimControllerName()}/{nameof(ClubsController.SportsmenRegisteredInCompetitionDiscipline)}")",
+                                type: "GET",
+                                dataType: "json",
+                                cache: false,
+                                data: { clubId: @Model.ClubId, competitionDisciplineId: disciplineId }
+                            }).done(function(data) {
+                                var dataObj = JSON.parse(data);
+                                var replacementId = "disc-player-tbl-body_" + disciplineId;
+                                var replacement = '<tbody id="' + replacementId + '">';
+                                var wdIds = [];
+                                if(dataObj.players)
+                                    for (var i = 0; i < dataObj.players.length; i++) {
+                                        var weightDeclId = "weight-decl-" + disciplineId + "-" + dataObj.players[i].UserId;
+                                        var weightDeclBtnId = "weight-decl-btn" + disciplineId + "-" + dataObj.players[i].UserId;
+                                        replacement +=
+                                            "<tr><td>" +
+                                            dataObj.players[i].UserName +
+                                            "</td><td>" +
+                                            '<input type="number" min="0" step="1" id="' + weightDeclId + '" name="' + weightDeclId + '"' +
+                                            'data-nameTpl="' + weightDeclId + '" class="form-control" value="' + dataObj.players[i].WeightDeclaration + '" />' +
+                                            "</td>" +
+                                        '<td><button class="btn btn-primary btn-save glyphicon glyphicon-saved btn" id="' + weightDeclBtnId + '"' +
+                                        ' autocomplete="off" playerId="' + dataObj.players[i].UserId + '" disciplineId="' + disciplineId +
+                                            '"></button></td></tr>';
+                                        wdIds.push(weightDeclBtnId);
+                                    }
+                                replacement += '</tbody>';
+                                $("#" + replacementId).replaceWith(replacement);
+                                wdIds.forEach(function(wdBtnId) {
+                                    $("#" + wdBtnId).bind("click", saveWeightDeclaration);
+                                });
+                            }).fail(function(reason) {
+                                console.log("Request failed:");
+                                console.log(reason);
+                            });
+                        $("#successfulreg").modal('show');
+                        needRegistration = false;
+                }
+            });
+                }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+        disableAlreadyRegistered();
+
+        var saveWeightDeclaration = function() {
+        var btnPressed = $(this);
+        var disciplineId = parseInt(btnPressed.attr("disciplineId"));
+        var playerId = parseInt(btnPressed.attr("playerId"));
+        var weightDecl = $('#weight-decl-' + disciplineId + '-' + playerId).val();
+        if (!weightDecl)
+            weightDecl = 0;
+        var updateData = {
+            clubId: @Model.ClubId,
+            competitionDisciplineId: disciplineId,
+            sportsmanId: playerId,
+            weightDeclaration: weightDecl
+        };
+        $.ajax({
+            url: "@($"/{nameof(ClubsController).TrimControllerName()}/{nameof(ClubsController.UpdateSportsmanRegistrationForDiscipline)}")",
+            type: "POST",
+            dataType: "json",
+            contentType: 'application/json',
+            success: function (data) {
+                var theColor = btnPressed.css('color');
+                if (data.Success === true) {
+                    btnPressed.css('color', 'lightgreen');
+                } else {
+                    btnPressed.css('color', 'red');
+                    console.log("Error: ", data.Message);
+                }
+                setTimeout(function() {
+                    btnPressed.css('color', theColor);
+                },1000);
+            },
+            data: JSON.stringify(updateData)
+        });
+
+
+    };
+
+    $(".btn-save").bind("click", saveWeightDeclaration);
+
+    $(".information").on("click",
+        function() {
+            var trElement = $(this).closest("tr");
+            var competitionId = $(this).attr("data-id");
+            $.ajax({
+                url: "@($"/{nameof(ClubsController).TrimControllerName()}/{nameof(ClubsController.CompetitionDetails)}")",
+                type: "POST",
+                data: { competitionId: competitionId, clubId: @Model.ClubId, section: "@Sections.WeightLifting" },
+                beforeSend: function() {
+                    trElement.find("i[name='info-icon']").hide();
+                    trElement.find("i[name='spinner']").show();
+                },
+                success: function(data) {
+                    trElement.find("i[name='info-icon']").show();
+                    trElement.find("i[name='spinner']").hide();
+                    $("#competitionmodal_pl").html(data);
+                    $("#competitionmodal").modal('show');
+                }
+            });
+        });
+    });
+</script>
+

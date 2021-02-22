@@ -1,0 +1,40 @@
+﻿@model TeamStandingsGameForm
+<div class="row">
+    <div class="col-lg-9" style="display: inline-block; vertical-align: middle; float: none">
+        <table class="table table-bordered">
+            <caption>
+                @Html.Partial("Standings/_StandingsUrl", Model)
+            </caption>
+            <thead>
+            <tr>
+                <th>@Messages.Rank</th>
+                <th>@Messages.Team</th>
+                <th>@Messages.Games</th>
+                <th>@Messages.Wins</th>
+                <th>@Messages.Tie</th>
+                <th>@Messages.Loss</th>
+                <th>@Messages.Goals</th>
+                <th>@Messages.Diff</th>
+                <th>@Messages.Points</th>
+            </tr>
+            </thead>
+            <tbody id="standings_table_body">
+            @foreach (var team in Model.TeamStandings)
+            {
+                <tr>
+                    <td class="flip-to-ltr">@team.Rank</td>
+                    <td>@team.Team</td>
+                    <td>@team.Games</td>
+                    <td>@team.Wins</td>
+                    <td>@team.Home</td>
+                    <td>@team.Lost</td>
+                    <td>@team.Papf</td>
+                    <td>@team.Road</td>
+                    <td>@team.Pts</td>
+                </tr>
+            }
+
+            </tbody>
+        </table>
+    </div>
+</div>

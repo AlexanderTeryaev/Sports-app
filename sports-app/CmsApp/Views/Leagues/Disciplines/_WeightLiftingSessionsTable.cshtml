@@ -1,0 +1,229 @@
+﻿@using CmsApp.Controllers
+@using DataService.DTO
+@model List<AppModel.WeightLiftingSession>
+@{
+    var index = 1;
+    var sportsMenSelectList = new MultiSelectList(ViewBag.Sportsmen, nameof(CompDiscRegDTO.RegistrationId), nameof(CompDiscRegDTO.UserName));
+}
+    @foreach (var session in Model)
+    {
+        index += 1;
+    <tr>
+        <td>@Html.TextBox("SessionNum", session.SessionNum, new { form = "edit_session_" + session.Id, @class="form-control",type = "number", onchange ="$(this).parent().parent().find('.edit_session_td button').removeAttr('disabled');" })</td>
+        <td>@Html.TextBox("StartTime", session.StartTime, "{0:dd/MM/yyyy HH:mm}", new { form = "edit_session_" + session.Id, @class="form-control frm-date-session" })</td>
+        <td>@Html.TextBox("WeightStartTime", session.WeightStartTime, "{0:dd/MM/yyyy HH:mm}", new { form = "edit_session_" + session.Id, @class="form-control frm-date-session" })</td>
+        <td>@Html.TextBox("WeightFinishTime", session.WeightFinishTime, "{0:dd/MM/yyyy HH:mm}", new { form = "edit_session_" + session.Id, @class="form-control frm-date-session" })</td>
+        <td>
+            <a href="@Url.Action("WeightLiftingResultsBySession", "Leagues", new { sessionId = @session.Id, leagueId = @ViewBag.CompetitionId })"
+               data-toggle="modal" data-target="#weightliftingregistrationresultslist"
+               data-ajax-update="#weightliftingregistrationresultslist_pl"
+               data-ajax="true"
+               class="@AppCss.Edit glyphicon-signal"></a>
+        </td>
+        <td>
+            @Html.DropDownList($"RegisterSelectorId_{session.Id}", sportsMenSelectList, new
+            {
+                @class = $"form-control session_register",
+                @multiple = "multiple",
+                data_leagueid = $"{@ViewBag.CompetitionId}",
+                data_sessionid = $"{session.Id}"
+            })
+        </td>
+        <td>
+            @if (ViewBag.Referees != null)
+            {
+                var refereesSelectList = new MultiSelectList(ViewBag.Referees, nameof(RefereeShortDto.UserId), nameof(RefereeShortDto.UserFullName));
+                @Html.DropDownList($"RegisterRefereeId_{session.Id}", refereesSelectList, new
+                {
+                    @class = $"form-control session_register_referee",
+                    @multiple = "multiple",
+                    data_leagueid = $"{@ViewBag.CompetitionId}",
+                    data_sessionid = $"{session.Id}",
+                })
+            }
+        </td>
+        <td>
+            <a href="@Url.Action("DisplayWeightliftSessionRegistrations", "Leagues", new { SessionId = session.Id, LeagueId = ViewBag.CompetitionId })"
+               data-toggle="modal"
+               data-target="#session_registrations_modal"
+               data-ajax-update="#session_registrations_modal_pl"
+               data-ajax="true"
+               class="btn btn-primary fa fa-info"></a>
+        </td>
+        <td>
+            <a href="@GlobVars.SiteUrl/LeagueTable/WeightliftingSessionAppointments/@session.Id?LeagueId=@ViewBag.CompetitionId" target="_blank" class="btn btn-primary pull-left">@Messages.ExternalLink</a>
+        </td>
+        <td class="edit_session_td">
+            @using (Ajax.BeginForm("EditSession", new { SessionId = session.Id, LeagueId = ViewBag.CompetitionId }, new AjaxOptions { HttpMethod = "Post" }, new { id = "edit_session_" + session.Id }))
+            {
+                <button type="submit" disabled class="@AppCss.Edit glyphicon glyphicon-saved" onclick="$(this).attr('disabled', 'disabled'); $(this).parent().submit();"/>
+            }
+        </td>
+        <td>
+            <a class="@AppCss.Delete"
+               data-ajax-confirm="@Messages.DeleteConfirm"
+               onclick="removeSession(@session.Id)"></a>
+        </td>
+    </tr>
+    }
+
+<script>
+    $(".session_register").multiselect({
+            enableCaseInsensitiveFiltering: true,
+            buttonWidth: '100px',
+            buttonText: function (options, select) {
+                return '@Messages.Register';
+            },
+            onDropdownShow: function () {
+                var selectItem = $(this)[0].$select[0];
+                var sessionId = $(selectItem).attr("data-sessionid");
+
+                $(selectItem).parent().parent().find("input").prop('checked', false);
+                $(selectItem).parent().parent().find("li").attr("class","");
+                for (var key in selectedRegistrationSessions) {
+                    if (selectedRegistrationSessions[key].length > 0) {
+                        if (selectedRegistrationSessions[key] != sessionId) {
+                            $(selectItem).parent().parent().find("input[value='" + key + "']").attr("disabled", true);
+                        } else {
+                            $(selectItem).parent().parent().find("input[value='" + key + "']").prop('checked', true);
+                            $(selectItem).parent().parent().find("input[value='" + key + "']").parent().parent().parent().attr("class", "active");
+                        }
+                    } else {
+                        $(selectItem).parent().parent().find("input[value='" + key + "']").attr("disabled", false);
+                    }
+                }
+            },
+        onChange: function (option, checked) {
+                var selectItem = $(this)[0].$select[0];
+                var checkboxClickedValue = $(option).val();
+                var leagueId = $(selectItem).attr("data-leagueid");
+                var sessionId = $(selectItem).attr("data-sessionid");
+                if (!checked) {
+                    sessionId = "";
+                }
+                $.ajax({
+                    url: "@Url.Action("UpdateRegistrationToItsSession", "Leagues",new { competitionId = ViewBag.CompetitionId })",
+                    type: "POST",
+                    data: {
+                        SessionId: sessionId,
+                        RegistrationId : checkboxClickedValue
+                    },
+                    success: function (data) {
+                        selectedRegistrationSessions[checkboxClickedValue] = sessionId;
+                    }
+                });
+        },
+        onDropdownHide: function (element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    $(".session_register_referee").multiselect({
+            enableCaseInsensitiveFiltering: true,
+            buttonWidth: '100px',
+            buttonText: function (options, select) {
+                return '@Messages.RegisterReferee';
+            },
+            onDropdownShow: function () {
+                var selectItem = $(this)[0].$select[0];
+                var sessionId = $(selectItem).attr("data-sessionid");
+
+                $(selectItem).parent().parent().find("input").prop('checked', false);
+                $(selectItem).parent().parent().find("li").attr("class","");
+                for (var key in selectedRefereeSessions) {
+                    if (selectedRefereeSessions[key].length > 0) {
+                        var i = 0;
+                        var arr = selectedRefereeSessions[key].split(',');
+                        for (i = 0; i < arr.length; i++) {
+                            if (arr[i] == sessionId) {
+                                $(selectItem).parent().parent().find("input[value='" + key + "']").prop('checked', true);
+                                $(selectItem).parent().parent().find("input[value='" + key + "']").parent().parent().parent().attr("class", "active");
+                            }
+                        }
+                    }
+                }
+            },
+        onChange: function (option, checked) {
+                var selectItem = $(this)[0].$select[0];
+                var checkboxClickedValue = $(option).val();
+                var leagueId = $(selectItem).attr("data-leagueid");
+                var sessionId = $(selectItem).attr("data-sessionid");
+                var isAdd = 1;
+                if (!checked) {
+                    isAdd = 0;
+                }
+                $.ajax({
+                    url: "@Url.Action("UpdateRegistrationRefereeToItsSession", "Leagues",new { competitionId = ViewBag.CompetitionId })",
+                    type: "POST",
+                    data: {
+                        SessionId: sessionId,
+                        LeagueId: leagueId,
+                        UserId: checkboxClickedValue,
+                        isAdd: isAdd
+                    },
+                    success: function (data) {
+                        if (isAdd === 1) {
+                            if (selectedRefereeSessions[checkboxClickedValue].length > 0) {
+                                selectedRefereeSessions[checkboxClickedValue] += ',' + sessionId;
+                            } else {
+                                selectedRefereeSessions[checkboxClickedValue] = sessionId;
+                            }                        
+                        } else if (isAdd === 0) {
+                            if (selectedRefereeSessions[checkboxClickedValue] == sessionId) {
+                                selectedRefereeSessions[checkboxClickedValue] = '';
+                            } else {
+                                var new_arr = $.grep(selectedRefereeSessions[checkboxClickedValue].split(','), function (value) {
+                                    return value != sessionId;
+                                });
+                                selectedRefereeSessions[checkboxClickedValue] = new_arr.join(',');
+                            }
+                        }
+                    }
+                });
+        },
+        onDropdownHide: function (element) {
+            $(element.currentTarget).find('.multiselect-clear-filter').click();
+        },
+        onDropdownShown: function (element) {
+            $(element.currentTarget).find('.multiselect-search').focus();
+        }
+    });
+
+    var selectedRegistrationSessions = [];
+    @foreach (var item in ViewBag.Sportsmen)
+    {
+        <text>
+        selectedRegistrationSessions["@item.RegistrationId"] = "@item.SessionId";
+        </text>
+    }
+    @if (ViewBag.SessionHasRegistersCantDelete != null && ViewBag.SessionHasRegistersCantDelete == true) {
+        <text>
+        $(document).ready(function(){
+            alert("Cant Delete Session while has some players assigned to it.");
+        });
+        </text>
+    }
+
+    @if (ViewBag.SessionRequiresAllDates != null && ViewBag.SessionRequiresAllDates == true) {
+        <text>
+        $(document).ready(function(){
+            alert("All Date Fields are required.");
+        });
+        </text>
+    }
+
+    var selectedRefereeSessions = [];
+    @if (ViewBag.Referees != null)
+    {
+        foreach (var item in ViewBag.Referees)
+        {
+            <text>
+                selectedRefereeSessions["@item.UserId"] = "@item.SessionIds";
+            </text>
+        }
+    }
+</script>
+

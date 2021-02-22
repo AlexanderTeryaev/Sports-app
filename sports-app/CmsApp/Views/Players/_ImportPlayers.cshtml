@@ -1,0 +1,189 @@
+﻿@model CmsApp.Models.ImportPlayersViewModel
+
+@{
+    bool showFileBox = true;
+}
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@Messages.ImportPlayers</h4>
+</div>
+
+@using (Ajax.BeginForm("ImportPlayers", null,
+                    new AjaxOptions
+                    {
+                        HttpMethod = "POST",
+                        UpdateTargetId = Model.UpdateTargetId,
+                        OnComplete = "importCompleted()"
+                    },
+                    new
+                    {
+                        id = "frmImportPlayers",
+                        enctype = "multipart/form-data"
+                    }))
+{
+
+<div class="modal-body">
+    @Html.HiddenFor(model => model.ClubId)
+    @Html.HiddenFor(model => model.LeagueId)
+    @Html.HiddenFor(model => model.TeamId)
+    @Html.HiddenFor(model => model.UnionId)
+    @Html.HiddenFor(model => model.FormName, new { id = "_FormName" })
+    @Html.HiddenFor(model => model.SeasonId)
+    @Html.HiddenFor(model => model.CanApprovePlayers)
+
+    @if (Model.Result.HasValue)
+    {
+        switch (Model.Result)
+        {
+            case ImportPlayersResult.Error:
+                showFileBox = true;
+                <text>
+                    <div class="alert alert-danger">@(Model.ResultMessage)</div>
+                    <br />
+                    <br />
+                </text>
+                break;
+            case ImportPlayersResult.PartialyImported:
+                showFileBox = true;
+                <text>
+                    <div class="alert alert-info">
+                        <p>@Messages.ImportPlayers_PartillyImport</p>
+                        <p>@Messages.ImportPlayers_PartiallyImportMessage - <a class="text-danger" href="@Url.Action("DownloadPartiallyImport")">@Messages.Download</a></p>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">@(Messages.ImportPlayers_SuccessCount)</div>
+                        <input type="hidden" id="hSuccessCount" value="@(Model.SuccessCount)" />
+                        <div class="col-md-8">@(Model.SuccessCount)</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">@(Messages.ImportPlayers_ValidationErrorCount)</div>
+                        <div class="col-md-8">@(Model.ErrorCount)</div>
+                    </div>
+                    @*<div class="row">
+                            <div class="col-md-4">@(Messages.ImportPlayers_DuplicateCount)</div>
+                            <div class="col-md-8">@(Model.DuplicateCount)</div>
+                        </div>*@
+                    <br />
+                    <br />
+                </text>
+                break;
+            case ImportPlayersResult.Success:
+                showFileBox = false;
+                <text>
+                    <div class="alert alert-success">@Messages.ImportPlayers_SuccessImport</div>
+                    <p>@(Messages.ImportPlayers_SuccessCount) - @(Model.SuccessCount)</p>
+                </text>
+                break;
+        }
+    }
+    @if (showFileBox)
+    {
+        <text>
+            <input type="file" id="file-import-from-excel" name="ImportFile" />
+            <br />
+            @if (Model.CanApprovePlayers)
+            {
+                @Html.CheckBoxFor(x => x.ApprovePlayersOnImport)
+                @Html.LabelFor(x => x.ApprovePlayersOnImport, Messages.ImportPlayers_ApprovePlayersOnImport)
+                <br />
+                <br />
+                @Html.CheckBoxFor(x => x.SetPlayersOnlyAsActiveOnImport)
+                @Html.LabelFor(x => x.SetPlayersOnlyAsActiveOnImport, Messages.ImportPlayers_SetPlayersAsActiceOnImport)
+            }
+        </text>
+    }
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+    @if (Model.Result != ImportPlayersResult.Success)
+    {
+        <button id="btnImportPlayers" class="btn btn-primary">@Messages.ImportPlayers_StartImport <span id="loading_import_player" style="display:none;" class="fa fa-refresh fa-spin"></span></button>
+        <button id="loading_import_player_sbmt" style="visibility:hidden;"></button>
+        
+    }
+</div>
+}
+
+    <script type="text/javascript">
+
+    @if(Model.Result.HasValue)
+    {
+        if(Model.Result == ImportPlayersResult.Success)
+        {
+            <text>
+                var importOk = true;
+            </text>
+        }
+        else
+        {
+            <text>
+                var importOk = false;
+            </text>
+        }
+    }
+    else
+    {
+        <text>
+            var importOk = false;
+        </text>
+    }
+
+
+    $(document).ready(function () {
+        var frm = $('#frmImportPlayers');
+
+        $('#savebtn', frm).click(function () {
+            return true;
+        });
+        $("#playerimportform").on("hidden.bs.modal", function (e) {
+            if ($("#_FormName").val() === 'team' && parseInt($("#hSuccessCount").val()) > 0) {
+                setTimeout(function() {
+                    window.location.reload();
+                }, 2000);
+            }
+        });
+        $(document).on('click', '#btnImportPlayers', function () {
+            $(this).attr("disabled","disabled");
+            $("#loading_import_player").show();
+            $("#loading_import_player_sbmt").trigger( "click" );           
+        });
+    });
+
+
+
+    function importCompleted() {
+
+    }
+
+     window.addEventListener("submit", function (e) {
+        var form = e.target;
+        if (form.getAttribute("enctype") === "multipart/form-data") {
+            if (form.dataset.ajax) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                var xhr = new XMLHttpRequest();
+                xhr.open(form.method, form.action);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        if (form.dataset.ajaxUpdate) {
+                            var updateTarget = document.querySelector(form.dataset.ajaxUpdate);
+                            if (updateTarget) {
+                                updateTarget.innerHTML = xhr.responseText;
+                                var count = (xhr.responseText.match(/var importOk = true/g) || []).length;
+                                if (count > 1) {
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 500)                                    
+                                }
+                            }
+                        }
+                    }
+                };
+                xhr.send(new FormData(form));
+            }
+        }
+    }, true);
+
+    </script>

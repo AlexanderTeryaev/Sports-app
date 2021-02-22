@@ -1,0 +1,244 @@
+﻿@model Dictionary<AppModel.Team, IEnumerable<AppModel.TeamsPlayer>>
+@{
+    var clubId = ViewBag.ClubId != null ? (int?)ViewBag.ClubId : null;
+    var seasonId = ViewBag.SeasonId != null ? (int?)ViewBag.SeasonId : null;
+    var leagueId = ViewBag.LeagueId != null ? (int?)ViewBag.LeagueId : null;
+    var teamIdsString = ViewBag.TeamsIds != null ? (string)ViewBag.TeamsIds : null;
+    var count = Model.Sum(t => t.Value.Count());
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex"><div class="col-sm-9"><h4 class="modal-title">@Messages.Registrations.ToLowerInvariant()</h4></div><div class="pull-right">@Messages.Count.ToLower(): <strong>@count</strong></div></div>
+</div>
+
+<div class="modal-body">
+    <div class="row">
+        <div class="col-sm-2" style="display:flex">
+            <a id="excelBtnExp" class="btn btn-info" href="#" onclick="$('#exportregistrations').submit()">
+                <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                @using (Html.BeginForm("ExportTennisRegistrationsToExcel", "Clubs", new { clubId, seasonId, leagueId, teamIdsString },
+                FormMethod.Post, new { id = "exportregistrations" })) { }
+            </a>
+        </div>
+        <div class="col-sm-2" style="display:flex">
+            <a id="printregistrations" class="btn btn-info remove_print">
+                <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+            </a>
+        </div>
+    </div>
+
+    <div style="margin-top:15px;" class="row">
+
+        <div class="col-sm-1">
+            <table class="table table-bordered">
+                <thead>
+                    <tr><th valign="middle" height="55">@Messages.Rank</th></tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Count; i++)
+                    {
+                        <tr><td>&nbsp;</td></tr>
+                        var players = Model.ElementAt(i).Value.ToList();
+                        for (int j = 1; j <= players.Count; j++)
+                        {
+                            <tr><td align="center" valign="middle" height="65"><b>@j</b></td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-sm-11">
+            <table id="print_table" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th valign="middle" height="55">@Messages.FullName</th>
+                        <th valign="middle" height="55">@Messages.IdentNum</th>
+                        <th valign="middle" height="55">@Messages.BirthDay</th>
+                        <th valign="middle" height="55">@Messages.TenicardValidity</th>
+                        <th valign="middle" height="55">@Messages.ValidityOfMedicalExamination</th>
+                        <th valign="middle" height="55">@Messages.InsuranceDate</th>
+                        <th valign="middle" height="55"></th>
+                        <th valign="middle" height="55" class="remove_print"></th>
+                    </tr>
+                </thead>
+                @for (var i = 0; i < Model.Count; i++)
+                {
+                    <tbody id="@(ViewBag.IsPlayersRegistrationEnded ? "unsortable" : "sortable")_@(i + 1)">
+                        @{
+                            var team = Model.ElementAt(i).Key;
+                            var teamName = team?.TeamsDetails.OrderByDescending(t => t.Id)?.FirstOrDefault()?.TeamName ?? team?.Title;
+                        }
+                        <tr class="no-sort">
+                            <td colspan="8" align="center">
+                                <b>@teamName</b>
+                            </td>
+                        </tr>
+                        @{
+                            var players = Model.ElementAtOrDefault(i).Value?.ToList();
+                        }
+                        @foreach (var player in players)
+                        {
+                            <tr data-team="@player.TeamId" data-id="@player.Id" id="row_@player.Id">
+                                <td valign="middle" height="65" width="20%">
+                                    <span>
+                                        <span class="unlock-link-color @(player.IsLocked == true ? " text-danger " : "")">
+                                            @player.User.FullName
+                                        </span>
+
+                                        @if (player.IsLocked.HasValue && (User.IsInAnyRole(AppRole.Admins) || ViewBag.JobRole == JobRole.UnionManager))
+                                        {
+                                            <a href="javascript:;" class="unlock-link" data-id="@(player.Id)">
+                                                @if (player.IsLocked == true)
+                                                {
+                                                    <i class="fa fa-lock"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fa fa-unlock"></i>
+                                                }
+                                            </a>
+                                        }
+                                    </span>
+                                </td>
+                                <td valign="middle" height="65">@player.User.IdentNum</td>
+                                <td valign="middle" height="65"> @(player.User.BirthDay?.ToShortDateString() ?? string.Empty) </td>
+                                <td valign="middle" height="65">
+                                    @(player.User.TenicardValidity?.ToShortDateString() ?? string.Empty)
+                                </td>
+                                <td valign="middle" height="65">@(player.User.MedExamDate?.ToShortDateString())</td>
+                                <td valign="middle" height="65">@(player.User.DateOfInsurance?.ToShortDateString())</td>
+                                <td valign="middle" height="65" class="remove_print">
+                                    <a data-id="@player.Id" class="btn btn-danger deletereg"><span class="glyphicon glyphicon-trash"></span></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                }
+            </table>
+        </div>
+
+
+        @*<div class="alert alert-danger">
+                <strong><i class="fa fa-ban"></i></strong>&nbsp; &nbsp; @Messages.NoPlayersRegistered
+            </div>*@
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+</div>
+<script>
+
+    $('#printregistrations').click(function () {
+        var tbl = $("#print_table");
+        if (tbl.length > 0) {
+            tablePrint(tbl);
+        }
+    });
+
+    function tablePrint(el) {
+        var wnd = window.open('', '@Messages.RegistrationStatus', 'height=600, width=600');
+        wnd.document.write('<html><head><title>@Messages.RegistrationStatus. @Messages.Club: @ViewBag.ClubName/@Messages.League: @ViewBag.LeagueName</title>');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+        wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+        wnd.document.write('<body>');
+
+        wnd.document.write($(el).prop('outerHTML'));
+        $(wnd.document).find('.remove_print').remove();
+        wnd.document.write('</body></html>');
+        wnd.document.close();
+        wnd.focus();
+        setTimeout(function () {
+            wnd.print();
+            wnd.close();
+        }, 200);
+    }
+
+    $(".deletereg").on("click",function() {
+        var value = confirm('@Messages.ConfirmDeleteReg');
+        if (value) {
+            $.ajax({
+                url: "/Clubs/DeleteTennisRegistration",
+                type: "POST",
+                data: {
+                    teamPlayerId: $(this).attr("data-id"),
+                    clubId: "@clubId",
+                    seasonId: "@seasonId",
+                    leagueId: "@leagueId",
+                    teamIdsString: "@teamIdsString"
+                },
+                success: function (data) {
+                    $("#registrationlist_pl").html(data)
+                }
+            });
+        }
+    });
+
+    $('body').on('click', '.unlock-link',
+        function() {
+            var $that = $(this);
+            var id = $that.data('id');
+
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("UnlockPlayers", "TeamPlayers")',
+                data: { id: id },
+                success: function(data) {
+                    if (data.result) {
+
+                        if (data.value === true) {
+                            $that.parent().find('.unlock-link-color').addClass('text-danger');
+                            $that.html('<i class="fa fa-lock"></i>');
+                        } else {
+                            $that.parent().find('.unlock-link-color').removeClass('text-danger');
+                            $that.html('<i class="fa fa-unlock"></i>');
+                        }
+                    } else {
+                        alert(data.message);
+                    }
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                    alert(thrownError);
+                }
+            });
+        });
+</script>
+
+@for (var i = 1; i <= Model.Count; i++)
+{
+    var elementId = $"sortable_{i}";
+    <script>
+            $(function () {
+                $("#@elementId").sortable({
+                    items: "tr:not(.no-sort)",
+                    cursor: 'move',
+                    helper: fixHelper,
+                    update: function (event, ui) {
+                        var ids = [];
+                        var childs = event.target.children;
+                        var team = $(ui.item).attr("data-team");
+                        $.each(childs, function (key, elem) {
+                            var id = $(elem).attr('data-id');
+                            var currentTeam = $(elem).attr("data-team");
+                            if (id != undefined && currentTeam == team) {
+                                ids.push(id);
+                            }
+                        });
+
+                        var postData = {
+                            ids: ids,
+                        }
+                        $.ajax({
+                            url: '@Url.Action("ChangeTennisPlayersOrder", "Clubs")',
+                            data: postData,
+                            type: 'POST',
+                            dataType: 'json'
+                        })
+                    }
+
+                }).disableSelection();
+            });     
+    </script>
+}

@@ -1,0 +1,338 @@
+﻿@using System.Web.Script.Serialization
+@using Newtonsoft.Json
+@model GroupsForm
+@{
+    var gameTypesList = Model.GamesTypes.Select(r => new SelectListItem
+    {
+        Value = r.Value,
+        Text = LangHelper.GetGameType(r.Text)
+    }).Where(t => Int32.Parse(t.Value) <= 3 || Int32.Parse(t.Value) == 6);
+
+    var pointTypesList = Model.PointsTypes.Select(r => new SelectListItem
+    {
+        Value = r.Key.ToString(),
+        Text = LangHelper.GetGameType(r.Value)
+    });
+
+    var isIndividual = Model.IsIndividual;
+
+    //If edit here we cath the exception
+    string type = isIndividual ? Messages.TournamentType : Messages.GameType;
+    var isMartialArts = !String.IsNullOrEmpty(Model.SectionAlias) && string.Equals(Model.SectionAlias, SectionAliases.MartialArts, StringComparison.CurrentCultureIgnoreCase);
+    bool isHebrew = Request.IsHebrew();
+    var departmentId = ViewBag.DepartmentId ?? null;
+    var pullClass = isHebrew ? "pull-right" : "pull-left";
+}
+<div id="groupmodal">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+        <h4 class="modal-title">@(Model.GroupId == 0 ? Messages.AddGroup : Model.Name)</h4>
+    </div>
+
+    @using (Ajax.BeginForm("Edit", null,
+                                                new AjaxOptions
+                                                {
+                                                    UpdateTargetId = "groupmodal",
+                                                    OnBegin = "editGroupNsp.removeListeners()"
+                                                },
+                                                new
+                                                {
+                                                    id = "groupform",
+                                                    autocomplete = "off"
+                                                }))
+    {
+        <div class="modal-body">
+            <div id="groups_fieldsContainer" class="container-fluid">
+                @if (isIndividual)
+                {
+                    <div class="row">
+                        <div class="form-group col-sm-12">
+                            <label class="control-label">@Messages.Type:</label>
+                            @Html.DropDownList("Type", Model.Types, new { @class = "form-control" })
+                        </div>
+                    </div>
+                }
+                <div class="row">
+                    <div class="form-group col-sm-12">
+                        <label class="control-label">@type:</label>
+                        @Html.DropDownListFor(m => m.TypeId, gameTypesList, new { @class = "form-control", @id = "MainDropDownListID" })
+                        @Html.ValidationMessageFor(m => m.TypeId)
+                    </div>
+                </div>
+                @if (isIndividual)
+                {
+                    <div class="row" id="filterAthletes" style="display:none">
+                        <div class="col-sm-12">
+                            <table class="table table-borderless">
+                                <thead>
+                                    <tr>
+                                        <th width="33%" align="center">
+                                            <label class="form-check-label">
+                                                @Html.CheckBox("IsAgesEnabled", Model.Athtletes.IsAgesEnabled, new { @class = "form-check-input" })
+                                                @Messages.Ages:
+                                            </label>
+                                        </th>
+                                        <th width="33%" align="center">
+                                            <label class="form-check-label">
+                                                @Html.CheckBox("IsWeightEnabled", Model.Athtletes.IsWeightEnabled, new { @class = "form-check-input" })
+                                                @Messages.Weight:
+                                            </label>
+                                        </th>
+                                        @if (isMartialArts)
+                                        {
+                                            <th width="33%" align="center">
+                                                <label class="form-check-label">
+                                                    @Html.CheckBox("IsRankedEnabled", Model.Athtletes.IsRankedEnabled, new { @class = "form-check-input" })
+                                                    @Messages.Ranked:
+                                                </label>
+                                            </th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div id="ages" style="display:none">
+                                                @Html.LabelFor(m => m.Athtletes.AgeStart, Messages.MaximumAge):
+                                                @Html.TextBoxFor(m => m.Athtletes.AgeStart, new { @class = "form-control date-time-generate" })
+                                                @Html.LabelFor(m => m.Athtletes.AgeEnd, Messages.MinimumAge):
+                                                @Html.TextBoxFor(m => m.Athtletes.AgeEnd, new { @class = "form-control date-time-generate" })
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div id="weight" style="display:none">
+                                                @Html.Label("weightSelector", $"{Messages.Kg}/{Messages.Lb}:")
+                                                &nbsp;
+                                                @Html.DropDownList("weightSelector", Model.Athtletes.WeightSelector, new { @class = "form-control" })
+                                                @Html.LabelFor(m => m.Athtletes.WeightFrom, "From"):
+                                                @Html.TextBoxFor(m => m.Athtletes.WeightFrom, new { @class = "form-control" })
+                                                @Html.LabelFor(m => m.Athtletes.WeightTo, "To"):
+                                                @Html.TextBoxFor(m => m.Athtletes.WeightTo, new { @class = "form-control" })
+                                            </div>
+                                        </td>
+                                        @if (isMartialArts)
+                                        {
+                                            if (isHebrew)
+                                            {
+
+                                                <td>
+                                                    <div id="rankes" style="display:none">
+                                                        @Html.DropDownList("Sports", new MultiSelectList(Model.Athtletes.Ranks, "Id", "RankNameHeb"),
+                                                    new { @class = "multiselect form-control ranks" })
+                                                    </div>
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                <td>
+                                                    <div id="rankes" style="display:none">
+                                                        @Html.DropDownList("Sports", new MultiSelectList(Model.Athtletes.Ranks, "Id", "RankName"),
+                                                    new { @class = "multiselect form-control ranks", @multiple = "multiple" })
+                                                    </div>
+                                                </td>
+                                            }
+                                        }
+
+                                    </tr>
+                                </tbody>
+                            </table>
+                            @if (isHebrew)
+                            {
+                                <div class="col-md-2">
+                                    <a class="btn btn-primary" id="apply">
+                                        Apply&nbsp;
+                                        <i class="fa fa-spin fa-spinner" id="spinner" style="display:none"></i>
+                                    </a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2 pull-right">
+                                    <a class="btn btn-primary" id="apply">
+                                        Apply
+                                        <i class="fa fa-spin fa-spinner" id="spinner" style="display:none"></i>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                @if (!Model.FirstStage && Model.PointId != 0)
+                {
+                    <div class="row" id="temp">
+                        <div class="form-group col-sm-12">
+                            <label class="control-label">@Messages.ScoringSettings:</label>
+                            @Html.DropDownListFor(m => m.PointId, pointTypesList, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.PointId)
+                        </div>
+                    </div>
+                }
+                <div class="row" id="NrOfTeams">
+                    <div class="form-group col-sm-12">
+                        <label class="control-label">@Messages.NumberOfTeams:</label>
+                        @Html.DropDownListFor(m => m.NumberOfTeams, Model.PossibleNumberOfTeams, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.NumberOfTeams)
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-12">
+                        <label class="control-label">@Messages.GroupName:</label>
+                        @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Name)
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-12">
+                        <label class="control-label">@Messages.RoundsNumber:</label>
+                        @Html.DropDownListFor(m => m.NumberOfCycles, Model.PossibleNumberOfCycles, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.NumberOfCycles)
+                    </div>
+                </div>
+                <div class="row" id="teamList" hidden>
+
+                    @if (isIndividual)
+                    {
+                        <div class="col-xs-5" id="listOfTeams">
+                            @Html.ListBoxFor(m => m.AthletesArr,
+                                            new MultiSelectList(Model.AthletesList, "Value", "Text"),
+                                            new
+                                            {
+                                                @id = "allathletes",
+                                                style = "display:block; height:200px;",
+                                                @class = "col-xs-12"
+                                            })
+                        </div>
+                    }
+                    <div class="col-xs-5" id="listOfTeams">
+                        @Html.ListBoxFor(m => m.TeamsArr,
+                                        new MultiSelectList(Model.TeamsList, "Value", "Text"),
+                                        new
+                                        {
+                                            @id = "allteams",
+                                            style = "display:block; height:200px;",
+                                            @class = "col-xs-12"
+                                        })
+                    </div>
+                    }
+                    <div class="col-xs-5">
+                        <label>@Messages.Group</label>
+                        @Html.ListBoxFor(m => m.SelectedTeamsArr, new MultiSelectList(Model.SelectedTeamsList, "Value", "Text"), new { @id = "selectedteams", style = "display:block; height:200px;", @class = "col-xs-12" })
+                        @Html.HiddenFor(m => m.TeamsList)
+                        @Html.HiddenFor(m => m.SelectedTeamsList)
+                    </div>
+                    @if (isIndividual)
+                    {
+                        <div class="col-xs-5">
+                            <label>@Messages.Group</label>
+                            @Html.ListBoxFor(m => m.SelectedAthletesArr, new MultiSelectList(Model.SelectedAthletesList, "Value", "Text"), new { @id = "selectedathletes", style = "display:block; height:200px;", @class = "col-xs-12" })
+                            @Html.HiddenFor(m => m.AthletesList)
+                            @Html.HiddenFor(m => m.SelectedAthletesList)
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row dragHeaders">
+                    <div class="col-xs-4">
+                        <label>@Messages.CommonTeamsList</label>
+                    </div>
+                    <div class="col-xs-4">
+                        <label>grab and drop</label>
+                    </div>
+                    <div class="col-xs-2">
+                        <label>@Messages.Group</label>
+                    </div>
+                    <div class="col-xs-2">
+                        <span class="glyphicon glyphicon-fullscreen" data-toggle="tooltip" data-placement="top" title="Expand View" data-container="body"></span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="dragTeamList" class="col-xs-4 dragTeamList">
+
+                    </div>
+                    <div id="moveTeamButtons" class="col-xs-1 offset-8 text-center">
+                        <a href="javascript:editGroupNsp.addSelectedTeams()" class="btn btn-primary btn-xs">
+                            @if (isHebrew)
+                            {
+                                <i class="glyphicon glyphicon-chevron-left"></i>
+                            }
+                            else
+                            {
+                                <i class="glyphicon glyphicon-chevron-right"></i>
+                            }
+                        </a>
+                        @*<a href="javascript:editGroupNsp.moveSelected('selectedteams', 'allteams')" class="btn btn-primary btn-xs offset-2">
+                                <i class="glyphicon glyphicon-chevron-right"></i>
+                            </a>*@
+                    </div>
+                    <div id="dragToSelectedTeams" class="col-xs-8">
+
+                    </div>
+                </div>
+
+                <div class="row col-xs-offset-6">
+                    @Html.ValidationMessageFor(m => m.SelectedTeamsArr)
+                </div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <div class="@pullClass">
+                <button type="button" onclick="editGroupNsp.randomLottery()" class="btn btn-link">@Messages.RandomLottery</button>
+                <label style="display:none; margin:2px;font-size:16px;" class="label label-warning" id="randomWarningLabel">@Messages.RandomLotterySelectMessage</label>
+            </div>
+            @Html.LabelFor(m => m.AllowIncomplete, Messages.AllowIncompleteGroup)
+            @Html.CheckBoxFor(m => m.AllowIncomplete, new { })
+            <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            <button type="submit" onclick="editGroupNsp.selectAllInSelectedList()" class="btn btn-primary">@Messages.Save</button>
+        </div>
+        @Html.HiddenFor(m => m.GroupId)
+        @Html.HiddenFor(m => m.StageId)
+        @Html.HiddenFor(m => m.LeagueId)
+        @Html.Hidden("SeasonId", (int?)ViewBag.SeasonId)
+        @Html.Hidden("DepartmentId", (int?)departmentId)
+    }
+
+    @if (TempData["LeagueId"] != null)
+    {
+        @*if (Model.JustCreated)
+            {
+                if (ViewBag.IsDepartmentLeague == true)
+                {
+                    <script>
+                    //Look here, it is binding the index page
+                    $('#groupsedit').modal('hide');
+                    $('#groupslist')
+                        .load('@Url.Action("Index", new {id = TempData["LeagueId"], seasonId = @ViewBag.SeasonId, departmentId = ViewBag.DepartmentId })');
+                    </script>
+                }
+                else
+                {
+                    <script>
+                    //Look here, it is binding the index page
+                    $('#groupsedit').modal('hide');
+                    $('#groupslist')
+                        .load('@Url.Action("Index", new {id = TempData["LeagueId"], seasonId = @ViewBag.SeasonId})');
+                    </script>
+                }
+            }
+            else
+            {*@
+        <script>
+            window.top.location.reload();
+        </script>
+        //}
+
+    }
+    <script src="~/Content/js/bracketsmodified.js"></script>
+    <script src="~/Scripts/pages/editgroups.js"></script>
+    <script>
+                var numOfTeams = "@Messages.NumberOfTeams:";
+                var incompleteGroupTeams = "@Messages.AllowIncompleteGroup:";
+                var teamList = "@Messages.CommonTeamsList:";
+                var numOfAthl = "@Messages.NumberOfAthletes:";
+                var incompleteGroupAthletes = "@Messages.AllowIncompleteAthleteGroup";
+                var athletList = "@Messages.CommonAthletesList";
+    </script>
+    <script src="~/Scripts/pages/individualSports.js"></script>
+</div>

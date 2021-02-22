@@ -1,0 +1,51 @@
+﻿@model ActivityFormControlTemplateModel
+
+@{
+    var controlEnabled = (!Model.IsPublish || !Model.IsDisabled) && !Model.IsDisabledBySettings;
+}
+
+<div class="control @(controlEnabled ? "" : "hidden")" data-type="@ActivityFormControlType.BasicCheckBox" data-fieldnote="@Model.FieldNote" data-isdisabled="@Model.IsDisabled" data-isrequired="@Model.IsRequired" data-canberequired="@Model.CanBeRequired" data-canbedisabled="@Model.CanBeDisabled" @Model.GetDataAttributesForLabels() data-propertyname="@Model.PropertyName" data-isreadonly="@Model.IsReadOnly">
+    @if (controlEnabled)
+    {
+        <label for="buildForm-body-@Model.PropertyName" class="control-label">@Model.GetLabelText():</label>
+
+        @*<input id="buildForm-body-@Model.PropertyName" name="@Model.PropertyName" type="checkbox" data-val-required="@Messages.PropertyValueRequired" data-val="@(Model.IsRequired ? "true" : "false")" @(Model.IsReadOnly ? "readonly" : "") />*@
+
+        var checkboxAttributes = new Dictionary<string, object>
+        {
+            {"id", $"buildForm-body-{Model.PropertyName}"},
+            {"data-val-required", Messages.PropertyValueRequired},
+            {"data-val", Model.IsRequired ? "true" : "false"},
+        };
+
+        if (Model.IsReadOnly)
+        {
+            checkboxAttributes.Add("readonly", "readonly");
+        }
+
+        @Html.CheckBox(Model.PropertyName, false, checkboxAttributes)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_ValidationMessage", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_RequiredSwitch", Model)
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_DisabledSwitch", Model)
+
+        @Html.Partial("ActivityForm/ControlTemplates/Common/_FieldNote", Model)
+
+        @*@Html.Partial("ActivityForm/ControlTemplates/Custom/_CustomControlOptions", Model)*@
+
+        if (Model.IsRequired && Model.IsPublish)
+        {
+            <script>
+                $(document).ready(function() {
+                    $.validator.addMethod("checkboxRequired",
+                        function(value, element, params) {
+                            return value === "on" || value === "true";
+                        },
+                        jQuery.validator.format("@Messages.PropertyValueRequired"));
+
+                    $("#buildForm-body-@Model.PropertyName").rules("add", "checkboxRequired");
+                });
+            </script>
+        }
+    }
+</div>

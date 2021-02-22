@@ -1,0 +1,130 @@
+﻿@model DisciplineTabViewModel
+@{
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+    int errId = TempData["ErrId"] != null ? (int)TempData["ErrId"] : 0;
+}
+<h4>@Messages.FriendshipTypes</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>@Messages.Name</th>
+            <th>@Messages.Hierarchy</th>
+            <th colspan="1"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (FriendshipTypeViewModel friendshipTypeViewModel in Model.FriendshipTypeViewModelsList)
+        {
+            string frmid = "friendshiptypes" + friendshipTypeViewModel.FriendshipsTypesId;
+            string updButton = "updateFr_" + friendshipTypeViewModel.FriendshipsTypesId;
+
+            <tr>
+                <td>
+                    @friendshipTypeViewModel.FriendshipsTypesId
+                </td>
+
+                @using (Ajax.BeginForm("UpdateFriendshipType", "Disciplines", new AjaxOptions { UpdateTargetId = "friendship_type_data", OnFailure = "ShowPartialLoadErrors" }, new { id = frmid }))
+                {
+                    <td>
+                        <span class="form-group">
+                            <input type="text" name="Name" value="@friendshipTypeViewModel.Name" form="@frmid" class="form-control required detectFrChange" maxlength="50" data-ident="@friendshipTypeViewModel.FriendshipsTypesId"/>
+                            @Html.ValidationMessage("Name")
+                        </span>
+                        <input type="hidden" name="FriendshipsTypesId" form="@frmid" value="@friendshipTypeViewModel.FriendshipsTypesId" />
+                        <input type="hidden" name="UnionId" form="@frmid" value="@ViewBag.UnionId" />
+                        <input type="hidden" name="SeasonId" form="@frmid" value="@ViewBag.SectionId" />
+                    </td>
+                    <td>
+                        <input type="number" name="Hierarchy" value="@friendshipTypeViewModel.Hierarchy" form="@frmid" class="form-control required averageInputClass detectFrChange" data-ident="@friendshipTypeViewModel.FriendshipsTypesId"/>
+                        @Html.ValidationMessage("Hierarchy")
+                    </td>
+                }
+
+                <td>
+                    <button class="@AppCss.Save @(savedId == friendshipTypeViewModel.FriendshipsTypesId ? "btn-success" : null) btn" form="@frmid" id="@updButton" disabled></button>
+                </td>
+                <td>
+                    <a href="@Url.Action("DeleteFriendship", new { id = friendshipTypeViewModel.FriendshipsTypesId })" class="@AppCss.Delete"
+                       data-ajax-confirm="@Messages.DeleteConfirm"
+                       data-ajax-update="#friendship_type_data"
+                       data-ajax-failure ="ShowPartialLoadErrors"
+                       data-ajax="true"></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="1"></td>
+        
+        @using (Ajax.BeginForm("SaveFriendshipType", "Discipines", new AjaxOptions { UpdateTargetId = "friendship_type_data", OnFailure= "ShowPartialLoadErrors" }, new { id = "friendshiptypes" }))
+        {
+            <td>
+                <span class="form-group">
+                    @Html.TextBox("Name", null, new { @class = "form-control", placeholder = Messages.AddNew, form = "friendshiptypes", maxlength = 50 })
+                    @Html.ValidationMessage("Name")
+                </span>
+                @Html.Hidden("SectionId", (int)ViewBag.SectionId, new { form = "friendshiptypes" })
+                @Html.Hidden("UnionId", (int)ViewBag.UnionId, new { form = "friendshiptypes" })
+            </td>
+            <td>
+                @Html.TextBox("Hierarchy", null, new { @class = "form-control averageInputClass", form = "friendshiptypes", type= "number" })
+                @Html.ValidationMessage("Hierarchy")
+            </td>
+        }
+        
+        <td>
+            <button class="btn btn-primary" form="friendshiptypes">@Messages.Save</button>
+        </td>
+        <td></td>
+    </tr>
+    </tfoot>
+</table>
+
+
+
+<script>
+    $('#friendshiptypes').validateBootstrap(true);
+
+    var msg = "@Messages.ExistingRelationFriendshipToPlayer";
+
+    function ShowPartialLoadErrors(result) {
+        //console.log(result);
+        if (result.statusText == "NotUnique") {
+            alert("@Messages.UniqueHierarchy");
+        }
+        else if (result.statusText == "Required")
+        {
+            alert("@Messages.NameAndHierarchyRequired");
+        }
+        else 
+            alert(msg);
+    }
+
+    $(document).ready(function () {
+        $('.averageInputClass').on('keydown', function (e) {
+            if (e.which == 40 || e.which == 69 || e.which == 189)
+                e.preventDefault();
+        });
+
+        $('.averageInputClass').on('change', function (e) {
+            var val = $(this).val();
+            if (val != null && val != "") {
+                var tryParse = parseInt(val);
+
+                if (isNaN(tryParse) || tryParse < 1 || val[0] == "1") {
+                    $(this).val("1");
+                }
+            }
+
+        });
+
+        $('.detectFrChange').on('change', function (e) {
+
+            var val = $(this).attr("data-ident");
+            $("#updateFr_" + val).removeAttr("disabled");
+
+        });
+    })
+</script>

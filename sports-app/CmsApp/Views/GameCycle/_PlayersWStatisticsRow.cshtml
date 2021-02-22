@@ -1,0 +1,70 @@
+﻿@model DataService.DTO.PlayersStatisticsDTO
+@{
+    string formId = $"stat_form_{Model.StatId}";
+}
+<td><b>@Model.PlayersName</b></td>
+<td>
+    @Html.TextBox("MinsInFormat", Model.MinsInFormat, new { @class = "form-control time", form = formId, onkeypress = "return onlyNumbersWithColon(event);" })
+</td>
+<td>@Html.TextBoxFor(m => m.Goal, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.Miss, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.PGoal, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.PMiss, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Model.FGP</td>
+<td>@Html.TextBoxFor(m => m.AST, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.STL, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.BLK, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.TO, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.Offs, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.Foul, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.Exc, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.BFoul, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.SSave, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Model.GSPP</td>
+<td>@Model.SAR</td>
+<td>@Model.SCR</td>
+<td>@Html.TextBoxFor(m => m.YC, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Html.TextBoxFor(m => m.RD, new { @class = "form-control onlynum", form = formId })</td>
+<td>@Model.EFF</td>
+<td>@Model.PlusMinus</td>
+
+@Html.HiddenFor(m => m.StatId, new { form = formId })
+@Html.HiddenFor(m => m.PlayersId, new { form = formId })
+
+<td>
+    <form id="@formId" method="post" action="@Url.Action("UpdateWStatistics")"
+          data-ajax="true" data-ajax-update="#tr_@Model.StatId"
+          data-ajax-begin="runSpinner('@Model.StatId')"
+          data-ajax-success="hideSpinner('@Model.StatId')"></form>
+    <button class="btn btn-primary" form="@formId">
+        <i id="saveBtn_@Model.StatId" class="glyphicon glyphicon-saved"></i>
+        <i id="spinner_@Model.StatId" class="fa fa-spin fa-spinner" style="display:none;"></i>
+    </button>
+</td>
+
+<script>
+    function runSpinner(id) {
+        $("#saveBtn_" + id).hide();
+        $("#spinner_" + id).show();
+    }
+    function hideSpinner(id) {
+        $("#saveBtn_" + id).show();
+        $("#spinner_" + id).hide();
+    }
+
+    function onlyNumbersWithColon(e) {
+        var charCode;
+        if (e.keyCode > 0) {
+            charCode = e.which || e.keyCode;
+        }
+        else if (typeof (e.charCode) != "undefined") {
+            charCode = e.which || e.keyCode;
+        }
+        if (charCode == 58)
+            return true
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+    }
+
+</script>

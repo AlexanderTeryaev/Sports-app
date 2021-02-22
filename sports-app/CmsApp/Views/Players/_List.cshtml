@@ -1,0 +1,2288 @@
+﻿@using DataService.DTO;
+@using CmsApp.Controllers;
+@model PlayersListForm
+@{
+    var statusValues = new List<SelectListItem>();
+    if (ViewBag.SectionName == GamesAlias.Athletics || ViewBag.SectionName == GamesAlias.Tennis || ViewBag.SectionName == GamesAlias.WaterPolo || ViewBag.SectionName == GamesAlias.Bicycle)
+    {
+        statusValues.Add(new SelectListItem
+        {
+            Value = ((int)RegistrationStatus.WaitingWithMedicalCert).ToString(),
+            Text = Messages.WaitingWithMedicalCert
+        });
+    }
+    statusValues.AddRange(new List<SelectListItem>
+{
+new SelectListItem
+{
+Value = ((int) RegistrationStatus.Completed).ToString(), Text = ViewBag.SectionName == GamesAlias.Gymnastic
+? Messages.Waiting
+: Messages.WaitingForApproval
+},
+new SelectListItem {Value = ((int) RegistrationStatus.Approved).ToString(), Text = Messages.Approved},
+new SelectListItem {Value = ((int) RegistrationStatus.NotApproved).ToString(), Text = Messages.NotApprovedForRegistration},
+new SelectListItem {Value = ((int) RegistrationStatus.NotActive).ToString(), Text = Messages.UnactivePlayers},
+new SelectListItem {Value = ((int) RegistrationStatus.Blockaded).ToString(), Text = Messages.Blockaded}
+});
+
+    var clubsIds = Model.SelectedClubsIds?.Split(',');
+    var disciplinesIds = Model.SelectedDisciplinesIds?.Split(',');
+    var statusesIds = Model.SelectedStatusesIds?.Split(',');
+    var updateId = Model.LogicalName == LogicaName.Union ? Model.UnionId : Model.ClubId;
+    bool isHebrew = Request.IsHebrew();
+    Session["PlayersCount"] = Model.ApprovedPlayersCount + Model.WaitingForApproval + Model.NotApprovedPlayersCount + Model.UnactivePlayers;
+
+
+
+}
+@if (isHebrew)
+{
+    <style>
+        .dataTables_filter {
+            text-align: left !important;
+        }
+
+            .dataTables_filter label {
+                display: block !important;
+            }
+
+        #blockaded:after {
+            content: "\f05e";
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            text-decoration: inherit;
+            position: relative;
+            font-size: 30px;
+            color: red;
+            margin: -10px -20px 0 -20px;
+            z-index: 1;
+        }
+
+        .top-modal {
+            z-index: 99999;
+        }
+
+        .dataTables_filter label {
+            display: block !important;
+        }
+
+        .athlete-num-cell {
+            background-color: rgba(0,254,0,0.1);
+            font-weight: bolder;
+            font-size: larger;
+        }
+
+        #players-table_filter > label > span > div > ul > li > a > label.checkbox {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .form-inline .multiselect-container li a label.checkbox input[type=checkbox] {
+            margin-left: 0px;
+            margin-right: -20px;
+        }
+
+        .dropdown-menu {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+    </style>
+}
+else
+{
+    <style>
+        #blockaded:after {
+            content: "\f05e";
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            text-decoration: inherit;
+            position: relative;
+            font-size: 30px;
+            color: red;
+            margin: -10px 0 0 -20px;
+            z-index: 1;
+        }
+
+        .athlete-num-cell {
+            background-color: rgba(0,254,0,0.1);
+            font-weight: bolder;
+            font-size: larger;
+        }
+    </style>
+}
+@{
+    var countBlockWidth = ViewBag.SectionName == GamesAlias.Athletics || ViewBag.SectionName == GamesAlias.Tennis || ViewBag.SectionName == GamesAlias.WaterPolo || ViewBag.SectionName == GamesAlias.Bicycle ? 2 : 3;
+}
+<div class="row" id="">
+    <div class="col-sm-3">
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                @Messages.ApprovedForRegistration
+            </div>
+            <div class="text-center">
+                <h2 style="text-align: center">@Model.ApprovedPlayersCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-@countBlockWidth">
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                @Messages.WaitingForApproval
+            </div>
+            <div class="text-center">
+                <h2 style="text-align: center">@Model.WaitingForApproval</h2>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.SectionName == GamesAlias.Athletics || ViewBag.SectionName == GamesAlias.Tennis || ViewBag.SectionName == GamesAlias.WaterPolo || ViewBag.SectionName == GamesAlias.Bicycle)
+    {
+        <div class="col-sm-@countBlockWidth">
+            <div class="panel panel-default">
+                <div class="panel-heading text-center">
+                    @Messages.WaitingWithMedicalCert
+                </div>
+                <div class="text-center">
+                    <h2 style="text-align: center">@Model.WaitingWithMedicalCert</h2>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="col-sm-@countBlockWidth">
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                @Messages.NotApprovedForRegistration
+            </div>
+            <div class="text-center">
+                <h2 style="text-align: center">@Model.NotApprovedPlayersCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-3">
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                @Messages.UnactivePlayers
+            </div>
+            <div class="text-center">
+                <h2 style="text-align: center">@Model.UnactivePlayers</h2>
+            </div>
+        </div>
+    </div>
+</div>
+<div>
+    <div id="toggle-columns">
+        @Messages.Activity_Status_ToggleColumns: <span id="columns-list"></span>
+    </div>
+    <div class="row" id="filters" style="margin-top:15px; margin-bottom:15px;">
+        <div class="col-sm-12">
+            @{
+                var clubs = new MultiSelectList(Model.ClubsList.Values, nameof(AppModel.Club.ClubId), nameof(AppModel.Club.Name), clubsIds);
+                var disciplines = new MultiSelectList(Model.DisciplinesList.Values, nameof(DisciplineDTO.DisciplineId), nameof(DisciplineDTO.Name), disciplinesIds);
+                var statuses = new MultiSelectList(statusValues, "Value", "Text", statusesIds);
+            }
+            @if (Model.LogicalName == LogicaName.Union)
+            {
+                @Html.DropDownList($"FilteredClubs", clubs, new { @class = "form-control clubfilter", @form = "filterform", @multiple = "multiple" })
+            }
+            @if (Model.DisciplinesList.Count > 0)
+            {
+                if (Model.UnionId != 52)
+                {
+                    @Html.DropDownList($"FilteredDisciplines", disciplines, new { @class = "form-control disciplinefilter", @form = "filterform", @multiple = "multiple" })
+                }
+            }
+            @Html.DropDownList($"FilteredStatuses", statuses, new { @class = "form-control statusfilter", @form = "filterform", @multiple = "multiple" })
+            &nbsp;&nbsp;&nbsp;
+            <button class="btn btn-primary no-hide" id="filterBtn">@Messages.Filter</button>
+            <button type="button"
+                    class="btn btn-danger"
+                    onclick="resetSearchBoxFiltering();">
+                @Messages.ResetFilters
+            </button>
+            &nbsp;&nbsp;&nbsp;
+            <button class="btn btn-info"
+                    id="checkAllAsActive">
+                @Messages.CheckAllAsActive
+            </button>
+            &nbsp;&nbsp;&nbsp;
+            <button class="btn btn-info"
+                    id="saveAllChanges">
+                @Messages.SaveAllChanges
+                <i class="fa fa-spin fa-spinner saveAllChangesloading" style="display: none;"></i>
+            </button>
+            &nbsp;&nbsp;&nbsp;
+            <button class="btn btn-info"
+                    id="exportPlayersList">
+                <i class="glyphicon glyphicon-export"></i>
+                @Messages.ExportToExcel
+                <i class="fa fa-spin fa-spinner exportloading" style="display: none;"></i>
+            </button>
+            &nbsp;&nbsp;&nbsp;
+
+            <a href="@Url.Action("ExportActivesList", "Players", new { id = updateId, logicalName = Model.LogicalName, seasonId = Model.SeasonId })" target="_new" class="btn btn-info">
+                <i class="glyphicon glyphicon-export"></i>
+                @(Messages.ExportActives.Replace(Messages.Players, UIHelpers.GetPlayerCaption(ViewBag.SectionName, true)))
+            </a>
+
+            @if (Model.IsBicycle && (Model.LogicalName == LogicaName.Union || Model.LogicalName == LogicaName.Club))
+            {
+                <text>&nbsp; &nbsp; &nbsp;</text>
+                <button class="btn btn-info"
+                        id="toPayBtn"
+                        disabled>
+                    @Messages.ToPay
+                </button>
+                <text>&nbsp; &nbsp; &nbsp;</text>
+            }
+
+            @if (Model.IsAthletics)
+            {
+                <a href="@Url.Action("ExportAthleticActivesList", "Players", new { id = updateId, logicalName = Model.LogicalName, seasonId = Model.SeasonId })" target="_new" class="btn btn-info">
+                    <i class="glyphicon glyphicon-export"></i>
+                    @(Messages.FourCompetitionsReport)
+                </a>
+            }
+
+            @if (Model.IsGymnastic && Model.ClubId.HasValue && Model.ClubId.Value > 0)
+            {
+                if (Model.UnionId != 52)
+                { 
+                <a href="@Url.Action(nameof(ClubsController.ExportTotoReport), nameof(ClubsController).TrimControllerName(),
+                        new { id = Model.UnionId, seasonId = Model.SeasonId, clubId = Model.ClubId })" class="btn btn-info"
+                   target="_new">
+                    <i class="glyphicon glyphicon-open"></i> @Messages.TotoReport <span id="totoLoading" style="display:none" class="fa fa-spin fa-spinner"></span>
+                </a>
+                }
+            }
+
+            @if (Model.LogicalName == LogicaName.Union && Model.IsAthletics)
+            {
+                if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager))
+                {
+                    @:&nbsp;
+                    <a href="@Url.Action("ProduceAthleteNumberForm", "Players", new { id = Model.UnionId, logicalName = LogicaName.Union, seasonId = Model.SeasonId })" onclick="produceAthleteNumber()" target="_new" class="btn btn-info" id="produceAthleteNumber">
+                        <i class="glyphicon glyphicon-export"></i>
+                        @Messages.ProduceAthleteNumber
+                    </a>
+                }
+                @:&nbsp;
+                <a href="@Url.Action("DownloadAthletesNumbersForm", "Players", new { id = Model.UnionId, logicalName = LogicaName.Union, seasonId = Model.SeasonId })" class="btn btn-info" id="exportAthletesNumbers">
+                    <i class="glyphicon glyphicon-export"></i>
+                    @Messages.DownloadExcelForm
+                </a>
+                @:&nbsp;
+
+                if (ViewBag.JobRole != JobRole.RefereeAssignment)
+                {
+                    <a class="btn btn-primary btn-edit" href="@Url.Action("ImportAthletesNumbers", "Players", new { UnionId = Model.UnionId, SeasonId = Model.SeasonId })" ,
+                       data-target="#athletesimportform"
+                       data-toggle="modal"
+                       title="@Messages.ImportAthletesNumbers">
+                        <i class="glyphicon glyphicon-save"></i>@Messages.ImportAthletesNumbers
+                    </a>
+                }
+            }
+
+            @if (Model.LogicalName == LogicaName.Club && Model.UnionId != 52)
+            {
+                if (Model.UnionId > 0 && (User.IsInAnyRole(AppRole.Admins) || Model.IsClubManager || User.HasTopLevelJob(JobRole.UnionManager)))
+                {
+                    <a class="btn btn-primary" data-toggle="modal" data-target="#importIDFilesModal" title="@Messages.ToolTipImportIdFiles">
+                        <i class="glyphicon glyphicon-save"></i>
+                        @Messages.ImportIdFiles
+                    </a>
+                    <a class="btn btn-primary" data-toggle="modal" data-target="#importMedicalCertsModal" title="@Messages.ToolTipImportMedicalCertificates">
+                        <i class="glyphicon glyphicon-save"></i>
+                        @Messages.ImportMedicalCertificates
+                    </a>
+                    if (Model.IsBicycle)
+                    {
+                        <a class="btn btn-primary" data-toggle="modal" data-target="#importRegistrationFormSignedModal" title="@Messages.ToolTipImportRegistrationFormSigned">
+                            <i class="glyphicon glyphicon-save"></i>
+                            @Messages.ImportRegistrationFormSigned
+                        </a>
+                    }
+                    @Html.Partial("_ImportClubFiles", new EditClubViewModel
+                    {
+                        Id = Model.ClubId ?? 0,
+                        UnionId = Model.UnionId.Value,
+                        SeasonId = Model.SeasonId
+                    })
+                }
+            }
+            @if (Model.LogicalName != LogicaName.Union && Model.UnionId != 52)
+            {
+                if ((Model.IsGymnastic || Model.IsAthletics || (Model.IsWaterpolo && Model.ClubId > 0) || Model.IsRowing || Model.IsBicycle || Model.IsSwimming))
+                {
+                    <a class="btn btn-primary" href="@Url.Action("CreatePlayer", "TeamPlayers", new { seasonId = Model.SeasonId, clubId = Model.ClubId, teamId = 0 })"
+                       data-target="#playereditform"
+                       data-toggle="modal">
+                        <i class="glyphicon glyphicon-plus"></i>@Messages.AddNew
+                    </a>
+                    <div class="modal fade" id="playereditform" tabindex="-1" role="dialog">
+                        <div class="modal-dialog">
+                            <div class="modal-content" id="playereditform_pl"></div>
+                        </div>
+                    </div>
+                }
+            }
+            @if (ViewBag.SectionName == GamesAlias.Tennis && Model.LogicalName == LogicaName.Union)
+            {
+                <button type="button" id="refreshTennisCompetitionsButton" class="btn btn-primary" onclick="refreshTennisCompetitionCount();">
+                    <i class="fa fa-spin fa-spinner" id="refreshTennisCompetitionspinner" style="display:none;"></i>@Messages.Refresh @Messages.Number @Messages.Competitions
+                </button>
+            }
+            <div id="filterLoading" style="display:none"><span class="fa fa-spin fa-spinner"></span>@Messages.LoadingDialog_DefaultMessage</div>
+        </div>
+    </div>
+
+    <table id="players-table" class="table table-striped table-bordered offset-2" cellspacing="0" width="100%" style="margin-top: 10px;"></table>
+</div>
+
+@if (Model.IsBicycle)
+{
+    <div class="modal fade" id="friendshipPaymentDialog" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="friendshipPaymentDialog-content">
+            </div>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="userNotificationDialog" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="userNotificationDialog_pl">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="playersform" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="playersform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="athletesimportform" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="athletesimportform_pl"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="importtotoform" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="importtotoform_pl">
+            <div class="modal-body">
+                <p style="text-align:center;"> <span class="fa fa-spin fa-spinner"></span>@Messages.Loading</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@if (Model.UnionId == 37)
+{
+    <div class="modal fade" id="karateunionmodal" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="karateunionform_pl">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <p id="modal-info-text"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="approval_warning" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content" id="">
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <p id="text-of-approval">
+
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.IsWaterpolo)
+{
+    <div class="modal fade" id="waterpoloapprovemodal" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content" id="waterpoloapprovemodal_pl">
+                <div class="modal-body" id="main_body_waterpolo">
+                    <div class="alert alert-warning">
+                        <p id="modal-info-text-waterpolo"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="approveRegistrationInAnotherTeam()" data-dismiss="modal">@Messages.Save</button>
+                    <button type="button" class="btn btn-danger" onclick="discardApprove()" data-dismiss="modal">@Messages.Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+    <script>
+    var isRefereeAssignment = '@(User.GetSessionWorkerValueOrTopLevelSeasonJob(Model.SeasonId ?? -1) == JobRole.RefereeAssignment)';
+    var isRankVisible = false;
+    var isRouteVisible = false;
+    var isSportRankVisible = false;
+    var isSportRankHebVisible = false;
+    var searchInputFilterArray = [];
+    var changedRowIds = [];
+    var forPaymentIds = []; //bicycle section - each formId of checked 'for payment' checkbox will be here
+    var dtable = null;
+
+    var section = '@ViewBag.SectionName';
+
+    if (section == '@GamesAlias.Gymnastic') {
+        isRouteVisible = true;
+        isRankVisible = true;
+    }
+    if (section == '@GamesAlias.MartialArts')
+    {
+        if ('@isHebrew' == 'True') {
+            isSportRankHebVisible = true;
+        }
+        else {
+            isSportRankVisible = true;
+        }
+    }
+    var playersTable = $("#players-table");
+    var columnsCount = $("#players-table th").length;
+    var searchInputTargetFilter;
+    var selectedForFiltering = [];
+    var filterBySearchColumnString = null;
+    var isAthletics = "@Model.IsAthletics" == "True";
+
+
+
+
+    function resetSearchBoxFiltering() {
+        var searchInputTargetFilter = $("#filter-search-input");
+        var filterBySearchColumn = searchInputTargetFilter.val();
+        filterBySearchColumnString = filterBySearchColumn != undefined ? filterBySearchColumn.join() : "";
+
+        var clubsFilterSelect = $("#FilteredClubs");
+        var disciplinesFilterSelect = $("#FilteredDisciplines");
+        var statusFilterSelect = $("#FilteredStatuses");
+
+        clubsFilterSelect.multiselect('deselectAll',false);
+        disciplinesFilterSelect.multiselect('deselectAll',false);
+        statusFilterSelect.multiselect('deselectAll',false);
+        $("#filterLoading").show();
+        dtable.ajax.url("/Players/LoadData/" + @updateId + "?logicalName=" + "@Model.LogicalName" + "&seasonId=" + @Model.SeasonId +
+            "&filterByClubs=&filterByDisciplines=&filterByPlayersStatus=&filterSearchByColumns=" + filterBySearchColumnString);
+        dtable.search("").draw();
+    }
+
+    function updateSearchBoxURL(filterByClubs,filterByDisciplines,filterByPlayersStatus) {
+        var searchInputTargetFilter = $("#filter-search-input");
+        var filterBySearchColumn = searchInputTargetFilter.val();
+        filterBySearchColumnString = filterBySearchColumn != undefined ? filterBySearchColumn.join() : "";
+        dtable.ajax.url("/Players/LoadData/" + @updateId + "?logicalName=" + "@Model.LogicalName" + "&seasonId=" + @Model.SeasonId +
+                       "&filterByClubs=" + filterByClubs + "&filterByDisciplines=" + filterByDisciplines + "&filterByPlayersStatus=" + filterByPlayersStatus + "&filterSearchByColumns=" + filterBySearchColumnString);
+    }
+
+
+    function drawDataTable(filterByClubs, filterByDisciplines, filterByPlayersStatus, filterBySearchColumnString) {
+
+        dtable = playersTable.DataTable({
+            "destroy": true,
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "/Players/LoadData/" + @updateId + "?logicalName=" + "@Model.LogicalName" + "&seasonId=" + @Model.SeasonId +
+                "&filterByClubs=" + filterByClubs + "&filterByDisciplines=" + filterByDisciplines + "&filterByPlayersStatus=" + filterByPlayersStatus + "&filterSearchByColumns=" + filterBySearchColumnString,
+                "type": "POST",
+                "datatype": "json"
+            },
+            "scrollX": true,
+            "order": [0, 'asc'],
+            "paging": true,
+            "ordering": true,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "@Messages.ShowAllPlayers"]],
+            initComplete: function () {
+                var searchInput = $("div.dataTables_filter input[type=search]");
+                searchInputTargetFilter = $("#filter-search-input");
+                if (searchInputTargetFilter.length == 0) {
+                    var filterInputSearch = '<select id="filter-search-input" multiple="multiple"></select>';
+                    searchInput.parent().prepend(filterInputSearch);
+                    searchInputTargetFilter = $("#filter-search-input");
+                    searchInputTargetFilter.multiselect({
+                        dropRight: true,
+                        //enableFiltering: true, includeSelectAllOption: true, selectAllText: "@Messages.SelectAllPlayers",
+                        buttonTitle: function (options, select) {
+                            return '@Messages.Filter';
+                        },
+                        buttonText: function (options, select) {
+                            return '@Messages.Filter';
+                        },
+                        onChange: function (option, checked) {
+                            updateSearchBoxURL(filterByClubs,filterByDisciplines,filterByPlayersStatus);
+                        },
+                        onSelectAll: function (option, checked) {
+                            updateSearchBoxURL(filterByClubs,filterByDisciplines,filterByPlayersStatus);
+                        },
+                        onDropdownHide: function(element) {
+                            $(element.currentTarget).find('.multiselect-clear-filter').click();
+                        },
+                        onDropdownShown: function (element) {
+                            $(element.currentTarget).find('.multiselect-search').focus();
+                        }
+                    });
+                    searchInputTargetFilter.multiselect('dataprovider', searchInputFilterArray);
+
+                }
+
+                searchInput.unbind();
+
+                searchInput.bind('keyup', function (e) {
+                    if (e.keyCode === 13) {
+                        dtable.search(this.value).draw();
+                    }
+                });
+                refreshMarkChanges();
+            },
+            "createdRow": function (row, data, dataIndex) {
+                if (data != undefined && data.Id != undefined) {
+                    $(row).attr('id', data.Id);
+                }
+            },
+            "drawCallback": function (settings) {
+                $("#filterLoading").hide();
+                if ('@Model.IsUnionViewer' === 'True') {
+                    $('a').attr('disabled', true);
+                    $('.btn').attr('disabled', true);
+                    $(".frm-date").attr('disabled', true);
+                    $(".auditoriums-display").attr('disabled', true);
+                    $("#filters .btn").attr('disabled', false);
+                    $(".export").attr('disabled', false);
+                    $("#arena_print").attr('disabled', false);
+                    $("#groupform > div:nth-child(1) > div > table > tbody > tr > td:nth-child(5) > span > div > button").attr('disabled', false);
+                    $("#date-to-div .btn").attr("disabled", false);
+                    $(".club-details").attr("disabled", false);
+                    $(".league-details").attr("disabled", false);
+                    $(".edit-team").attr('disabled', false);
+                }
+                if ('@Model.BlockRegistration' === 'True') {
+                    $("input[name='IsActive'][type=checkbox]").attr("disabled", true);
+                    $("input[name='IsApproveChecked']").attr("disabled", true);
+                    $("input[name='IsNotApproveChecked']").attr("disabled", true);
+                }
+                $(".frm-date-wo-time").datetimepicker({
+                    format: 'd/m/Y',
+                    timepicker: false,
+                    scrollMonth: false,
+                    scrollTime: false,
+                    scrollInput: false
+                });
+                $(".frm-date").datetimepicker({
+                    format: 'd/m/Y H:i',
+                    formatTime: 'H:i',
+                    formatDate: 'd/m/Y',
+                    step: 15,
+                    closeOnDateSelect: false,
+                    onChangeDateTime: function () {
+                        $(this).data("input").trigger("changedatetime.xdsoft");
+                    },
+
+                    scrollMonth: false,
+                    scrollTime: false,
+                    scrollInput: false
+                });
+                window.checkColumnsVisibility();
+                $('[data-toggle="tooltip"]').tooltip();
+                $('[data-toggle="popover"]').popover({
+                    container: 'body',
+                    template: '<div class="popover top-modal" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>'
+                });
+
+                if ("@Model.IsBicycle" == "True") {
+
+                    $("#players-table_wrapper input").on("change",
+                        function() {
+                            //console.log("CHANGE!");
+                            var fid = $(this).attr("form");
+                            var id = fid.split("_")[1];
+
+
+                            //For Payment checkbox for bicycle section on this page does not have a related db field at the moment and it does not need to updated
+                            if ($(this).attr("name") != "ForPayment") {
+                                if ($.inArray(id, changedRowIds) < 0)
+                                    changedRowIds.push(id);
+                            }
+
+                        });
+
+                    $("input[name=ForPayment]").on("change",
+                        function() {
+                            //console.log("CHANGE!");
+                            var fid = $(this).attr("form");
+                            var id = fid.split("_")[1];
+
+                            if ($(this).prop("checked") == true) {
+                                if ($.inArray(id, forPaymentIds) < 0)
+                                    forPaymentIds.push(id);
+                                $("#toPayBtn").removeAttr("disabled");
+                            } else {
+
+                                forPaymentIds = jQuery.grep(forPaymentIds,
+                                    function(value) {
+                                        return value != id;
+                                    });
+                                if (forPaymentIds.length == 0) {
+                                    $("#toPayBtn").attr("disabled", true);
+                                }
+                            }
+                        });
+                }
+            },
+            "columns": [
+                {
+                    "data": "IsActive",
+                    "title":
+                        '@Messages.Active <a id="activeHelper" tabindex="0" role="button" class="glyphicon glyphicon-question-sign" style="cursor: pointer" data-toggle="popover" data-trigger="focus" title="@Messages.TeamPlayers_ActiveCheckBoxInfo_Title" data-html="true" data-content="@Messages.TeamPlayers_ActiveCheckBoxInfo_Body"></a>', "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        var canApprove = '@Model.CanApprove' == 'True' ? true : false;
+                        var checkboxClass = "";
+                        var isBlockadedId = full.IsBlockaded || full.IsUnderPenalty ? "blockaded" : "";
+                        var blockadeMessage = "";
+
+                        if (full.IsBlockaded && !full.IsUnderPenalty)
+                            blockadeMessage = "@Messages.Blockaded" + " " + "@Messages.Player.ToLower()";
+                        else if (!full.IsBlockaded && full.IsUnderPenalty)
+                            blockadeMessage = "@Messages.Exclusion" + " " + "@Messages.Player.ToLower()";
+                        else if (full.IsBlockaded && full.IsUnderPenalty)
+                            blockadeMessage = "@Messages.Blockaded" + " " + "@Messages.And.ToLower()" + " " + "@Messages.Exclusion" + " " + "@Messages.Player.ToLower()";
+
+                        if (full.IsNotApproveChecked) {
+                            checkboxClass = "registration-approved";
+                        }
+                        else if (full.IsActive && (full.IsPlayerRegistrationApproved || full.IsApproveChecked)) {
+                            checkboxClass = "registration-registered";
+                        }
+                        else if (full.IsActive && !full.IsPlayerRegistered) {
+                            checkboxClass = "registration-ready";
+                        }
+                        if (canApprove) {
+                            if (full.IsActive) {
+                                return "<div id=" + isBlockadedId + " title=" + blockadeMessage + ">" +
+                                    //"<input form='playersForm_" + full.Id + "' type='hidden' value='on' name='IsActive'>" +
+                                    "<input form='playersForm_" + full.Id + "' type='checkbox' class='" + checkboxClass + "' name='IsActive' onchange='checkActiveStatus(" + full.Id + "," + full.IsActive + "," + full.IsApproveChecked + "," + full.IsPlayerRegistered + ")' checked/>" +
+                                    "</div>";
+                            }
+                            else {
+                                return "<div id=" + isBlockadedId + " title=" + blockadeMessage + ">" +
+                                    //"<input form='playersForm_" + full.Id + "' type='hidden' value='off' name='IsActive'>" +
+                                    "<input form='playersForm_" + full.Id + "' type='checkbox' class='" + checkboxClass + "' name='IsActive' onchange='checkActiveStatus(" + full.Id + "," + full.IsActive + "," + full.IsApproveChecked + "," + full.IsPlayerRegistered + ")'/>" +
+                                    "</div>";
+                            }
+                        }
+                        else {
+                            if (full.IsActive) {
+                                return "<div id=" + isBlockadedId + " title=" + blockadeMessage + ">" +
+                                    //"<input form='playersForm_" + full.Id + "' type='hidden' value='on' name='IsActive'>" +
+                                    "<input form='playersForm_" + full.Id + "' type='checkbox' class='" + checkboxClass + "' name='IsActive' checked disabled readonly onchange='checkActiveStatus(" + full.Id + "," + full.IsActive + "," + full.IsApproveChecked + "," + full.IsPlayerRegistered + ")'/>" +
+                                    "</div>";
+                            }
+                            else {
+                                return "<div id=" + isBlockadedId + " title=" + blockadeMessage + ">" +
+                                    //"<input form='playersForm_" + full.Id + "' type='hidden' value='off' name='IsActive'>" +
+                                    "<input form='playersForm_" + full.Id + "' type='checkbox' class='" + checkboxClass + "' name='IsActive' disabled readonly onchange='checkActiveStatus(" + full.Id + "," + full.IsActive + "," + full.IsApproveChecked + "," + full.IsPlayerRegistered + ")'/>" +
+                                    "</div>";
+                            }
+                        }
+                    }
+                },
+                {
+                    "data": "ToWaitingStatus", "title": '@Messages.BackToWaiting', "orderable": false,
+                    "visible": @(!Model.IsCatchball && Model.LogicalName == LogicaName.Club ? "true" : "false"),
+                    "render": function (data, type, full, meta) {
+                        var isEnabled = full.IsActive && full.IsNotApproveChecked;
+                        if (isEnabled) {
+                            return "<div><input form='playersForm_" + full.Id + "' type='checkbox' name='ToWaitingStatus' /></div>";
+                        }
+                        else {
+                            return "<div><input form='playersForm_" + full.Id + "' type='checkbox' name='ToWaitingStatus' disabled /></div>";
+                        }
+                    }
+                },
+                {
+                    "data": "FullName", "title": "@Messages.Name", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        var href = '/Players/Edit/' + full.UserId + '?seasonId=' + full.SeasonId + '&teamId=' + full.TeamId + '&clubId=' + full.ClubId;
+                        if (full.LeagueId != undefined) {
+                            var href = '/Players/Edit/' + full.UserId + '?seasonId=' + full.SeasonId + '&teamId=' + full.TeamId + '&clubId=' + full.ClubId + '&leagueId=' + full.LeagueId;
+                        }
+                        var isLocked = full.IsLocked;
+                        var exceptionalSign = full.IsExceptional ? "<b>@Messages.ExceptionSign</b>" : "";
+                        var canApprove = '@Model.CanBlockade' == 'True';
+                        var linkColor = isLocked ? " text-danger" : "";
+                        var spanElement = "<span class='unlock-link-color" + linkColor + "'>"
+                        var isLockedElement = "";
+                        if (canApprove) {
+                            if (isLocked != undefined) {
+                                isLockedElement += isLocked
+                                    ? "<a href ='javascript:;' class ='unlock-link' data-id='" + full.Id + "'><i class='fa fa-lock'></i></a>"
+                                    : "<a href ='javascript:;' class ='unlock-link' data-id='" + full.Id + "'><i class='fa fa-unlock'></i></a>";
+                            }
+                        }
+                        var approvedInPreviousSeasonIndicator = "";
+                        @if (!Model.IsTennis)
+                        {
+                            @:approvedInPreviousSeasonIndicator = "<i class='" + (full.ApprovedInPreviousSeason ? "approved-in-last-season-indicator" : "") + "'></i>";
+                                                                                                                                                }
+
+                        var isNewPlayerToThisSeason = "";
+                        @if (Model.IsAthletics || Model.IsWaterpolo)
+                        {
+                            @:isNewPlayerToThisSeason = full.SeasonIdOfCreation == "@Model.SeasonId" ? "<i class='new-player-season-indicator' ></i>" : "";
+                                                                                                                                                }
+                        if (isRefereeAssignment == "1") {
+                            return isNewPlayerToThisSeason +
+                                " " +
+                                approvedInPreviousSeasonIndicator +
+                                spanElement +
+                                exceptionalSign +
+                                data +
+                                "</span>" +
+                                isLockedElement;
+                        } else {
+                            return isNewPlayerToThisSeason +
+                                "<a style='position:relative;' href='" +
+                                href +
+                                " ' target='_blank'>" +
+                                approvedInPreviousSeasonIndicator +
+                                spanElement +
+                                exceptionalSign +
+                                data +
+                                "</span></a>" +
+                                isLockedElement;
+                        }
+                    }
+                },
+                {
+                    "data": "TeamName",
+                    "title":
+                        "@(Model.IsGymnastic ? Messages.ClubDiscipline : Model.IsAthletics ? Messages.SubClub : Messages.Team)",
+                    "visible": @(Model.IsGymnastic || Model.IsTennis ? "false" : "true"),
+                    "orderable": true
+                },
+                @if (Model.IsTennis)
+                {
+                    <text>
+                        {
+                            "data": "TrainingTeamName",
+                            "title": "@(Messages.TrainingTeam)",
+                            "visible": @(Model.IsTennis ? "true" : "false"),
+                            "orderable": true
+                        },
+                        {
+                            "data": "LeagueTeamName",
+                            "title": "@(Messages.LeagueTeams)",
+                            "visible": @(Model.IsTennis ? "true" : "false"),
+                            "orderable": true
+                        },
+                    </text>
+                }
+                {
+                    "data": "LeagueName",
+                    "title": "@Messages.League",
+                    "visible": @(Model.IsGymnastic ? "false" : "true"),
+                    "orderable": true
+                },
+                {
+                    "data": "PlayerImage", "title": "@Messages.TeamPlayers_ProfilePicture", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data != "") {
+                            var src = '@GlobVars.ContentPath/players/' + data;
+                            return "<img class='img-responsive img-thumbnail' style='max-height: 50px; max-width: 50px' src='" + src + "' alt='' />";
+                        }
+                        else {
+                            return "&nbsp";
+                        }
+                    }
+                },
+                {
+                    "data": "BirthdayString", "title": "@Messages.BirthDay", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        return data;
+                    }
+                },
+                @if (Model.IsRowing || Model.IsBicycle)
+                {
+                    <text>
+                    {
+                        "data": "Age", "title": "@Messages.Age", "orderable": false,
+                        "render": function(data, type, full, meta) {
+                            return data;
+                        }
+                    },
+                    </text>
+                }
+                {
+                    "data": "ShirtNum", "title": "@Messages.Shirt", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        var id = 'shirtNum_' + full.id;
+                        return "<input style=\"width:75px;\" form='playersForm_" + full.Id + "' id='" + id + "' name='ShirtNum' value='" + data + "' class='form-control' />";
+                    }
+                },
+                {
+                    "data": "ShirtSize", "title":
+                    "@(Model.IsSwimming || Model.IsWaterpolo ? Messages.SwimSuitSize : Messages.ShirtSize)",
+                    "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        var sizes = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "Sc", "Mc", "Lc", "XLc"];
+                        var names = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "S child", "M child", "L child", "XLChild"];
+                        var selectItem = "<select form='playersForm_" + full.Id + "' class='form-control' name='ShirtSize'>";
+                        for (var i = 0; i < sizes.length; i++) {
+                            if (i == 0) {
+                                selectItem += "<option value>@Messages.Select</option>";
+                            }
+                            else {
+                                if (sizes[i] == data) {
+                                    selectItem += "<option value='" + sizes[i] + "' selected>" + names[i] + "</option>";
+                                }
+                                else {
+                                    selectItem += "<option value='" + sizes[i] + "'>" + names[i] + "</option>";
+                                }
+                            }
+                        }
+                        return selectItem + "</select>";
+                    }
+                },
+                {
+                    "data": "PosId", "title": "@Messages.Position", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        var positionsNames = '@ViewBag.PositionsNames';
+                        var positionsValues = '@ViewBag.PositionsIds';
+
+                        var positionsNamesArr = positionsNames != 'null' && positionsNames != undefined && positionsNames != ""
+                            ? positionsNames.split(',')
+                            : [];
+                        var positionsValuesArr = positionsValues != 'null' && positionsValues != undefined && positionsValues != ""
+                            ? positionsValues.split(',')
+                            : [];
+                        var selectItem = "<select form='playersForm_" + full.Id + "' class='form-control' name='PosId'>"
+                        if (positionsNamesArr.length > 0 && positionsValuesArr.length > 0) {
+                            for (var i = 0; i < positionsNamesArr.length; i++) {
+                                if (i == 0) {
+                                    selectItem += "<option value>@Messages.Select</option>"
+                                }
+                                else {
+                                    if (positionsValuesArr[i] == data) {
+                                        selectItem += "<option value='" + positionsValuesArr[i] + "' selected>" + positionsNamesArr[i] + "</option>";
+                                    }
+                                    else {
+                                        selectItem += "<option value='" + positionsValuesArr[i] + "'>" + positionsNamesArr[i] + "</option>";
+                                    }
+                                }
+                            }
+                        }
+                        return selectItem + "</select>";
+                    }
+                },
+                { "data": "IdentNum", "title": "@Messages.IdentNum", "orderable": true },
+                { "data": "Email", "title": "@Messages.Email", "orderable": true },
+                { "data": "Phone", "title": "@Messages.Phone", "orderable": false },
+                { "data": "City", "title": "@Messages.City", "orderable": true },
+                @*{
+                    "data": "InsuranceFile", "title": "@Messages.Insurance", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data != "") {
+                            return "<span class='glyphicon glyphicon-eye-open glyph-btn' onclick=\"window.open('/assets/players/" + data + "')\"></span>";
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },*@
+                { "data": "Height", "title": "@Messages.Height", "orderable": true },
+                { "data": "Weight", "title": "@Messages.Weight", "orderable": true },
+                {
+                    "data": "Gender", "title": "@Messages.Gender", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        if (data === "Female") {
+                            return "@Messages.Female";
+                        }
+                        else {
+                            return "@Messages.Male";
+                        }
+                    }
+                },
+                { "data": "ParentName", "title": "@Messages.ParentName", "orderable": true },
+                {
+                    "data": "IDFile", "title": "@Messages.IDFile", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data !== "") {
+                            return "<span class='glyphicon glyphicon-eye-open glyph-btn' onclick=\"window.open('/assets/players/" + data + "')\"></span>";
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },
+                {
+                    "data": "PassportFile", "title": "@Messages.PassportFile", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data !== "") {
+                            return "<span class='glyphicon glyphicon-eye-open glyph-btn' onclick=\"window.open('/assets/players/" + data + "')\"></span>";
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },
+
+                { "data": "CompetitiveLicenseNumber", "title": "@Messages.CompetitiveDriversNumber", "orderable": true },
+                { "data": "LicenseValidity", "title": "@Messages.ValidityOfACompetitiveDrivingLicense", "orderable": true },
+                { "data": "LicenseLevel", "title": "@Messages.LicenseLevel", "orderable": true },
+                {
+                    "data": "DriverLicenseFile", "title": "@Messages.LicenseFile", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data !== "") {
+                            return "<span class='glyphicon glyphicon-eye-open glyph-btn' onclick=\"window.open('/assets/players/" + data + "')\"></span>";
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },
+                { "data": "ClubName", "title": "@Messages.ClubName", "orderable": true },
+                @if (Model.UnionId != 52)
+                {
+                    <text>
+                { "data": "DisciplinesNames", "title": "@(Model.IsAthletics ? Messages.AthleticsDisciplines : Messages.Disciplines)", "orderable": false },
+                    </text>
+                }
+                {
+                    "data": "StartPlayingString", "title": "@Messages.StartPlaying", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        var startPlayingDate = data != null || data !== undefined ? data : "";
+                        return "<input style=\"width:120px;\" form='playersForm_" + full.Id + "' type='text' name='StartPlaying' value='" + startPlayingDate + "' class='form-control frm-date-wo-time' />";
+                    }
+                },
+                {
+                    "data": "BaseHandicap", "title": "@Messages.HandicapLevel", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        return "@Model.LogicalName" === "Union"
+                            ? "<input style=\"width:75px;\" class='form-control' type=\"number\" step=\"0.01\" name='BaseHandicap' form='playersForm_" + full.Id + "' value='" + data + "' />"
+                            : data;
+                    }
+                },
+
+                @if (Model.IsSwimming)
+                {
+                    <text>
+                    {
+                        "data": "ClassS", "title": "@Messages.RankGym S", "orderable": false,
+                    },
+                    {
+                        "data": "ClassSB", "title": "@Messages.RankGym SB", "orderable": false,
+                    },
+                    {
+                        "data": "ClassSM", "title": "@Messages.RankGym SM", "orderable": false,
+                    },
+                    </text>
+                }
+
+
+
+
+                @if (!Model.IsBasketball)
+                {
+                    <text>
+                        {
+                            "data": "HandicapReduction",
+                            "title": "@Messages.CalculatedReduction",
+                            "orderable": false
+                        },
+                        {
+                            "data": "FinalHandicap",
+                            "title": "@Messages.TotalResult",
+                            "orderable": false
+                        },
+                    </text>
+                }
+                {
+                    "data": "UnionComment", "title": "@Messages.Activity_BuildForm_UnionComment", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        var value = data == null ? "" : data;
+                        if ('@Model.LogicalName' == 'Union') {
+                            return "<input form='playersForm_" + full.Id + "' type='text' class='form-control' name='UnionComment' value='" + value + "' />";
+                        }
+                        else if ('@Model.LogicalName' == 'Club') {
+                            return value;
+                        }
+                        else {
+                            return value;
+                        }
+                    }
+                },
+                {
+                    "data": "ClubComment", "title": "@Messages.Activity_BuildForm_ClubComment", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        var value = data == null ? "" : data;
+                        if ('@Model.LogicalName' == 'Club') {
+                            return "<input form='playersForm_" + full.Id + "' type='text' class='form-control' name='ClubComment' value='" + value + "' />";
+                        }
+                        else if ('@Model.LogicalName' == 'Union') {
+                            return value;
+                        }
+                        else {
+                            return value;
+                        }
+                    }
+                },
+                {
+                    "data": "MedicalCertificateFile", "title": "@Messages.MedicalCertificate", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data != "") {
+                            //var approved = "@@Model.LogicalName" == "Club" ? "cert-approved" : "";
+                            var approved = full.MedicalCertApproved ? "cert-approved" : "";
+                            return "<span class='glyphicon glyphicon-eye-open glyph-btn " + approved + "' onclick=\"window.open('/assets/players/" + data + "')\"></span>";
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },
+                {
+                    "data": "MedicalCertificate", "title": "@Messages.Activity_BuildForm_ApproveMedicalCert", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (full.MedicalCertApproved === true) {
+                            return "<input form='playersForm_" + full.Id + "' type='checkbox' name='MedicalCertificate' checked />";
+                        }
+                        else {
+                            return "<input form='playersForm_" + full.Id + "' type='checkbox' name='MedicalCertificate'/>";
+                        }
+                    }
+                },
+                {
+                    "data": "MedExamDateString", "title": "@(Model.IsTennis || Model.IsRowing || Model.IsBicycle ? @Messages.ValidityOfMedicalExamination : @Messages.MedExamDate)", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        var dateId = "medExamDate_" + full.Id;
+                        var medExamDateDate = data != null || data !== undefined ? data : "";
+                        if (full.IsApproveChecked && "@Model.IsClubManager".toLowerCase() === "true" && "@Model.IsRowing" != "True") {
+                            return medExamDateDate;
+                        }
+                        return "<input style=\"width:120px;\" id='" + dateId + "' form = 'playersForm_" + full.Id + "' type = 'text' name = 'MedExamDate' value = '" + medExamDateDate + "' class='form-control frm-date-wo-time' /> ";
+                    }
+                },
+                @if(Model.IsBasketball)
+                {
+                     <text>
+                    {
+                        "data": "DateOfInsuranceString", "title": "@Messages.InsuranceDateValidity", "orderable": true,
+                        "render": function(data, type, full, meta) {
+                            var dateId = "dateOfInsurance_" + full.Id;
+                            var dateOfInsuranceDate = data != null || data !== undefined ? data : "";
+                            if (full.IsApproveChecked && "@Model.IsClubManager".toLowerCase() === "true" && "@Model.IsRowing" != "True")
+                            {
+                                return dateOfInsuranceDate;
+                            }
+                            return "<input style=\"width:120px;\" id='" + dateId + "' form = 'playersForm_" + full.Id + "' type = 'text' name = 'DateOfInsurance' value = '" + dateOfInsuranceDate + "' class='form-control frm-date-wo-time' /> ";
+                        }
+                    },
+                    </text>
+                }
+                 @if (Model.IsTennis)
+                 {
+                     <text>
+                     {
+                         "data": "TenicardValidity", "title": "@Messages.TenicardValidity", "orderable": true,
+                         "render": function (data, type, full, meta) {
+                             var canApprove = '@(User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) ? "True" : "False")' == 'True' ? true : false;
+                             var value = data != null || data !== undefined ? data : "";
+                             if (canApprove) {
+                                 return "<input style=\"width:120px;\" form='playersForm_" + full.Id + "' type='text' name='TenicardValidity' value='" + value + "' class='form-control frm-date-wo-time' />";
+                             } else {
+                                 return data;
+                             }
+                         }
+                     },
+                     </text>
+                 }
+
+                 {
+                     "data": "InitialApprovalDate", "title": "@Messages.InitialApprovalDate", "orderable": true,
+                     "render": function (data, type, full, meta) {
+                         var initialApprovalDate = data != null || data !== undefined ? data : "";
+                         var hasTopLevel = "@Model.CanBlockade" === "True";
+                         return hasTopLevel
+                             ? "<input style=\"width:120px;\" form='playersForm_" + full.Id + "' type='text' name='InitialApprovalDate' value='" + initialApprovalDate + "' class='form-control frm-date-wo-time' />"
+                             : "<text>" + initialApprovalDate + "</text><input style=\"width:120px;\" form='playersForm_" + full.Id + "' type='hidden' name='InitialApprovalDate' value='" + initialApprovalDate + "' class='form-control' readonly/>";
+                     }
+                 },
+                {
+                    "data": "ParentStatementFile", "title": "@(Model.IsGymnastic ? Messages.GymnastStatement : (Model.IsWaterpolo ? Messages.NewPlayerStatement : (Model.IsSwimming ? @Messages.UnionRegistrationForm : @Messages.ParentStatement)))", "orderable": true,
+                    "render": function (data) {
+                        if (data != undefined && data != "") {
+                            return "<span class='glyphicon glyphicon-eye-open glyph-btn' onclick=\"window.open('/assets/players/" + data + "')\"></span>";
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },
+                @if (Model.ApprovePlayerByClubManagerFirst)
+                {
+                    if (Model.LogicalName == LogicaName.Union)
+                    {
+                        <text>
+                        {
+                            "data": "IsApprovedByClubManagerChecked", "title": "@Messages.ClubApproved", "orderable": false,
+                            "render": function(data, type, full, meta) {
+                                var canApprove = '@Model.CanApprove' == 'True' ? true : false;
+                                var approveId = 'approvebyclubmanager_' + full.Id;
+                                var checkedAttr = full.IsApprovedByClubManager == true ? 'checked' : '';
+
+                                return "<input form='playersForm_" + full.Id + "' id='" + approveId + "' type='checkbox' name='IsApprovedByClubManagerChecked' " + checkedAttr + " disabled readonly/>";
+                            }
+                        },
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                        {
+                            "data": "IsApprovedByClubManagerChecked", "title": "@Messages.ClubApprove", "orderable": false,
+                            "render": function(data, type, full, meta) {
+                                var canApprove = '@Model.CanApprove' == 'True' ? true : false;
+                                var approveId = 'approvebyclubmanager_' + full.Id;
+                                var checkedAttr = full.IsApprovedByClubManager == true ? 'checked' : '';
+                                var disabledAttr = full.IsApproveChecked || full.IsNotApproveChecked ? 'disabled' : '';
+
+                                if (canApprove)
+                                    return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'approvebyclubmanager\')\" onclick =\"checkApprovedStatus('" + full.Id + "'," + full.UserId + "," + full.TeamId + "," + full.LeagueId + ")\" id='" + approveId + "' type='checkbox' name='IsApprovedByClubManagerChecked' " + checkedAttr + " " + disabledAttr + " />";
+                                else {
+                                    return "<input form='playersForm_" + full.Id + "' id='" + approveId + "' type='checkbox' name='IsApprovedByClubManagerChecked' " + checkedAttr + " disabled readonly/>";
+                                }
+                            }
+                        },
+                        </text>
+                    }
+
+                }
+                {
+                    "data": "IsApproveChecked", "title": "@Messages.Approve", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        var canApprove = '@Model.CanApprove' == 'True' ? true : false;
+                        var isClimbing = '@Model.IsClimbing' == 'True' ? true : false;
+                        var approveId = 'approve_' + full.Id;
+                        var unionApprovebuCM = "@Model.ApprovePlayerByClubManagerFirst" == 'True' ? true : false;
+
+                        if (!full.IsApprovedByClubManager && unionApprovebuCM) {
+                            return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'approve\')\" onclick =\"checkApprovedStatus('" + full.Id + "'," + full.UserId + "," + full.TeamId + "," + full.LeagueId + ")\" id='" + approveId + "' type='checkbox' name='IsApproveChecked' disabled/>";
+                        }
+                        else
+                        if (canApprove) {
+
+                            if (full.IsApproveChecked && !full.IsNotApproveChecked) {
+                                return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'approve\')\" onclick =\"checkApprovedStatus('" + full.Id + "'," + full.UserId + "," + full.TeamId + "," + full.LeagueId + ")\" id='" + approveId + "' type='checkbox' name='IsApproveChecked' checked/>";
+                            }
+                            else if (!full.IsApproveChecked && !full.IsNotApproveChecked) {
+                                return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'approve\')\" onclick =\"checkApprovedStatus('" + full.Id + "'," + full.UserId + "," + full.TeamId + "," + full.LeagueId + ")\" id='" + approveId + "' type='checkbox' name='IsApproveChecked'/>"
+                            }
+                            else {
+                                return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'approve\')\" onclick =\"checkApprovedStatus('" + full.Id + "'," + full.UserId + "," + full.TeamId + "," + full.LeagueId + ")\" id='" + approveId + "' type='checkbox' name='IsApproveChecked' disabled/>";
+                            }
+                        }
+                        else {
+                            if (full.IsApproveChecked) {
+                                return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'approve\')\" onclick =\"checkApprovedStatus('" + full.Id + "'," + full.UserId + "," + full.TeamId + "," + full.LeagueId + ")\" id='" + approveId + "' type='checkbox' name='IsApproveChecked' checked disabled readonly/>";
+                            }
+                            else {
+                                return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'approve\')\" onclick =\"checkApprovedStatus('" + full.Id + "'," + full.UserId + "," + full.TeamId + "," + full.LeagueId + ")\" id='" + approveId + "' type='checkbox' name='IsApproveChecked' disabled readonly/>";
+                            }
+                        }
+                    }
+                },
+                {
+                    "data": "IsNotApproveChecked", "title": "@Messages.NotApproved", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        var canApprove = '@Model.CanApprove' == 'True' ? true : false;
+                        var notApproveId = 'notapprove_' + full.Id;
+                        if (canApprove) {
+                            if (full.IsNotApproveChecked && !full.IsApproveChecked) {
+                                return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'notapprove\')\" id='" + notApproveId + "' type='checkbox' name='IsNotApproveChecked' checked/>";
+                            }
+                            else if (!full.IsNotApproveChecked && !full.IsApproveChecked) {
+                                return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'notapprove\')\" id='" + notApproveId + "' type='checkbox' name='IsNotApproveChecked'/>";
+                            }
+                            else {
+                                return "<input form='playersForm_" + full.Id + "' onchange=\"changeDisabledStatus(" + full.Id + ",\'notapprove\')\" id='" + notApproveId + "' type='checkbox' name='IsNotApproveChecked' disabled/>";
+                            }
+                        }
+                        else {
+                            if (full.IsNotApproveChecked) {
+                                return "<input form='playersForm_" + full.Id + "' id='" + notApproveId + "' type='checkbox' name='IsNotApproveChecked' checked disabled readonly/>";
+                            }
+                            else {
+                                return "<input form='playersForm_" + full.Id + "' id='" + notApproveId + "' type='checkbox' name='IsNotApproveChecked' disabled readonly/>";
+                            }
+                        }
+                    }
+                },
+                @if (Model.IsBicycle)
+                {
+                    <text>
+                        {
+                            "data": "FriendshipTypeName", "title": "@Messages.FriendshipName", "orderable": false,
+                        },
+                        {
+                            "data": "FriendshipPriceTypeName", "title": "@Messages.FrienshipPriceTypeName", "orderable": false,
+                        },
+                        {
+                            "data": "RoadHeat", "title": "@Messages.RoadHeat", "orderable": false,
+                        },
+                        {
+                            "data": "MountainHeat", "title": "@Messages.MountainHeat", "orderable": false,
+                        },
+                        {
+                            "data": "ChipNumber", "title": "@Messages.ChipNumber", "orderable": false,
+                        },
+                        {
+                            "data": "UciId", "title": "@Messages.UciId", "orderable": false,
+                        },
+                        {
+                             "data": "KitStatusName", "title": "@Messages.KitStatus", "orderable": false,
+                        },
+                        {
+                            "data": "MountainIronNumber", "title": "@Messages.MountainIronNumber", "orderable": false,
+                        },
+                        {
+                            "data": "RoadIronNumber", "title": "@Messages.RoadIronNumber", "orderable": false,
+                        },
+                        {
+                            "data": "FriendshipTotalPrice", "title": "@Messages.TotalPrice", "orderable": false,
+                            "render": function (data, type, full, meta) {
+                                return "<input form='playersForm_" + full.Id +
+                                    "' type='text' name='FriendshipTotalPrice' value='" + data +
+                                    "' class='form-control' disabled/>";
+                            }
+                        },
+                        {
+                            "title": "@Messages.ForPayment", "orderable": false,
+                            "render": function (data, type, full, meta) {
+                                if (full.FriendshipPaid) {
+                                    return "<input form='playersForm_" + full.Id + "' type='checkbox' disabled />";
+                                } else {
+                                    var forpaymentId = 'forpayment_' + full.Id;
+                                    return "<input form='playersForm_" + full.Id + "' id='" + forpaymentId + "' type='checkbox' name='ForPayment'/>";
+                                }
+                            }
+                        },
+                        {
+                            "title": "@Messages.IsPaid", "orderable": false,
+                            "render": function (data, type, full, meta) {
+                                if (full.FriendshipPaid) {
+                                    return "<input form='playersForm_" + full.Id + "' type='checkbox' checked disabled/>";
+                                } else {
+                                    return "<input form='playersForm_" + full.Id + "' type='checkbox' disabled/>";
+                                }
+                            }
+                        },
+                    </text>
+                }
+                @if (Model.IsAthletics)
+                { <text>
+                    { //show column for athletics section (else data column will empty and toogle column will empty)
+                        "data": "AthletesNumbers", "title": "@(Model.IsAthletics ? @Messages.AthleteNumber : "")", "orderable": true,
+                        "render": function (data, type, full, meta) {
+                            if (data != undefined && data != "") {
+                                return "<text class='athlete-num-cell'>" + data + "</text>";
+                            }
+                            else {
+                                return "&nbsp;";
+                            }
+                        }
+                    },
+                    { //show column for athletics section (else data column will empty and toogle column will empty)
+                        "data": "IsAthleteNumberProduced", "title": "@(Model.IsAthletics ? @Messages.IsAthleteNumberProduced : "")", "orderable": true,
+                        "render": function (data, type, full, meta) {
+                            var canApprove = '@(User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager) ? "True":"False")' == 'True' ? true : false;
+                            var produceId = 'produce_' + full.Id;
+                            if (canApprove) {
+                                if (full.IsAthleteNumberProduced) {
+                                    return "<input form='playersForm_" + full.Id + "' onclick =\"checkAthleteNumberProduced('" + produceId + "','" + full.UserId + "')\" id='" + produceId + "' type='checkbox' name='IsAthleteNumberProduced' checked/>";
+                                }
+                                else if (!full.IsAthleteNumberProduced) {
+                                    return "<input form='playersForm_" + full.Id + "' onclick =\"checkAthleteNumberProduced('" + produceId + "','" + full.UserId + "')\" id='" + produceId + "' type='checkbox' name='IsAthleteNumberProduced'/>";
+                                }
+                            }
+                            else {
+                                if (full.IsAthleteNumberProduced) {
+                                    return "<input type='checkbox' name='IsAthleteNumberProduced' checked disabled readonly/>";
+                                }
+                                else {
+                                    return "<input type='checkbox' name='IsAthleteNumberProduced' disabled readonly/>";
+                                }
+                            }
+                        }
+                    },
+                    </text>
+                }
+                @*{
+                    "data": "IsBlockaded", "title": "@Messages.BlockadePlayer", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        var canBlockade = '@Model.CanBlockade' == 'True' ? true : false;
+                        if (canBlockade) {
+                            if (data == true) {
+                                return "<input form='playersForm_" + full.Id + "' type='checkbox' name='IsBlockaded' checked/>";
+                            }
+                            else {
+                                return "<input form='playersForm_" + full.Id + "' type='checkbox' name='IsBlockaded'/>";
+                            }
+                        }
+                        else {
+                            if (data == true) {
+                                return "<input form='playersForm_" + full.Id + "' type='checkbox' name='IsBlockaded' checked disabled readonly/>";
+                            }
+                            else {
+                                return "<input form='playersForm_" + full.Id + "' type='checkbox' name='IsBlockaded' disabled readonly/>";
+                            }
+                        }
+                    }
+                },*@
+                {
+                    "data": "EndBlockadeDateString", "title": "@Messages.BlockadeEndDate", "orderable": true,
+                    "render": function (data, type, full, meta) {
+                        @*var canBlockade = '@Model.CanBlockade' == 'True' ? true : false;
+                        if (canBlockade && full.IsBlockaded == true) {
+                            return "<input form='playersForm_" + full.Id + "' type='text' name='EndBlockadeDate' value='" + data + "' class='form-control frm-date' />";
+                        }
+                        else if (canBlockade && full.IsBlockaded == false) {
+                            return "<input form='playersForm_" + full.Id + "' type='text' name='EndBlockadeDate' value='" + data + "' class='form-control frm-date' disabled/>";
+                        }
+                        else {
+                            return "<input form='playersForm_" + full.Id + "' type='text' name='EndBlockadeDate' value='" + data + "' class='form-control frm-date' disabled/>";
+                        }*@
+                        return data;
+                    }
+                },
+                @if (Model.UnionId != 52)
+                {
+                <text>
+                { //show column for gymnastic section (else data column will empty and toogle column will empty)
+                    "data": "Route", "title": "@(Model.IsGymnastic ? @Messages.Route : "")", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data != "") {
+                            return data;
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },
+
+                        { //show column for gymnastic section (else data column will empty and toogle column will empty)
+                            "data": "Rank", "title": "@(Model.IsGymnastic ? @Messages.Ranks : "")", "orderable": false,
+                            "render": function(data, type, full, meta) {
+                                if (data != undefined && data != "") {
+                                    return data;
+                                }
+                                else {
+                                    return "&nbsp;";
+                                }
+                            }
+                        },
+                    </text>
+                    }
+                    {
+                        "data": "CompetitionCount", "title": "@Messages.Competitions", "orderable": true,
+                        "render": function (data, type, full, meta) {
+                            if (data != undefined && data != "") {
+                                return data;
+                            }
+                            else {
+                                return "&nbsp;";
+                            }
+                        }
+                    },
+                {
+                    "data": "ApprovalDate", "title": "@Messages.ApproveDate", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data != "") {
+                            return "<text id='dateOfApprove_" + full.Id + "'>" + data + "</text>";
+                        }
+                        else {
+                            return "<text id='dateOfApprove_" + full.Id + "'>&nbsp;</text>";
+                        }
+                    }
+                },
+
+                { //show column for martial-arts section EN localization (show toogle column and hide or show eng ranks)
+                    "data": "Achievements", "title": isSportRankVisible ? "@Messages.Ranks" : "", "orderable": false, "visible": isSportRankVisible,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data != "") {
+                            return data;
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },
+                {//show column for martial-arts section Heb localization (show toogle column and hide or show heb ranks)
+                    "data": "AchievementsHeb", "title": isSportRankHebVisible ? "@Messages.Ranks" : "", "orderable": false, "visible": isSportRankHebVisible,
+                    "render": function (data, type, full, meta) {
+                        if (data != undefined && data != "") {
+                            return data;
+                        }
+                        else {
+                            return "&nbsp;";
+                        }
+                    }
+                },
+                {
+                    "title": "", "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (isRefereeAssignment == "1") {
+                            return '';
+                        }
+                        else {
+                            var actionHref = "/Players/UpdatePlayer";
+                            var returnValue = "";
+                            returnValue += "<input type='hidden' name='Id' value='" + full.Id + "' form='playersForm_" + full.Id + "' />";
+                            returnValue += "<input type='hidden' name='LogicalName' value='@Model.LogicalName' form='playersForm_" + full.Id + "' />";
+                            returnValue += "<input type='hidden' name='SeasonId' value='@Model.SeasonId' form='playersForm_" + full.Id + "' />";
+                            returnValue += "<input type='hidden' name='UserId' value='" + full.UserId + "' form='playersForm_" + full.Id + "' />";
+                            returnValue += "<input type='hidden' name='TeamId' value='" + full.TeamId + "' form='playersForm_" + full.Id + "' />";
+                            returnValue += "<input type='hidden' name='ClubId' value='" + full.ClubId + "' form='playersForm_" + full.Id + "' />";
+                            returnValue += "<form id='playersForm_" + full.Id + "' method='post' action='" + actionHref + "'></form>";
+                            returnValue += "<button class='btn btn-primary' style='display:inline-block' onclick='submitUsersForm(" + full.Id + "," + full.ClubId + ")''>@Messages.Save";
+                            returnValue += "<i id='successIcon_" + full.Id + "' class=\"fa fa-check\" aria-hidden=\"true\" style='display:none'></i>";
+                            returnValue += "<i id='unsuccessIcon_" + full.Id + "' class=\"fa fa-close\" aria-hidden=\"true\" style='display:none'></i></button>";
+                            return returnValue;
+                        }
+                    }
+                },
+                {
+                    "title": "",
+                    "orderable": false,
+                    "render": function (data, type, full, meta) {
+                        if (isRefereeAssignment == "1") {
+                            return '';
+                        }
+                        else {
+                            return "<a onclick='sendNotificationToPlayer(" + full.UserId + "," + full.TeamId + "," + @Model.SeasonId + ")' class=\"btn btn-primary\"><i class=\"fa fa-envelope\"></i></a>";
+                        }
+                    }
+                },
+                {
+                    "title": "",
+                    "orderable": false,
+                    "visible": @((Model.IsGymnastic && Model.IsClubManager) || (Model.IsAthletics && !User.IsInAnyRole(AppRole.Admins) && !User.HasTopLevelJob(JobRole.UnionManager)) ? "false" : "true"),
+                    "render": function (data, type, full, meta) {
+                        if (isRefereeAssignment == "1") {
+                            return '';
+                        }
+                        else {
+                            return "<a name='deletePlayer' data-id='" + full.Id + "' class='@AppCss.Delete'></a>";
+                        }
+                    }
+                },
+
+            ],
+            "language": {
+                "processing": "@Messages.Loading",
+                "search": "@Messages.Search:",
+                "lengthMenu": "@Messages.Datatable_LengthMenu",
+                "zeroRecords": "@Messages.Datatable_NothingFound",
+                "info": "@Messages.Datatable_Info",
+                "infoEmpty": "@Messages.Datatable_InfoEmpty",
+                "infoFiltered": "@Messages.Datatable_InfoFiltered",
+                "paginate": {
+                    "next": "@Messages.Next",
+                    "previous": "@Messages.Previous"
+                },
+            }
+        });
+        dtable.on( 'draw', function () {
+            refreshMarkChanges();
+        });
+    }
+
+    function refreshMarkChanges() {
+        changedRowIds = [];
+        $("#players-table_wrapper input").on("change", function () {
+            var fid = $(this).attr("form");
+            if (fid != undefined) {
+                var id = fid.split("_")[1];
+                 if ($.inArray(id, changedRowIds) < 0) changedRowIds.push(id);
+            }
+        });
+    }
+
+    function produceAthleteNumber() {
+        setTimeout(function () { location.reload(); }, 3000);
+    }
+
+    $(document).ready(function() {
+        $("#toPayBtn").on("click",
+            function() {
+                $("#toPayBtn").attr("disabled", true);
+
+                $.post("@Url.Action("CreateFriendshipPaymentDialog", "OfficeGuy")",
+                    { teamPlayersIds: forPaymentIds },
+                    function(data) {
+                        $("#toPayBtn").attr("disabled", false);
+
+                        $("#friendshipPaymentDialog-content").html(data);
+                        $("#friendshipPaymentDialog").modal("show");
+                    });
+            });
+        $("#friendshipPaymentDialog").on("click",
+            "#friendshipPayment-to-officeguy",
+            function () {
+                $(this).prop("disabled", true);
+
+                $.post("@Url.Action("BicycleFriendshipMultiple", "OfficeGuy")",
+                    { teamPlayersIds: forPaymentIds },
+                    function(data) {
+                        window.open(data.url, "_blank");
+                        $("#friendshipPaymentDialog").modal("hide");
+                    });
+            });
+
+        $('#checkAllAsActive').on('click',
+            function() {
+                $('#players-table_wrapper input[name=IsActive]').each(function() {
+                    if ($(this).is(":checked") == false) {
+                        $(this).prop('checked', true);
+                        $(this).trigger("change");
+                    }
+                });
+            });
+
+        $('#saveAllChanges').on('click',
+            function() {
+                //console.log(changedRowIds);
+                if (changedRowIds.length == 0) {
+                    alert("@Messages.NoChangesWereMade");
+                } else
+                    $(".saveAllChangesloading").show();
+
+                $.each(changedRowIds,
+                    (index, item) => {
+                        submitUsersForm(item, 0);
+                    });
+                changedRowIds = [];
+                $(".saveAllChangesloading").hide();
+            });
+
+        $('.disciplinefilter').multiselect({
+            buttonText: function(options, select) {
+                return '@Messages.SectionFilter';
+            },
+            buttonTitle: function(options, select) {
+                var labels = [];
+                options.each(function() {
+                    labels.push($(this).text());
+                });
+                return labels.join(' - ');
+            },
+            onDropdownHide: function(element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function(element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+        $('.clubfilter').multiselect({
+            buttonText: function(options, select) {
+                return '@Messages.ClubFilter';
+            },
+            buttonTitle: function(options, select) {
+                var labels = [];
+                options.each(function() {
+                    labels.push($(this).text());
+                });
+                return labels.join(' - ');
+            },
+            onDropdownHide: function(element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function(element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+        $('.statusfilter').multiselect({
+            buttonText: function(options, select) {
+                return '@Messages.StatusFilter';
+            },
+            buttonTitle: function(options, select) {
+                var labels = [];
+                options.each(function() {
+                    labels.push($(this).text());
+                });
+                return labels.join(' - ');
+            },
+            onDropdownHide: function(element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function(element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+
+        drawDataTable("", "", "", isAthletics ? "AthletesNumbers,FullName" : "");
+        var columns = playersTable.DataTable().columns();
+        window.hiddenColumns = '@(Model.HiddenColumns)'.split(',');
+
+
+        var isHandicap = "@Model.IsHandicapEnabled" == "True" ? true : false;
+        var hasDisciplines = "@Model.HasDisciplines" == "True" ? true : false;
+        var hasTopLevelAccess = "@Model.CanBlockade" == "True" ? true : false;
+        $('a[data-toggle="tab"]').on('shown.bs.tab',
+            function(e) {
+                var target = $(e.target).attr("href");
+                if (target == '#players') {
+                    playersTable.DataTable().columns.adjust().draw();
+                }
+            });
+
+        window.checkColumnsVisibility = function() {
+            var $columnList = $("#columns-list");
+            $columnList.empty();
+            $.each(columns[0],
+                function(index, item) {
+                    var isColumnHidden = hiddenColumns.includes(index.toString());
+                    var column = playersTable.DataTable().column(item);
+                    var header = $(column.header()).text();
+                    if (!isHandicap) {
+                        if (header === "@Messages.StartPlaying" ||
+                            header === "@Messages.HandicapLevel" ||
+                            //header === "@Messages.MedExamDate" ||
+                            header === "@Messages.CalculatedReduction" ||
+                            header === "@Messages.TotalResult") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if (!hasDisciplines) {
+                        if (header === "@Messages.Disciplines") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if (!hasTopLevelAccess) {
+                        if (header === "@Messages.Approve" || header === "@Messages.NotApproved") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if ("@Model.LogicalName" == "Club") {
+                        if (header === "@Messages.Activity_BuildForm_ApproveMedicalCert") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if ("@Model.IsGymnastic" == "True" || "@Model.IsRowing" == "True" || "@Model.IsSurfing" == "True") {
+                        //header == "@Messages.Insurance" ||
+                        if (header == "@Messages.Height" ||
+                            header == "@Messages.Weight" ||
+                            header == "@Messages.ShirtSize") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+
+                    if ("@Model.IsBicycle" == "True") {
+                        if (header == "@Messages.Height" ||
+                            header == "@Messages.Weight" ||
+                            header == "@Messages.ShirtSize") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+
+                    if ("@Model.IsClimbing" == "True") {
+                        if (header == "@Messages.Height" ||
+                            header == "@Messages.Weight") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+
+                    if ("@Model.IsGymnastic" == "True" ||
+                        "@Model.IsWaterpolo" == "True" ||
+                        "@Model.IsMotorsport" == "True" ||
+                        "@Model.IsAthletics" == "True" ||
+                        "@Model.IsWeightLifting" == "True" ||
+                        "@Model.IsSwimming" == "True" ||
+                        "@Model.IsMartialArts" == "True" ||
+                        "@Model.IsRowing" == "True" ||
+                        "@Model.IsSurfing" == "True" ||
+                        "@Model.IsBicycle" == "True" ||
+                        "@Model.IsClimbing" == "True") {
+                        if (header == "@Messages.Shirt") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if ("@Model.IsGymnastic" == "True" ||
+                        "@Model.IsMotorsport" == "True" ||
+                        "@Model.IsAthletics" == "True" ||
+                        "@Model.IsWeightLifting" == "True" ||
+                        "@Model.IsSwimming" == "True" ||
+                        "@Model.IsMartialArts" == "True" ||
+                        "@Model.IsRowing" == "True" ||
+                        "@Model.IsSurfing" == "True" ||
+                        "@Model.IsBicycle" == "True" ||
+                        "@Model.IsClimbing" == "True") {
+                        if (header == "@Messages.Position") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if ("@Model.IsGymnastic" == "True" ||
+                        "@Model.IsAthletics" == "True" ||
+                        "@Model.IsMartialArts" == "True" ||
+                        "@Model.IsRowing" == "True" ||
+                        "@Model.IsBicycle" == "True" ||
+                        "@Model.IsClimbing" == "True") {
+                        if (header == "@Messages.League") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if ("@Model.IsGymnastic" == "False" && "@Model.IsWeightLifting" == "False") {
+                        if (header == "@Messages.InitialApprovalDate") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if ("@Model.IsMotorsport" === "False") {
+                        if (header === "@Messages.CompetitiveDriversNumber" ||
+                            header === "@Messages.ValidityOfACompetitiveDrivingLicense" ||
+                            header === "@Messages.LicenseLevel" ||
+                            header === "@Messages.LicenseFile") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if ("@Model.IsIndividual" === "False") {
+                        if (header === "@Messages.Competitions" ||
+                            header === "@Messages.Approve @Messages.Date.ToLower()") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    if (section == "@GamesAlias.Tennis") {
+                        if (header === "@Messages.Position" ||
+                            header === "@Messages.Shirt" ||
+                            header === "@Messages.League") {
+                            column.visible(false);
+                            return;
+                        }
+                    }
+                    var itemStyle = isColumnHidden ? 'color: red' : '';
+                    if (item !== columns[0][columns[0].length - 1] && item !== columns[0][0] && header != "") {
+                        $columnList.append(" - ");
+                    }
+                    if (header != "") {
+                        $columnList.append($("<a>", { "data-column": item, text: header, style: itemStyle }));
+                    }
+                    if (isColumnHidden) {
+                        column.visible(false);
+                    }
+                });
+        }
+
+        checkColumnsVisibility();
+
+        $("#columns-list").on("click",
+            "a",
+            function(e) {
+                e.preventDefault();
+                var table = playersTable.DataTable();
+                var item = $(this).attr("data-column");
+                columnName = $(this).text();
+                var column = table.column(item);
+                var vis = !column.visible();
+                column.visible(vis);
+                e.target.style = vis ? '' : 'color: red';
+                if (vis) {
+                    var index = hiddenColumns.indexOf(item);
+                    if (index > -1) {
+                        hiddenColumns.splice(index, 1);
+                    }
+                } else {
+                    hiddenColumns.push(item);
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Players/ColumnVisibility/",
+                    data: {
+                        item: item,
+                        value: vis,
+                        columnName: columnName
+                    }
+                });
+            });
+
+        $.fn.dataTable.ext.errMode = 'throw';
+
+        var searchableTitlesList = ["FullName", "Email", "IdentNum", "AthletesNumbers"];
+
+        $.each(columns[0],
+            function(index, item) {
+                var isColumnHidden = hiddenColumns.includes(index.toString());
+                var column = playersTable.DataTable().column(item);
+                var header = $(column.header()).text();
+                var cvalue = column.dataSrc();
+                if (header.length > 0 && cvalue.length > 0 && searchableTitlesList.indexOf(cvalue) > -1) {
+                    var isSelected = true;
+                    if (isAthletics && cvalue != "AthletesNumbers" && cvalue != "FullName") {
+                        isSelected = false;
+                    }
+                    searchInputFilterArray.push({ label: header, value: cvalue, selected: isSelected });
+                }
+            });
+
+
+    });
+    </script>
+<script>
+        $("#filterBtn").click(function() {
+
+            var filterByClubs = $("#FilteredClubs").val();
+            var filterByDisciplines = $("#FilteredDisciplines").val();
+            var filterByPlayersStatus = $("#FilteredStatuses").val();
+
+            var filterByClubsString = filterByClubs != undefined ? filterByClubs.join() : "";
+            var filterByDisciplinesString = filterByDisciplines != undefined ? filterByDisciplines.join() : "";
+            var filterByPlayersStatusString = filterByPlayersStatus != undefined ? filterByPlayersStatus.join() : "";
+
+            dtable.ajax.url("/Players/LoadData/" + @updateId + "?logicalName=" + "@Model.LogicalName" + "&seasonId=" + @Model.SeasonId +
+                "&filterByClubs=" + filterByClubsString + "&filterByDisciplines=" + filterByDisciplinesString + "&filterByPlayersStatus=" + filterByPlayersStatusString + "&filterSearchByColumns=" + filterBySearchColumnString);
+            dtable.state.clear();
+            dtable.ajax.reload();
+
+            //drawDataTable(filterByClubsString, filterByDisciplinesString, filterByPlayersStatusString, filterBySearchColumnString);
+            window.checkColumnsVisibility();
+        });
+
+        $('#importAthletesNumbers').click(function () {
+            $('#importAthletesNumbersModal').modal('show');
+        });
+
+
+        $("#exportPlayersList").click(function() {
+            var id = ('@Model.LogicalName' == 'Union') ? @Model.UnionId : @Model.ClubId;
+            var clubsIds = $("#FilteredClubs").val();
+            var disciplinesIds = $("#FilteredDisciplines").val();
+            var statusesIds = $("#FilteredStatuses").val();
+            $.ajax({
+                url: "/Players/ExportPlayersList",
+                type: "POST",
+                traditional: true,
+                data: {
+                    id: id,
+                    logicalName: '@Model.LogicalName',
+                    isFiltered: '@Model.IsFiltered',
+                    seasonId: @Model.SeasonId,
+                    clubsIds: clubsIds,
+                    disciplinesIds: disciplinesIds,
+                    statusesIds: statusesIds
+                },
+                beforeSend: function() {
+                    $(".exportloading").show();
+                },
+                complete: function() {
+                    $(".exportloading").hide();
+                },
+                success: function(data) {
+                    $("#playersform_pl").html(data);
+                    $("#playersform").modal('show');
+                }
+            });
+        });
+        $("#exportActivesList").click(function() {
+            var id = ('@Model.LogicalName' == 'Union') ? @Model.UnionId : @Model.ClubId;
+            var clubsIds = $("#FilteredClubs").val();
+            var disciplinesIds = $("#FilteredDisciplines").val();
+            var statusesIds = $("#FilteredStatuses").val();
+            $.ajax({
+                url: "/Players/ExportActivesList",
+                type: "POST",
+                traditional: true,
+                data: {
+                    id: id,
+                    logicalName: '@Model.LogicalName',
+                    isFiltered: '@Model.IsFiltered',
+                    seasonId: @Model.SeasonId,
+                    clubsIds: clubsIds,
+                    disciplinesIds: disciplinesIds,
+                    statusesIds: statusesIds
+                },
+                beforeSend: function() {
+                    $(".exportloading").show();
+                },
+                complete: function() {
+                    $(".exportloading").hide();
+                },
+                success: function(data) {
+                    $("#playersform_pl").html(data);
+                    $("#playersform").modal('show');
+                }
+            });
+        });
+        //$('table').on('change', 'input[name="IsBlockaded"]', function (e) {
+        //    var isBlockaded = $(this).is(":checked");
+        //    var endBlockadeInput = $(this).closest('tr').find("input[name='EndBlockadeDate']");
+        //    if (isBlockaded) {
+        //        endBlockadeInput.attr("disabled", false);
+        //    }
+        //    else {
+        //        endBlockadeInput.attr("disabled", true);
+        //        endBlockadeInput.val(undefined);
+        //    }
+        //})
+
+    function checkApprovedStatus(id, userId, teamId, leagueId, teamPlayerId) {
+                if ("@Model.IsWaterpolo" === "True" && isApproved) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/Players/CheckApprovedStatus',
+                        data: {
+                            userId: userId,
+                            teamId: teamId,
+                            leagueId: leagueId,
+                            seasonId: "@Model.SeasonId",
+                    },
+                    success: function(data) {
+                        if (data.IsApprovedInAnotherTeam == true) {
+                            $("#waterpoloapprovemodal").modal({ backdrop: 'static', keyboard: false });
+                            var hiddenApprovedStat = $("#main_body_waterpolo").find("input[name='ApprovedStatusId']");
+
+                            if (hiddenApprovedStat) {
+                                $(hiddenApprovedStat).remove();
+                            }
+                            $("#main_body_waterpolo")
+                                .append('<input type="hidden" name="ApprovedStatusId" value="' + id + '" />');
+                            $("#modal-info-text-waterpolo").html(data.Message);
+                            $("#waterpoloapprovemodal").modal("show");
+                        }
+                    }
+                });
+            }
+        }
+
+
+    function refreshTennisCompetitionCount() {
+        $("#refreshTennisCompetitionspinner").show();
+        $("#refreshTennisCompetitionsButton").attr("disabled", "disabled");
+        $.ajax({
+            type: 'POST',
+            url: '/Players/RefreshTennisPlayersCompetitionCount',
+            data: {
+                unionId: "@Model.UnionId",
+                seasonId: "@Model.SeasonId"
+            },
+            success: function (data) {
+                $("#refreshTennisCompetitionspinner").hide();
+                $("#refreshTennisCompetitionsButton").removeAttr("disabled");
+            }
+        });
+    }
+
+
+
+    function checkAthleteNumberProduced(docId, userId) {
+        var isChecked = $('#' + docId).is(":checked");
+         $.ajax({
+                type: 'POST',
+                url: '/Players/EditAthleteNumberProducedStatus',
+                data: {
+                      userId: userId,
+                      isProduced: isChecked,
+                      seasonId: "@Model.SeasonId"
+                },
+                success: function (data) {
+
+                }
+         });
+
+    }
+
+        function discardApprove() {
+            var id = $("input[name='ApprovedStatusId']").val();
+            $("#approve_" + id).prop('checked', false);
+            changeDisabledStatus(id, "approve");
+        }
+
+        function approveRegistrationInAnotherTeam() {
+            var id = $("input[name='ApprovedStatusId']").val();
+            $.ajax({
+                url: "/Players/ApprovePlayerRegistration",
+                type: "POST",
+                data: { id: id },
+                success: function(data) {
+                    $("#approve_" + id).closest("tr")
+                        .find("input[name='IsActive']")
+                        .attr('class', 'registration-registered');
+
+                    $("#dateOfApprove_" + id).text(data.DateOfApprove);
+                }
+            })
+        }
+
+        function changeDisabledStatus(id, type) {
+            var isApprovedValue = $("#approve_" + id).is(":checked");
+            var isNotApprovedValue = $("#notapprove_" + id).is(":checked");
+            var isNotApprovedByCMValue = $("#approvebyclubmanager_" + id).is(":checked");
+            var isClimbing = "@Model.IsClimbing" == "True" ? true : false;
+            var isUnion = "@Model.LogicalName" == "Union" ? true : false;
+            var unionApproveByCM = "@Model.ApprovePlayerByClubManagerFirst" == "True" ? true : false;
+            var isBicycle = "@Model.IsBicycle" == "True" ? true : false;
+
+            if (isBicycle) {
+                if (isApprovedValue == true) {
+                    //check if medexamdate is valid
+                    var medData = $("#medExamDate_" + id).val();
+                    if (medData == null || medData == "") {
+                        alert("@Messages.MedExamDate" + " " + "@Messages.FieldIsRequired");
+                        $("#approve_" + id).prop("checked", false);
+                        return;
+                    }
+                }
+            }
+
+            if (type == "approvebyclubmanager") {
+                if (isNotApprovedByCMValue == true) {
+                    $("#approve_" + id).removeAttr("disabled");
+                }
+                else {
+                    $("#approve_" + id).attr("disabled", true);
+                }
+                return;
+            }
+
+            if (type == "approve" && isApprovedValue == true) {
+                $("#notapprove_" + id).attr("disabled", true);
+                $("#approvebyclubmanager_" + id).attr("disabled", true);
+            } else if (type == "approve" && isApprovedValue == false) {
+                $("#notapprove_" + id).removeAttr("disabled");
+                if (!isUnion) $("#approvebyclubmanager_" + id).removeAttr("disabled");
+            } else if (type == "notapprove" && isNotApprovedValue == true) {
+                $("#approve_" + id).attr("disabled", true);
+                $("#approvebyclubmanager_" + id).attr("disabled", true);
+            } else if (type == "notapprove" && isNotApprovedValue == false) {
+                if (unionApproveByCM) {
+                    if (!isUnion) {
+                        $("#approvebyclubmanager_" + id).removeAttr("disabled");
+                        if (isNotApprovedByCMValue == true) $("#approve_" + id).removeAttr("disabled");
+                    }
+                    else {
+                        if(isNotApprovedByCMValue == true) $("#approve_" + id).removeAttr("disabled");
+                    }
+                }
+                else {
+                    $("#approve_" + id).removeAttr("disabled");
+                }
+            } else {
+                $("#approve_" + id).attr("disabled", true);
+                $("#notapprove_" + id).removeAttr("disabled");
+            }
+        }
+
+        function getPlayerFormData(id) {
+            var playersTable = $("#players-table").DataTable();
+            var columns = playersTable.columns();
+
+            var hiddenColumns = [];
+
+            //find all hidden columns and make them temporary visible
+            //so then $.serialize() will be able to pickup entire DOM data correctly
+            //because hidden columns are excluded from DOM and their data is not sent upon POST ../updateplayer
+            columns.every(function() {
+                var visible = this.visible();
+
+                if (!visible) {
+                    this.visible(true, false); //false means no redraw, helps performance
+
+                    hiddenColumns.push(this.index());
+                }
+            });
+
+            var isActiveDisabled = $("input[name='IsActive']").is(":disabled");
+            if (isActiveDisabled) {
+                $("input[type=checkbox][name='IsActive']").prop('disabled', false);
+            }
+            var isAppByCmDisabled = $("#approvebyclubmanager_" + id).is(":disabled");
+            if (isAppByCmDisabled) {
+                $("#approvebyclubmanager_" + id).prop('disabled', false);
+            }
+            var data = $("#playersForm_" + id).serialize();
+            $.each(hiddenColumns,
+                function(index, column) {
+                    playersTable.column(column).visible(false, false);
+                });
+
+            if (isActiveDisabled) {
+                $("input[type=checkbox][name='IsActive']").prop('disabled', true);
+            }
+            if (isAppByCmDisabled) {
+                $("#approvebyclubmanager_" + id).prop('disabled', true);
+            }
+            //playersTable.columns.adjust().draw(false); //redraw table just in case
+            return data;
+        }
+
+    function submitUsersForm(id, clubId) {
+            $.ajax({
+                type: 'POST',
+                url: '/Players/UpdatePlayer',
+                data: getPlayerFormData(id),//$('#playersForm_' + id).serialize(),
+                success: function(data) {
+                    if (data.IsSuccess == true) {
+                        $("#unsuccessIcon_" + id).hide();
+                        $("#successIcon_" + id).hide();
+                        $("#successIcon_" + id).show();
+                    } else {
+                        $("#unsuccessIcon_" + id).hide();
+                        $("#successIcon_" + id).hide();
+                        $("#unsuccessIcon_" + id).show();
+                        if (data.ClimbingCheck) {
+                            var isActive = $("input[form=playersForm_" + id + "][name='IsActive']");
+                            isActive.prop("checked", false);
+                        }
+                        alert(data.ErrorMessage);
+                    }
+                }
+            });
+            if ("@Model.UnionId" == "37") {
+                $.ajax({
+                    type: 'POST',
+                    url: '/Unions/GetUnionPaymentDetails',
+                    data: {
+                        clubId: clubId,
+                        seasonId: "@Model.SeasonId"
+                    },
+                    success: function(data) {
+                        if (data.Message) {
+                            $("#karateunionmodal").modal({ backdrop: 'static', keyboard: false });
+                            $("#modal-info-text").text(data.Message);
+                            $("#karateunionmodal").modal("show");
+                        }
+                    }
+                });
+            }
+        }
+
+        $('table').on('click',
+            'a[name="deletePlayer"]',
+            function(e) {
+                var isConfirmed = confirm('@Messages.DeleteConfirm');
+                var row = $(this).closest('tr');
+                if (isConfirmed) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/Players/DeletePlayer',
+                        data: {
+                            id: $(this).attr("data-id"),
+                            seasonId: "@Model.SeasonId"
+                        },
+                        success: function(data) {
+                            if (data.ErrorMessage == "") {
+                                row.remove();
+                            } else {
+                                alert(data.ErrorMessage);
+                            }
+                        }
+                    });
+                }
+            });
+
+        $('body').on('click',
+            '.unlock-link',
+            function() {
+                var $that = $(this);
+                var id = $that.data('id');
+
+                $.ajax({
+                    type: "GET",
+                    url: '@Url.Action("UnlockPlayers", "TeamPlayers")',
+                    data: { id: id },
+                    success: function(data) {
+                        if (data.result) {
+
+                            if (data.value == true) {
+                                $that.parent().find('.unlock-link-color').addClass('text-danger');
+                                $that.html('<i class="fa fa-lock"></i>');
+                            } else {
+                                $that.parent().find('.unlock-link-color').removeClass('text-danger');
+                                $that.html('<i class="fa fa-unlock"></i>');
+                            }
+                        } else {
+                            alert(data.message);
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        alert(xhr.status);
+                        alert(thrownError);
+                    }
+                });
+        });
+    function checkActiveStatus(id, isActive, isApproved, isRegistered) {
+        var $checkbox = $(event.target);
+        var needAccept = "@Model.CantChangeIfAccepted" == "True";
+        if (needAccept) {
+            if (isActive && isApproved) {
+                $checkbox.prop('checked', true);
+                $("#text-of-approval").text("@Messages.Approval_warning.Replace("{0}",Model.PlayerTypeString)");
+                $("#approval_warning").modal('show');
+            }
+            else if (isActive && isRegistered) {
+                $checkbox.prop('checked', true);
+                $("#text-of-approval").text("@Messages.Registered_warning.Replace("{0}", Model.PlayerTypeString)");
+                $("#approval_warning").modal('show');
+            }
+        }
+    }
+
+    function sendNotificationToPlayer(userId, teamId, seasonId) {
+        $.ajax({
+            url: "@Url.Action("SendNotification","TeamPlayers")",
+            type: "GET",
+            data: {
+                id: userId,
+                seasonId: seasonId,
+                teamId: teamId,
+                unionId: "@Model.UnionId",
+                clubId: "@Model.ClubId"
+            },
+            success: function (data) {
+                $("#userNotificationDialog_pl").html(data);
+                $("#userNotificationDialog").modal("show");
+            }
+        });
+    }
+
+</script>
+
+
+
+
+<script src="//cdn.datatables.net/plug-ins/1.10.15/sorting/custom-data-source/dom-text.js"></script>

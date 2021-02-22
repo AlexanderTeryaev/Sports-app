@@ -1,0 +1,58 @@
+﻿@model RouteViewModel
+
+<div class="modal-dialog" id="modal_window_@Model.Id">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">@Model.Route - @Messages.Ranks:</h4>
+        </div>
+        <div class="modal-body">
+            <table class="table table-bordered" id="rank_table_@Model.Id">
+                <thead>
+                    <tr>
+                        <th>@Messages.RankGym</th>
+                        <th>@Messages.FromAge</th>
+                        <th>@Messages.ToAge</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Ranks != null)
+                    {
+                        foreach (var rank in Model.Ranks)
+                        {
+                            <tr id="rank_@rank.Id">
+                                <td><input type="text" value="@rank.Rank" id="rankValue_@rank.Id" class="form-control" /></td>
+                                <td>
+                                    <input type="text" value="@(rank.FromAge?.ToShortDateString())" id="rankFromAge_@rank.Id" class="frm-date-wo-time form-control" />
+                                </td>
+                                <td>
+                                    <input type="text" value="@(rank.ToAge?.ToShortDateString())" id="rankToAge_@rank.Id" class="frm-date-wo-time form-control" />
+                                </td>
+                                <td>
+                                    <a data-controls-modal="#rankModal_@Model.Id" data-backdrop="static" data-keyboard="false"
+                                       href="#" class="@AppCss.Save" onclick="updateRank(@rank.Id)">
+                                    </a>
+                                </td>
+                                <td>
+                                    <a data-controls-modal="#rankModal_@Model.Id" data-backdrop="static" data-keyboard="false" href="#"
+                                       class="btn btn-danger" onclick="removeRank(@rank.Id, @Model.Id, @(rank.RelationCount > 0 ? "1" : "0"), '@Messages.RankDeleteConfirmation')">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    <tr>
+                        <td><input type="text" id="new_rank_@Model.Id" class="form-control" /></td>
+                        <td><input type="text" id="new_rank_AgeFrom_@Model.Id" class="frm-date-wo-time form-control" /></td>
+                        <td><input type="text" id="new_rank_AgeTo_@Model.Id" class="frm-date-wo-time form-control" /></td>
+                        <td><input type="button" onclick="addRank(@Model.Id)" value="@Messages.AddNewRank" class="btn btn-primary" /></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

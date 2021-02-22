@@ -1,0 +1,105 @@
+﻿@using Resources
+@using AppModel
+@using LogLigFront.Helpers
+@model List<IGrouping<string, CompetitionDisciplineRegistration>>
+<div class="modal-dialog modal-lg modal-result-custom-width">
+    <div class="modal-content" style="padding: 18px;">
+        <div class="print_id">
+            <div class="modal-header">
+                <a href="" onclick="printClick();" class="print_print_id btn btn-primary remove_print desktop-only" style="float:left;">
+                    <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+                </a>
+                <h4 class="disciplines-title">@Messages.StartList - @ViewBag.DisciplineName - @ViewBag.CompetitionName - @ViewBag.CompetitionDate</h4>
+            </div>
+            <style>
+                td, th {
+                    text-align: center;
+                }
+            </style>
+            <div class="modal-body">
+
+                @if (ViewBag.DisciplineRecord != null)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered" style="width:100%;">
+                            <thead>
+                                <tr style="background:royalblue;">
+                                    <th>@Messages.IsraeliRecord</th>
+                                    @if (!string.IsNullOrEmpty(ViewBag.DisciplineRecord.CompetitionRecord))
+                                    {
+                                        <th>@($"{Messages.CompetitionRecord}")</th>
+                                    }
+                                    <th>@Messages.IntentionalIsraeliRecord</th>
+                                    <th>@Messages.SeasonRecord</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>@ViewBag.DisciplineRecord.IsraeliRecord</td>
+                                @if (!string.IsNullOrEmpty(ViewBag.DisciplineRecord.CompetitionRecord))
+                                {
+                                    <td>@ViewBag.DisciplineRecord.CompetitionRecord</td>
+                                }
+                                <td>@ViewBag.DisciplineRecord.IntentionalIsraeliRecord</td>
+                                <td>@ViewBag.SeasonRecord</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <div class="table-responsive">
+                    <table class="table res-table" data-print-title="">
+                        <thead style="color:royalblue;">
+                            <tr>
+                                <th>@Messages.AthleteNumber</th>
+                                <th>@Messages.Heat</th>
+                                <th>@(ViewBag.Format == 10 || ViewBag.Format == 11 ? Messages.OrderRaw : Messages.Lane)</th>
+                                <th>@Messages.FullName</th>
+                                <th>@Messages.ClubName</th>
+                                @if (ViewBag.DisciplineRecord != null)
+                                {
+                                    <th>SB</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var group in Model)
+                            {
+                                string title = Messages.Heat + ": " + group.Key;
+                                <tr class="heat_tr">
+                                    <td colspan="@(ViewBag.DisciplineRecord != null ? "6" : "5")" style="color:royalblue;text-align: right;padding-top: 20px;padding-bottom: 10px;"><h4><b>@title</b></h4></td>
+                                </tr>
+                                foreach (var reg in group)
+                                {
+                                    var result = reg.CompetitionResult.FirstOrDefault();
+                                    <tr class="reorder" value="@group.Key">
+                                        @{
+                                            var athleteNumber = reg.User?.AthleteNumbers.FirstOrDefault(x => x.SeasonId == ViewBag.SeasonId)?.AthleteNumber1;
+                                        }
+                                        <td>@athleteNumber</td>
+                                        <td>@(result?.Heat ?? "")</td>
+                                        <td>@(result?.Lane.ToString() ?? "")</td>
+                                        <td>
+                                            <a href="@Url.Action("Details", "Players", new {id = reg.UserId, seasonId = ViewBag.SeasonId})"
+                                               style="margin: 8px 0; padding: 2px 12px; color: #000080;" target="_blank">@reg.User.FullName</a>
+                                        </td>
+                                        <td>@reg.Club.Name</td>
+                                        @if (ViewBag.DisciplineRecord != null)
+                                        {
+                                            <td>@UIHelpers.GetCompetitionDisciplineResultString(@reg.SeasonalBest, ViewBag.Format)</td>
+                                        }
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @section scripts
+                {
+                    <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+                }
+            </div>
+        </div>
+    </div>
+</div>

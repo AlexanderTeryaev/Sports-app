@@ -1,0 +1,508 @@
+﻿@model CompetitionDisciplineViewModel
+@{
+    var fieldsHidden = Model.UseAllProps || Model.IsSwimming || Model.IsRowing ? "" : "hidden";
+    var onlyathleticsOrSwim = Model.UseAllProps && !Model.IsSwimming ? "" : "hidden";
+    var onlyathleticsOrSwimOrRowing = ((Model.UseAllProps && !Model.IsSwimming) || Model.IsRowing) ? "" : "hidden";
+    var isAthletics = Model.UseAllProps && !Model.IsSwimming && !Model.IsRowing;
+    var fieldsHiddenClimbing = Model.UseAllProps || Model.IsSwimming || Model.IsRowing || Model.IsClimbing ? "" : "hidden";
+}
+<div class="modal-header">
+    <style>
+        .multiselect {
+            display: block;
+            width: 100%;
+            padding: 6px 12px;
+            font-size: 14px;
+            line-height: 1.42857143;
+            color: #555;
+            background-color: #fff;
+            background-image: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .selectBox {
+            position: relative;
+        }
+
+            .selectBox select {
+                width: 100%;
+                font-weight: bold;
+            }
+
+        .overSelect {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+        #checkboxes, #checkboxes_r, #checkboxes_boatTypes, #checkboxes_expertise {
+            display: none;
+        }
+
+            #checkboxes label, #checkboxes_r label, #checkboxes_boatTypes label, #checkboxes_expertise label {
+                display: block;
+            }
+
+                #checkboxes label:hover, #checkboxes_r label:hover, #checkboxes_boatTypes label:hover, #checkboxes_expertise label:hover{
+                    background-color: #1e90ff;
+                }
+    </style>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+    <h4 class="modal-title">
+        @(ViewBag.IsUpdate == true ? Messages.Update : Messages.AddNew)
+        @(Model.UseAllProps || Model.IsSwimming ? Messages.Discipline.ToLower() : (Model.IsRowing ? Messages.BoatsAndDistances : (Model.IsBicycle ? Messages.SubCompetition :Messages.Category.ToLower())))
+    </h4>
+</div>
+@using (Ajax.BeginForm(ViewBag.IsUpdate == true ? "UpdateDiscipline" : "CreateDiscipline", "Leagues",
+    new AjaxOptions { HttpMethod = "POST", OnSuccess = "updateData(data)" }))
+{
+    @Html.HiddenFor(m => m.Id)
+    @Html.HiddenFor(m => m.CompetitionId)
+    @Html.HiddenFor(m => m.IsRowing)
+    @Html.HiddenFor(m => m.IsSwimming)
+    @Html.HiddenFor(m => m.IsBicycle)
+    @Html.HiddenFor(m => m.IsClimbing)
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-sm-12">
+                @if (Model.IsBicycle)
+                { 
+                <div>
+                    @Messages.Expertise
+                </div>
+                }
+                @if (!Model.IsBicycle)
+                {
+                    if (!Model.IsRowing)
+                    {
+                        <div class="form-group" @fieldsHidden>
+                            <label class="control-label">@(Model.IsRowing ? Messages.BoatType : Messages.ChooseDiscipline)</label>
+                            @Html.DropDownListFor(m => m.DisciplineId, (SelectList)ViewBag.DisciplineList, Messages.Select, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.DisciplineId, $"\"{Messages.Discipline}\" {Messages.FieldIsRequired.ToLower()}")
+
+                        </div>
+                    }
+
+                    if (Model.IsRowing)
+                    {<div class="form-group">
+                            <label class="control-label">@Messages.BoatType</label>
+                            <div class="multiselect">
+                                <div class="selectBox" onclick="showBoatTypesCheckboxes()">
+                                    <text id="boatTypes_choose">@Messages.Expand</text>
+                                    <div class="overSelect"></div>
+                                </div>
+                                <input id="filter_boatTypes_box" class="form-control" type="text" style="display:none;" onchange="filter_boatTypes_selections(this);" />
+								<div id="checkboxes_boatTypes">
+									<label for="select_all_boatTypes">
+										<input type="checkbox" id="select_all_boatTypes" />@Messages.SelectAllPlayers
+									</label>
+									@foreach (var value in (SelectList)ViewBag.DisciplineList)
+									{
+										<label for="@value.Value">
+											<input type="checkbox" class="boatTypes_options" id="@value.Value" />@value.Text
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                            @Html.HiddenFor(x => x.BoatTypesId, "")
+                            @Html.ValidationMessageFor(m => m.BoatTypesId, $"\"{Messages.BoatType}\" {Messages.FieldIsRequired.ToLower()}")
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">@Messages.ChooseDistances</label>
+                            <div class="multiselect">
+                                <div class="selectBox" onclick="showDistanceCheckboxes()">
+                                    <text id="distance_choose">@Messages.Expand</text>
+                                    <div class="overSelect"></div>
+                                </div>
+                                <input id="filter_distance_box" class="form-control" type="text" style="display:none;" onchange="filter_category_selections(this);" />
+								<div id="checkboxes_r">
+									<label for="select_all_distances">
+										<input type="checkbox" id="select_all_distances" />@Messages.SelectAllPlayers
+                                    </label>
+                                    @foreach (var value in (SelectList)ViewBag.DistanceList)
+                                    {
+                                        <label for="@value.Value">
+                                            <input type="checkbox" class="distance_options" id="@value.Value" />@value.Text
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                            @Html.HiddenFor(x => x.DistanceId, "")
+                            @Html.ValidationMessageFor(m => m.DistanceId, $"\"{Messages.Distance}\" {Messages.FieldIsRequired.ToLower()}")
+                        </div>
+                    }
+
+                    <div class="form-group">
+                        <label class="control-label">@Messages.Category</label>
+                        <div class="multiselect">
+                            <div class="selectBox" onclick="showCheckboxes()">
+                                <text id="category_choose">@Messages.Expand</text>
+                                <div class="overSelect"></div>
+                            </div>
+                            <input id="filter_category_box" class="form-control" type="text" style="display:none;" onchange="filter_category_selections(this);" />
+							<div id="checkboxes">
+								<label for="select_all_categories">
+									<input type="checkbox" id="select_all_categories" />@Messages.SelectAllPlayers
+                                </label>
+                                @foreach (var value in (SelectList)ViewBag.CategoryList)
+                                {
+                                    <label for="@value.Value">
+                                        <input type="checkbox" class="category_options" id="@value.Value" />@value.Text
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                        @Html.HiddenFor(x => x.CategoryId, "")
+                        @Html.HiddenFor(x => x.UseAllProps)
+                        @Html.ValidationMessageFor(m => m.CategoryId, $"\"{Messages.Category}\" {Messages.FieldIsRequired.ToLower()}")
+                    </div>
+
+                    if (!Model.IsRowing)
+                    {
+                        <div class="form-group" @fieldsHiddenClimbing>
+                            <label class="control-label">@Messages.MaxSportsmen</label>
+                            @Html.TextBoxFor(m => m.MaxSportsmen, new { @class = "form-control", type = "number", min = "1" })
+                        </div>
+                    }
+
+                    <div class="form-group" @onlyathleticsOrSwim>
+                        <label class="control-label">@Messages.MinResult</label>
+                        @Html.TextBoxFor(m => m.MinResult, new { @class = "form-control", type = "number", min = "1.0", step = "0.1" })
+                    </div>
+                    if (isAthletics && ViewBag.IsUpdate == true)
+                    {
+                        <div class="form-group" @fieldsHidden>
+                            <label class="control-label">@Messages.CompetitionRecord</label>
+                            @Html.TextBoxFor(m => m.CompetitionRecord, new { @class = "form-control", format = Model.Format })
+                        </div>
+                        <div class="form-group" @fieldsHidden>
+                            <label class="control-label">@Messages.IncludeRecordsInStartList</label>
+                            @Html.CheckBoxFor(m => m.IncludeRecordInStartList, new { @name = "IncludeRecordInStartList", @id = "IncludeRecordInStartList" })
+                            @Html.ValidationMessageFor(m => m.IsResultsManualyRanked)
+                        </div>
+                    }
+                    <div class="form-group" @onlyathleticsOrSwimOrRowing>
+                        <label class="control-label">@Messages.StartTime</label>
+                        @{ var StartTime = Model.StartTime.HasValue ? Model.StartTime : null; }
+                        @Html.TextBoxFor(m => StartTime, new { @class = "form-control frm-date", @name = "StartTime", @id = "StartTime" })
+                        @Html.ValidationMessageFor(m => m.StartTime)
+                    </div>
+                    <div class="form-group" @onlyathleticsOrSwim>
+                        <label class="control-label">@Messages.IsManualRanking</label>
+                        @Html.CheckBoxFor(m => m.IsResultsManualyRanked, new { @name = "IsResultsManualyRanked", @id = "IsResultsManualyRanked" })
+                        @Html.ValidationMessageFor(m => m.IsResultsManualyRanked)
+                    </div>
+                }
+                else
+                {
+                    <div class="form-group">
+                        <label class="control-label">@Messages.Choose</label>
+                        <div class="multiselect">
+                            <div class="selectBox" onclick="showExpertiseCheckboxes()">
+                                <text id="expertise_choose">@Messages.Expand</text>
+                                <div class="overSelect"></div>
+                            </div>
+                            <input id="filter_expertise_box" class="form-control" type="text" style="display:none;" onchange="filter_expertise_selections(this);" />
+                            <div id="checkboxes_expertise">
+                                <label for="select_all_expertise">
+                                    <input type="checkbox" id="select_all_expertise" />@Messages.SelectAllPlayers
+                                    @*<text id="select_all_expertise"></text>*@
+                                </label>
+                                @foreach (var value in (SelectList)ViewBag.DisciplineExpertiseList)
+                                {
+                                    <label for="@value.Value">
+                                        <input type="checkbox" class="expertise_options" id="@value.Value" />@value.Text
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                        @Html.HiddenFor(x => x.DisciplineExpertiseId, "")
+                        @Html.ValidationMessageFor(m => m.DisciplineExpertiseId, $"\"{Messages.Expertise}\" {Messages.FieldIsRequired.ToLower()}")
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">@Messages.Save <i id="spinner" class="@AppCss.Loading hidden"></i></button>
+        <a class="btn btn-danger" data-dismiss="modal">@Messages.Close</a>
+    </div>
+}
+
+<script>
+
+    @if (ViewBag.IsUpdate == true)
+    {
+        if (!Model.IsBicycle)
+        {
+            @:$('document').ready(function () { $('#CategoryId').val('@Model.CategoryId'); $("input.category_options#@Model.CategoryId").prop("checked", true); $('#DistanceId').val('@Model.DistanceId'); @Html.Raw(string.IsNullOrWhiteSpace(Model.DistanceId) ? "" : HttpUtility.HtmlDecode($"$('input.distance_options#{Model.DistanceId.ToString()}').prop('checked', true);")) $('#BoatTypesId').val('@Model.DisciplineId'); @Html.Raw(Model.DisciplineId == null ? "" : HttpUtility.HtmlDecode($"$('input.boatTypes_options#{Model.DisciplineId.ToString()}').prop('checked', true);")) });
+        }
+        else
+        {
+            @:$('document').ready(function () { $('#DisciplineExpertiseId').val('@Model.DisciplineExpertiseId'); $("input.expertise_options#@Model.DisciplineExpertiseId").prop("checked", true); });
+        }
+    }
+    
+
+    $(".frm-date").datetimepicker({
+        format: 'd/m/Y H:i',
+        formatTime: 'H:i',
+        formatDate: 'd/m/Y',
+
+        step: 15,
+        closeOnDateSelect: false,
+        closeOnTimeSelect: true,
+        onChangeDateTime: function () {
+            $(this).data("input").trigger("changedatetime.xdsoft");
+            }
+        });
+        var selected_categories = [];
+        var selected_distances = [];
+        var selected_boatTypes = [];
+
+    $.validator.setDefaults({ ignore: '' });
+
+        function updateCategorySelection() {
+            selected_categories = [];
+        $(".category_options:checked").each(function (index, ele) {
+                selected_categories.push(ele.id);
+            });
+        $("input[name=CategoryId]").attr('value', selected_categories);
+    }
+
+    function updateDistanceSelection() {
+        selected_distances = [];
+        $(".distance_options:checked").each(function (index, ele) {
+            selected_distances.push(ele.id);
+        });
+        $("input[name=DistanceId]").attr('value', selected_distances);
+    }
+
+    function updateBoatTypesSelection() {
+        selected_boatTypes = [];
+        $(".boatTypes_options:checked").each(function (index, ele) {
+            selected_boatTypes.push(ele.id);
+        });
+        $("input[name=BoatTypesId]").attr('value', selected_boatTypes);
+    }
+
+    function updateExpertiseSelection() {
+        selected_expertise = [];
+        $(".expertise_options:checked").each(function (index, ele) {
+            selected_expertise.push(ele.id);
+        });
+        $("input[name=DisciplineExpertiseId]").attr('value', selected_expertise);
+    }
+
+    $(".category_options").click(function (event) {
+        updateCategorySelection();
+    });
+    $(".distance_options").click(function (event) {
+        updateDistanceSelection();
+    });
+    $(".boatTypes_options").click(function (event) {
+        updateBoatTypesSelection();
+    });
+    $(".expertise_options").click(function (event) {
+        updateExpertiseSelection();
+    });
+
+    $("#select_all_categories").click(function (event) {
+        var checked = $(".category_options").prop("checked");
+        if (checked)
+            $(".category_options").prop("checked", false);
+        else
+            $(".category_options").prop("checked", true);
+        updateCategorySelection();
+        });
+
+    $("#select_all_distances").click(function (event) {
+        var checked = $(".distance_options").prop("checked");
+        if (checked)
+            $(".distance_options").prop("checked", false);
+        else
+            $(".distance_options").prop("checked", true);
+        updateDistanceSelection();
+        });
+    $("#select_all_boatTypes").click(function (event) {
+        var checked = $(".boatTypes_options").prop("checked");
+        if (checked)
+            $(".boatTypes_options").prop("checked", false);
+        else
+            $(".boatTypes_options").prop("checked", true);
+        updateBoatTypesSelection();
+        });
+    $("#select_all_expertise").click(function (event) {
+        var checked = $("#select_all_expertise").prop("checked");
+        if (!checked)
+            $(".expertise_options").prop("checked", false);
+        else
+            $(".expertise_options").prop("checked", true);
+        updateExpertiseSelection();
+        });
+
+        var expanded = false;
+        var expandedDistances = false;
+        var expandedBoatTypes = false;
+        var expandedExpetise = false;
+
+        function showCheckboxes() {
+            var checkboxes = document.getElementById("checkboxes");
+            if (!expanded) {
+                checkboxes.style.display = "block";
+            $("#category_choose").text("@Messages.Collapse");
+            $("#filter_category_box").show();
+                expanded = true;
+            } else {
+                checkboxes.style.display = "none";
+            $("#category_choose").text("@Messages.Expand");
+            $("#filter_category_box").hide();
+                expanded = false;
+            }
+        }
+
+        function showDistanceCheckboxes() {
+            var checkboxes = document.getElementById("checkboxes_r");
+            if (!expandedDistances) {
+                checkboxes.style.display = "block";
+            $("#distance_choose").text("@Messages.Collapse");
+            $("#filter_distance_box").show();
+                expandedDistances = true;
+            } else {
+                checkboxes.style.display = "none";
+            $("#distance_choose").text("@Messages.Expand");
+            $("#filter_distance_box").hide();
+                expandedDistances = false;
+            }
+        }
+
+        function showBoatTypesCheckboxes() {
+            var checkboxes = document.getElementById("checkboxes_boatTypes");
+            if (!expandedBoatTypes) {
+                checkboxes.style.display = "block";
+            $("#boatTypes_choose").text("@Messages.Collapse");
+            $("#filter_boatTypes_box").show();
+                expandedBoatTypes = true;
+            } else {
+                checkboxes.style.display = "none";
+            $("#boatTypes_choose").text("@Messages.Expand");
+            $("#filter_boatTypes_box").hide();
+                expandedBoatTypes = false;
+            }
+        }
+
+        function showExpertiseCheckboxes () {
+            var checkboxes = document.getElementById("checkboxes_expertise");
+            if (!expandedExpetise) {
+                checkboxes.style.display = "block";
+            $("#expertise_choose").text("@Messages.Collapse");
+            $("#filter_expertise_box").show();
+                expandedExpetise = true;
+            } else {
+                checkboxes.style.display = "none";
+            $("#expertise_choose").text("@Messages.Expand");
+            $("#filter_expertise_box").hide();
+                expandedExpetise = false;
+            }
+        }
+
+        function filter_category_selections() {
+            var str = $("#filter_category_box").val();
+            if (str == undefined || str.length < 2) {
+            $("label").has('input.category_options').show();
+            } else {
+            $("label").has('input.category_options').hide();
+            $("label:contains('" + str + "')").has('input.category_options').show();
+            }
+        }
+
+        function filter_distance_selections() {
+            var str = $("#filter_distance_box").val();
+            if (str == undefined || str.length < 2) {
+            $("label").has('input.distance_options').show();
+            } else {
+            $("label").has('input.distance_options').hide();
+            $("label:contains('" + str + "')").has('input.distance_options').show();
+            }
+        }
+
+        function filter_boatTypes_selections() {
+            var str = $("#filter_boatTypes_box").val();
+            if (str == undefined || str.length < 2) {
+            $("label").has('input.boatTypes_options').show();
+            } else {
+            $("label").has('input.boatTypes_options').hide();
+            $("label:contains('" + str + "')").has('input.boatTypes_options').show();
+            }
+        }
+
+        function filter_boatTypes_selections() {
+            var str = $("#filter_expertise_box").val();
+            if (str == undefined || str.length < 2) {
+            $("label").has('input.expertise_options').show();
+            } else {
+            $("label").has('input.expertise_options').hide();
+            $("label:contains('" + str + "')").has('input.expertise_options').show();
+            }
+        }
+
+    $("#form0").bind("keypress", function (e) {
+            if (e.keyCode == 13) {
+                return false;
+            }
+        });
+
+    $("#filter_category_box").bind("keypress", function (e) {
+            if (e.keyCode == 13) {
+                filter_category_selections();
+            }
+        });
+    $("#filter_distance_box").bind("keypress", function (e) {
+            if (e.keyCode == 13) {
+                filter_distance_selections();
+            }
+        });
+    $("#filter_boatTypes_box").bind("keypress", function (e) {
+            if (e.keyCode == 13) {
+                filter_boatTypes_selections();
+            }
+        });
+    $("#filter_expertise_box").bind("keypress", function (e) {
+            if (e.keyCode == 13) {
+                filter_boatTypes_selections();
+            }
+        });
+
+
+        function updateData(data) {
+            if (data.Success == true) {
+            $("#create_competition_discipline_content").empty();
+
+            $.ajax({
+                url: "@Url.Action("Disciplines", "Leagues", new { leagueId = ViewBag.CompetitionId })",
+                type: "GET",
+                beforeSend: function () {
+                    $("#spinner").show();
+                    },
+                success: function (data) {
+                    $("#disciplines").html(data);
+                    $("#spinner").hide();
+                    $("#create_competition_discipline_content").modal("hide");
+                    },
+                error: function (xhr, status, error) {
+                        console.log("fail");
+                    }
+                });
+
+    }
+        else {
+            $("#spinner").show();
+            $("#create_competition_discipline_content").html(data);
+            $("#spinner").hide();
+    }
+    }
+    applyFormatFieldsRestriction();
+</script>

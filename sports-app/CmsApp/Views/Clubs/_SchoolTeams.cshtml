@@ -1,0 +1,201 @@
+﻿@model SchoolTeamsModel
+
+@using (Html.BeginForm(Model.IsCamp ? "ExportCampTeamsList" : "ExportSchoolTeamsList", "Clubs",
+                            new
+                            {
+                                clubId = Model.ClubId,
+                                seasonId = Model.SeasonId,
+                                type = Model.IsCamp ? 1 : 0
+                            },
+                            FormMethod.Post,
+                            new
+                            {
+                                id = Model.IsCamp ? "export_camp_teams" : "export_school_teams"
+                            })) { }
+
+@if (Model.CanManageSchools)
+{
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#@(Model.IsCamp ? "addCampModal" : "addSchoolModal")">
+        <span class="glyphicon glyphicon-plus"></span>
+        @(Model.IsCamp ? Messages.AddCamp : Messages.AddSchool)
+    </button>
+
+    <div class="modal fade" id="@(Model.IsCamp ? "addCampModal" : "addSchoolModal")" tabindex="-1" role="dialog" aria-labelledby="@(Model.IsCamp ? "addCampModalLabel" : "addSchoolModalLabel")">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                @Html.Partial("_AddSchool", new AddSchoolModel {ClubId = Model.ClubId, SeasonId = Model.SeasonId, IsCamp = Model.IsCamp})
+            </div>
+        </div>
+    </div>
+    if (Model.IsCamp)
+    {
+        <a href="#" role="button" class="btn btn-info export" id="export_teams" style="margin-left:5px;" onclick="$('#export_camp_teams').submit()">
+            @Messages.ExportTeamsToExcel
+        </a>
+    }
+    else
+    {
+        <a href="#" role="button" class="btn btn-info export" id="export_teams" style="margin-left:5px;" onclick="$('#export_school_teams').submit()">
+            @Messages.ExportTeamsToExcel
+        </a>
+    }
+}
+<style>
+    .changeBackgroundOnHover {
+        cursor: move;
+    }
+
+        .changeBackgroundOnHover:hover {
+            background-color: #ffffff;
+        }
+     
+</style>
+
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" >
+    @foreach (var school in Model.Schools)
+    {
+        <div class="panel panel-default" data-isCamp ="@Model.IsCamp" data-id="@school.Id">
+            <div class="panel-heading" role="tab" id="@(Model.IsCamp ? $"heading-camp-{school.Id}" : $"heading-school-{school.Id}")">
+                <div class="modal fade" id="@(Model.IsCamp ? $"addTeamToCamp-{school.Id}-Modal" : $"addTeamToSchool-{school.Id}-Modal")" tabindex="-1" role="dialog" aria-labelledby="@(Model.IsCamp ? $"addTeamToCamp-{school.Id}-ModalLabel" : $"addTeamToSchool-{school.Id}-ModalLabel")">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            @Html.Partial("_AddTeamToSchool", new AddTeamToSchoolModel {SchoolId = school.Id, AvailableTeams = Model.AvailableTeams, IsCamp = Model.IsCamp})
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="panel-title">
+                    <a role="button" class="collapsed" aria-expanded="false" data-toggle="collapse" @*data-parent="#accordion"*@ href="#@(Model.IsCamp ? $"collapse-camp-{school.Id}-teams" : $"collapse-school-{school.Id}-teams")" 
+                       aria-controls="@(Model.IsCamp ? $"#collapse-camp-{school.Id}-teams" : $"#collapse-school-{school.Id}-teams")">
+                        @school.Name
+                    </a>
+                    
+                    @if (Model.CanManageSchools)
+                    {
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#@(Model.IsCamp ? $"addTeamToCamp-{school.Id}-Modal" : $"addTeamToSchool-{school.Id}-Modal")">
+                            <span class="glyphicon glyphicon-plus"></span>
+                            @(Model.IsCamp ? Messages.AddTeamToCamp : Messages.AddTeamToSchool)
+                        </button>
+
+                        using (Html.BeginForm("RemoveSchool", "Clubs", new {id = school.Id}, FormMethod.Post, new {@style = "display: inline-block;"}))
+                        {
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('@Messages.DeleteConfirm');">
+                                <span class="glyphicon glyphicon-trash"></span>
+                                @(Model.IsCamp ? Messages.RemoveCamp : Messages.RemoveSchool)
+                            </button>
+                        }
+                    }
+                </h4>
+            </div>
+            <div id="@(Model.IsCamp ? $"collapse-camp-{school.Id}-teams" : $"collapse-school-{school.Id}-teams")" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="@(Model.IsCamp ? $"heading-camp-{school.Id}" : $"heading-school-{school.Id}")">
+                <div class="panel-body">
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>@Messages.Team</th>
+                            <th>@Messages.Players</th>
+                            <th></th>
+                            @if (Model.CanManageSchools)
+                            {
+                                <th></th>
+                            }
+                        </tr>
+                        </thead>
+                        <tbody id="sortableSchool_@school.Id">
+
+                        @foreach (var team in school.SchoolTeams.OrderBy(x=>x.Team.SortOrder))
+                        {
+                            <tr class="changeBackgroundOnHover" data-school-id="@school.Id" data-id="@team.Id">
+                                <td>@team.TeamId</td>
+                                <td>@(team.Team.TeamsDetails.FirstOrDefault(x => x.SeasonId == Model.SeasonId)?.TeamName ?? team.Team.Title)</td>
+                                <td>@(team.Team.TeamsPlayers.Count(c => !c.User.IsArchive && c.User.IsActive && c.SeasonId == Model.SeasonId))</td>
+                                <td>
+                                    <a href="@Url.Action("Edit", "Teams", new {id = team.TeamId, clubId = Model.ClubId, seasonId = Model.SeasonId})" class="btn btn-primary edit-team">@Messages.Details</a>
+                                </td>
+                                @if (Model.CanManageSchools)
+                                {
+                                    <td>
+                                        @if (User.IsInAnyRole(AppRole.Admins, AppRole.Editors, AppRole.Workers))
+                                        {
+                                            @Ajax.ActionLink(" ", "RemoveFromSchool", "Clubs",
+                                                new {clubId = Model.ClubId, schoolId = school.Id, teamId = team.TeamId, seasonId = Model.SeasonId, isCamp = Model.IsCamp},
+                                                new AjaxOptions {HttpMethod = "POST", Confirm = Messages.DeleteConfirm, UpdateTargetId = Model.IsCamp ? "campTeams" : "schoolTeams", InsertionMode = InsertionMode.Replace},
+                                                new {@class = AppCss.Delete})
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@foreach (var school in Model.Schools)
+{
+    var elementId = $"sortableSchool_{school.Id}";
+    <script>
+        $(function () {
+            $('#@elementId').sortable({
+                items: "tr",
+                cursor: 'move',
+                helper: fixHelper,
+                update: function (event, ui) {
+
+                    var schoolTeamIds = [];
+                    var childs = event.target.children;
+                    var schoolId;
+                    $.each(childs, function (key, elem) {
+                        var id = $(elem).attr('data-id');
+                        schoolTeamIds.push(id);
+                        schoolId = $(elem).attr('data-school-id');
+                    });
+
+                    $.post("/Clubs/ChangeTeamInSchoolsOrder", {
+                        schoolId: schoolId, schoolTeamIds: schoolTeamIds
+                    }, function(result) {
+                        if (result.Success) {
+                        }
+                    });
+                }
+            }).disableSelection();
+        });
+    </script>    
+}
+<script>
+    // Return a helper with preserved width of cells
+    var fixHelper = function (e, ui) {
+        ui.children().each(function () {
+            $(this).width($(this).width());
+        });
+        return ui;
+    };
+   
+    
+    
+    $(function () {
+        $('#accordion').sortable({
+            items: ".panel-default",
+            cursor: 'move',
+            helper: fixHelper,
+            update: function (event, ui) {
+
+                var schoolIds = [];
+                var childs = event.target.children;
+                var isCamp;
+                $.each(childs, function (key, elem) {
+                    var id = $(elem).attr('data-id');
+                    schoolIds.push(id);
+                    isCamp = $(elem).attr('data-isCamp');
+                });
+                $.post("/Clubs/ChangeSchoolsOrder", { clubId: @ViewBag.ClubId, schoolIds: schoolIds, seasonId: @ViewBag.SeasonId, isCamp : isCamp }, function (result) {
+                    if (result.Success) {
+                    }
+                });
+            }
+        }).disableSelection();
+    });
+</script>

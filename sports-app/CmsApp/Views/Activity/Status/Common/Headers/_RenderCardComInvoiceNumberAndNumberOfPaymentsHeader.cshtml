@@ -1,0 +1,11 @@
+﻿@model IEnumerable<ActivityRegistrationItem>
+
+@if (Model.Any(x => x.CardComInvoiceNumber != null))
+{
+    <th>@Messages.Activity_Status_CardComInvoiceNumber</th>
+}
+
+@if (Model.Any(x => x.CardComNumberOfPayments != null))
+{
+    <th>@Messages.Activity_Status_CardComNumberOfPayments</th>
+}

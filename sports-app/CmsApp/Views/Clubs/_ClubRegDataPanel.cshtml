@@ -1,0 +1,46 @@
+﻿@model ClubRegistration
+
+<div>
+    <label class="control-label">@Messages.Activity_Name:</label>
+    <span class="label label-primary" style="font-size: 100%;">@Model.ActivityName</span>
+ <!--  <span class="label label-info">@(Model.IsAutomatic ? Messages.Activity_Type_BuiltIn : Messages.Activity_Type_Custom)</span>  --> 
+</div>
+<div style="margin-top: 10px;">
+    @if (Model.CustomFields?.Any() == true)
+    {
+        <label class="control-label">@Messages.Activity_CustomFields:</label>
+        <div class="well" style="display: inline-grid;">
+            @foreach (var customField in Model.CustomFields)
+            {
+                var formField = Model.FormControls?.FirstOrDefault(x => x.PropertyName == customField.PropertyName);
+                if (formField != null)
+                {
+                    <p>
+                        <label class="control-label">
+                            @(Model.Culture != CultEnum.He_IL ? formField.LabelTextEn : formField.LabelTextHeb):
+                        </label>
+                        
+                        @if (string.IsNullOrWhiteSpace(customField.Value))
+                        {
+                            <span></span>
+                        }
+                        else
+                        {
+                            if (customField.Type == ActivityFormControlType.CustomFileUpload)
+                            {
+                                <a target="_blank"
+                                   href="@($"{GlobVars.ContentPath}/publishedactivityforms/{customField.Value}")">
+                                    <span class="glyphicon glyphicon-new-window"></span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span>@customField.Value</span>
+                            }
+                        }
+                    </p>
+                }
+            }
+        </div>
+    }
+</div>

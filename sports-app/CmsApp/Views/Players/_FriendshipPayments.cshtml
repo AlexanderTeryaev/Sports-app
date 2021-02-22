@@ -1,0 +1,107 @@
+﻿@model BicycleFriendshipPaymentsModel
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">@Messages.PlayerProfile_FriendshipPaymentsTab</h3>
+        </div>
+        <div class="panel-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>@Messages.ClubName</th>
+                        <th>@Messages.TeamName</th>
+                        <th>@Messages.Season</th>
+                        <th>@Messages.FriendshipPrices</th>
+                        <th>@Messages.ChipPrices</th>
+                        <th>@Messages.UciPrice</th>
+                        <th>@Messages.Total</th>
+                        <th>@Messages.LogLigPaymentIdentifier</th>
+
+                        @if (Model.Payments.Any(x => x.OfficeGuyCustomerId != null))
+                        {
+                            <th>@Messages.OfficeGuy_CustomerId</th>
+                        }
+                        @if (Model.Payments.Any(x => x.OfficeGuyPaymentId != null))
+                        {
+                            <th>@Messages.OfficeGuy_PaymentIdentifier</th>
+                        }
+                        @if (Model.Payments.Any(x => x.OfficeGuyDocumentNumber != null))
+                        {
+                            <th>@Messages.OfficeGuy_DocumentNumber</th>
+                        }
+                        
+                        <th>@Messages.CreatedBy</th>
+                        <th>@Messages.DateCreated</th>
+                        <th>@Messages.DatePaid</th>
+
+                        @if (Model.Payments.Any(x => !string.IsNullOrWhiteSpace(x.Comment)))
+                        {
+                            <th>@Messages.Comment</th>
+                        }
+                        @if (Model.Payments?.Any(x => x.Discarded) == true)
+                        {
+                            <th>@Messages.Payment_DiscardedBy</th>
+                            <th>@Messages.Payment_DiscardDate</th>
+                        }
+                    </tr>
+                </thead>
+
+                <tbody>
+                @if (Model.Payments?.Any() == true)
+                {
+                    foreach (var payment in Model.Payments)
+                    {
+                        <tr style="@(payment.Discarded ? "background-color: #ffd2d2;" : string.Empty)">
+                            <td>@payment.ClubName</td>
+                            <td>@payment.TeamName</td>
+                            <td>@payment.SeasonName</td>
+
+                            <td>@payment.Prices.FriendshipPrice</td>
+                            <td>@payment.Prices.ChipPrice</td>
+                            <td>@payment.Prices.UciPrice</td>
+                            <td>@payment.Prices.Total</td>
+
+                            <td>@(payment.LogLigPaymentId.ToString().ToUpper())</td>
+
+                            @if (Model.Payments.Any(x => x.OfficeGuyCustomerId != null))
+                            {
+                                <td>@payment.OfficeGuyCustomerId</td>
+                            }
+                            @if (Model.Payments.Any(x => x.OfficeGuyPaymentId != null))
+                            {
+                                <td>@payment.OfficeGuyPaymentId</td>
+                            }
+                            @if (Model.Payments.Any(x => x.OfficeGuyDocumentNumber != null))
+                            {
+                                <td>@payment.OfficeGuyDocumentNumber</td>
+                            }
+                            
+                            <td>@payment.CreatedByName</td>
+                            <td>@payment.DateCreated</td>
+                            <td>@payment.DatePaid</td>
+
+                            @if (Model.Payments.Any(x => !string.IsNullOrWhiteSpace(x.Comment)))
+                            {
+                                <td>@payment.Comment</td>
+                            }
+
+                            @if (Model.Payments?.Any(x => x.Discarded) == true)
+                            {
+                                <td>@payment.DiscardedByName</td>
+                                <td>@(payment.DiscardDate?.ToString())</td>
+                            }
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="100" style="text-align: center;">
+                            <i>@Messages.NoDataFound</i>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>

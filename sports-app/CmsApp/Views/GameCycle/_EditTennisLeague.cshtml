@@ -1,0 +1,343 @@
+﻿@using AppModel;
+@model TennisLeagueViewModel
+@{
+    bool isHebrew = Request.IsHebrew();
+    string pullLeft = !isHebrew ? "pull-left" : "pull-right";
+    string pullRigth = !isHebrew ? "pull-right" : "pull-left";
+    var numberOfGames = Model.GameSettings.PairsAsLastGame ? Model.GameSettings.NumberOfGames + 1 : Model.GameSettings.NumberOfGames;
+}
+<style>
+    .side-bordered {
+        border-left: 1px solid gray;
+        border-right: 1px solid gray;
+    }
+
+    .bottom-bordered {
+        border-bottom: 1px solid gray;
+    }
+</style>
+<div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" id="gameCycleIdHidden" value="@Model.GameCycleId" />
+        <input type="hidden" id="numberOfGames" value="@numberOfGames" />
+        <input type="hidden" id="bestOfSets" value="@Model.GameSettings.BestOfSets" />
+        <input type="hidden" id="seasonIdHidden" value="@ViewBag.SeasonId" />
+        <input type="hidden" id="tech-tennis-home" value="@Model.GameSettings.TechWinHomePoints" />
+        <input type="hidden" id="tech-tennis-guest" value="@Model.GameSettings.TechWinGuestPoints" />
+        <div class="container-fluid">
+            <div class="row" style="background-color:lightgray; height:30px;">
+                <div class="col-lg-4 col-sm-4" style="text-align:center"><text><b>@Model.HomeTeam.TeamName</b></text></div>
+                <div class="col-lg-4 col-sm-4" style="text-align:center"><text><b>@Messages.Results</b></text></div>
+                <div class="col-lg-4 col-sm-4" style="text-align:center"><text><b>@Model.GuestTeam.TeamName</b></text></div>
+            </div>
+            @for (int i = 0; i < Model.GameSettings.NumberOfGames; i++)
+            {
+                var gameInformation = Model.Games.FirstOrDefault(g => g.PositionIndex == i);
+                var homePlayersList = new SelectList(Model.HomeTeam.RegisteredPlayersList, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), gameInformation?.HomeInformation?.PlayerId);
+                var guestPlayersList = new SelectList(Model.GuestTeam.RegisteredPlayersList, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), gameInformation?.GuestInformation?.PlayerId);
+
+                <div class="row bottom-bordered game-row" style="margin-top:10px;" data-set="@(i + 1)" data-type="default" id="game_row_@(i+1)">
+                    <div class="col-lg-3 col-sm-3" id="home_player_@(i + 1)">
+                        <div class="row">
+                            <div class="col-lg-12 text-center">
+                                <label class="control-label">@Messages.Single @(i + 1)</label>
+                                @Html.DropDownList("HomePlayerId", homePlayersList,Messages.Select, new
+                               {
+                                   @id = $"homePlayerId_{i+1}",
+                                   @class = "form-control not-pair-select player-list",
+                                   data_team = Model.HomeTeam.TeamId,
+                                   data_type = "default",
+                                   data_set = i+1
+                               })
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:30px;">
+                            <div class="col-lg-12">
+                                <label class="checkbox-inline">
+                                    @if (gameInformation?.GuestInformation?.IsTechnicalWinner == true)
+                                    {
+                                        @Html.CheckBox("IsTechnicalWinner",gameInformation?.HomeInformation?.IsTechnicalWinner ?? false, new
+                                   {
+                                       @class = "technical_winner",
+                                       data_type = "home",
+                                       data_set = i + 1,
+                                       id = $"home_tech_winner_{i + 1}",
+                                       disabled = "disabled",
+                                       onclick = "tennisGame.setTechWinner(event);"
+                                   })
+                                    }
+                                    else
+                                    {
+                                        @Html.CheckBox("IsTechnicalWinner",gameInformation?.HomeInformation?.IsTechnicalWinner ?? false, new
+                                   {
+                                       @class = "technical_winner",
+                                       data_type = "home",
+                                       data_set = i + 1,
+                                       id = $"home_tech_winner_{i + 1}",
+                                       onclick = "tennisGame.setTechWinner(event);"
+                                   })
+                                    }
+
+                                    @Messages.TechWin
+                                </label>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-sm-6 side-bordered" id="results_@(i + 1)">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                @for (int j = 0; j < Model.GameSettings.BestOfSets; j++)
+                                {
+                                    var game = gameInformation != null && gameInformation.Sets.Count > 0 && j < Model.GameSettings.BestOfSets ? gameInformation.Sets[j] : null;
+                                    bool isTieBreak = game == null? false : game.IsTieBreak;
+                                    string isTieBreakComboboxChecked = isTieBreak ? "checked" : "";
+                                    bool isBreakTieGame = (Model.GameSettings.BestOfSets == j + 1);
+                                    string sm_col_width = "5";
+                                    string lg_col_width = "5";
+                                    if (isBreakTieGame)
+                                    {
+                                        sm_col_width = "4";
+                                        lg_col_width = "4";
+                                    }
+                                    <div class="row results-row" style="margin-bottom:10px;">
+                                        <div class="col-lg-@(lg_col_width) col-sm-@(sm_col_width) edit_tenis_offset"><input data-set="@(i + 1)" type="number" min="0" value="@(game?.HomeScore)" id="home_score_game_@(i + 1)_set_@(j + 1)" class="form-control score-value home-score" /></div>
+                                        <div class="col-lg-1 col-sm-1"><text style="font-size:18px;"><b>:</b></text></div>
+                                        <div class="col-lg-@(lg_col_width) col-sm-@(sm_col_width)"><input data-set="@(i + 1)" type="number" value="@(game?.GuestScore)" min="0" id="guest_score_game_@(i + 1)_set_@(j + 1)" class="form-control score-value guest-score" /></div>
+                                        @if (isBreakTieGame)
+                                        {
+                                            <div class="col-lg-2 col-sm-2" style="padding: 6px 0px;text-align: center;"><input type="checkbox" id="tie_break_id" name="tie_break" value="1" @(isTieBreakComboboxChecked)><label for="tie_break_id">T-B</label></div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:25px;margin-bottom:15px;">
+                            <div class="col-lg-12 col-sm-12" id="button_div_@(i+1)">
+                                @if (gameInformation?.IsEnded == true)
+                                {
+                                    <button type="button" class="btn btn-danger @pullLeft reset-game-btn" name="event-input" data-set="@(i + 1)" id="reset-game-@(i+1)">
+                                        @Messages.ResetGame
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-primary @pullLeft end-game-btn" name="event-input" data-set="@(i + 1)" id="end-game-@(i+1)">
+                                        @Messages.EndGame
+                                    </button>
+                                }
+                                <button type="button" class="@AppCss.Save save-score-btn @pullRigth" data-set="@(i + 1)" id="save-score-@(i + 1)" disabled></button>
+                            </div>
+                        </div>
+                        <div style="display:none;" class="row alert alert-warning text-center" id="alert-message-@(i + 1)">
+                            @Messages.TennisLeagueGameSelectPlayers
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-3" id="guest_player_@(i+1)">
+                        <div class="row">
+                            <div class="col-lg-12 text-center">
+                                <label class="control-label">@Messages.Single @(i + 1)</label>
+                                @Html.DropDownList("GuestPlayerId", guestPlayersList, Messages.Select, new
+                           {
+                               @id = $"guestPlayerId_{i + 1}",
+                               @class = "form-control not-pair-select player-list",
+                               data_team = Model.GuestTeam.TeamId,
+                               data_type = "default",
+                               data_set = i+1
+                           })
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:30px;">
+                            <div class="col-lg-12">
+                                <label class="checkbox-inline">
+                                    @if (gameInformation?.HomeInformation?.IsTechnicalWinner == true)
+                                    {
+                                        @Html.CheckBox("IsTechnicalWinner",gameInformation?.GuestInformation?.IsTechnicalWinner ?? false, new
+                                   {
+                                       @class = "technical_winner",
+                                       data_type = "guest",
+                                       data_set = i + 1,
+                                       id = $"guest_tech_winner_{i + 1}",
+                                       disabled = "disabled",
+                                       onclick = "tennisGame.setTechWinner(event);"
+                                   })
+                                    }
+                                    else
+                                    {
+                                        @Html.CheckBox("IsTechnicalWinner",gameInformation?.GuestInformation?.IsTechnicalWinner ?? false, new
+                                   {
+                                       @class = "technical_winner",
+                                       data_type = "guest",
+                                       data_set = i + 1,
+                                       id = $"guest_tech_winner_{i + 1}",
+                                       onclick = "tennisGame.setTechWinner(event);"
+                                   })
+                                    }
+                                    @Messages.TechWin
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (Model.GameSettings.PairsAsLastGame)
+            {
+                Html.RenderPartial("_PairGamePartial", Model);
+            }
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button id="@(ViewBag.IsFromTeam ? "end-and-publish-hometeam-btn" : "end-and-publish-btn")" type="button" class="btn btn-primary @pullRigth" data-dismiss="modal">@Messages.EndAndPublish</button>
+        <button type="button" id="reset-all-games-hometeam" class="btn btn-danger @pullLeft" data-dismiss="modal">@Messages.ResetAllGames</button>
+    </div>
+</div>
+<script>
+    var resetGameCapture = '@Messages.ResetGame';
+    var endGameCapture = "@Messages.EndGame";
+    var pullLeftCapture = "@pullLeft";
+    var pullRightCapture = "@pullRigth";
+
+    $(document).ready(function () {
+
+        $(".game-row").each(function (index, elem) {
+            var type = $(elem).attr('data-type');
+            var gameNumber = $(elem).attr('data-set');
+            changeDisabledStatusForGame(gameNumber, type);
+        });
+
+        $(".player-list").change(function () {
+            var type = $(this).attr('data-type');
+            var gameNumber = $(this).attr('data-set');
+            changeDisabledStatusForGame(gameNumber, type);
+        })
+
+        function changeDisabledStatusForGame(gameNumber, type) {
+            var homePlayerId = $("#homePlayerId_" + gameNumber).val();
+            var guestPlayerId = $("#guestPlayerId_" + gameNumber).val();
+            var homePairPlayerId = "";
+            var guestPairPlayerId = "";
+            if (type == "pair") {
+                homePairPlayerId = $("#homePairPlayerId_" + gameNumber).val();
+                guestPairPlayerId = $("#guestPairPlayerId_" + gameNumber).val();
+                if (homePlayerId != "" && homePairPlayerId != "" && guestPlayerId == "" && guestPairPlayerId == "") {
+                    disableAllValues(gameNumber);
+                    changeTechWinnerStatus("home", gameNumber);
+                }
+                else if (guestPlayerId != "" && guestPairPlayerId != "" && homePlayerId == "" && homePairPlayerId == "") {
+                    disableAllValues(gameNumber);
+                    changeTechWinnerStatus("guest", gameNumber);
+                }
+                else if (homePlayerId == "" && homePairPlayerId == "" && guestPairPlayerId == "" && guestPlayerId == "") {
+                    changeTechWinnerStatus("all", gameNumber);
+                    disableAllValues(gameNumber);
+                }
+                else if (homePlayerId != "" && guestPlayerId != "" && homePairPlayerId != "" && guestPairPlayerId) {
+                    enableAllValues(gameNumber);
+                }
+                else {
+                    changeTechWinnerStatus("all", gameNumber);
+                    disableAllValues(gameNumber);
+                }
+            }
+            else {
+                if (homePlayerId != "" && guestPlayerId == "") {
+                    disableAllValues(gameNumber);
+                    changeTechWinnerStatus("home", gameNumber);
+                }
+                else if (guestPlayerId != "" && homePlayerId == "") {
+                    disableAllValues(gameNumber);
+                    changeTechWinnerStatus("guest", gameNumber);
+                }
+                else if (homePlayerId == "" && guestPlayerId == "") {
+                    changeTechWinnerStatus("all", gameNumber);
+                    disableAllValues(gameNumber);
+                }
+                else {
+                    enableAllValues(gameNumber);
+                }
+            }
+        }
+
+        function changeTechWinnerStatus(type, gameNumber) {
+            if (type == "home") {
+                $("#home_player_" + gameNumber + " :checkbox").each(function () {
+                    $(this).removeAttr("disabled");
+                });
+                $("#guest_player_" + gameNumber + " :checkbox").each(function () {
+                    $(this).attr("disabled", true);
+                });
+            }
+            else if (type == "guest") {
+                $("#guest_player_" + gameNumber + " :checkbox").each(function () {
+                    $(this).removeAttr("disabled");
+                });
+                $("#home_player_" + gameNumber + " :checkbox").each(function () {
+                    $(this).attr("disabled", true);
+                });
+            }
+            else {
+                $("#home_player_" + gameNumber + " :checkbox").each(function () {
+                    $(this).attr("disabled", true);
+                });
+                $("#guest_player_" + gameNumber + " :checkbox").each(function () {
+                    $(this).attr("disabled", true);
+                });
+            }
+        }
+
+        function enableAllValues(gameNumber) {
+            $("#alert-message-" + gameNumber).hide();
+            $("#end-game-" + gameNumber).attr('disabled', false);
+            $("#home_player_" + gameNumber + " :checkbox").each(function () {
+                $(this).removeAttr("disabled");
+            });
+            $("#guest_player_" + gameNumber + " :checkbox").each(function () {
+                $(this).removeAttr("disabled");            });
+            $("#game_row_" + gameNumber).find(".score-value").each(function (index, elem) {
+                $(elem).attr("disabled", false);
+            });
+        }
+
+        function disableAllValues(gameNumber) {
+            $("#alert-message-" + gameNumber).show();
+            $("#end-game-" + gameNumber).attr('disabled', true);
+            $("#game_row_" + gameNumber).find(".score-value").each(function (index, elem) {
+                $(elem).attr("disabled", true);
+            });
+        }
+    })
+
+    var endAndPublishEvent = async function (ev) {
+        var numberOfGames = Number($("#numberOfGames").val());
+        var gameCycleId = $("#gameCycleIdHidden").val();
+        if (numberOfGames != NaN) {
+            for (var currGameNumber = 1; currGameNumber <= numberOfGames; currGameNumber++) {
+                await window.tennisGame.saveScores(currGameNumber);
+                await window.tennisGame.endGame(currGameNumber);
+            }
+            $.ajax({
+                url: "/GameCycle/EndAndPublishGames",
+                type: "POST",
+                data: {
+                    gameCycleId: gameCycleId
+                },
+                success: function (data) {
+                    $("#row" + gameCycleId + ">td.homeScore").html(data.homeScore);
+                    $("#row" + gameCycleId + ">td.guestScore").html(data.guestScore);
+                    if (data.gameStatus == "@GameStatus.Started") {
+                        $("#row" + gameCycleId + ">td>.game_status").removeClass("label-success").removeClass("label-danger").removeClass("label-default").addClass("label-success").text("@Messages.Started");
+                    }else if (data.gameStatus == "@GameStatus.Ended") {
+                        $("#row" + gameCycleId + ">td>.game_status").removeClass("label-success").removeClass("label-danger").removeClass("label-default").addClass( "label-danger" ).text("@Messages.Ended");
+                    } else {
+                        $("#row" + gameCycleId + ">td>.game_status").removeClass("label-success").removeClass("label-danger").removeClass("label-default").addClass( "label-default" ).text("@Messages.Waiting");
+                    }
+                }
+            });
+        }
+    }
+
+    $("#end-and-publish-btn").unbind("click"); $("#end-and-publish-btn").bind("click", endAndPublishEvent);
+</script>

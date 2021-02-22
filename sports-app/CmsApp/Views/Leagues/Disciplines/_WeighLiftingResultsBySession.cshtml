@@ -1,0 +1,549 @@
+﻿@using AppModel
+@using CmsApp.Controllers
+@model CompetitionDiscipline[]
+@{
+    bool isHebrew = Request.IsHebrew();
+    string pullRight = isHebrew ? "pull-left" : "pull-right";
+    var SuccessList = new List<SelectListItem>
+{
+        new SelectListItem {Text = "", Value = ""},
+        new SelectListItem {Text = "-", Value = "0" },
+        new SelectListItem {Text = "+", Value = "1" },
+        new SelectListItem {Text = "/", Value = "3" }
+    };
+    int clubId = ViewBag.ClubId != null ? ViewBag.ClubId : 0;
+    var endedAndClubManager = ViewBag.IsCompetitionEnded && clubId > 0;
+    var currentHtmlResultAttributes = new Dictionary<string, object>();
+    currentHtmlResultAttributes.Add("class", "form-control result-success-weight");
+    currentHtmlResultAttributes.Add("style", "text-align-last: center;");
+    var tabIndex = 1;
+    var j = 0;
+}
+    
+
+<style>
+
+.modal-result-custom-width {
+    width:100%;
+}
+.modal-result-lg-custom-width {
+    width:100%;
+}
+
+@Html.Raw('@')media screen and (min-width: 1000px) {
+     .modal-result-custom-width {
+                    max-width:1000px;
+                    width:90%;
+    }
+    .modal-result-lg-custom-width {
+                    min-width:1000px;
+                    width:90%;
+    }
+}
+</style>
+
+
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">
+        <span aria-hidden="true">&times;</span><span class="sr-only"></span>
+    </button>
+    <div class="row" style="display:flex">
+        <div class="col-sm-9"><h4 class="modal-title">- @Messages.CompetitionResults -</h4></div>
+        <a href="@GlobVars.SiteUrl/LeagueTable/WeightDeclarationResultsBySession/@ViewBag.SessionId&#95;@ViewBag.LeagueId" target="_blank" class="btn btn-primary pull-left" style="margin-left:10px;margin-right:10px;">@Messages.ExternalLink</a>
+        <div class="pull-right">@(Messages.Sportsmans + " " + Messages.Count.ToLower()) <strong> @(ViewBag.reg_count)</strong></div>
+    </div>
+</div>
+<style>
+    .result-weight {
+        max-width: 100px;
+    }
+
+    .result-success-weight {
+        min-width: 58px;
+    }
+
+    .result-input {
+        min-width: 50px;
+    }
+</style>
+<div class="modal-body">
+
+    <div style="margin-top:15px;" class="row">
+        <div class="col-sm-12" style="overflow: scroll">
+            @if (ViewBag.compCount > 0)
+            {
+                <table id="print_table_registrationList" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.BirthDay</th>
+                            <th>@Messages.ClubName</th>
+                            <th style="max-width:45px; overflow-wrap:break-word;">@Messages.Gender</th>
+                            <th>@Messages.Category</th>
+                            <th>@Messages.Weight</th>
+                            <th>@Messages.Entry</th>
+                            <th colspan="6">@Messages.Lifting</th>
+                            <th>Res.</th>
+                            <th colspan="6">@Messages.Push</th>
+                            <th>Res.</th>
+                            <th>F. Two</th>
+                            @if (ViewBag.isTeam == "true" || ViewBag.isCup == "true")
+                            {
+                                <th>@Messages.Sinclair</th>
+                            }
+                            <th style="display: none !important;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="session-registrations-list">
+                        @foreach (var model in Model)
+                        {
+                            var i = 0;
+                            foreach (var reg in model.CompetitionDisciplineRegistrations)
+                            {
+                                tabIndex = j*12+1;
+                                var sex = reg.User.GenderId ?? 0;
+                                var result = reg.CompetitionResult.FirstOrDefault();
+                                if (result == null)
+                                {
+                                    result = new CompetitionResult();
+                                }
+                                var canEditResults = clubId == 0;
+                                var canEditDeclarations = clubId == 0 || reg.ClubId == clubId;
+                                currentHtmlResultAttributes["form"] = $"registrant_{reg.Id}";
+                                <tr>
+                                    <td class="@(ViewBag.ChosenNextReg == reg.Id ? "bg-info font-bold" : "" )">@reg.User.FullName</td>
+                                    <td class="@(ViewBag.ChosenNextReg == reg.Id ? "bg-info" : "" )">
+                                        @{
+                                            var birthDate = reg.User.BirthDay.HasValue
+                                            ? reg.User.BirthDay.Value.ToShortDateString()
+                                            : string.Empty;
+                                        }
+                                        @birthDate
+                                    </td>
+                                    <td class="@(ViewBag.ChosenNextReg == reg.Id ? "bg-info" : "" )">@reg.Club.Name</td>
+                                    <td class="@(ViewBag.ChosenNextReg == reg.Id ? "bg-info" : "" )">@(LangHelper.GetGenderCharById(reg.User.GenderId ?? 0)) </td>
+                                    <td class="@(ViewBag.ChosenNextReg == reg.Id ? "bg-info" : "" )">@(reg.CompetitionDiscipline.CompetitionAge.age_name ?? string.Empty)</td>
+
+                                    @{
+                                        string danger = "";
+                                        bool IsWeighOk = (!reg.Weight.HasValue || !reg.CompetitionDiscipline.CompetitionAge.from_weight.HasValue || !reg.CompetitionDiscipline.CompetitionAge.to_weight.HasValue || (reg.CompetitionDiscipline.CompetitionAge.from_weight <= reg.Weight && reg.CompetitionDiscipline.CompetitionAge.to_weight > reg.Weight)) ? true : false;
+
+                                        if (!IsWeighOk)
+                                        {
+                                            danger = "alert-danger";
+                                        }
+                                    }
+                                    <td class="@danger">@reg.Weight</td>
+                                    <td extra_data="@($"registrant_{reg.Id}")" value="@reg.WeightDeclaration">@reg.WeightDeclaration</td>
+
+                                    <td class="@(result.Lift1Success.HasValue && result.Lift1Success.Value == 1 ? "alert-success" : result.Lift1Success.HasValue && result.Lift1Success.Value == 0 ? "alert-danger": "")">
+                                        <input class="form-control fa-sort-numeric-asc result-weight result-input lifting-value" tabindex="@(tabIndex)" form="@($"registrant_{reg.Id}")" id="Lifting1" name="Lifting1" type="text" value="@result.Lifting1" oldvalue="@result.Lifting1" @(!canEditDeclarations || endedAndClubManager || result.Lift1Success.HasValue && clubId > 0 ? "readonly" : "") autocomplete="off" />
+                                    </td>
+                                    <td class="@(result.Lift1Success.HasValue && result.Lift1Success.Value == 1 ? "alert-success" : result.Lift1Success.HasValue && result.Lift1Success.Value == 0 ? "alert-danger": "")">
+                                        @{
+                                            var multiSelect = new List<SelectListItem>();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Disabled = (!canEditResults && altResList.Value != result.Lift1Success.ToString()) ? true : false,
+                                                    Selected = altResList.Value == result.Lift1Success.ToString()
+                                                };
+                                                multiSelect.Add(s);
+                                            };
+                                        }
+                                        @{     
+                                            currentHtmlResultAttributes["oldvalue"] = result.Lift1Success.ToString();
+                                            currentHtmlResultAttributes["tabindex"] = tabIndex+1;
+                                        }
+                                        @Html.DropDownList("Lift1Success", multiSelect, currentHtmlResultAttributes)
+                                    </td>
+
+                                    <td class="@(result.Lift2Success.HasValue && result.Lift2Success.Value == 1 ? "alert-success" : result.Lift2Success.HasValue && result.Lift2Success.Value == 0 ? "alert-danger": "")">
+                                        <input class="form-control fa-sort-numeric-asc result-weight result-input lifting-value" tabindex="@(tabIndex+2)" form="@($"registrant_{reg.Id}")" id="Lifting2" name="Lifting2" type="text" value="@result.Lifting2" oldvalue="@result.Lifting2" @(!canEditDeclarations || endedAndClubManager || result.Lift2Success.HasValue && clubId > 0 ? "readonly" : "") autocomplete="off" />
+                                    </td>
+                                    <td class="@(result.Lift2Success.HasValue && result.Lift2Success.Value == 1 ? "alert-success" : result.Lift2Success.HasValue && result.Lift2Success.Value == 0 ? "alert-danger": "")">
+                                        @{
+                                            var multiSelect2 = new List<SelectListItem>();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Disabled = (!canEditResults && altResList.Value != result.Lift2Success.ToString()) ? true : false,
+                                                    Selected = altResList.Value == result.Lift2Success.ToString()
+                                                };
+                                                multiSelect2.Add(s);
+                                            };
+                                        }
+                                        @{
+                                            currentHtmlResultAttributes["oldvalue"] = result.Lift2Success.ToString();
+                                            currentHtmlResultAttributes["tabindex"] = tabIndex+3;
+                                        }
+                                        @Html.DropDownList("Lift2Success", multiSelect2, currentHtmlResultAttributes)
+                                    </td>
+
+                                    <td class="@(result.Lift3Success.HasValue && result.Lift3Success.Value == 1 ? "alert-success" : result.Lift3Success.HasValue && result.Lift3Success.Value == 0 ? "alert-danger": "")">
+                                        <input class="form-control fa-sort-numeric-asc result-weight result-input lifting-value" tabindex="@(tabIndex+4)" form="@($"registrant_{reg.Id}")" id="Lifting3" name="Lifting3" type="text" value="@result.Lifting3" oldvalue="@result.Lifting3" @(!canEditDeclarations  || endedAndClubManager || result.Lift3Success.HasValue && clubId > 0 ? "readonly" : "") autocomplete="off" />
+                                    </td>
+                                    <td class="@(result.Lift3Success.HasValue && result.Lift3Success.Value == 1 ? "alert-success" : result.Lift3Success.HasValue && result.Lift3Success.Value == 0 ? "alert-danger": "")">
+                                        @{
+                                            var multiSelect3 = new List<SelectListItem>
+                                                ();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Disabled = (!canEditResults && altResList.Value != result.Lift3Success.ToString()) ? true : false,
+                                                    Selected = altResList.Value == result.Lift3Success.ToString()
+                                                };
+                                                multiSelect3.Add(s);
+                                            };
+                                        }
+                                        @{
+                                            currentHtmlResultAttributes["oldvalue"] = result.Lift3Success.ToString();
+                                            currentHtmlResultAttributes["tabindex"] = tabIndex+5;
+                                        }
+                                        @Html.DropDownList("Lift3Success", multiSelect3, currentHtmlResultAttributes)
+                                    </td>
+                                    <td id="lifting_result_@reg.Id">
+                                        @{
+                                            int? bestLift = 0;
+                                            if (result.Lifting1.HasValue && result.Lift1Success.HasValue && result.Lift1Success.Value == 1 && (!bestLift.HasValue || result.Lifting1.Value > bestLift.Value))
+                                            {
+                                                bestLift = result.Lifting1;
+                                            }
+                                            if (result.Lifting2.HasValue && result.Lift2Success.HasValue && result.Lift2Success.Value == 1 && (!bestLift.HasValue || result.Lifting2.Value > bestLift.Value))
+                                            {
+                                                bestLift = result.Lifting2;
+                                            }
+                                            if (result.Lifting3.HasValue && result.Lift3Success.HasValue && result.Lift3Success.Value == 1 && (!bestLift.HasValue || result.Lifting3.Value > bestLift.Value))
+                                            {
+                                                bestLift = result.Lifting3;
+                                            }
+                                        }
+                                        @bestLift
+                                    </td>
+                                    <td class="@(result.Push1Success.HasValue && result.Push1Success.Value == 1 ? "alert-success" : result.Push1Success.HasValue && result.Push1Success.Value == 0 ? "alert-danger": "")">
+                                        <input class="form-control fa-sort-numeric-asc result-weight result-input push-value" tabindex="@(tabIndex+6)" form="@($"registrant_{reg.Id}")" id="Push1" name="Push1" type="text" value="@result.Push1" oldvalue="@result.Push1" @(!canEditDeclarations || endedAndClubManager || result.Push1Success.HasValue && clubId > 0 ? "readonly" : "") autocomplete="off" />
+                                    </td>
+                                    <td class="@(result.Push1Success.HasValue && result.Push1Success.Value == 1 ? "alert-success" : result.Push1Success.HasValue && result.Push1Success.Value == 0 ? "alert-danger": "")">
+                                        @{
+                                            var multiSelect4 = new List<SelectListItem>
+                                                ();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Disabled = (!canEditResults && altResList.Value != result.Push1Success.ToString()) ? true : false,
+                                                    Selected = altResList.Value == result.Push1Success.ToString()
+                                                };
+                                                multiSelect4.Add(s);
+                                            };
+                                        }
+                                        @{
+                                            currentHtmlResultAttributes["oldvalue"] = result.Push1Success.ToString();
+                                            currentHtmlResultAttributes["tabindex"] = tabIndex+7;
+                                        }
+                                        @Html.DropDownList("Push1Success", multiSelect4, currentHtmlResultAttributes)
+                                    </td>
+                                    <td class="@(result.Push2Success.HasValue && result.Push2Success.Value == 1 ? "alert-success" : result.Push2Success.HasValue && result.Push2Success.Value == 0 ? "alert-danger": "")">
+                                        <input class="form-control fa-sort-numeric-asc result-weight result-input push-value" tabindex="@(tabIndex+8)" form="@($"registrant_{reg.Id}")" id="Push2" name="Push2" type="text" value="@result.Push2" oldvalue="@result.Push2" @(!canEditDeclarations || endedAndClubManager || result.Push2Success.HasValue && clubId > 0 ? "readonly" : "") autocomplete="off" />
+                                    </td>
+                                    <td class="@(result.Push2Success.HasValue && result.Push2Success.Value == 1 ? "alert-success" : result.Push2Success.HasValue && result.Push2Success.Value == 0 ? "alert-danger": "")">
+                                        @{
+                                            var multiSelect5 = new List<SelectListItem>
+                                                ();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Disabled = (!canEditResults && altResList.Value != result.Push2Success.ToString()) ? true : false,
+                                                    Selected = altResList.Value == result.Push2Success.ToString()
+                                                };
+                                                multiSelect5.Add(s);
+                                            };
+                                        }
+                                        @{
+                                            currentHtmlResultAttributes["oldvalue"] = result.Push2Success.ToString();
+                                            currentHtmlResultAttributes["tabindex"] = tabIndex+9;
+                                        }
+                                        @Html.DropDownList("Push2Success", multiSelect5, currentHtmlResultAttributes)
+                                    </td>
+                                    <td class="@(result.Push3Success.HasValue && result.Push3Success.Value == 1 ? "alert-success" : result.Push3Success.HasValue && result.Push3Success.Value == 0 ? "alert-danger": "")">
+                                        <input class="form-control fa-sort-numeric-asc result-weight result-input push-value" tabindex="@(tabIndex+10)" form="@($"registrant_{reg.Id}")" id="Push3" name="Push3" type="text" value="@result.Push3" oldvalue="@result.Push3" @(!canEditDeclarations || endedAndClubManager || result.Push3Success.HasValue && clubId > 0 ? "readonly" : "") autocomplete="off" />
+                                    </td>
+                                    <td class="@(result.Push3Success.HasValue && result.Push3Success.Value == 1 ? "alert-success" : result.Push3Success.HasValue && result.Push3Success.Value == 0 ? "alert-danger": "")">
+                                        @{
+                                            var multiSelect6 = new List<SelectListItem>
+                                                ();
+                                            foreach (var altResList in SuccessList)
+                                            {
+                                                int value;
+                                                bool isBool = int.TryParse(altResList.Value, out value);
+                                                var s = new SelectListItem
+                                                {
+                                                    Text = altResList.Text,
+                                                    Value = altResList.Value,
+                                                    Disabled = (!canEditResults && altResList.Value != result.Push3Success.ToString()) ? true : false,
+                                                    Selected = altResList.Value == result.Push3Success.ToString()
+                                                };
+                                                multiSelect6.Add(s);
+                                            };
+                                        }
+                                        @{
+                                            currentHtmlResultAttributes["oldvalue"] = result.Push3Success.ToString();
+                                            currentHtmlResultAttributes["tabindex"] = tabIndex+11;
+                                        }
+                                        @Html.DropDownList("Push3Success", multiSelect6, currentHtmlResultAttributes)
+                                    </td>
+
+                                    <td id="push_result_@reg.Id">
+                                        @{
+                                            int? bestPush = 0;
+                                            if (result.Push1.HasValue && result.Push1Success.HasValue && result.Push1Success.Value == 1 && (!bestPush.HasValue || result.Push1.Value > bestPush.Value))
+                                            {
+                                                bestPush = result.Push1;
+                                            }
+                                            if (result.Push2.HasValue && result.Push2Success.HasValue && result.Push2Success.Value == 1 && (!bestPush.HasValue || result.Push2.Value > bestPush.Value))
+                                            {
+                                                bestPush = result.Push2;
+                                            }
+                                            if (result.Push3.HasValue && result.Push3Success.HasValue && result.Push3Success.Value == 1 && (!bestPush.HasValue || result.Push3.Value > bestPush.Value))
+                                            {
+                                                bestPush = result.Push3;
+                                            }
+                                        }
+                                        @bestPush
+                                    </td>
+                                    @if (bestLift == 0 || bestPush == 0)
+                                    {
+                                        <td>0</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@(bestLift + bestPush)</td>
+                                    }
+                                    @if (ViewBag.isTeam == "true" || ViewBag.isCup == "true")
+                                    {
+                                        <td>
+                                            @{
+                                                double? sc = 0;
+                                                int? total = 0;
+                                                if (reg.Weight.HasValue)
+                                                {
+                                                    if (sex == 1)
+                                                    {
+                                                        sc = Math.Pow(10, 0.751495030 * Math.Pow(Math.Log10((double)reg.Weight / 175.508), 2));
+                                                        if ((double)reg.Weight > 175.508)
+                                                        {
+                                                            sc = (double)1;
+                                                        }
+                                                    }
+                                                    else if (sex == 0)
+                                                    {
+                                                        sc = Math.Pow(10, 0.783497476 * Math.Pow(Math.Log10((double)reg.Weight / 153.655), 2));
+                                                        if ((double)reg.Weight > 153.655)
+                                                        {
+                                                            sc = (double)1;
+                                                        }
+                                                    }
+                                                }
+
+                                                if (bestLift == 0 || bestPush == 0)
+                                                {
+                                                    total = 0;
+                                                }
+                                                else
+                                                {
+                                                    total = bestLift + bestPush;
+                                                }
+                                            }
+                                            @(String.Format("{0:0.000}", sc * total))
+                                        </td>
+                                    }
+                                <td style="display:none !important;">
+                                    @using (Ajax.BeginForm(nameof(LeaguesController.UpdateWeightInWeightliftRegistrationResultBySession), nameof(LeaguesController).TrimControllerName(), new { RegistrationId = reg.Id, CompetitionDisciplineId = ViewBag.CompetitionDisciplineId[i], LeagueId = ViewBag.CompetitionId[i], SessionId = ViewBag.SessionId, ClubId = clubId }, new AjaxOptions { HttpMethod = "POST", UpdateTargetId = "weightliftingregistrationresultslist_pl" }, new { id = $"registrant_{reg.Id}" }))
+                                    {
+                                        <input type="hidden" name="WeightDeclaration" value="@reg.WeightDeclaration" />
+                                        <input type="hidden" name="ChosenNextRegId" value="@ViewBag.ChosenNextReg" />
+                                    }
+                                </td>
+                                </tr>
+                                j++;
+                            }
+                            i++;                            
+                        }                      
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-danger">
+                    <strong><i class="fa fa-ban"></i></strong>&nbsp; &nbsp; @Messages.NoSportmenRegistered
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-danger" data-dismiss="modal">@Messages.Close</button>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        function setFormData(obj) {
+            var thisObj = $(obj);
+            var formId = $(thisObj).attr('form');
+            var thisName = $(thisObj).attr('name');
+            var thisVal = $(thisObj).val();
+            var oldVal = $(thisObj).attr("oldvalue");
+            if (oldVal == thisVal || (oldVal == undefined && thisVal == "")) {
+                return false;
+            }
+
+            var oppoName = '';
+            var oppoVal = '';
+
+            var index = thisName.substr(thisName.length - 1, 1);
+            if (thisName.substr(0, thisName.length - 1) === 'Lifting') {
+                oppoName = 'Push' + index;
+            } else {
+                oppoName = 'Lifting' + index;
+            }
+
+            oppoObj = $('input[name="' + oppoName + '"][form="' + formId + '"]');
+            oppoVal = $(oppoObj).val();
+
+            var decVal = $('td[extra_data="' + formId + '"]').html();
+
+            if (isNaN(parseFloat(thisVal)) && thisVal != '') {
+                alert('@Messages.Field_Must_Be_Number');
+                $(thisObj).val('');
+                return false;
+            }
+
+            if (index === '1') {
+                if (!isNaN(parseFloat(decVal))) {
+                    var can = parseFloat(decVal) - parseFloat(thisVal) - 20;
+                    if (can < 0)
+                        can = 0;
+
+                    if ($(oppoObj).closest('td').next().children('select').val() === '') {
+                        if (isNaN(parseFloat(oppoVal)) || (can > parseFloat(oppoVal))) {
+                            $(oppoObj).val(can);
+                            return true;
+                        }
+                    } else {
+                        var min = parseFloat(decVal) - parseFloat(oppoVal) - 20;
+                        if (parseFloat(thisVal) < min) {
+                            alert('@Messages.Value_At_Least' + min);
+                            $(thisObj).val(min);
+                            return false;
+                        }
+                    }
+                }
+            } else {
+                var min = parseFloat($(thisObj).closest('td').prev().prev().children('input').val());
+                if ($(thisObj).closest('td').prev().children('select').val() === 'True') {
+                    min += 1;
+                }
+
+                console.log(min);
+                console.log(thisVal);
+                if (parseFloat(thisVal) < min) {
+                    alert('@Messages.Value_At_Least' + min);
+                    $(thisObj).val(min);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        $('.modal-body input[type=text]').focusout(function () {
+            var formid = $(this).attr("form");
+            var res = setFormData(this);
+            if (res)
+                $('form#' + formid).submit();
+        });
+
+        $('.modal-body select').change(function () {
+            var val = $(this).val();
+            if ($(this).attr('id') !== 'Lift3Success' && $(this).attr('id') !== 'Push3Success') {
+                var obj = $(this).closest('td').next('td').children('input');
+                var can = parseFloat($(this).closest('td').prev('td').children('input').val());
+                if (!isNaN(can) && val !== '') {
+                    if (val === '1') {
+                        can += 1;
+                    }
+                    if (val != '3') {
+                        $(obj).val(can);
+                        $(obj).attr('min', can);
+                    }
+                }
+            }
+
+            var formid = $(this).attr("form");
+            $('form#' + formid).submit();
+        });
+    });
+
+$('#printregistrations').click(function () {
+var tbl = $("#print_table_registrationList");
+if (tbl.length > 0) {
+    tablePrint(tbl);
+}
+});
+
+function tablePrint(el) {
+    var wnd = window.open('', '@Messages.RegistrationStatus', 'height=600, width=600');
+    wnd.document.write('<html><head><title>@Messages.RegistrationStatus</title>');
+    wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+    wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+    wnd.document.write('<body>');
+
+    wnd.document.write($(el).prop('outerHTML'));
+    $(wnd.document).find('.remove_print').remove();
+    wnd.document.write('</body></html>');
+    wnd.document.close();
+    wnd.focus();
+    setTimeout(function () {
+        wnd.print();
+        wnd.close();
+    }, 1000);
+}
+    @if(ViewBag.ErrorMessage != null)
+    {
+        <text>
+            alert("@ViewBag.ErrorMessage");
+        </text>
+    }
+
+    $(".result-success-weight, .push-value, .lifting-value").keypress(function(e){
+        if (e.keyCode == 13 || e.keyCode == 9) {
+            var tabindex = parseInt($(this).attr("tabindex")) +1;
+            $("input[tabindex='" + tabindex + "'], select[tabindex='" + tabindex + "']").focus();
+        }
+    });
+</script>

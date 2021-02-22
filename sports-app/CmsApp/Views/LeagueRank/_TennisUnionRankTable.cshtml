@@ -1,0 +1,149 @@
+﻿@model UnionTennisRankForm
+@{
+    var count = 1;
+    var rankList = Model.RankList;
+}
+<div id="sections_pl" name="rankdiv">
+    <div class="row">
+        <div class="col-sm-6 col-lg-3 form-inline">
+            <label class="control-label">@Messages.Ages:</label>
+            @Html.DropDownListFor(m => m.CompetitionAgeId, Model.ListAges, "- select -", new { @class = "form-control", @id = "dropdownage", style = "min-width:250px;" })
+            @if (ViewBag.IsUpdated)
+            {
+                <p style="color:green">@Messages.TennisRanksSavedForIndividuals</p>
+            }
+        </div>
+        <div class="col-6 no-padding">
+            <div class="btn-group">
+                <a href="@GlobVars.SiteUrl/LeagueRank/TennisUnionRanks?unionId=@Model.UnionId&seasonId=@Model.SeasonId&ageId=@Model.CompetitionAgeId&clubId=@Model.ClubId" target="_blank" class="btn btn-info view">@Messages.ExternalLink</a>
+                <a id="excelBtnExp" class="btn btn-info" style="margin-right:5px;" href="#" onclick="$('#exportranks').submit()">
+                    <i href="#" class="glyphicon glyphicon-open"></i> @Messages.ExportToExcel
+                    @using (Html.BeginForm("ExportTennisUnionRank", "LeagueRank", new { unionId = Model.UnionId, seasonId = Model.SeasonId, ageId = Model.CompetitionAgeId }
+                    , FormMethod.Post, new { id = "exportranks" })) { }
+                </a>
+                <a class="btn btn-info btn-edit export" style="margin-right:5px;" onclick="printUnionRanks()">
+                    <i class="glyphicon glyphicon-print"></i>
+                    @Messages.Print
+                </a>
+                <div style="display: inline;margin-right:100px;">@Messages.MinimumParticipationRequired</div><input class="form-control" style="margin-right:5px;width:100px; display:unset;" value="@Model.MinimumParticipationRequired" onchange='updateMinimumParticipationRequired(this, @Model.SeasonId);' />
+                <!--
+        @Ajax.ActionLink(Messages.Refresh, "UpdateTennisPlayoffRanksGroup", "LeagueRank",
+                        new { categoryId = ViewBag.CategoryId, seasonId = ViewBag.SeasonId},
+                        new AjaxOptions {HttpMethod = "POST", UpdateTargetId = "tennisrankings", InsertionMode = InsertionMode.Replace},
+                        new {@class = "btn btn-primary fa fa-spinner", style= "float: left;margin-right: 5px;" })
+        -->
+                <button type="button" class="btn btn-primary" style="float: left;margin-right: 5px;" onclick="showRanks(true);">@Messages.Save</button>
+            </div>
+        </div>
+    </div>
+    <div id="unionrank" name="unionrank" class="row" style="margin-top: 20px;">
+        @if (rankList != null && rankList.Any())
+        {
+            <div class="col-sm-12">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-1">@Messages.Rank</th>
+                            <th>@Messages.Name</th>
+                            <th class="col-sm-1">@Messages.BirthDay</th>
+                            <th class="col-sm-1">@Messages.Club</th>
+                            <th class="col-sm-1">@Messages.AveragePoints</th>
+                            <th class="col-sm-2">@Messages.PointsToAverage</th>
+                            <th class="col-sm-2">@Messages.Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < rankList.Count(); i++)
+                        {
+                            var group = rankList.ElementAt(i);
+                            if(i>0 && group.TotalPoints != rankList.ElementAt(i - 1).TotalPoints)
+                            {
+                                count = i+1;
+                            }
+                            <tr>
+                                <td>@count</td>
+                                <td>@group.FullName</td>
+                                <td>@group.Birthday.Value.ToShortDateString()</td>
+                                <td>@group.TrainingTeam</td>
+                                <td>@group.AveragePoints</td>
+                                <td>@group.PointsToAverage</td>
+                                <td>@group.TotalPoints</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+<script>
+        function printUnionRanks() {
+            var wnd = window.open('', '@(Messages.Rank)', '');
+
+            wnd.document.write('<html><head><title>@(Messages.Rank)</title>');
+            //if need to add styles
+            wnd.document.write('<link rel="stylesheet" href="/content/css/style.css" type="text/css" media="print" />');
+            wnd.document.write('<link rel="stylesheet" href="/content/css/bootstrap.css" type="text/css" />');
+            wnd.document.write('<link rel="stylesheet" href="/Content/site.css" type="text/css" />');
+
+            wnd.document.write('<body>');
+
+            wnd.document.write($('#unionrank').html());
+
+            wnd.document.write('</body>');
+
+            wnd.document.write('</body></html>');
+            wnd.document.close();
+            wnd.focus();
+
+            setTimeout(function() {
+                    wnd.print();
+                },
+                1000);
+
+            return false;
+    }
+
+        function showRanks(isUpdate) {
+                if ($("#dropdownage").val() != null && $("#dropdownage").val() != undefined) {
+                    var params = {
+                        unionId: @Model.UnionId,
+                        seasonId: @Model.SeasonId,
+                        ageId: $("#dropdownage").val(),
+                        "isUpdate": isUpdate
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("TennisUnionRankDetails", "LeagueRank")',
+                        data: params,
+                        success: function (response) {
+                            $("#tennisrankings").html(response);
+                        }
+                    });
+                }
+        }
+
+        $(document).ready(function () {
+            $("#dropdownage").on("change", function () {
+                showRanks(false);
+            });
+        });
+
+
+
+
+
+    function updateMinimumParticipationRequired(element, seasonId) {
+        var value = $(element).val();
+        $.ajax({
+            url: '@Url.Action("SetMinimumParticipationRequired", "Unions")',
+            data: {
+                Requirement: value,
+                SeasonId: @Model.SeasonId
+            },
+            type: 'POST',
+            dataType: 'json'
+        });
+    }
+
+</script>

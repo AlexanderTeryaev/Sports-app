@@ -1,0 +1,33 @@
+﻿@model OfficeGuyPaymentSuccessfulModel
+
+<head>
+    <link href="~/Content/css/style.css" rel="stylesheet" />
+    <link href="~/Content/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<header>
+    <div class="well">
+        <h1 style="text-align: center;">
+            @Messages.ThankYou<br />
+        </h1>
+        <h1 style="text-align: center;">
+                @Messages.OfficeGuy_PaymentSuccesful
+        </h1>
+        <div class="well well-sm">
+            <h3 style="text-align:center;">@($"{Messages.LogLigPaymentIdentifier}:")</h3>
+            <div class="text-center">
+                <h4>
+                    <span class="label label-success">@(Model.PaymentIdentifier.ToString().ToUpper())</span>
+                </h4>
+            </div>
+        </div>
+    </div>
+</header>
+<body>
+    <div style="margin-top:10px; border:none;">
+        <footer>
+            <div class="pull-left bot-title" style="float:left;">Powered By</div>
+            <img src="@Url.Content("~/content/images/logo.png")" class="pull-left bot-logo" alt="Powered By LogLig" />
+            <div class="clearfix"></div>
+        </footer>
+    </div>
+</body>

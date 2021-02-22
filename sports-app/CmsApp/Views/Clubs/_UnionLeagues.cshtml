@@ -1,0 +1,169 @@
+﻿@using DataService.DTO;
+@model IEnumerable<AppModel.League>
+@{
+    var seasonId = (int?)ViewBag.SeasonId;
+    var clubId = (int)ViewBag.ClubId;
+    var clubTeams = ViewBag.ClubTeamsList != null ? (IEnumerable<TeamShortDTO>)ViewBag.ClubTeamsList : Enumerable.Empty<TeamShortDTO>();
+    var selectedTeams = ViewBag.LeagueSelectedTeamIds != null && clubTeams.Any() 
+        ? (Dictionary<int, IEnumerable<int>>)ViewBag.LeagueSelectedTeamIds 
+        : new Dictionary<int, IEnumerable<int>>();
+    var allRegisteredTeams = new List<int>();
+    foreach (var selectedTeam in selectedTeams)
+    {
+        allRegisteredTeams.AddRange(selectedTeam.Value);
+    }
+}
+
+<style>
+    .dropdown-menu {
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+
+<div class="row" id="sections_pl">
+    @if (Model != null && Model.Any())
+    {
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>@Messages.Title</th>
+                    <th>@Messages.StartDate</th>
+                    <th>@Messages.EndDate</th>
+                    <th>@Messages.EndRegistrationDate</th>
+                    <th align="center">@Messages.LeagueDetail_MinimumPlayersTeam</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var league in Model.Where(l => !l.IsArchive))
+                {
+                    var EndRegistrationTeam = league.EndTeamRegistrationDate ?? league.EndRegistrationDate;
+                    if (EndRegistrationTeam > DateTime.Now || (EndRegistrationTeam <= DateTime.Now
+                        && league.TeamRegistrations.Any(c => c.Team.TeamsPlayers.Where(l => !l.WithoutLeagueRegistration).Count() > 0)))
+                    {
+                        var necessaryTeamIds = selectedTeams != null && selectedTeams.Any() && selectedTeams.ContainsKey(league.LeagueId)
+                            ? selectedTeams[league.LeagueId] : Enumerable.Empty<int>();
+                        var teamsRegisteredInOtherTeams = allRegisteredTeams.Where(t => !necessaryTeamIds.Contains(t));
+                        var clubTeamsCurrent = clubTeams.Where(t => !teamsRegisteredInOtherTeams.Contains(t.TeamId.Value));
+                        var registrations = new MultiSelectList(clubTeamsCurrent, nameof(TeamShortDTO.TeamId), nameof(TeamShortDTO.Title), necessaryTeamIds);
+                        <tr class="@(EndRegistrationTeam <= DateTime.Now ? "isEnded" : string.Empty)">
+                            <td>
+                                <a data-id="@league.LeagueId" class="btn btn-primary information">
+                                    <i class="glyphicon glyphicon-info-sign" name="info-icon"></i>
+                                    <i class="fa fa-spin fa-spinner" name="spinner" style="display:none"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="#" class="registration-info" data-id="@league.LeagueId" style="color:#f45c0e;">
+                                    <b>@league.Name</b>
+                                </a>
+                            </td>
+                            <td>@league.LeagueStartDate</td>
+                            <td>@league.LeagueEndDate</td>
+                            <td>@EndRegistrationTeam</td>
+                            <td align="center">@league.MinimumPlayersTeam</td>
+                            <td>
+                                @Html.DropDownList("RegisteredTeamId", registrations, Messages.Select,
+                                                                                        new { @class = "form-control registeredteams", data_leagueid = $"{league.LeagueId}", multiple = "multiple", id = $"registrations_{league.LeagueId}" })
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <h4>@Messages.NoLeaguesAvailableAlert</h4>
+    }
+</div>
+
+<div class="modal fade" id="leagueinfomodal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="leagueinfomodal_pl">
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="registrationlist" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="registrationlist_pl">
+        </div>
+    </div>
+</div>
+
+<script>
+    var isChanged = false;
+    $(document).ready(function () {
+        $(".isEnded").find(".registeredteams").attr('disabled', true);
+        $(".registeredteams").multiselect({
+            numberDisplayed: 1,
+            onChange: function () {
+                isChanged = true;
+            },
+            onDropdownHidden: function (event) {
+                if (isChanged) {
+                    var selectItem = $(this)[0].$select[0];
+                    var teamIds = $(selectItem).val();
+                    var leagueId = $(selectItem).attr("data-leagueid");
+                     $.ajax({
+                            url: "/Clubs/RegisterTennisTeam",
+                            type: "POST",
+                            data: { teamIds: teamIds == null ? undefined : teamIds, clubId: "@ViewBag.ClubId", leagueId: leagueId, seasonId: "@ViewBag.SeasonId" },
+                            success: function () {
+                                location.reload();
+                            }
+                    });
+                     isChanged = false;
+                }
+            },
+            onDropdownHide: function (element) {
+                $(element.currentTarget).find('.multiselect-clear-filter').click();
+            },
+            onDropdownShown: function (element) {
+                $(element.currentTarget).find('.multiselect-search').focus();
+            }
+        });
+    });
+
+
+    $(".information").on("click", function () {
+        var trElement = $(this).closest("tr");
+        var competitionId = $(this).attr("data-id");
+        $.ajax({
+            url: "/Clubs/CompetitionDetails",
+            type: "POST",
+            data: { competitionId: competitionId, clubId: @clubId, section: "@Sections.Tennis" },
+            beforeSend: function () {
+                trElement.find("i[name='info-icon']").hide();
+                trElement.find("i[name='spinner']").show();
+            },
+            success: function (data) {
+                trElement.find("i[name='info-icon']").show();
+                trElement.find("i[name='spinner']").hide();
+                $("#leagueinfomodal_pl").html(data);
+                $("#leagueinfomodal").modal('show');
+            }
+        });
+    });
+
+    $(".registration-info").on("click", function () {
+        var competitionId = $(this).attr("data-id");
+        var teamIds = $("#registrations_" + competitionId).val();
+        var teamIdsString = "";
+        if (teamIds && teamIds.length > 0) {
+            teamIdsString = teamIds.join(',');
+        }
+        $.ajax({
+            url: "/Clubs/TennisPlayersRegistrationList",
+            type: "GET",
+            data: { clubId: "@clubId", seasonId: "@ViewBag.SeasonId", teamIdsString: teamIdsString, leagueId: competitionId },
+            success: function (data) {
+                $("#registrationlist_pl").html(data);
+                $("#registrationlist").modal('show');
+            }
+        });
+    })
+</script>

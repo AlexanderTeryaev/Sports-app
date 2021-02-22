@@ -1,0 +1,36 @@
+﻿@model List<AppModel.League>
+<div class="container-fluid offset-3">
+    <div class="row">
+        <div class="col-sm-12 col-lg-6" id="sections_pl">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>@Messages.LeagueName</th>
+                        <th>@Messages.Season</th>
+                        <th>@Messages.StartDate</th>
+                        <th>@Messages.EndDate</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var league in Model.OrderByDescending(t => t.Season?.Name ?? "").ThenByDescending(t => t.SeasonId))
+                    {
+                        <tr>
+                            <td>@league.Name</td>
+                            <td>@(league.Season?.Name)</td>
+                            <td>@(league.LeagueStartDate?.ToShortDateString())</td>
+                            <td>@(league.LeagueEndDate?.ToShortDateString())</td>
+                            <td>
+                                <a class="@AppCss.Edit" href="@Url.Action("Edit","Leagues",new
+                                    {
+                                        id = league.LeagueId,
+                                        seasonId = league.SeasonId
+                                    })"></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,1338 @@
+﻿@model UnionCompetitionForm
+@{
+    var hasGymnastics = false;
+    bool isHebrew = Request.IsHebrew();
+}
+
+@helper AddDropDownForComposition(int leagueId, int competitionRouteId, int instrumentId, int? composition, MultiSelectList gymnasts, string elementName, int type, bool isTeam)
+{
+    @Html.DropDownList(elementName, gymnasts, new
+    {
+        @class = $"form-control gymnasticsIds competition_{type + 1}_{leagueId}",
+        @multiple = "multiple",
+        data_leagueid = $"{leagueId}",
+        data_competitionrouteid = $"{competitionRouteId}",
+        data_composition = $"{composition}",
+        data_type = $"composition{type + 1}",
+        id = $"gymnastics_{type + 1}_{leagueId}_{competitionRouteId}",
+        data_instrumentid = $"{instrumentId}",
+        data_isteam = isTeam
+    });
+}
+
+@helper AddDropDownForCompositionNoInstrument(int leagueId, int competitionRouteId, int? composition, MultiSelectList gymnasts, string elementName, int type, bool isTeam)
+{
+    @Html.DropDownList(elementName, gymnasts, new
+    {
+        @class = $"form-control gymnasticsIds competition_{type + 1}_{leagueId}",
+        @multiple = "multiple",
+        data_leagueid = $"{leagueId}",
+        data_competitionrouteid = $"{competitionRouteId}",
+        data_composition = $"{composition}",
+        data_type = $"composition{type + 1}",
+        id = $"gymnastics_{type + 1}_{leagueId}_{competitionRouteId}",
+        data_isteam = isTeam
+    });
+}
+
+@helper AddDropDownForAdditionalComposition(int leagueId, int competitionRouteId, SelectList gymnasts, string elementName, int type, bool isTeam)
+{
+    @Html.DropDownList(elementName, gymnasts, Messages.NoneSelected, new
+    {
+        @class = $"form-control additionalgymnastics",
+        @id = $"additionalgym_{type + 1}_{leagueId}_{competitionRouteId}",
+        @data_competitionRouteId = $"{competitionRouteId}",
+        @data_type = $"composition{type + 1}",
+        @data_leagueId = $"{leagueId}",
+        data_isteam = isTeam
+    });
+}
+
+
+
+
+
+
+@foreach (var competition in Model.Competitions.OrderByDescending(c => c.StartDate ?? DateTime.MinValue))
+{
+    <tr class="@(competition.IsClubCompetition == 1 ? "club_competition" : string.Empty) @(competition.IsEnded ? "isEnded" : string.Empty) @(competition.IsStarted ? string.Empty : "isNotStarted") @(competition.IsMaxed ? "isMaxed" : string.Empty)">
+        <td>
+            <a data-id="@competition.LeagueId" class="btn btn-primary information">
+                <i class="glyphicon glyphicon-info-sign" name="info-icon"></i>
+                <i class="fa fa-spin fa-spinner" name="spinner" style="display: none"></i>
+            </a>
+        </td>
+        <td>
+            <a class="btn btn-primary"
+               href="@Url.Action("AllRoutesPlayersRegistrationList", "Clubs", new { clubId = Model.ClubId, seasonId = Model.SeasonId, leagueId = competition.LeagueId })"
+               data-toggle="modal"
+               data-target="#registrationlist"
+               data-ajax-update="#registrationlist_pl"
+               data-ajax="true">
+                @Messages.Status
+            </a>
+        </td>
+        <td>
+            <b>@competition.CompetitionName</b>
+        </td>
+        @if (Model.IsGymnastic)
+        {
+            <td>@competition.DisciplineName</td>
+        }
+        else if (Model.IsMartialArts)
+        {
+            <td>@LangHelper.GetLeagueTypeValue(competition.TypeId)</td>
+        }
+        <td>@competition.StartDate</td>
+        <td>@competition.EndDate</td>
+        @if (Model.SectionAlias.Equals(GamesAlias.Athletics) || Model.IsGymnastic)
+        {
+            <td>@competition.StartRegistrationDate</td>
+        }
+        <td>@competition.EndRegistrationDate</td>
+        @if (Model.SectionAlias.Equals(GamesAlias.Athletics))
+        {
+            <td>@competition.Place</td>
+        }
+        <td>
+
+            @if (User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager))
+            {
+                <a data-id="@competition.LeagueId" class="btn btn-primary is_admin register">@Messages.Register</a>
+            }
+            else
+            {
+                <a data-id="@competition.LeagueId" class="btn btn-primary register">@Messages.Register</a>
+            }
+
+
+            @{
+                var selectedRefereesIds = Model.SelectedRefereesIds.ContainsKey(competition.LeagueId)
+                    ? Model.SelectedRefereesIds[competition.LeagueId]
+                    : Enumerable.Empty<int>();
+
+                var clubAndDisciplineReferees = Model.ClubReferees
+                    .Where(x => competition.DisciplineReferees.Select(r => r.UserId).Contains(x.UserId))
+                    .ToList();
+
+                var referees = competition.IsEnded
+                    ? new MultiSelectList(clubAndDisciplineReferees, nameof(DataService.DTO.WorkerMainShortDto.UserJobId), nameof(DataService.DTO.WorkerMainShortDto.UserFullName), selectedRefereesIds, clubAndDisciplineReferees.Select(c => c.UserJobId) ?? Enumerable.Empty<int>())
+                    : new MultiSelectList(clubAndDisciplineReferees, nameof(DataService.DTO.WorkerMainShortDto.UserJobId), nameof(DataService.DTO.WorkerMainShortDto.UserFullName), selectedRefereesIds);
+            }
+            @if (!Model.SectionAlias.Equals(GamesAlias.Athletics))
+            {
+                @Html.DropDownList($"GymnasticsIds", referees, new
+                {
+                    @class = $"form-control refereesIds",
+                    @multiple = "multiple",
+                    data_leagueid = competition.LeagueId,
+                    @id = $"refereesIds_{competition.LeagueId}"
+                })
+            }
+        </td>
+        @if (Model.IsGymnastic)
+        {
+            <td></td>
+            <td></td>
+        }
+    </tr>
+    if (!competition.IsEnded)
+    {
+        <tr style="display: none" id="collapse_@competition.LeagueId">
+            <td colspan="7">
+                @if ((competition.CompetitionRoutes != null && competition.CompetitionRoutes.Any()) || (competition.CompetitionTeamRoutes != null && competition.CompetitionTeamRoutes.Any()))
+                {
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            @if (competition.CompetitionRoutes != null && competition.CompetitionRoutes.Any())
+                            {
+                                <div class="row" style="margin-bottom: 10px;">
+                                    <div class="col-sm-12">
+                                        <strong>@Messages.IndividualRoutes</strong>
+                                    </div>
+                                </div>
+
+                                <div class="row" style="margin-bottom: 20px;">
+                                    <div class="col-sm-2">
+                                        <strong>@Messages.Routes</strong>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <strong>@Messages.Ranks</strong>
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <strong>@Messages.Instruments</strong>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <strong>@Messages.Composition</strong>
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <strong>@Messages.Registrations</strong>
+                                    </div>
+                                    <div class="col-sm-3">
+
+                                    </div>
+                                </div>
+                                foreach (var competitionRoute in competition.CompetitionRoutes)
+                                {
+
+                                    var clubPlayers = Enumerable.Empty<AppModel.User>();
+                                    var instrumentIds = !string.IsNullOrEmpty(competitionRoute.InstrumentIds) ? competitionRoute.InstrumentIds.Split(',').Select(int.Parse) : Enumerable.Empty<int>();
+                                    var instruments = instrumentIds.Any() ? Model.Instruments.Where(i => instrumentIds.Contains(i.InstrumentId)) : Enumerable.Empty<DataService.DTO.InstrumentShortDto>();
+
+                                    var gymnasticsModel = competitionRoute.RouteRank?.UsersRanks?.Select(c => c.User);
+                                    if (gymnasticsModel != null && gymnasticsModel.Any())
+                                    {
+                                        clubPlayers = gymnasticsModel.Where(c => Model.ClubPlayersIds.Contains(c.UserId));
+                                    }
+                                    if (clubPlayers != null && clubPlayers.Any())
+                                    {
+                                        hasGymnastics = true;
+                                    }
+                                    var clubPlayersOrdered = clubPlayers.OrderBy(u => u.FullName);
+
+                                    List<IEnumerable<int>> selectedGymnasts = new List<IEnumerable<int>>();
+                                    List<int?> selectedAdditionalGymnasts = new List<int?>();
+                                    List<MultiSelectList> selectedGymnastsMultiSelectList = new List<MultiSelectList>();
+                                    List<SelectList> selectedAdditionalGymnastsSelectList = new List<SelectList>();
+                                    for (int i = 0; i < 10; i++)
+                                    {
+                                        if (i == 0)
+                                        {
+                                            List<int> group = !instruments.Any() ? competitionRoute.CompetitionRegistrations.Where(c => c.ClubId == Model.ClubId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId && !c.CompositionNumber.HasValue || c.CompositionNumber == 0)?.Select(g => g.UserId).Distinct().ToList() ?? new List<int>() : new List<int>();
+                                            selectedGymnasts.Add(group);
+                                            selectedGymnastsMultiSelectList.Add(new MultiSelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), group));
+
+                                            var additional = competitionRoute.AdditionalGymnastics.FirstOrDefault(c => c.ClubId == Model.ClubId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId)?.UserId;
+                                            selectedAdditionalGymnasts.Add(additional);
+                                            selectedAdditionalGymnastsSelectList.Add(new SelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), additional));
+                                        }
+                                        else
+                                        {
+                                            var selectedGymnasticsIComposition = competitionRoute.CompetitionRegistrations.Where(c => c.ClubId == Model.ClubId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId && c.CompositionNumber == i);
+                                            List<int> group = selectedGymnasticsIComposition != null && selectedGymnasticsIComposition.Any() ? selectedGymnasticsIComposition.Select(g => g.UserId).ToList() : new List<int>();
+                                            selectedGymnasts.Add(group);
+                                            selectedGymnastsMultiSelectList.Add(new MultiSelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), group));
+
+                                            var additional = competitionRoute.AdditionalGymnastics.FirstOrDefault(c => c.ClubId == Model.ClubId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId && c.CompositionNumber == i)?.UserId;
+                                            selectedAdditionalGymnasts.Add(additional);
+                                            selectedAdditionalGymnastsSelectList.Add(new SelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), additional));
+                                        }
+                                    }
+                                    if (instruments.Any())
+                                    {
+                                        <div class="row" style="margin-bottom: 30px;">
+                                            <div class="col-sm-2">
+                                                <strong>#@competitionRoute.Id</strong>&nbsp;&nbsp;@competitionRoute.DisciplineRoute.Route
+                                            </div>
+                                            <div class="col-sm-2">
+                                                @competitionRoute.RouteRank.Rank
+                                            </div>
+                                        </div>
+                                        foreach (var instrument in instruments)
+                                        {
+                                            var selectedValuesIds = competitionRoute
+                                                .CompetitionRegistrations
+                                                .Where(c =>
+                                                    c.ClubId == Model.ClubId &&
+                                                    c.InstrumentId == instrument.InstrumentId &&
+                                                    c.LeagueId == competition.LeagueId &&
+                                                    c.SeasonId == Model.SeasonId &&
+                                                    (!c.CompositionNumber.HasValue || c.CompositionNumber == 0))
+                                                ?.Select(g => g.UserId)
+                                                ?.ToList() ?? new List<int>();
+
+                                            var gymnastics = new MultiSelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), selectedValuesIds);
+
+
+                                            <div class="row" style="margin-bottom: 30px;">
+                                                <div class="col-sm-2"></div>
+                                                <div class="col-sm-2"></div>
+                                                <div class="col-sm-1">
+                                                    <b>@instrument.Name</b>
+                                                </div>
+                                                @if (competitionRoute.Composition.HasValue)
+                                                {
+                                            <div class="col-sm-2">
+                                                @Messages.Composition: <strong class="composition">@competitionRoute.Composition</strong>
+                                                @if (competitionRoute.SecondComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #2:</span>
+                                                        <strong class="composition">@competitionRoute.SecondComposition</strong>
+                                                    </div>
+                                                }
+                                                @if (competitionRoute.ThirdComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #3:</span>
+                                                        <strong class="composition">@competitionRoute.ThirdComposition</strong>
+                                                    </div>
+                                                }
+                                                @if (competitionRoute.FourthComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #4:</span>
+                                                        <strong class="composition">@competitionRoute.FourthComposition</strong>
+                                                    </div>
+                                                }
+                                                @if (competitionRoute.FifthComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #5:</span>
+                                                        <strong class="composition">@competitionRoute.FifthComposition</strong>
+                                                    </div>
+                                                }
+                                                @if (competitionRoute.SixthComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #6:</span>
+                                                        <strong class="composition">@competitionRoute.SixthComposition</strong>
+                                                    </div>
+                                                }
+                                                @if (competitionRoute.SeventhComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #7:</span>
+                                                        <strong class="composition">@competitionRoute.SeventhComposition</strong>
+                                                    </div>
+                                                }
+                                                @if (competitionRoute.EighthComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #8:</span>
+                                                        <strong class="composition">@competitionRoute.EighthComposition</strong>
+                                                    </div>
+                                                }
+                                                @if (competitionRoute.NinthComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #9:</span>
+                                                        <strong class="composition">@competitionRoute.NinthComposition</strong>
+                                                    </div>
+                                                }
+                                                @if (competitionRoute.TenthComposition.HasValue)
+                                                {
+                                                    <div style="margin-top: 40px;">
+                                                        <span>@Messages.Composition #10:</span>
+                                                        <strong class="composition">@competitionRoute.TenthComposition</strong>
+                                                    </div>
+                                                }
+                                            </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="col-sm-2">
+                                                    </div>
+                                                }
+                                                @if (gymnastics != null && gymnastics.Any())
+                                                {
+                                                    <div class="col-sm-1 gymnasticdiv">
+                                                        <div class="composition1-div">
+                                                            @Html.DropDownList($"GymnasticsIds", gymnastics, new
+                                                            {
+                                                                @class = $"form-control gymnasticsIds competition_{competition.LeagueId}",
+                                                                @multiple = "multiple",
+                                                                data_leagueid = $"{competition.LeagueId}",
+                                                                data_competitionrouteid = $"{competitionRoute.Id}",
+                                                                data_composition = $"{competitionRoute.Composition}",
+                                                                data_type = "composition1",
+                                                                id = $"gymnastics_{competition.LeagueId}_{competitionRoute.Id}",
+                                                                data_instrumentid = $"{instrument.InstrumentId}",
+                                                                data_isteam = false
+                                                            })
+                                                        </div>
+                                                        @if (competitionRoute.SecondComposition.HasValue)
+                                                        {
+                                                            <div class="composition2-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.SecondComposition, selectedGymnastsMultiSelectList.ElementAt(1), "SecondGymnasticsIds", 1, false)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.ThirdComposition.HasValue)
+                                                        {
+                                                            <div class="composition3-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.ThirdComposition, selectedGymnastsMultiSelectList.ElementAt(2), "ThirdGymnasticsIds", 2, false)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.FourthComposition.HasValue)
+                                                        {
+                                                            <div class="composition4-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.FourthComposition, selectedGymnastsMultiSelectList.ElementAt(3), "FourthGymnasticsIds", 3, false)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.FifthComposition.HasValue)
+                                                        {
+                                                            <div class="composition5-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.FifthComposition, selectedGymnastsMultiSelectList.ElementAt(4), "FifthGymnasticsIds", 4, false)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.SixthComposition.HasValue)
+                                                        {
+                                                            <div class="composition6-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.SixthComposition, selectedGymnastsMultiSelectList.ElementAt(5), "SixthGymnasticsIds", 5, false)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.SeventhComposition.HasValue)
+                                                        {
+                                                            <div class="composition7-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.SeventhComposition, selectedGymnastsMultiSelectList.ElementAt(6), "SeventhGymnasticsIds", 6, false)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.EighthComposition.HasValue)
+                                                        {
+                                                            <div class="composition8-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.EighthComposition, selectedGymnastsMultiSelectList.ElementAt(7), "EighthGymnasticsIds", 7, false)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.NinthComposition.HasValue)
+                                                        {
+                                                            <div class="composition9-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.NinthComposition, selectedGymnastsMultiSelectList.ElementAt(8), "NinthGymnasticsIds", 8, false)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.TenthComposition.HasValue)
+                                                        {
+                                                            <div class="composition10-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.TenthComposition, selectedGymnastsMultiSelectList.ElementAt(9), "TenthGymnasticsIds", 9, false)
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    @*<div class="col-sm-4">
+                                                        @if (competitionRoute.Composition.HasValue)
+                                                        {
+                                                            <div class="col-sm-4">
+                                                                @Html.DropDownList($"AdditionalGymnasticId", selectedAdditionalGymnastsSelectList.ElementAt(0), Messages.NoneSelected, new
+                                                                {
+                                                                    @class = $"form-control additionalgymnastics",
+                                                                    @id = $"additionalgym_{competition.LeagueId}_{competitionRoute.Id}",
+                                                                    @data_competitionRouteId = $"{competitionRoute.Id}",
+                                                                    @data_type = "composition1",
+                                                                    @data_leagueId = $"{competition.LeagueId}",
+                                                                    data_isteam = false
+                                                                })
+                                                                @if (competitionRoute.SecondComposition.HasValue)
+                                                                {
+
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(1), "SecondAdditionalGymnasticId", 1, false)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.ThirdComposition.HasValue)
+                                                                {
+
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(2), "ThirdAdditionalGymnasticId", 2, false)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.FourthComposition.HasValue)
+                                                                {
+
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(3), "FourthAdditionalGymnasticId", 3, false)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.FifthComposition.HasValue)
+                                                                {
+
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(4), "FifthAdditionalGymnasticId", 4, false)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.SixthComposition.HasValue)
+                                                                {
+
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(5), "SixthAdditionalGymnasticId", 5, false)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.SeventhComposition.HasValue)
+                                                                {
+
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(6), "SeventhAdditionalGymnasticId", 6, false)
+                                                                    </div>
+                                                                }
+
+                                                            </div>
+                                                        }
+                                                        @if (!competitionRoute.Composition.HasValue)
+                                                        {
+                                                            <div class="col-sm-1">
+                                                                <a class="btn btn-primary gymorder" data-instrumentid="@instrument.InstrumentId" data-id="@competition.LeagueId" data-isteam=false data-competitionrouteid="@competitionRoute.Id">@Messages.OrderOfGymnastics</a>
+                                                            </div>
+                                                        }
+                                                    </div>*@
+                                                }
+                                                else
+                                                {
+                                                    <div class="col-sm-4">
+                                                        <i class="text-danger">@Messages.RouteGymnasticsError</i>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        var gymnastics = new MultiSelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), selectedGymnasts.ElementAt(0));
+                                        <div class="row" style="margin-bottom: 30px;">
+                                            <div class="col-sm-2">
+                                                <strong>#@competitionRoute.Id</strong>&nbsp;&nbsp;@competitionRoute.DisciplineRoute.Route
+                                            </div>
+                                            <div class="col-sm-2">
+                                                @competitionRoute.RouteRank.Rank
+                                            </div>
+                                            <div class="col-sm-1"></div>
+                                            @if (competitionRoute.Composition.HasValue)
+                                            {
+                                                <div class="col-sm-2">
+                                                    @Messages.Composition #1: <strong class="composition">@competitionRoute.Composition</strong>
+
+                                                    @if (competitionRoute.SecondComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #2:</span>
+                                                            <strong class="composition">@competitionRoute.SecondComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.ThirdComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #3:</span>
+                                                            <strong class="composition">@competitionRoute.ThirdComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.FourthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #4:</span>
+                                                            <strong class="composition">@competitionRoute.FourthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.FifthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #5:</span>
+                                                            <strong class="composition">@competitionRoute.FifthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.SixthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #6:</span>
+                                                            <strong class="composition">@competitionRoute.SixthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.SeventhComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #7:</span>
+                                                            <strong class="composition">@competitionRoute.SeventhComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.EighthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #8:</span>
+                                                            <strong class="composition">@competitionRoute.EighthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.NinthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #9:</span>
+                                                            <strong class="composition">@competitionRoute.NinthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.TenthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #10:</span>
+                                                            <strong class="composition">@competitionRoute.TenthComposition</strong>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="col-sm-2">
+                                                </div>
+                                            }
+                                            @if (gymnastics != null)
+                                            {
+                                                <div class="col-sm-1 gymnasticdiv">
+                                                    <div class="composition1-div">
+                                                        @Html.DropDownList($"GymnasticsIds", gymnastics, new
+                                                        {
+                                                            @class = $"form-control gymnasticsIds competition_{competition.LeagueId}",
+                                                            @multiple = "multiple",
+                                                            data_leagueid = $"{competition.LeagueId}",
+                                                            data_competitionrouteid = $"{competitionRoute.Id}",
+                                                            data_composition = $"{competitionRoute.Composition}",
+                                                            data_isteam = false,
+                                                            data_type = "composition1",
+                                                            id = $"gymnastics_{competition.LeagueId}_{competitionRoute.Id}"
+                                                        })
+                                                    </div>
+
+                                                    @if (competitionRoute.SecondComposition.HasValue)
+                                                    {
+                                                        <div class="composition2-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.SecondComposition, selectedGymnastsMultiSelectList.ElementAt(1), "SecondGymnasticsIds", 1, false)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.ThirdComposition.HasValue)
+                                                    {
+                                                        <div class="composition3-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.ThirdComposition, selectedGymnastsMultiSelectList.ElementAt(2), "ThirdGymnasticsIds", 2, false)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.FourthComposition.HasValue)
+                                                    {
+                                                        <div class="composition4-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.FourthComposition, selectedGymnastsMultiSelectList.ElementAt(3), "FourthGymnasticsIds", 3, false)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.FifthComposition.HasValue)
+                                                    {
+                                                        <div class="composition5-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.FifthComposition, selectedGymnastsMultiSelectList.ElementAt(4), "FifthGymnasticsIds", 4, false)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.SixthComposition.HasValue)
+                                                    {
+                                                        <div class="composition6-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.SixthComposition, selectedGymnastsMultiSelectList.ElementAt(5), "SixthGymnasticsIds", 5, false)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.SeventhComposition.HasValue)
+                                                    {
+                                                        <div class="composition7-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.SeventhComposition, selectedGymnastsMultiSelectList.ElementAt(6), "SeventhGymnasticsIds", 6, false)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.EighthComposition.HasValue)
+                                                    {
+                                                        <div class="composition8-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.EighthComposition, selectedGymnastsMultiSelectList.ElementAt(7), "EighthGymnasticsIds", 7, false)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.NinthComposition.HasValue)
+                                                    {
+                                                        <div class="composition9-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.NinthComposition, selectedGymnastsMultiSelectList.ElementAt(8), "NinthGymnasticsIds", 8, false)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.TenthComposition.HasValue)
+                                                    {
+                                                        <div class="composition10-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.TenthComposition, selectedGymnastsMultiSelectList.ElementAt(9), "TenthGymnasticsIds", 9, false)
+                                                        </div>
+                                                    }
+                                                </div>
+                                                @*<div class="col-sm-4">
+                                                    @if (competitionRoute.Composition.HasValue)
+                                                    {
+                                                        <div class="col-sm-4">
+                                                            @Html.DropDownList($"AdditionalGymnasticId", selectedAdditionalGymnastsSelectList.ElementAt(0), Messages.NoneSelected, new
+                                                            {
+                                                                @class = $"form-control additionalgymnastics",
+                                                                @id = $"additionalgym_{competition.LeagueId}_{competitionRoute.Id}",
+                                                                @data_competitionRouteId = $"{competitionRoute.Id}",
+                                                                @data_type = "composition1",
+                                                                @data_leagueId = $"{competition.LeagueId}",
+                                                                @data_isteam = false
+                                                            })
+
+                                                            @if (competitionRoute.SecondComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(1), "SecondAdditionalGymnasticId", 1, false)
+                                                                </div>
+                                                            }
+
+                                                            @if (competitionRoute.ThirdComposition.HasValue)
+                                                            {
+
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(2), "ThirdAdditionalGymnasticId", 2, false)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.FourthComposition.HasValue)
+                                                            {
+
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(3), "FourthAdditionalGymnasticId", 3, false)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.FifthComposition.HasValue)
+                                                            {
+
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(4), "FifthAdditionalGymnasticId", 4, false)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.SixthComposition.HasValue)
+                                                            {
+
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(5), "SixthAdditionalGymnasticId", 5, false)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.SeventhComposition.HasValue)
+                                                            {
+
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedAdditionalGymnastsSelectList.ElementAt(6), "SeventhAdditionalGymnasticId", 6, false)
+                                                                </div>
+                                                            }
+
+                                                        </div>
+                                                    }
+                                                    @if (!competitionRoute.Composition.HasValue)
+                                                    {
+                                                        <div class="col-sm-1">
+                                                            <a class="btn btn-primary gymorder" data-id="@competition.LeagueId" data-isteam=false data-competitionrouteid="@competitionRoute.Id">@Messages.OrderOfGymnastics</a>
+                                                        </div>
+                                                    }
+                                                </div>*@
+                                            }
+                                            else
+                                            {
+                                                <div class="col-sm-4">
+                                                    <i class="text-danger">@Messages.RouteGymnasticsError</i>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            }
+
+                            @if (competition.CompetitionTeamRoutes != null && competition.CompetitionTeamRoutes.Any())
+                            {
+                                <div class="row" style="margin-bottom: 10px;">
+                                    <div class="col-sm-12">
+                                        <strong>@Messages.TeamRoutes</strong>
+                                    </div>
+                                </div>
+                                <div class="row" style="margin-bottom: 20px;">
+                                    <div class="col-sm-2">
+                                        <strong>@Messages.Routes</strong>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <strong>@Messages.Ranks</strong>
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <strong>@Messages.Instruments</strong>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <strong>@Messages.Composition</strong>
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <strong>@Messages.Registrations</strong>
+                                    </div>
+                                    <div class="col-sm-3">
+
+                                    </div>
+                                </div>
+                                foreach (var competitionRoute in competition.CompetitionTeamRoutes)
+                                {
+                                    var clubPlayers = Enumerable.Empty<AppModel.User>();
+                                    var instrumentIds = !string.IsNullOrEmpty(competitionRoute.InstrumentIds) ? competitionRoute.InstrumentIds.Split(',').Select(int.Parse) : Enumerable.Empty<int>();
+                                    var instruments = instrumentIds.Any() ? Model.Instruments.Where(i => instrumentIds.Contains(i.InstrumentId)) : Enumerable.Empty<DataService.DTO.InstrumentShortDto>();
+
+                                    var gymnasticsModel = competitionRoute.RouteTeamRank?.TeamsRanks?.Select(c => c.User);
+                                    if (gymnasticsModel != null && gymnasticsModel.Any())
+                                    {
+                                        clubPlayers = gymnasticsModel.Where(c => Model.ClubPlayersIds.Contains(c.UserId));
+                                    }
+                                    if (clubPlayers != null && clubPlayers.Any())
+                                    {
+                                        hasGymnastics = true;
+                                    }
+                                    var clubPlayersOrdered = clubPlayers.OrderBy(u => u.FullName);
+
+                                    List<IEnumerable<int>> selectedTeamGymnasts = new List<IEnumerable<int>>();
+                                    List<int?> selectedTeamAdditionalGymnasts = new List<int?>();
+                                    List<MultiSelectList> selectedTeamGymnastsMultiSelectList = new List<MultiSelectList>();
+                                    List<SelectList> selectedTeamAdditionalGymnastsSelectList = new List<SelectList>();
+                                    for (int i = 0; i < 10; i++)
+                                    {
+                                        if (i == 0)
+                                        {
+                                            List<int> group = !instruments.Any() ? competitionRoute.CompetitionRegistrations.Where(c => c.ClubId == Model.ClubId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId && !c.CompositionNumber.HasValue || c.CompositionNumber == 0)?.Select(g => g.UserId).Distinct().ToList() ?? new List<int>() : new List<int>();
+                                            selectedTeamGymnasts.Add(group);
+                                            selectedTeamGymnastsMultiSelectList.Add(new MultiSelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), group));
+
+                                            var additional = competitionRoute.AdditionalTeamGymnastics.FirstOrDefault(c => c.ClubId == Model.ClubId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId)?.UserId;
+                                            selectedTeamAdditionalGymnasts.Add(additional);
+                                            selectedTeamAdditionalGymnastsSelectList.Add(new SelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), additional));
+                                        }
+                                        else
+                                        {
+                                            var selectedGymnasticsIComposition = competitionRoute.CompetitionRegistrations.Where(c => c.ClubId == Model.ClubId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId && c.CompositionNumber == i);
+                                            List<int> group = selectedGymnasticsIComposition != null && selectedGymnasticsIComposition.Any() ? selectedGymnasticsIComposition.Select(g => g.UserId).ToList() : new List<int>();
+                                            selectedTeamGymnasts.Add(group);
+                                            selectedTeamGymnastsMultiSelectList.Add(new MultiSelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), group));
+
+                                            var additional = competitionRoute.AdditionalTeamGymnastics.FirstOrDefault(c => c.ClubId == Model.ClubId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId && c.CompositionNumber == i)?.UserId;
+                                            selectedTeamAdditionalGymnasts.Add(additional);
+                                            selectedTeamAdditionalGymnastsSelectList.Add(new SelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), additional));
+                                        }
+                                    }
+
+                                    if (instruments.Any())
+                                    {
+                                        <div class="row" style="margin-bottom: 30px;">
+                                            <div class="col-sm-2">
+                                                <strong>#@competitionRoute.Id</strong>&nbsp;&nbsp;@competitionRoute.DisciplineTeamRoute.Route
+                                            </div>
+                                            <div class="col-sm-2">
+                                                @competitionRoute.RouteTeamRank.Rank
+                                            </div>
+                                        </div>
+                                        foreach (var instrument in instruments)
+                                        {
+                                            var selectedValuesIds = competitionRoute.CompetitionRegistrations.Where(c => c.ClubId == Model.ClubId && c.InstrumentId == instrument.InstrumentId && c.LeagueId == competition.LeagueId && c.SeasonId == Model.SeasonId
+                                                                                                                         && (!c.CompositionNumber.HasValue || c.CompositionNumber == 0))?.Select(g => g.UserId) ?? Enumerable.Empty<int>();
+                                            var gymnastics = new MultiSelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), selectedValuesIds);
+                                            <div class="row" style="margin-bottom: 30px;">
+                                                <div class="col-sm-2"></div>
+                                                <div class="col-sm-2"></div>
+                                                <div class="col-sm-1">
+                                                    <b>@instrument.Name</b>
+                                                </div>
+                                                @if (competitionRoute.Composition.HasValue)
+                                                {
+                                                    <div class="col-sm-2">
+                                                        @Messages.Composition: <strong class="composition">@competitionRoute.Composition</strong>
+                                                        @if (competitionRoute.SecondComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #2:</span>
+                                                                <strong class="composition">@competitionRoute.SecondComposition</strong>
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.ThirdComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #3:</span>
+                                                                <strong class="composition">@competitionRoute.ThirdComposition</strong>
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.FourthComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #4:</span>
+                                                                <strong class="composition">@competitionRoute.FourthComposition</strong>
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.FifthComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #5:</span>
+                                                                <strong class="composition">@competitionRoute.FifthComposition</strong>
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.SixthComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #6:</span>
+                                                                <strong class="composition">@competitionRoute.SixthComposition</strong>
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.SeventhComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #7:</span>
+                                                                <strong class="composition">@competitionRoute.SeventhComposition</strong>
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.EighthComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #8:</span>
+                                                                <strong class="composition">@competitionRoute.EighthComposition</strong>
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.NinthComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #9:</span>
+                                                                <strong class="composition">@competitionRoute.NinthComposition</strong>
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.TenthComposition.HasValue)
+                                                        {
+                                                            <div style="margin-top: 40px;">
+                                                                <span>@Messages.Composition #10:</span>
+                                                                <strong class="composition">@competitionRoute.TenthComposition</strong>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="col-sm-2">
+                                                    </div>
+                                                }
+                                                @if (gymnastics != null && gymnastics.Any())
+                                                {
+                                                    <div class="col-sm-1 gymnasticdiv">
+                                                        <div class="composition1-div">
+                                                            @Html.DropDownList($"GymnasticsIds", gymnastics, new
+                                                            {
+                                                                @class = $"form-control gymnasticsIds competition_{competition.LeagueId}",
+                                                                @multiple = "multiple",
+                                                                data_leagueid = $"{competition.LeagueId}",
+                                                                data_competitionrouteid = $"{competitionRoute.Id}",
+                                                                data_composition = $"{competitionRoute.Composition}",
+                                                                data_type = "composition1",
+                                                                id = $"gymnastics_{competition.LeagueId}_{competitionRoute.Id}",
+                                                                data_instrumentid = $"{instrument.InstrumentId}",
+                                                                data_isteam = true
+                                                            })
+                                                        </div>
+
+                                                        @if (competitionRoute.SecondComposition.HasValue)
+                                                        {
+                                                            <div class="composition2-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.SecondComposition, selectedTeamGymnastsMultiSelectList.ElementAt(1), "SecondGymnasticsIds", 1, true)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.ThirdComposition.HasValue)
+                                                        {
+                                                            <div class="composition3-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.ThirdComposition, selectedTeamGymnastsMultiSelectList.ElementAt(2), "ThirdGymnasticsIds", 2, true)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.FourthComposition.HasValue)
+                                                        {
+                                                            <div class="composition4-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.FourthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(3), "FourthGymnasticsIds", 3, true)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.FifthComposition.HasValue)
+                                                        {
+                                                            <div class="composition5-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.FifthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(4), "FifthGymnasticsIds", 4, true)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.SixthComposition.HasValue)
+                                                        {
+                                                            <div class="composition6-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.SixthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(5), "SixthGymnasticsIds", 5, true)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.SeventhComposition.HasValue)
+                                                        {
+                                                            <div class="composition7-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.SeventhComposition, selectedTeamGymnastsMultiSelectList.ElementAt(6), "SeventhGymnasticsIds", 6, true)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.EighthComposition.HasValue)
+                                                        {
+                                                            <div class="composition7-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.EighthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(7), "EighthGymnasticsIds", 7, true)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.NinthComposition.HasValue)
+                                                        {
+                                                            <div class="composition7-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.NinthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(8), "NinthGymnasticsIds", 8, true)
+                                                            </div>
+                                                        }
+                                                        @if (competitionRoute.TenthComposition.HasValue)
+                                                        {
+                                                            <div class="composition7-div" style="margin-top: 30px;">
+                                                                @AddDropDownForComposition(competition.LeagueId, competitionRoute.Id, instrument.InstrumentId, competitionRoute.TenthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(9), "TenthGymnasticsIds", 9, true)
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <div class="col-sm-4">
+                                                        @if (competitionRoute.Composition.HasValue && competition.DisciplineId == 1)
+                                                        {
+                                                            <div class="col-sm-4">
+                                                                @Html.DropDownList($"AdditionalGymnasticId", selectedTeamAdditionalGymnastsSelectList.ElementAt(0), Messages.NoneSelected, new
+                                                                {
+                                                                    @class = $"form-control additionalgymnastics",
+                                                                    @id = $"additionalgym_{competition.LeagueId}_{competitionRoute.Id}",
+                                                                    @data_competitionRouteId = $"{competitionRoute.Id}",
+                                                                    @data_type = "composition1",
+                                                                    @data_leagueId = $"{competition.LeagueId}",
+                                                                    data_isteam = true
+                                                                })
+
+                                                                @if (competitionRoute.SecondComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(1), "SecondAdditionalGymnasticId", 1, true)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.ThirdComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(2), "ThirdAdditionalGymnasticId", 2, true)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.FourthComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(3), "FourthAdditionalGymnasticId", 3, true)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.FifthComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(4), "FifthAdditionalGymnasticId", 4, true)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.SixthComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(5), "SixthAdditionalGymnasticId", 5, true)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.SeventhComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(6), "SeventhAdditionalGymnasticId", 6, true)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.EighthComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(7), "EighthAdditionalGymnasticId", 7, true)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.NinthComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(8), "NinthAdditionalGymnasticId", 8, true)
+                                                                    </div>
+                                                                }
+                                                                @if (competitionRoute.TenthComposition.HasValue)
+                                                                {
+                                                                    <div style="margin-top: 30px;">
+                                                                        @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(9), "TenthAdditionalGymnasticId", 9, true)
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        @if (!competitionRoute.Composition.HasValue)
+                                                        {
+                                                            <div class="col-sm-1">
+                                                                <a class="btn btn-primary gymorder" data-instrumentid="@instrument.InstrumentId" data-isteam=true data-id="@competition.LeagueId" data-competitionrouteid="@competitionRoute.Id">@Messages.OrderOfGymnastics</a>
+                                                            </div>
+                                                        }
+
+
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="col-sm-4">
+                                                        <i class="text-danger">@Messages.RouteGymnasticsError</i>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        var gymnastics = new MultiSelectList(clubPlayersOrdered, nameof(AppModel.User.UserId), nameof(AppModel.User.FullName), selectedTeamGymnasts.ElementAt(0));
+                                        <div class="row" style="margin-bottom: 30px;">
+                                            <div class="col-sm-2">
+                                                <strong>#@competitionRoute.Id</strong>&nbsp;&nbsp;@competitionRoute.DisciplineTeamRoute.Route
+                                            </div>
+                                            <div class="col-sm-2">
+                                                @competitionRoute.RouteTeamRank.Rank
+                                            </div>
+                                            <div class="col-sm-1"></div>
+                                            @if (competitionRoute.Composition.HasValue)
+                                            {
+                                                <div class="col-sm-2">
+                                                    @Messages.Composition #1: <strong class="composition">@competitionRoute.Composition</strong>
+                                                    @if (competitionRoute.SecondComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #2:</span>
+                                                            <strong class="composition">@competitionRoute.SecondComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.ThirdComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #3:</span>
+                                                            <strong class="composition">@competitionRoute.ThirdComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.FourthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #4:</span>
+                                                            <strong class="composition">@competitionRoute.FourthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.FifthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #5:</span>
+                                                            <strong class="composition">@competitionRoute.FifthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.SixthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #6:</span>
+                                                            <strong class="composition">@competitionRoute.SixthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.SeventhComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #7:</span>
+                                                            <strong class="composition">@competitionRoute.SeventhComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.EighthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #8:</span>
+                                                            <strong class="composition">@competitionRoute.EighthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.NinthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #9:</span>
+                                                            <strong class="composition">@competitionRoute.NinthComposition</strong>
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.TenthComposition.HasValue)
+                                                    {
+                                                        <div style="margin-top: 40px;">
+                                                            <span>@Messages.Composition #10:</span>
+                                                            <strong class="composition">@competitionRoute.TenthComposition</strong>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="col-sm-2">
+                                                </div>
+                                            }
+                                            @if (gymnastics != null)
+                                            {
+                                                <div class="col-sm-1 gymnasticdiv">
+                                                    <div class="composition1-div">
+                                                        @Html.DropDownList($"GymnasticsIds", gymnastics, new
+                                                        {
+                                                            @class = $"form-control gymnasticsIds competition_{competition.LeagueId}",
+                                                            @multiple = "multiple",
+                                                            data_leagueid = $"{competition.LeagueId}",
+                                                            data_competitionrouteid = $"{competitionRoute.Id}",
+                                                            data_composition = $"{competitionRoute.Composition}",
+                                                            data_type = "composition1",
+                                                            id = $"gymnastics_{competition.LeagueId}_{competitionRoute.Id}",
+                                                            data_isteam = true
+                                                        })
+                                                    </div>
+
+                                                    @if (competitionRoute.SecondComposition.HasValue)
+                                                    {
+                                                        <div class="composition2-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.SecondComposition, selectedTeamGymnastsMultiSelectList.ElementAt(1), "SecondGymnasticsIds", 1, true)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.ThirdComposition.HasValue)
+                                                    {
+                                                        <div class="composition3-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.ThirdComposition, selectedTeamGymnastsMultiSelectList.ElementAt(2), "ThirdGymnasticsIds", 2, true)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.FourthComposition.HasValue)
+                                                    {
+                                                        <div class="composition4-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.FourthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(3), "FourthGymnasticsIds", 3, true)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.FifthComposition.HasValue)
+                                                    {
+                                                        <div class="composition5-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.FifthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(4), "FifthGymnasticsIds", 4, true)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.SixthComposition.HasValue)
+                                                    {
+                                                        <div class="composition6-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.SixthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(5), "SixthGymnasticsIds", 5, true)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.SeventhComposition.HasValue)
+                                                    {
+                                                        <div class="composition7-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.SeventhComposition, selectedTeamGymnastsMultiSelectList.ElementAt(6), "SeventhGymnasticsIds", 6, true)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.EighthComposition.HasValue)
+                                                    {
+                                                        <div class="composition8-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.EighthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(7), "EighthGymnasticsIds", 7, true)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.NinthComposition.HasValue)
+                                                    {
+                                                        <div class="composition9-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.SeventhComposition, selectedTeamGymnastsMultiSelectList.ElementAt(8), "NinthGymnasticsIds", 8, true)
+                                                        </div>
+                                                    }
+                                                    @if (competitionRoute.TenthComposition.HasValue)
+                                                    {
+                                                        <div class="composition10-div" style="margin-top: 30px;">
+                                                            @AddDropDownForCompositionNoInstrument(competition.LeagueId, competitionRoute.Id, competitionRoute.TenthComposition, selectedTeamGymnastsMultiSelectList.ElementAt(9), "TenthGymnasticsIds", 9, true)
+                                                        </div>
+                                                    }
+
+                                                </div>
+                                                <div class="col-sm-4">
+                                                    @if (competitionRoute.Composition.HasValue && competition.DisciplineId == 1)
+                                                    {
+                                                        <div class="col-sm-4">
+                                                            @Html.DropDownList($"AdditionalGymnasticId", selectedTeamAdditionalGymnastsSelectList.ElementAt(0), Messages.NoneSelected, new
+                                                            {
+                                                                @class = $"form-control additionalgymnastics",
+                                                                @id = $"additionalgym_{competition.LeagueId}_{competitionRoute.Id}",
+                                                                @data_competitionRouteId = $"{competitionRoute.Id}",
+                                                                @data_type = "composition1",
+                                                                @data_leagueId = $"{competition.LeagueId}",
+                                                                @data_isteam = true
+                                                            })
+
+
+                                                            @if (competitionRoute.SecondComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(1), "SecondAdditionalGymnasticId", 1, true)
+                                                                </div>
+                                                            }
+
+                                                            @if (competitionRoute.ThirdComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(2), "ThirdAdditionalGymnasticId", 2, true)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.FourthComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(3), "FourthAdditionalGymnasticId", 3, true)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.FifthComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(4), "FifthAdditionalGymnasticId", 4, true)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.SixthComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(5), "SixthAdditionalGymnasticId", 5, true)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.SeventhComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(6), "SeventhAdditionalGymnasticId", 6, true)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.EighthComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(7), "EighthAdditionalGymnasticId", 7, true)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.NinthComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(8), "NinthAdditionalGymnasticId", 8, true)
+                                                                </div>
+                                                            }
+                                                            @if (competitionRoute.TenthComposition.HasValue)
+                                                            {
+                                                                <div style="margin-top: 30px;">
+                                                                    @AddDropDownForAdditionalComposition(competition.LeagueId, competitionRoute.Id, selectedTeamAdditionalGymnastsSelectList.ElementAt(9), "TenthAdditionalGymnasticId", 9, true)
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    @if (!competitionRoute.Composition.HasValue)
+                                                    {
+                                                        <div class="col-sm-1">
+                                                            <a class="btn btn-primary gymorder" data-id="@competition.LeagueId" data-isteam=true data-competitionrouteid="@competitionRoute.Id">@Messages.OrderOfGymnastics</a>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="col-sm-4">
+                                                    <i class="text-danger">@Messages.RouteGymnasticsError</i>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            }
+                        </div>
+                        @if (isHebrew)
+                        {
+                            <div class="panel-footer pull-left">
+                                @if (hasGymnastics)
+                                {
+                                    <button data-id="@competition.LeagueId" class="btn btn-primary saveGymnastsBtn">@Messages.Save</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary" disabled>@Messages.Save</button>
+                                }
+                                <button class="btn btn-danger cancel" data-id="@competition.LeagueId">@Messages.Cancel</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="panel-footer pull-right">
+                                @if (hasGymnastics)
+                                {
+                                    <button data-id="@competition.LeagueId" class="btn btn-primary saveGymnastsBtn">@Messages.Save</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary" disabled>@Messages.Save</button>
+                                }
+                                <button class="btn btn-danger cancel" data-id="@competition.LeagueId">@Messages.Cancel</button>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="row" style="margin-bottom: 20px;">
+                                <div class="col-sm-12">
+                                    @Messages.NoRoutesForThisCompetition
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <button class="btn btn-danger cancel">@Messages.Cancel</button>
+                        </div>
+                    </div>
+                }
+
+            </td>
+        </tr>
+    }
+}

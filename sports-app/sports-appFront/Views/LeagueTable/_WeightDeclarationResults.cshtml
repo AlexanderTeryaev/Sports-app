@@ -1,0 +1,236 @@
+﻿@using AppModel
+@using Resources
+@using LogLigFront.Helpers
+@model CompetitionDiscipline
+@{
+    HttpCookie cookie = Request.Cookies["_culture"];
+    bool isHebrew = cookie?.Value != "en-US";
+    string pullRight = isHebrew ? "pull-left" : "pull-right";
+}
+<div class="modal-dialog modal-lg modal-result-custom-width">
+    <div class="modal-content" style="padding: 18px;">
+        <div class="row" style="display:flex">
+            <div class="pull-right" style="padding-right: 10px;">@Messages.SportsmenNumber <strong> @(Model?.CompetitionDisciplineRegistrations.Count() ?? 0)</strong></div>
+        </div>
+        <a href="" onclick="printClick();" class="print_print_id btn btn-primary remove_print" style="float:left;">
+            <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+        </a>
+        <div class="print_id" id="print_id" data-print-title="">
+
+            <style>
+                td, th {
+                    text-align: center;
+                }
+                .modal-result-custom-width {
+                    width:100%;
+                }
+
+            @Html.Raw('@')media screen and (min-width: 1000px) {
+                .modal-result-custom-width {
+                    min-width:1000px;
+                    width:90%;
+                }
+            @Html.Raw('@')page{size:auto; margin:5mm;}
+            }
+            </style>
+            <div class="main-title disciplines-title">
+                <div class="col-sm-9"><h4 class="modal-title">- @Messages.Results - @ViewBag.CompetitionName - @ViewBag.CategoryName</h4></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table res-table">
+                    <thead>
+                        <tr class="disciplines-title">
+                            <th>@Messages.FullName</th>
+                            <th>@Messages.YearOfBirth</th>
+                            <th>@Messages.Club</th>
+                            <th>@Messages.Gender</th>
+                            <th>@Messages.Weight</th>
+                            <th colspan="3">@Messages.Lifting</th>
+                            <th>@Messages.ResultOf @Messages.Lifting</th>
+                            <th>@Messages.RankRaw</th>
+                            <th colspan="3">@Messages.Pushing</th>
+                            <th>@Messages.ResultOf @Messages.Pushing</th>
+                            <th>@Messages.RankRaw</th>
+                            <th>@Messages.BattleOfTwo</th>
+                            @if (@ViewBag.isTeam == "true" || ViewBag.isCup == "true")
+                            {
+                                <th>Sinclair</th>
+                            }
+                            <th>@Messages.RankRaw</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var rank = 0;
+                        }
+
+                        @foreach (var reg in Model.CompetitionDisciplineRegistrations)
+                        {
+                            var sex = reg.User.GenderId ?? 0;
+                            var result = reg.CompetitionResult.FirstOrDefault();
+                            if (result == null)
+                            {
+                                result = new CompetitionResult();
+                            }
+                            rank += 1;
+                        <tr>
+                            <td>
+                                @if (reg.User != null)
+                                {
+                                    @reg.User.FullName
+                                }
+                            </td>
+                            <td>
+                                @if (reg.User != null)
+                                {
+                                    @(reg.User.BirthDay.HasValue ? reg.User.BirthDay.Value.Year.ToString() : "");
+                                }
+                            </td>
+                            <td>
+                                @if (reg.Club != null)
+                                {
+                                    @reg.Club.Name
+                                }
+                            </td>
+                            <td>@(UIHelpers.GetGenderCharById(reg.User.GenderId ?? 0)) </td>
+                            @{
+                                string danger = "";
+                                bool IsWeighOk = (!reg.Weight.HasValue || !reg.CompetitionDiscipline.CompetitionAge.from_weight.HasValue || !reg.CompetitionDiscipline.CompetitionAge.to_weight.HasValue || (reg.CompetitionDiscipline.CompetitionAge.from_weight <= reg.Weight && reg.CompetitionDiscipline.CompetitionAge.to_weight > reg.Weight)) ? true : false;
+
+                                if (!IsWeighOk)
+                                {
+                                    danger = "alert-danger";
+                                }
+                            }
+                            <td class="@danger">@reg.Weight</td>
+
+
+                            <td class="@(result.Lift1Success.HasValue && result.Lift1Success.Value == 1 ? "alert-success" : (result.Lift1Success.HasValue && result.Lift1Success.Value == 0 ? "alert-danger": ""))">@(result.Lift1Success.HasValue && result.Lift1Success.Value == 3 ? "-" : result.Lifting1.ToString())</td>
+                            <td class="@(result.Lift2Success.HasValue && result.Lift2Success.Value == 1 ? "alert-success" : (result.Lift2Success.HasValue && result.Lift2Success.Value == 0 ? "alert-danger": ""))">@(result.Lift2Success.HasValue && result.Lift2Success.Value == 3 ? "-" : result.Lifting2.ToString())</td>
+                            <td class="@(result.Lift3Success.HasValue && result.Lift3Success.Value == 1 ? "alert-success" : (result.Lift3Success.HasValue && result.Lift3Success.Value == 0 ? "alert-danger": ""))">@(result.Lift3Success.HasValue && result.Lift3Success.Value == 3 ? "-" : result.Lifting3.ToString())</td>
+
+                            <td>
+                                @{
+                                    int? bestLift = 0;
+                                    if (result.Lifting1.HasValue && result.Lift1Success.HasValue && result.Lift1Success.Value == 1 && (!bestLift.HasValue || result.Lifting1.Value > bestLift.Value))
+                                    {
+                                        bestLift = result.Lifting1;
+                                    }
+                                    if (result.Lifting2.HasValue && result.Lift2Success.HasValue && result.Lift2Success.Value == 1 && (!bestLift.HasValue || result.Lifting2.Value > bestLift.Value))
+                                    {
+                                        bestLift = result.Lifting2;
+                                    }
+                                    if (result.Lifting3.HasValue && result.Lift3Success.HasValue && result.Lift3Success.Value == 1 && (!bestLift.HasValue || result.Lifting3.Value > bestLift.Value))
+                                    {
+                                        bestLift = result.Lifting3;
+                                    }
+                                }
+                                @bestLift
+                            </td>
+                            <td>@result.LiftingRank</td>
+
+                            <td class="@(result.Push1Success.HasValue && result.Push1Success.Value == 1 ? "alert-success" : (result.Push1Success.HasValue && result.Push1Success.Value == 0 ? "alert-danger": ""))">@(result.Push1Success.HasValue && result.Push1Success.Value == 3 ? "-" : result.Push1.ToString())</td>
+                            <td class="@(result.Push2Success.HasValue && result.Push2Success.Value == 1 ? "alert-success" : (result.Push2Success.HasValue && result.Push1Success.Value == 0 ? "alert-danger": ""))">@(result.Push2Success.HasValue && result.Push2Success.Value == 3 ? "-" : result.Push2.ToString())</td>
+                            <td class="@(result.Push3Success.HasValue && result.Push3Success.Value == 1 ? "alert-success" : (result.Push3Success.HasValue && result.Push1Success.Value == 0 ? "alert-danger": ""))">@(result.Push3Success.HasValue && result.Push3Success.Value == 3 ? "-" : result.Push3.ToString())</td>
+
+                            <td>
+                                @{
+                                    int? bestPush = 0;
+                                    if (result.Push1.HasValue && result.Push1Success.HasValue && result.Push1Success.Value == 1 && (!bestPush.HasValue || result.Lifting1.Value > bestPush.Value))
+                                    {
+                                        bestPush = result.Push1;
+                                    }
+                                    if (result.Push2.HasValue && result.Push2Success.HasValue && result.Push2Success.Value == 1 && (!bestPush.HasValue || result.Push2.Value > bestPush.Value))
+                                    {
+                                        bestPush = result.Push2;
+                                    }
+                                    if (result.Push3.HasValue && result.Push3Success.HasValue && result.Push3Success.Value == 1 && (!bestPush.HasValue || result.Push3.Value > bestPush.Value))
+                                    {
+                                        bestPush = result.Push3;
+                                    }
+                                }
+                                @bestPush
+                            </td>
+                            <td>@result.PushRank</td>
+                            <td>@(bestLift + bestPush)</td>
+                            @if (ViewBag.isTeam == "true" || ViewBag.isCup == "true")
+                            {
+                                <td class="rank-index">
+                                    @{
+                                        double? sc = 0;
+                                        int? total = 0;
+                                        if (reg.Weight.HasValue)
+                                        {
+
+                                            if (sex == 1)
+                                            {
+                                                sc = Math.Pow(10, 0.751495030 * Math.Pow(Math.Log10((double)reg.Weight / 175.508), 2));
+                                                if ((double)reg.Weight > 175.508)
+                                                {
+                                                    sc = (double)1;
+                                                }
+
+                                            }
+                                            else if (sex == 0)
+                                            {
+                                                sc = Math.Pow(10, 0.783497476 * Math.Pow(Math.Log10((double)reg.Weight / 153.655), 2));
+                                                if ((double)reg.Weight > 153.655)
+                                                {
+                                                    sc = (double)1;
+                                                }
+                                            }
+                                        }
+
+                                        if (bestLift == 0 || bestPush == 0)
+                                        {
+                                            total = 0;
+                                        }
+                                        else
+                                        {
+                                            total = bestLift + bestPush;
+                                        }
+                                    }
+                                    @(String.Format("{0:0.000}", sc * total))
+                                </td>
+                            }
+                            <td>@rank</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default mobile-only" data-dismiss="modal">Close</button>
+        </div>
+        @section scripts
+        {
+            <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+            <script>
+                var lastRecievedResults = '@(ViewBag.LastResultsUpdate)';
+
+                function checkIsNeedPageRefresh() {
+                    $.ajax({
+                        type: "POST",
+                        url: "/LeagueTable/IsWeightDeclarationResultsRequireUpdate",
+                        data: {
+                            "competitionDisciplineId": @(ViewBag.CompetitionDisciplineId),
+                            "lastRecieveValue": lastRecievedResults
+                        },
+                        success: function (data) {
+                            lastRecievedResults = data.lastUpdate;
+                            if (!data.IsStillSame) {
+                               location.reload();
+                            }
+                        }
+                    });
+                }
+                setInterval(function () {
+                    checkIsNeedPageRefresh();
+                }, 5 * 1000);
+            </script>
+        }
+    </div>
+
+</div>
+

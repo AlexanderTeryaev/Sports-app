@@ -1,0 +1,23 @@
+﻿@model TravelSectionModel
+@if (Model.IsAthleticsLeague)
+{
+    <td><input type="checkbox" id="union_transport_@Model.JobId" @(Model.TravelInformationDto.IsUnionTravel ? "checked" : "") /></td>
+}
+
+@if (Model.IsIndividualSection)
+{
+    <td><input type="checkbox" id="no_travel_@Model.JobId" @(Model.TravelInformationDto.NoTravel ? "checked" : "") /></td>
+}
+@if (Model.IsAthleticsLeague)
+{
+    <td>
+        <div class="">
+            @Html.Hidden(nameof(Model.TravelInformationDto.FromHour), (DateTime?)Model.TravelInformationDto.FromHour ?? DateTime.MinValue, new { data_format = "HH:mm ", id = "userJobFromTime_" + @Model.JobId + "i" })
+            <div class="UserJobWorkFromTime" id="userJobFromTime_@Model.JobId"></div>
+        </div>
+    </td>
+    <td>
+        @Html.Hidden(nameof(Model.TravelInformationDto.ToHour), (DateTime?)Model.TravelInformationDto.ToHour ?? DateTime.MinValue, new { data_format = "HH:mm ", id = "userJobToTime_" + @Model.JobId + "i" })
+        <div class="UserJobWorkToTime" id="userJobToTime_@Model.JobId"></div>
+    </td>
+}

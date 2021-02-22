@@ -1,0 +1,583 @@
+﻿@using DataService.DTO;
+@model Dictionary<AppModel.Discipline, IEnumerable<AppModel.DisciplineTeamRoute>>
+@{
+    var ranksValues = new Dictionary<int, IEnumerable<AppModel.RouteTeamRank>>();
+    var routeHierarchy = new Dictionary<int, int?>();
+    foreach (var discipline in Model)
+    {
+        foreach (var rank in discipline.Value)
+        {
+            if (rank != null)
+            {
+                ranksValues.Add(rank.Id, rank.RouteTeamRanks);
+                routeHierarchy.Add(rank.Id, rank.Hierarchy.GetValueOrDefault(-1));
+            }
+        }
+    }
+    var selectedValues = (IEnumerable<SelectedRoutesDto>)ViewBag.SelectedValues;
+    bool fromAdding = (bool)ViewBag.IsFromAdd;
+}
+
+@{
+    int userId = ViewBag.UserId != null ? ViewBag.UserId : 0;
+    int teamId = ViewBag.TeamId != null ? ViewBag.TeamId : 0;
+    string _type = ViewBag.RouteType;
+}
+@*<div class="modal-body">*@
+@if (Model.Count > 0)
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>@Messages.Discipline</td>
+                <td>@Messages.Route</td>
+                <td>@Messages.Ranks</td>
+                @if (!fromAdding)
+                {
+                    <td></td>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var disciplineValues in Model)
+            {
+                var selected = selectedValues.Where(c => c.DisciplineId == disciplineValues.Key?.DisciplineId).FirstOrDefault();
+                var routesSelect = disciplineValues.Value?.Select(c => new SelectListItem
+                {
+                    Text = c.Route,
+                    Value = c.Id.ToString(),
+                    Selected = selected != null && selected.UsersRouteId == c.Id
+                });
+                var usersRanks = disciplineValues.Value.Select(c => c.RouteTeamRanks.FirstOrDefault(j => j.TeamRouteId == selected?.UsersRouteId)).FirstOrDefault(c => c != null);
+                var usersRanksDrop = new List<SelectListItem>();
+                if (usersRanks != null)
+                {
+                    foreach (var userRank in usersRanks.DisciplineTeamRoute?.RouteTeamRanks)
+                    {
+
+                        usersRanksDrop.Add(new SelectListItem
+                        {
+                            Text = userRank.Rank,
+                            Value = userRank.Id.ToString(),
+                            Selected = selected != null && selected.UsersRankId == userRank.Id
+                        });
+                    }
+                }
+
+                <tr data-id="@disciplineValues.Key.DisciplineId" data-route-old-id="@(selected != null ? selected.UsersRouteId : -1)" data-type="@_type">
+                    <td>@disciplineValues.Key.Name</td>
+                    <td>@Html.DropDownList($"routes", routesSelect, Messages.Select, new { @class = $"teamroutes  {_type} form-control", id = $"routes-{disciplineValues.Key.DisciplineId}-{_type}" })</td>
+                    <td><div id="rankDiv">@Html.DropDownList($"rank", usersRanksDrop, Messages.Select, new { @class = " teamrank form-control", id = $"rank-{disciplineValues.Key.DisciplineId}-{_type}" })</div></td>
+                    @if (!fromAdding)
+                    {
+                        <td><a class="saveRouteBtn @AppCss.Save"></a></td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <script type="text/javascript">
+        $(".route-rank-for-team").hide();
+    </script>
+}
+@*</div>*@
+
+
+@if (fromAdding)
+{
+    <script>
+        $('#saveRouteMainBtn').show();
+    </script>
+}
+
+@*@if (Model != null && Model.Count > 0)
+{*@
+    <script>
+            var teamroutesRanks = [];
+            var teamroutesHierarchy = {};
+            var _teamranks = {};
+
+            var currentSelectedRoutes = {};
+
+            $(document).ready(function () {
+
+                $('.routes').each(function (index, value) {
+                    currentSelectedRoutes[$(value)[0].id] = $(value).val();
+                });
+
+                $('.teamroutes').each(function (index, value) {
+                    currentSelectedRoutes[$(value)[0].id] = $(value).val();
+                });
+            });
+
+    </script>
+    @foreach (var rankValue in ranksValues)
+    {
+        <script>
+            var ranksIds = '@String.Join(",", rankValue.Value?.Select(r => r.Id))'.split(',');
+            var ranksNames = '@String.Join(",", rankValue.Value?.Select(r => r.Rank))'.split(',');
+            var ranksAgesFrom = '@String.Join(",", rankValue.Value?.Select(r => r.FromAge?.Ticks ?? -1))'.split(',');
+            var ranksAgesTo = '@String.Join(",", rankValue.Value?.Select(r => r.ToAge?.Ticks ?? -1))'.split(',');
+            var ranks = {
+                "routeId": '@rankValue.Key',
+                "ranksIds": ranksIds,
+                "ranksNames": ranksNames,
+                "ranksAgesFrom":ranksAgesFrom,
+                "ranksAgesTo":ranksAgesTo
+            };
+            teamroutesRanks.push(ranks);
+        </script>
+    }
+
+    @foreach (var rankValue in ranksValues)
+    {
+        <script>
+                var ranksIds = '@String.Join(",", rankValue.Value?.Select(r => r.Id))'.split(',');
+                var ranksAgesFrom = '@String.Join(",", rankValue.Value?.Select(r => r.FromAge?.Ticks ?? -1))'.split(',');
+                var ranksAgesTo = '@String.Join(",", rankValue.Value?.Select(r => r.ToAge?.Ticks ?? -1))'.split(',');
+                for (var i = 0; i < ranksIds.length; i++) {
+                    var id = ranksIds[i];
+                    var from = ranksAgesFrom[i];
+                    var to = ranksAgesTo[i];
+                    if (id != '') {
+                        _teamranks[id] = { from: from, to: to };
+                    }
+                }
+        </script>
+    }
+
+    @foreach (var route in routeHierarchy)
+    {
+        <script>
+            teamroutesHierarchy['@route.Key'] = '@route.Value';
+        </script>
+    }
+
+    <script>
+        $(".close-routes-modal").click(function() {
+            $("#routeRanks").modal("hide");
+        });
+
+        var playerAge = $("#hBirthDate").val();
+
+        $(".routes, .teamroutes").change(function () {
+            var routeId = $(this).val();
+
+
+            var disciplineId = $(this).closest('tr').attr('data-id');
+            var _type_ = $(this).closest('tr').attr('data-type');
+
+
+            var saveButtonElement = $(this).parent().next().next().children().first();
+            saveButtonElement.removeClass("btn-success");
+            saveButtonElement.addClass("btn-primary");
+
+            var cl = "rank";
+            if (_type_ == "_team_") {
+                cl = "teamrank";
+            }
+            var rankDiv = $(this).closest('tr').find('#rankDiv');
+            var rankDropdown = $(this).closest('tr').find('.'+cl);
+            if (!routeId) {
+                rankDropdown.remove();
+
+
+
+                var newDropdown = $('<select id="rank' + disciplineId + '-' + _type_ + '" class=" '+cl+' form-control">').appendTo(rankDiv);
+                newDropdown.append($("<option>").attr('value','0').text('@Messages.Select'));
+            }
+
+
+            if (_type_ == "_team_") {
+                for (var i = 0; i < teamroutesRanks.length; i++) {
+                    if (routeId == teamroutesRanks[i].routeId) {
+                        if (rankDropdown.length) { // if exists - delete
+                            rankDropdown.remove();
+                        }
+
+                        var values = teamroutesRanks[i].ranksIds;
+                        var textVal = teamroutesRanks[i].ranksNames;
+                        var ageFromVals = teamroutesRanks[i].ranksAgesFrom;
+                        var ageToVals = teamroutesRanks[i].ranksAgesTo;
+
+                        if (routeId) {
+                            var newDropdown = $('<select id="rank-' + disciplineId + '-' + _type_ + '" class="'+cl+' form-control">').appendTo(rankDiv);
+
+                            for (var j = 0; j < values.length; j++) {
+                                if (j == 0) {
+                                    newDropdown.append($("<option>").attr('value', '0').text('@Messages.Select'));
+                                }
+                                newDropdown.append($("<option>").attr('value', values[j]).text(textVal[j]));
+                            }
+                        }
+
+                    }
+                }
+            }
+            else {
+                for (var i = 0; i < routesRanks.length; i++) {
+                    if (routeId == routesRanks[i].routeId) {
+                        if (rankDropdown.length) { // if exists - delete
+                            rankDropdown.remove();
+                        }
+
+                        var values = routesRanks[i].ranksIds;
+                        var textVal = routesRanks[i].ranksNames;
+                        var ageFromVals = routesRanks[i].ranksAgesFrom;
+                        var ageToVals = routesRanks[i].ranksAgesTo;
+
+                        if (routeId) {
+                            var newDropdown = $('<select id="rank-' + disciplineId + '-'+_type_+'" class="'+cl+' form-control">').appendTo(rankDiv);
+
+                            for (var j = 0; j < values.length; j++) {
+                                if (j == 0) {
+                                    newDropdown.append($("<option>").attr('value','0').text('@Messages.Select'));
+                                }
+                                newDropdown.append($("<option>").attr('value', values[j]).text(textVal[j]));
+                            }
+                        }
+
+                    }
+                }
+            }
+        });
+
+        $('table').on('click',
+            '.saveRouteBtn',
+            function (e) {
+
+                var button = $(this);
+                var row = $(this).closest('tr');
+                var dID = row.attr('data-id');
+                var _type_ = row.attr('data-type');
+                var selectInputData = row.find('#routes-' + dID + '-' + _type_);
+                var selectInput = $(selectInputData)[0].id;
+                var routeId = selectInputData.val();
+
+                var routeSelectedId = selectInput.id;
+
+                var oldRouteId = row.attr('data-route-old-id');
+
+                @if (!(User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager)))
+                {
+                    <text>
+                    if (routeId != oldRouteId) {
+                        if (_type_ == "_team_") {
+                            var routeHierarchy = parseInt(teamroutesHierarchy[routeId]);
+                            var oldRouteHierarchy = parseInt(teamroutesHierarchy[oldRouteId]);
+
+                            //if (oldRouteHierarchy > routeHierarchy) {
+                            //    alert('@Messages.PlayerRouteValidationMessage');
+                            //    return;
+                            //}
+
+                        }
+                        else {
+                            var routeHierarchy = parseInt(routesHierarchy[routeId]);
+                            var oldRouteHierarchy = parseInt(routesHierarchy[oldRouteId]);
+
+                            //if (oldRouteHierarchy > routeHierarchy) {
+                            //    alert('@Messages.PlayerRouteValidationMessage');
+                            //    return;
+                            //}
+                        }
+                    }
+                    </text>
+                }
+
+                var rankId = row.find('#rank-' + dID + '-' + _type_).val();
+                var userId = $('#UserId').val();
+                var teamId = $("#CurrentTeamId").val();
+                var fromAge = -1;
+                var toAge = -1;
+
+                if (_type_ == "_team_") {
+                    if (rankId && rankId != '' && rankId != '0') {
+                        fromAge = _teamranks[rankId].from;
+                        toAge = _teamranks[rankId].to;
+                    }
+                }
+                else {
+                    if (rankId && rankId != '' && rankId != '0') {
+                        fromAge = _ranks[rankId].from;
+                        toAge = _ranks[rankId].to;
+                    }
+                }
+                if (rankId != '0' && rankId != undefined && rankId != null) {
+                    if (playerAge != -1 && (fromAge != -1 || toAge != -1)) {
+                        if ((fromAge == -1 || (fromAge != -1 && playerAge >= fromAge)) && (toAge == -1 || (toAge != -1 && playerAge <= toAge))) {
+                            // player age mathed with rank age
+                        }
+                        else {
+                            // player age didn't match with rank age
+                            @if (!(User.IsInAnyRole(AppRole.Admins) || User.HasTopLevelJob(JobRole.UnionManager)))
+                            {   <text>
+                                        alert('@Messages.PlayerRankValidationMessage');
+                                        return;
+                                    </text>
+                            }
+                            else
+                            {
+                                    <text>
+                                        if (confirm("@Messages.PlayerRankValidationMessage @Messages.AreYouSureYouWantToProceed")) {
+                                        } else {
+                                            return;
+                                        }
+                                    </text>
+                            }
+                        }
+                    }
+                }
+
+
+                if (routeId != "" && (rankId == "" || rankId == "0") ) {
+                    alert('@Messages.SelectRankForEachRoute');
+                    return;
+                }
+
+
+                var possibleOutcome = JSON.parse(JSON.stringify(currentSelectedRoutes));
+                possibleOutcome[selectInput] = routeId;
+
+                var count = 0;
+                for (var key in possibleOutcome) {
+                    if (possibleOutcome[key] != "") {
+                        count = count + 1;
+                    }
+                }
+
+                if (count == 0) {
+                   alert('@Messages.SelectRoute');
+                   return;
+                }
+
+                currentSelectedRoutes[selectInput] = routeId;
+
+                var url = "/Players/EditRankForUser";
+                var data = {
+                    userId: userId,
+                    routeId: routeId,
+                    rankId: rankId != '0' && rankId != undefined && rankId != null ? rankId : undefined
+                };
+                if (_type_ == '_team_') {
+                    url = "/Players/EditRankForTeam";
+                    data = {
+                        teamId: teamId,
+                        userId: userId,
+                        routeId: routeId,
+                        rankId: rankId != '0' && rankId != undefined && rankId != null ? rankId : undefined
+                    };
+                }
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: data,
+                    success: function(data) {
+                        if (data.Message) {
+                            alert(data.Message);
+                            $(button).removeClass("btn btn-primary btn-save glyphicon glyphicon-saved")
+                                .addClass("btn btn-danger btn-save glyphicon glyphicon-saved");
+                        } else {
+                            $(button).removeClass("btn btn-primary btn-save glyphicon glyphicon-saved")
+                                .addClass("btn btn-success btn-save glyphicon glyphicon-saved");
+                        }
+                    }
+                });
+            });
+    </script>
+    @if (fromAdding)
+    {
+        <script>
+            $("#saveRouteMainBtn").click(function () {
+                var disps = [];
+                var routes = [];
+                var ranks = [];
+
+                var teamdisps = [];
+                var teamroutes = [];
+                var teamranks = [];
+                var error = false;
+
+                $('.routes').each(function (index, value) {
+                    
+                    routes.push($(value).val());
+
+                    if ($(value).val() != '') {
+                        disps.push($(value).closest('tr').attr('data-id'));
+                    }
+                });
+                $('.rank').each(function (index, value) {
+                    ranks.push($(value).val());
+                });
+
+
+                for (var i = 0; i < ranks.length; i++) {
+                    if (ranks[i] == "0") {
+                        ranks[i] = "";
+                    }
+                }
+
+                var dispsString = disps.join();
+                var routesString = routes.join();
+                var ranksString = ranks.join();
+
+                if (routes.length == ranks.length) {
+                    for (var i = 0; i < ranks.length; i++) {
+                        var routeId = routes[i];
+                        var rankId = ranks[i];
+                        if (routeId != "" && (rankId == "" || rankId == "0")) {
+                            error = true;
+                        }
+                    }
+                }
+
+
+                $('.teamroutes').each(function (index, value) {
+                    teamroutes.push($(value).val());
+
+                    if ($(value).val() != '') {
+                        teamdisps.push($(value).closest('tr').attr('data-id'));
+                    }
+                });
+                $('.teamrank').each(function (index, value) {
+                    teamranks.push($(value).val());
+                });
+
+                for (var i = 0; i < teamranks.length; i++) {
+                    if (teamranks[i] == "0") {
+                        teamranks[i] = "";
+                    }
+                }
+
+                var teamdispsString = teamdisps.join();
+                var teamroutesString = teamroutes.join();
+                var teamranksString = teamranks.join();
+
+                if (teamroutes.length == teamranks.length) {
+                    for (var i = 0; i < teamranks.length; i++) {
+                        var routeId = teamroutes[i];
+                        var rankId = teamranks[i];
+                        if (routeId != "" && (rankId == "" || rankId == "0")) {
+                            error = true;
+                        }
+                    }
+                }
+
+                var count = 0;
+                var isAllRoutesHaveRanks = true;
+
+                if (routes.length != ranks.length) {
+                    isAllRoutesHaveRanks = false;
+                }
+                if (teamroutes.length != teamranks.length) {
+                    isAllRoutesHaveRanks = false;
+                }
+                for (var i = 0 ; i < routes.length ; i++){
+                    if (routes[i] != "" && ranks[i] == "") {
+                        isAllRoutesHaveRanks = false;
+                    }
+                    if (routes[i] == "" && ranks[i] != "") {
+                        isAllRoutesHaveRanks = false;
+                    }
+                    if (routes[i] != "" && ranks[i] != "") {
+                        count += 1;
+                    }
+                }
+
+                for (var i = 0; i < teamroutes.length; i++) {
+                    if (teamroutes[i] != "" && teamranks[i] == "") {
+                        isAllRoutesHaveRanks = false;
+                    }
+                    if (teamroutes[i] == "" && teamranks[i] != "") {
+                        isAllRoutesHaveRanks = false;
+                    }
+                    if (teamroutes[i] != "" && teamranks[i] != "") {
+                        count += 1;
+                    }
+                }
+                if (!isAllRoutesHaveRanks) {
+                    alert('@Messages.SelectRankForEachRoute');
+                    return;
+                }
+                if (count == 0) {
+                    alert('@Messages.SelectAtleastOneRoute');
+                    return;
+                }
+                if (!error) {
+                    if ($("input[name='DisciplinesString']").length) {
+                        $("input[name='DisciplinesString']").remove();
+                    }
+                    if ($("input[name='RoutesString']").length) {
+                        $("input[name='RoutesString']").remove();
+                    }
+                    if ($("input[name='RanksString']").length) {
+                        $("input[name='RanksString']").remove();
+                    }
+
+                    if ($("input[name='TeamDisciplinesString']").length) {
+                        $("input[name='TeamDisciplinesString']").remove();
+                    }
+                    if ($("input[name='TeamRoutesString']").length) {
+                        $("input[name='TeamRoutesString']").remove();
+                    }
+                    if ($("input[name='TeamRanksString']").length) {
+                        $("input[name='TeamRanksString']").remove();
+                    }
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'DisciplinesString',
+                        id: 'hDisciplinesString',
+                        value: dispsString,
+                    }).appendTo('#userplayerform');
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'RoutesString',
+                        id: 'hRoutesString',
+                        value: routesString,
+                    }).appendTo('#userplayerform');
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'RanksString',
+                        id: 'hRanksString',
+                        value: ranksString,
+                    }).appendTo('#userplayerform');
+
+
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'TeamDisciplinesString',
+                        id: 'hTeamDisciplinesString',
+                        value: teamdispsString,
+                    }).appendTo('#userplayerform');
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'TeamRoutesString',
+                        id: 'hTeamRoutesString',
+                        value: teamroutesString,
+                    }).appendTo('#userplayerform');
+
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'TeamRanksString',
+                        id: 'hTeamRanksString',
+                        value: teamranksString,
+                    }).appendTo('#userplayerform');
+
+
+                    $("#routeRanks").modal('hide');
+                }
+                else {
+                    alert('@Messages.SelectRank');
+                }
+            })
+        </script>
+    }
+@*}*@

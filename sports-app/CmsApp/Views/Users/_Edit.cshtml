@@ -1,0 +1,64 @@
+﻿@model UserForm
+<!-- Modal -->
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
+    <h4 class="modal-title">@(Model.UserId == 0 ? Messages.AddNew : Model.FullName)</h4>
+</div>
+@using (Ajax.BeginForm("Edit", null, 
+    new AjaxOptions { UpdateTargetId = "userform_pl", OnSuccess="userUpdated()" },
+    new { id = "userform", autocomplete = "off" }))
+    {
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.FullName:</label>
+                @Html.TextBoxFor(m => m.FullName, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.FullName)
+            </div>
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.IdentNum:</label>
+                @Html.TextBoxFor(m => m.IdentNum, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m => m.IdentNum)
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.Ended:</label>
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control custemail" })
+                @Html.ValidationMessageFor(m => m.Email)
+            </div>
+            <div class="form-group col-sm-6">
+                <label class="control-label">@Messages.Password:</label>
+                <input style="display:none">
+                @Html.PasswordFor(m => m.Password, new { @class = "form-control pass", value = Model.Password, data_val_pass = Messages.IvalidPasswrodPattern })
+                @Html.ValidationMessageFor(m => m.Password)
+            </div>
+        </div>
+        @if (User.IsInRole(AppRole.Admins))
+        {
+            <div class="row">
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.UserName:</label>
+                    @Html.TextBoxFor(m => m.UserName, new { @class = "form-control", minlength = 5, regex = "^[a-zA-Z0-9-_]*$", data_val_regex = "אותיות ומספרים באנגלית, מקף, קו תחתון" })
+                    @Html.ValidationMessageFor(m => m.UserName)
+                </div>
+                <div class="form-group col-sm-6">
+                    <label class="control-label">@Messages.Role:</label>
+                    @Html.DropDownListFor(m => m.TypeId, Model.RolesList, Messages.Select, new { @class = "form-control" })
+                </div>
+            </div>
+            <div class="checkbox">
+                <label>@Html.CheckBoxFor(m => m.IsActive) <span> @Messages.Active</span></label>
+                <label class="space-3">@Html.CheckBoxFor(m => m.IsBlocked) <span> @Messages.Blocked</span></label>
+            </div>
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">@Messages.Close</button>
+        <button type="submit" class="btn btn-primary">@Messages.Save</button>
+    </div>
+    @Html.HiddenFor(m => m.UserId)
+}
+<script>
+    $('#userform').validateBootstrap(true);
+</script>

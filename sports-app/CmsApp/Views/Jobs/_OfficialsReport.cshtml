@@ -1,0 +1,675 @@
+﻿@model SalaryReportForm
+@{
+    /**/
+
+    bool isHebrew = Request.IsHebrew();
+    var loadClass = isHebrew ? "pull-left" : "pull-right";
+    var css = isHebrew ? "left" : "right";
+    var isReferee = ViewBag.IsReferee ?? false;
+    var hasMoreThanOneLigue = Model?.WorkerReportInfo?.LeaguesGrouped?.Count() > 1 && ViewBag.SectionAlias != GamesAlias.Athletics;
+    var travelDistance = Model.WorkerReportInfo.GamesAssigned.Sum(c => c.TravelDistance ?? 0);
+    decimal? leaguePaymentPerKm;
+    if (!hasMoreThanOneLigue)
+    {
+        var item = Model.WorkerReportInfo.GamesAssigned?.FirstOrDefault();
+        if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateA")
+        {
+            leaguePaymentPerKm = item?.IsUnionReport == true
+                ? item?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateAForTravel
+                : item?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateAForTravel;
+        }
+        else if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateB")
+        {
+            leaguePaymentPerKm = item?.IsUnionReport == true
+                ? item?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateBForTravel
+                : item?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateBForTravel;
+        }
+        else if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateC")
+        {
+            leaguePaymentPerKm = item?.IsUnionReport == true
+                ? item?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateCForTravel
+                : item?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateCForTravel;
+        }
+        else
+        {
+            leaguePaymentPerKm = item?.IsUnionReport == true
+                ? item?.Union?.UnionOfficialSettings?.FirstOrDefault()?.PaymentTravel
+                : item?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.PaymentTravel;
+        }
+    }
+    else
+    {
+        leaguePaymentPerKm = 0;
+    }
+    var totalPayment = !hasMoreThanOneLigue ? Convert.ToDecimal(travelDistance) * leaguePaymentPerKm : 0;
+
+    var sectionAlias = ViewBag.SectionAlias != null ? (string) ViewBag.SectionAlias : string.Empty;
+    var withoutSum = ViewBag.ReportType != null && (string) ViewBag.ReportType == "reportWithoutSum";
+    decimal? totalIntermediate = null;
+    decimal? withholdingTax = null;
+    var city = Model.WorkerReportInfo?.GamesAssigned?.FirstOrDefault()?.OfficialCity;
+    var address = Model.WorkerReportInfo?.GamesAssigned?.FirstOrDefault()?.OfficialAddress;
+}
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+    <h4 class="modal-title">
+        @Messages.SalaryReport
+        @{ var workerName = Model.WorkerReportInfo?.WorkerFullName ?? ""; }
+        @workerName
+    </h4>
+    <div class="@loadClass" style="display: none" id="loadingForReport">
+        <span class="@AppCss.Loading pull-right"></span>@Messages.Loading
+    </div>
+</div>
+<div class="modal-body">
+<div id="downloadLink" class="col-sm-12" style="display: none">
+    <div class="alert alert-success">
+        @Messages.SuccessfulPdfReport - <a class="text-danger" href="@Url.Action("DownloadExportFile", "Jobs")">@Messages.Download</a>
+    </div>
+</div>
+<form class="form-inline">
+    <div class="form-group">
+        @Html.LabelFor(m => m.ReportStartDate, Messages.StartDate)
+        @Html.TextBoxFor(m => m.ReportStartDate, new {@class = "form-control frm-date"})
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.ReportEndDate, Messages.EndDate)
+        @Html.TextBoxFor(m => m.ReportEndDate, new {@class = "form-control frm-date"})
+    </div>
+    <a style="margin-left: 20px;" id="exportToPdf" class="btn btn-primary">@Messages.DownloadReport</a>
+
+    <input type="checkbox" id="SaveReportToOfficials"/>
+    <label for="SaveReportToOfficials">@Messages.SaveReportToOfficials</label>
+</form>
+
+<div id="generated-reports">
+    <a id="manage-salary-reports-btn" class="btn btn-primary">
+        @Messages.ManageSalaryReports
+    </a>
+
+    <div id="reports-list" style="display: none">
+        @Html.Action("SalaryReports", "WorkerHome", new {userId = Model.WorkerReportInfo?.WorkerId ?? 0})
+    </div>
+</div>
+
+@if (Model.WorkerReportInfo?.GamesCount > 0)
+{
+    <p>
+    <div class="row offset-3" id="sections_pl">
+    <h5 style="text-align: center">
+        @Messages.ReportPdf_Title
+        @{ var reportTitle = Model.WorkerReportInfo?.WorkerFullName?.ToLowerInvariant(); }
+        @reportTitle
+    </h5>
+    <br/>
+    <div style="text-align: center;">
+        <h4>
+            <b>
+                @Messages.ReportNameOfOfficial
+                @{ var nameOfOfficial = Model?.WorkerReportInfo?.WorkerFullName; }
+                @nameOfOfficial
+                &nbsp;&nbsp;
+                @Messages.ReportIdOfOfficial
+                @{ var workerIdentNum = Model?.WorkerReportInfo?.WorkerIdentNum?.ToString(); }
+                @workerIdentNum
+            </b>
+        </h4>
+    </div>
+    <div style="text-align: center">
+        <h4>
+            @Messages.Season: @Model.WorkerReportInfo.SeasonName
+            &nbsp;&nbsp;
+            @{
+                var startDateString = Model.ReportStartDate.ToShortDateString();
+                var endDateString = Model.ReportEndDate.ToShortDateString();
+            }
+            @Messages.Period @startDateString - @endDateString
+        </h4>
+    </div>
+    <div class="row offset-3">
+        <div style="text-align: center">
+            <h4>
+                @Messages.Address: @address
+                &nbsp;&nbsp;
+                @Messages.City: @city
+            </h4>
+        </div>
+    </div>
+    <div class="row offset-3">
+        <table style="width: 100%" class="table table-condensed" id="table1">
+            <thead>
+            <tr>
+                <th style="width: 3%">##</th>
+                <th style="width: 10%">@(sectionAlias != GamesAlias.Athletics ? Messages.ReportTable_DateOfGame : Messages.DateOfCompetition)</th>
+                <th style="width: 10%">
+                    @if (sectionAlias.Equals(SectionAliases.Waterpolo, StringComparison.OrdinalIgnoreCase))
+                    {
+                        @Messages.Pools
+                    }
+                    else
+                    {
+                        @(sectionAlias != GamesAlias.Athletics ? Messages.ReportTable_Auditorium : Messages.Stadiums)
+                    }
+                </th>
+                <th style="width: 12%">@Messages.Role</th>
+                @if (sectionAlias != GamesAlias.Athletics)
+                {
+                    <th style="width: 10%">@Messages.HomeTeam</th>
+                    <th style="width: 10%">@Messages.GuestTeam</th>
+                }
+                <th style="width: 13%">@(sectionAlias != GamesAlias.Athletics ? Messages.League : Messages.Competition)</th>
+                <th style="width: 5%">@Messages.Day</th>
+                @if (sectionAlias == GamesAlias.Athletics)
+                {
+                    <th style="width: 10%">@Messages.Hours</th>
+                }
+                <th style="width: 7%">@Messages.ReportTable_Fee (@Messages.Nis)</th>
+                <th style="width: 12%">@Messages.ReportTable_TravelDistance (@Messages.Km)</th>
+                <th style="width: 13%">@Messages.Comment</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (Model.WorkerReportInfo?.GamesAssigned != null && Model.WorkerReportInfo.GamesAssigned.Any())
+            {
+                foreach (var game in Model.WorkerReportInfo.GamesAssigned.OrderBy(c => c.StartDate).Select((value, index) => new {value, index = index + 1}))
+                {
+                    <tr>
+                        <td align="center">@game.index</td>
+                        <td>
+                            @{ var gameDate = game.value.StartDate?.ToString("dd/MM/yyyy HH:mm") ?? ""; }
+                            @gameDate
+                        </td>
+                        <td>@game.value.AuditoriumName</td>
+                        <td>@LangHelper.GetRoleName(game.value.Role ?? string.Empty)</td>
+                        @if (sectionAlias != GamesAlias.Athletics)
+                        {
+                            <td>@game.value.HomeTeamName</td>
+                            <td>@game.value.GuestTeamName</td>
+                        }
+                        <td>@game.value.League.Name</td>
+                        <td>@LangHelper.GetDayOfWeek(game.value.StartDate.Value)</td>
+                        @if (sectionAlias == GamesAlias.Athletics)
+                        {
+                            <td>@game.value.WorkedHours</td>
+                        }
+                        <td>@game.value.LeagueFee</td>
+                        <td align="center">
+                            <input type="number"
+                                   class="form-control officialGameDetail travelDistance"
+                                   data-id="@(sectionAlias == GamesAlias.Athletics ? game.value.Id : Model.WorkerReportInfo.UserJobId)"
+                                   data-gameid="@(sectionAlias == GamesAlias.Athletics ? 0 : game.value.Id)"
+                                   value="@(game.value.TravelDistance ?? 0)"/>
+                        </td>
+                        <td>
+                            <textarea data-id="@(sectionAlias == GamesAlias.Athletics ? game.value.Id : Model.WorkerReportInfo.UserJobId)"
+                                                      data-gameid="@(sectionAlias == GamesAlias.Athletics ? 0 : game.value.Id)"
+                                                      class="form-control officialGameDetail comment">@game.value.Comment</textarea>
+                        </td>
+                    </tr>
+                }
+
+                if (!isReferee && withoutSum)
+                {
+                    <tr>
+                        <th>@Messages.TotalDays</th>
+                        <td align="@css">
+                            @(Model.WorkerReportInfo.DaysCount)
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>@Messages.TotalHours</th>
+                        <td align="@css">
+                            @(Model.WorkerReportInfo.GamesCount * 2)
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>@Messages.Comment</th>
+                    </tr>
+                }
+                if (!withoutSum)
+                {
+@*Here we need to implement payment per groups*@
+                    if (hasMoreThanOneLigue)
+                    {
+                        foreach (var group in Model.WorkerReportInfo.LeaguesGrouped)
+                        {
+                            bool isUnionReport = group?.FirstOrDefault()?.IsUnionReport == true;
+                            var leagueName = group.Key?.Name;
+                            decimal? paymentPerKm = 0M;
+                            if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateA")
+                            {
+                                paymentPerKm = group?.FirstOrDefault()?.IsUnionReport == true
+                                    ? group?.FirstOrDefault()?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateAForTravel
+                                    : group?.FirstOrDefault()?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateAForTravel;
+                            }
+                            else if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateB")
+                            {
+                                paymentPerKm = group?.FirstOrDefault()?.IsUnionReport == true
+                                    ? group?.FirstOrDefault()?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateBForTravel
+                                    : group?.FirstOrDefault()?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateBForTravel;
+                            }
+                            else if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateC")
+                            {
+                                paymentPerKm = group?.FirstOrDefault()?.IsUnionReport == true
+                                    ? group?.FirstOrDefault()?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateCForTravel
+                                    : group?.FirstOrDefault()?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateCForTravel;
+                            }
+                            else
+                            {
+                                paymentPerKm = group?.FirstOrDefault()?.IsUnionReport == true
+                                    ? group?.FirstOrDefault()?.Union?.UnionOfficialSettings?.FirstOrDefault()?.PaymentTravel
+                                    : group?.FirstOrDefault()?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.PaymentTravel;
+                            }
+                            var travelLeagueDistance = isUnionReport ? Model.WorkerReportInfo.GamesAssigned.Sum(c => c.TravelDistance) : group?.Sum(c => c.TravelDistance) ?? 0;
+                            var paymentByDistanceOfLeague = Convert.ToDecimal(travelLeagueDistance) * paymentPerKm;
+                            totalPayment += paymentByDistanceOfLeague;
+
+                            if (withoutSum)
+                            {
+                                for (int i = 0; i < 3; i++)
+                                {
+                                    <tr>
+                                        @for (int j = 0; j < 9; j++)
+                                        {
+                                            <td height="50">&nbsp;</td>
+                                        }
+                                    </tr>
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="2">
+                    @Messages.Total
+                    @if (!withoutSum)
+                    {
+                        @Model.WorkerReportInfo.GamesCount
+                    }
+                </td>
+                @if (sectionAlias == GamesAlias.Athletics)
+                {
+                    <td colspan="5"></td>
+                }
+                else
+                {
+                    <td colspan="6"></td>
+                }
+                <td>@Model.WorkerReportInfo.TotalFeeCount</td>
+                <td align="center">@travelDistance</td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+    </div>
+
+    <table style="margin-left: 30px;" id="table2">
+    <thead style="border-bottom: 2px solid black">
+    <tr>
+        <th width="300px;">@Messages.ReportTable_TotalSummary</th>
+        <td align="@css">
+            &nbsp;
+        </td>
+    </tr>
+    </thead>
+    @if (isReferee)
+    {
+        <tr>
+            <th>@Messages.TotalDays</th>
+            <td align="@css">
+                @(Model.WorkerReportInfo.DaysCount)
+            </td>
+        </tr>
+        <tr>
+            <th>@Messages.Total_Hours</th>
+            @if (!withoutSum)
+            {
+                <td align="@css">
+                    @if (sectionAlias == GamesAlias.Athletics)
+                    {
+                        @(Model.WorkerReportInfo.GamesAssigned.Sum(g => g.WorkedHours))
+                    }
+                    else
+                    {
+                        @(Model.WorkerReportInfo.GamesCount * 2)
+                    }
+                </td>
+            }
+        </tr>
+        if (withoutSum)
+        {
+            <tr>
+                <th>@Messages.Comment</th>
+            </tr>
+        }
+    }
+    @if (!isReferee && withoutSum)
+    {
+        <tr>
+            <th>@Messages.TotalDays</th>
+            <td align="@css">
+                @(Model.WorkerReportInfo.DaysCount)
+            </td>
+        </tr>
+        <tr>
+            <th>@Messages.Total_Hours</th>
+            <td align="@css">
+                @(Model.WorkerReportInfo.GamesCount * 2)
+            </td>
+        </tr>
+        <tr>
+            <th>@Messages.Comment</th>
+        </tr>
+    }
+    @if (!withoutSum)
+    {
+        <tr>
+            <th>@Messages.ReportTable_TotalFees</th>
+            <td align="@css">
+                @Model.WorkerReportInfo.TotalFeeCount <span>@Messages.Nis</span>
+            </td>
+        </tr>
+                    @*Here we need to implement payment per groups*@
+        if (hasMoreThanOneLigue)
+        {
+            totalPayment = 0;
+            foreach (var group in Model.WorkerReportInfo.LeaguesGrouped)
+            {
+                bool isUnionReport = group?.FirstOrDefault()?.IsUnionReport == true;
+                var leagueName = group.Key?.Name;
+                decimal? paymentPerKm = 0M;
+                if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateA")
+                {
+                    paymentPerKm = group?.FirstOrDefault()?.IsUnionReport == true
+                        ? group?.FirstOrDefault()?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateAForTravel
+                        : group?.FirstOrDefault()?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateAForTravel;
+                }
+                else if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateB")
+                {
+                    paymentPerKm = group?.FirstOrDefault()?.IsUnionReport == true
+                        ? group?.FirstOrDefault()?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateBForTravel
+                        : group?.FirstOrDefault()?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateBForTravel;
+                }
+                else if (Model.WorkerReportInfo.WorkerRate != null && Model.WorkerReportInfo.WorkerRate == "RateC")
+                {
+                    paymentPerKm = group?.FirstOrDefault()?.IsUnionReport == true
+                        ? group?.FirstOrDefault()?.Union?.UnionOfficialSettings?.FirstOrDefault()?.RateCForTravel
+                        : group?.FirstOrDefault()?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.RateCForTravel;
+                }
+                else
+                {
+                    paymentPerKm = group?.FirstOrDefault()?.IsUnionReport == true
+                        ? group?.FirstOrDefault()?.Union?.UnionOfficialSettings?.FirstOrDefault()?.PaymentTravel
+                        : group?.FirstOrDefault()?.League?.LeagueOfficialsSettings?.FirstOrDefault()?.PaymentTravel;
+                }
+                var travelLeagueDistance = isUnionReport ? Model.WorkerReportInfo.GamesAssigned.Sum(c => c.TravelDistance ?? 0) : group?.Sum(c => c.TravelDistance ?? 0) ?? 0;
+                var paymentByDistanceOfLeague = Convert.ToDecimal(travelLeagueDistance) * paymentPerKm;
+                totalPayment += paymentByDistanceOfLeague;
+                <tr>
+                    <th>
+                        @if (isUnionReport)
+                        {
+                            <span>@Messages.ReportTable_TotalTravelDistance</span>
+                        }
+                        else
+                        {
+                            <span>@Messages.ReportTable_TotalTravelDistance - @leagueName</span>
+                        }
+                    </th>
+                    <td align="@css">
+                        @String.Format("{0:0.00} {1}", travelLeagueDistance, Messages.Km)
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        @if (isUnionReport)
+                        {
+                            <span>@Messages.ReportTable_PaymentPerKm</span>
+                        }
+                        else
+                        {
+                            <span>@Messages.ReportTable_PaymentPerKm - @leagueName</span>
+                        }
+                    </th>
+                    <td align="@css">
+                        @paymentPerKm <span>@Messages.Nis</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        @if (isUnionReport)
+                        {
+                            <span>@Messages.ReportTable_TotalPayment</span>
+                        }
+                        else
+                        {
+                            <span>@Messages.ReportTable_PaymentPerKm - @leagueName</span>
+                        }
+                    </th>
+                    <td align="@css">
+                        @String.Format("{0:0.00} {1}", paymentByDistanceOfLeague, Messages.Nis)
+                    </td>
+                </tr>
+                if (isUnionReport)
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            <tr>
+                <th>@Messages.ReportTable_TotalTravelDistance</th>
+                <td align="@css">@String.Format("{0:0.00} {1}", travelDistance, Messages.Km) </td>
+            </tr>
+            <tr>
+                <th>@Messages.ReportTable_PaymentPerKm</th>
+                <td align="@css">
+                    @String.Format("{0:0.00} {1}", leaguePaymentPerKm, Messages.Nis)
+                </td>
+            </tr>
+            <tr>
+                <th>@Messages.ReportTable_TotalPayment</th>
+                <td align="@css">
+                    @String.Format("{0:0.00} {1}", totalPayment, Messages.Nis)
+                </td>
+            </tr>
+        }
+
+                    @*here it should ends*@
+        <tr>
+            <th>@Messages.ReportTable_TotalIntermediate</th>
+            <td align="@css">
+                @{
+                    totalIntermediate = totalPayment + Model.WorkerReportInfo.TotalFeeCount;
+                }
+                @String.Format("{0:0.00}", totalIntermediate) <span>@Messages.Nis</span>
+            </td>
+        </tr>
+
+        <tr>
+            <th>@Messages.ReportTable_Tax</th>
+            <td align="@css">
+                @Model.WorkerReportInfo.WithholdingTax
+                @if (Model.WorkerReportInfo.WithholdingTax.HasValue)
+                {
+                    <span>%</span>
+                }
+            </td>
+        </tr>
+        <tr>
+            <th>@Messages.WithholdingTax</th>
+            <td align="@css">
+                @{
+                    withholdingTax = Model.WorkerReportInfo.WithholdingTax.HasValue ? (totalIntermediate * Model.WorkerReportInfo.WithholdingTax) / 100 : 0;
+                }
+                @if (withholdingTax != 0)
+                {
+                    if (isHebrew)
+                    {
+                        @String.Format("{0:0.00}{1} {2}", withholdingTax, "-", Messages.Nis)
+                    }
+                    else
+                    {
+                        @String.Format("{0}{1:0.00} {2}", "-", withholdingTax, Messages.Nis)
+                    }
+                }
+            </td>
+        </tr>
+    }
+    @if (!withoutSum)
+    {
+        <tfoot style="width: 500px; border-top: 2px solid black">
+        <tr>
+            <th>@Messages.ReportTable_ForPayment</th>
+            <td align="@css">
+                @{
+                    var forPayment = totalIntermediate - withholdingTax;
+                }
+                @String.Format("{0:0.00}", forPayment) <span>@Messages.Nis</span>
+            </td>
+        </tr>
+        </tfoot>
+    }
+    </table>
+    </p>
+    if (!withoutSum && isReferee && sectionAlias != GamesAlias.Athletics)
+    {
+        <p style="margin-top: 30px">
+            * @Messages.TotalHoursInfo
+        </p>
+    }
+
+
+    <p style="text-align: center; margin-top: 30px">
+        <b>&copy; @Messages.Report_Copyright @Messages.Report_LogLigLtd </b>
+    </p>
+}
+else
+{
+    <br/>
+    <p style="text-align: center">
+        <h2>@Messages.ReportTable_Unavailable</h2>
+    </p>
+}
+</div>
+<script>
+    $(document).ready(function() {
+        $(".frm-date").datetimepicker({
+            format: 'd/m/Y H:i',
+            formatTime: 'H:i',
+            formatDate: 'd/m/Y',
+
+            step: 15,
+            closeOnDateSelect: false,
+            onChangeDateTime: function() {
+                $(this).data("input").trigger("changedatetime.xdsoft");
+            },
+
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+
+        $(".officialGameDetail").change(function() {
+            var $this = $(this);
+            var officialId = $this.data("id");
+            var gameId = $this.data("gameid");
+            var row = $this.closest("tr");
+            $.post("/Jobs/UpdateOfficialGameReportDetail/" + officialId,
+                    {
+                        gameId: gameId,
+                        travelDistance: row.find(".travelDistance").val(),
+                        comment: row.find(".comment").val()
+                    })
+                .done(function() {
+                    if ($this.hasClass("travelDistance")) {
+                        var reportRequestData = $(".official-report-modal").data("report-request-data");
+                        reportRequestData["startDate"] = $("#ReportStartDate").val();
+                        reportRequestData["endDate"] = $("#ReportEndDate").val();
+                        $.ajax({
+                            type: 'POST',
+                            url: '/Jobs/ShowReport',
+                            data: reportRequestData,
+                            success: function(data) {
+                                if (!data.Message) {
+                                    $(".official-report-modal").find(".modal-content").html(data);
+                                } else {
+                                    alert(data.Message);
+                                }
+                            }
+                        });
+                    }
+                });
+        });
+    });
+
+    function getReport(isPdf) {
+        var id = @Model.WorkerReportInfo.WorkerId;
+        var officialType = '@Model.OfficialType';
+        var distanceSettings = $("#tableCheck").is(":checked") ? "table" : "googleMapsApi";
+
+        var reportForm = $("#reportform");
+
+        $.ajax({
+            type: "GET",
+            url: isPdf ? '/Jobs/CreatePdf' : '/Jobs/ShowReport',
+            data: {
+                userId: id,
+                officialType: officialType,
+                seasonId: $("#SeasonId").val(),
+                logicalName: $("#RelevantEntityLogicalName").val(),
+                relevantId: $("#RelevantEntityId").val(),
+                startDate: $("#ReportStartDate").val(),
+                endDate: $("#ReportEndDate").val(),
+                distanceSettings: distanceSettings,
+                jobId: "@Model.JobId",
+                isSaturdayTariff: $("#SaturdaysTariff").is(":checked"),
+                saveToOfficials: reportForm.find("#SaveReportToOfficials").is(":checked")
+            },
+            beforeSend: function() {
+                $("#loadingForReport").show();
+            },
+            success: function(data) {
+                $("#loadingForReport").hide();
+                if (isPdf) {
+                    if (data.Success) {
+                        $("#downloadLink").show();
+
+                        $.get('@Url.Action("SalaryReports", "WorkerHome", new {userId = Model.WorkerReportInfo?.WorkerId ?? 0})',
+                            function(data) {
+                                $("#reports-list").html(data);
+                            });
+                    }
+                } else {
+                    $("#reportform_pl").html(data);
+                }
+            }
+        });
+    }
+
+    $("#ReportStartDate").change(function() {
+        getReport(false);
+    });
+    $("#ReportEndDate").change(function() {
+        getReport(false);
+    });
+
+    $("#exportToPdf").click(function() {
+        getReport(true);
+    });
+
+    $(".remove-salary-form").submit(function () {
+        setTimeout(function() {
+                getReport(false);
+            },
+            300);
+    });
+
+    $("#manage-salary-reports-btn").click(function() {
+        $("#reports-list").toggle();
+    });
+</script>

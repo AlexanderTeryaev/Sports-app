@@ -1,0 +1,171 @@
+﻿@model PricesTabViewModel
+@{
+    int savedId = TempData["SavedId"] != null ? (int)TempData["SavedId"] : 0;
+    int errId = TempData["ErrId"] != null ? (int)TempData["ErrId"] : 0;
+}
+<h4>@Messages.FriendshipPrices</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>@Messages.FriendshipName</th>
+            <th>@Messages.FromAge</th>
+            <th>@Messages.ToAge</th>
+            <th>@Messages.Gender</th>
+            <th>@Messages.Type</th>
+            <th>@Messages.Price</th>
+            <th>@Messages.PriceForNew</th>
+            <th colspan="1"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (FriendshipPriceViewModel friendshipPriceViewModel in Model.FriendshipPriceViewModelsList)
+        {
+            string frmid = "friendshipprices" + friendshipPriceViewModel.FriendshipPricesId;
+            var updateBtn = "frPriceUpdate" + friendshipPriceViewModel.FriendshipPricesId;
+            var fid = friendshipPriceViewModel.FriendshipPricesId;
+
+        <tr>
+            <td>
+                @friendshipPriceViewModel.FriendshipPricesId
+            </td>
+
+            @using (Ajax.BeginForm("UpdateFriendshipPrice", "Prices", new AjaxOptions { UpdateTargetId = "friendship_prices_data" }, new { id = frmid }))
+            {
+                
+
+                <td>
+                    <span class="form-group">
+                        @Html.DropDownListFor(m => friendshipPriceViewModel.FriendshipsTypeId, friendshipPriceViewModel.FriendshipTypes, new { @class = "form-control frDetectChange", @form = @frmid, name = "FriendshipsTypeId", onchange = "friendshipTypeChanged(" + friendshipPriceViewModel.FriendshipPricesId + ")", id = "friendship_type_select_" + friendshipPriceViewModel.FriendshipPricesId, data_id=fid })
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        <input data-id="@fid" type="number" name="FromAge" value="@friendshipPriceViewModel.FromAge" form="@frmid" class="form-control frDetectChange" />
+                        @Html.ValidationMessage("FromAge")
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        <input data-id="@fid" type="number" name="ToAge" value="@friendshipPriceViewModel.ToAge" form="@frmid" class="form-control frDetectChange" />
+                        @Html.ValidationMessage("ToAge")
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.DropDownListFor(m => friendshipPriceViewModel.GenderId, friendshipPriceViewModel.GendersList, new { @class = "form-control frDetectChange", @form = @frmid, name = "GenderId", onchange = "genderChanged(" + friendshipPriceViewModel.FriendshipPricesId + ")", id = "gender_id_select_" + friendshipPriceViewModel.FriendshipPricesId, data_id = fid })
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.DropDownListFor(m => friendshipPriceViewModel.FriendshipPriceType, friendshipPriceViewModel.FriendshipPriceTypes, new { @class = "form-control frDetectChange", @form = @frmid, name = "FriendshipPriceType", onchange = "friendshipPriceTypeChanged(" + friendshipPriceViewModel.FriendshipPricesId + ")", id = "friendship_price_type_select_" + friendshipPriceViewModel.FriendshipPricesId, data_id = fid })
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        <input data-id="@fid" type="number" name="Price" value="@friendshipPriceViewModel.Price" form="@frmid" class="form-control frDetectChange" />
+                        @Html.ValidationMessage("Price")
+                    </span>
+                    <input type="hidden" name="FriendshipPricesId" form="@frmid" value="@friendshipPriceViewModel.FriendshipPricesId" />
+                    <input type="hidden" name="UnionId" form="@frmid" value="@ViewBag.UnionId" />
+                    <input type="hidden" name="SeasonId" form="@frmid" value="@ViewBag.SeasonId" />
+                    <input type="hidden" id="friendshipType_@friendshipPriceViewModel.FriendshipPricesId" name="FriendshipsTypeId" value="@friendshipPriceViewModel.FriendshipsTypeId" form="@frmid" />
+                    <input type="hidden" id="genderId_@friendshipPriceViewModel.FriendshipPricesId" name="GenderId" value="@friendshipPriceViewModel.GenderId" form="@frmid" />
+                    <input type="hidden" id="friendshipPriceType_@friendshipPriceViewModel.FriendshipPricesId" name="FriendshipPriceType" value="@friendshipPriceViewModel.FriendshipPriceType" form="@frmid" />
+                </td>
+                <td>
+                    <span class="form-group">
+                        <input data-id="@fid" type="number" name="PriceForNew" value="@friendshipPriceViewModel.PriceForNew" form="@frmid" class="form-control frDetectChange" />
+                        @Html.ValidationMessage("PriceForNew")
+                    </span>
+                </td>
+            }
+
+            <td>
+                <button id="@updateBtn" class="@AppCss.Save @(savedId == friendshipPriceViewModel.FriendshipPricesId ? "btn-success" : null) btn" form="@frmid" disabled></button>
+            </td>
+            <td>
+                <a href="@Url.Action("DeleteFriendshipPrice", new { friendshipId = friendshipPriceViewModel.FriendshipPricesId })" class="@AppCss.Delete"
+                   data-ajax-confirm="@Messages.DeleteConfirm"
+                   data-ajax-update="#friendship_prices_data"
+                   data-ajax="true"></a>
+            </td>
+        </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="1"></td>
+            @using (Ajax.BeginForm("SaveFriendshipPrice", "Prices", new AjaxOptions { UpdateTargetId = "friendship_prices_data" }, new { id = "friendshipprices" }))
+            {
+                <td>
+                    <span class="form-group">
+                        @Html.DropDownListFor(m => Model.FriendshipTypeId, Model.FriendshipTypes, new { @class = "form-control", form = "friendshipprices", name = "FriendshipsTypeId" })
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.TextBox("FromAge", null, new { @class = "form-control", placeholder = Messages.FromAge, form = "friendshipprices", type = "number" })
+                        @Html.ValidationMessage("FromAge")
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.TextBox("ToAge", null, new { @class = "form-control", placeholder = Messages.ToAge, form = "friendshipprices", type = "number" })
+                        @Html.ValidationMessage("ToAge")
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.DropDownListFor(m => Model.GenderId, Model.GendersList, new { @class = "form-control", @form = "friendshipprices", name = "GenderId" })
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.DropDownListFor(m => Model.FriendshipPriceTypeId, Model.FriendshipPriceTypes, new { @class = "form-control", @form = "friendshipprices", name = "FriendshipPriceTypeId" })
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.TextBox("Price", null, new { @class = "form-control", placeholder = Messages.Price, form = "friendshipprices", type = "number" })
+                        @Html.ValidationMessage("Price")
+                    </span>
+                </td>
+                <td>
+                    <span class="form-group">
+                        @Html.TextBox("PriceForNew", null, new { @class = "form-control", placeholder = Messages.PriceForNew, form = "friendshipprices", type = "number" })
+                        @Html.ValidationMessage("PriceForNew")
+                    </span>
+                </td>
+                <input type="hidden" name="UnionId" form="friendshipprices" value="@ViewBag.UnionId" />
+                <input type="hidden" name="SeasonId" form="friendshipprices" value="@ViewBag.SeasonId" />
+            }
+            <td>
+                <button class="btn btn-primary" form="friendshipprices">@Messages.Save</button>
+            </td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+
+<script type="text/javascript">
+    function friendshipTypeChanged(id) {
+        var value = $('#friendship_type_select_' + id).val();
+        $("#friendshipType_" + id).val(value);
+    }
+
+    function genderChanged(id) {
+        var value = $('#gender_id_select_' + id).val();
+        $("#genderId_" + id).val(value);
+    }
+
+    function friendshipPriceTypeChanged(id) {
+        var value = $('#friendship_price_type_select_' + id).val();
+        $("#friendshipPriceType_" + id).val(value);
+    }
+
+    $(".frDetectChange").on("change", function () {
+        var id = $(this).attr("data-id");
+        $("#frPriceUpdate" + id).removeAttr("disabled");
+    });
+</script>

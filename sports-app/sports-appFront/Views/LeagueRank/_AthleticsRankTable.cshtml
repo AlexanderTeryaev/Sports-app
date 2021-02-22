@@ -1,0 +1,108 @@
+﻿@using DataService
+@using Resources
+@using LogLigFront.Helpers
+@model List<List<CompetitionClubRankedStanding>>
+@{
+    var isMaleDone = false;
+}
+<div class="modal-dialog modal-lg modal-result-custom-width">
+    <div class="modal-content" style="padding: 18px;">
+        <a href="" onclick="printClick();" class="print_print_id btn btn-primary remove_print desktop-only" style="float:left;">
+            <i class="glyphicon glyphicon-print"></i>&nbsp @Messages.Print
+        </a>
+        <div class="print_id row col-sm-12" id="print_id" data-print-title="">
+
+            <style>
+                td, th {
+                    text-align: center;
+                }
+                .modal-result-custom-width {
+                    width:100%;
+                }
+
+            @Html.Raw('@')media screen and (min-width: 1000px) {
+                .modal-result-custom-width {
+                    max-width:1000px;
+                    width:90%;
+                }
+            @Html.Raw('@')page{size:auto; margin:5mm;}
+            }
+            </style>
+            <div class="main-title disciplines-title">
+                <table class="borderless disciplines-title" style="width:100%;">
+                    <tr>
+                        <td style="vertical-align : middle;text-align:center;" colspan="3" rowspan="3">
+                            @if (ViewBag.Logo != null && !string.IsNullOrEmpty(ViewBag.Logo))
+                            {
+                                <img src="@ViewBag.Logo" class="img-circle keep-for-print" style="max-height:100px;max-width:150px;" alt="" />
+                            }
+                        </td>
+                        <td style="text-align:center;" colspan="4">
+                            <h3 style="margin-top:0px;margin-bottom:0px;">
+                                @ViewBag.CompetitionName
+                            </h3>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <h4 style="margin-top:0px;margin-bottom:0px;">
+                                @if (ViewBag.CompetitionDate != null)
+                                {
+                                    @ViewBag.CompetitionDate.ToString("dd/MM/yyyy")
+                                }
+                            </h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><h4 style="margin-top:0px;margin-bottom:0px;">@Messages.League_RankedStandings</h4></td>
+                    </tr>
+                </table>
+            </div>
+            @foreach (var table in Model)
+            {
+                var index = 0;
+                <div class="col-sm-6">
+                    <br />
+                    <h4>@(isMaleDone ? Messages.Women : Messages.Men)</h4>
+                    @{
+                        isMaleDone = true;
+                    }
+                    <div class="table-responsive">
+                        <table class="table res-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>@Messages.Club</th>
+                                    <th>@Messages.Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in table)
+                                {
+                                    index += 1;
+                                    <tr>
+                                        <td>@index</td>
+                                        <td>@(row.ClubName)</td>
+                                        <td>@(UIHelpers.RemoveRightSidedZeros(row.Points.ToString()))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            @if (Model.Count == 1)
+            {
+                <div class="col-sm-6"></div>
+            }
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default mobile-only" data-dismiss="modal">Close</button>
+        </div>
+        @section scripts
+        {
+            <script type="text/javascript" src="~/Scripts/App/PrintSchedule.js"></script>
+        }
+    </div>
+</div>
+

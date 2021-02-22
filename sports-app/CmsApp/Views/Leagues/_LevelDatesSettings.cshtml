@@ -1,0 +1,127 @@
+﻿@model LevelDatesSettingsForm
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>@Messages.Level</td>
+            <td>@Messages.QualificationsStartDate</td>
+            <td>@Messages.QualificationsEndDate</td>
+            <td>@Messages.FinalsStartDate</td>
+            <td>@Messages.FinalsEndDate</td>
+            <td></td>
+        </tr>
+    </thead>
+    @if (Model.LevelDatesSettings.Any())
+    {
+        <tbody>
+            @foreach (var levelDate in Model.LevelDatesSettings.OrderBy(l => l.Id))
+            {
+                <tr>
+                    <td>
+                        @Html.DropDownListFor(m=> levelDate.CompetitionLevelId,
+                               new SelectList(Model.LevelList,nameof(AppModel.CompetitionLevel.id), nameof(AppModel.CompetitionLevel.level_name), levelDate.CompetitionLevelId),
+                               new { @class = "form-control" })
+                    </td>
+                    <td>@Html.TextBoxFor(m => levelDate.QualificationStartDate, new { @class = "form-control frm-date-wo-time" })</td>
+                    <td>@Html.TextBoxFor(m => levelDate.QualificationEndDate, new { @class = "form-control frm-date-wo-time" })</td>
+                    <td>@Html.TextBoxFor(m => levelDate.FinalStartDate, new { @class = "form-control frm-date-wo-time" })</td>
+                    <td>@Html.TextBoxFor(m => levelDate.FinalEndDate, new { @class = "form-control frm-date-wo-time" })</td>
+                    <td align="center">
+                        <button type="button" onclick="updateLevelDate('@levelDate.Id');" class="@AppCss.Save" disabled></button>
+                        <button type="button" onclick="removeLevelDate('@levelDate.Id');" class="btn btn-default">
+                            <i class="glyphicon glyphicon-remove"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    }
+    <tfoot>
+        <tr>
+            <td>
+                @Html.DropDownList("CompetitionLevelCreate",
+                       new SelectList(Model.LevelList,nameof(AppModel.CompetitionLevel.id), nameof(AppModel.CompetitionLevel.level_name)),
+                       new { @class = "form-control" })
+            </td>
+            <td>@Html.TextBox("QualificationStartDateCreate", string.Empty, new { @class = "form-control frm-date-wo-time" })</td>
+            <td>@Html.TextBox("QualificationEndDateCreate", string.Empty, new { @class = "form-control frm-date-wo-time" })</td>
+            <td>@Html.TextBox("FinalStartDateCreate", string.Empty, new { @class = "form-control frm-date-wo-time" })</td>
+            <td>@Html.TextBox("FinalEndDateCreate", string.Empty, new { @class = "form-control frm-date-wo-time" })</td>
+            <td>
+                <a class="btn btn-primary" onclick="createNewCompetitionLevel()">
+                    <i class="glyphicon glyphicon-plus"></i>
+                    @Messages.AddNew
+                </a>
+            </td>
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+        $(".frm-date-wo-time").datetimepicker({
+            format: 'd/m/Y',
+            timepicker: false,
+            scrollMonth: false,
+            scrollTime: false,
+            scrollInput: false
+        });
+        $(".form-control").change(function () {
+            $(this).closest('tr').find(".btn-save").removeAttr("disabled");
+        })
+    });
+
+    function createNewCompetitionLevel() {
+        $.ajax({
+            url: "@Url.Action("CreateLevelSettings", "Leagues")",
+            type: "POST",
+            data: {
+                competitionId: "@Model.CompetitionId",
+                competitionLevelId: $("#CompetitionLevelCreate").val(),
+                qualificationStartDate: $("#QualificationStartDateCreate").val(),
+                qualificationEndDate: $("#QualificationEndDateCreate").val(),
+                finalStartDate: $("#FinalStartDateCreate").val(),
+                finalEndDate: $("#FinalEndDateCreate").val()
+            },
+            success: function (data) {
+                $("#levelDatesSettings").html(data);
+            }
+        })
+    }
+
+    function removeLevelDate(id) {
+        var tr = $(event.target).closest('tr');
+        $.ajax({
+            url: "@Url.Action("DeleteLevelSettings", "Leagues")",
+            type: "POST",
+            data: {
+                id: id
+            },
+            success: function (data) {
+                if (data.Success == true) {
+                    $(tr).remove();
+                }
+            }
+        })
+    }
+
+    function updateLevelDate(id) {
+        var tr = $(event.target).closest('tr');
+        $.ajax({
+            url: "@Url.Action("UpdateLevelSettings", "Leagues")",
+            type: "POST",
+            data: {
+                id: id,
+                competitionId: "@Model.CompetitionId",
+                competitionLevelId: tr.find("#levelDate_CompetitionLevelId").val(),
+                qualificationStartDate: tr.find("#levelDate_QualificationStartDate").val(),
+                qualificationEndDate: tr.find("#levelDate_QualificationEndDate").val(),
+                finalStartDate: tr.find("#levelDate_FinalStartDate").val(),
+                finalEndDate: tr.find("#levelDate_FinalEndDate").val()
+            },
+            success: function (data) {
+                if (data.Success == true) {
+                    $(tr).find(".btn-save").attr("disabled", true);
+                }
+            }
+        });
+    }
+</script>

@@ -1,0 +1,1 @@
+ALTER TABLE dbo.ClubBalances ADD Reference int NULL
